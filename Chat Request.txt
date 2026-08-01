@@ -9,3 +9,5 @@
 * [2026-08-01T11:34:12+05:30] Create and update "Chat Request.txt" with datetime stamps in bullet points for all project user chat requests. List all implementation plans and tasks created since the beginning of this project and save them in the requirement folder as imp_plan_## and Task_##.
 
 * [2026-08-01T11:40:55+05:30] Streamline the application process to focus purely on the unified working combination of remote control apps (Run app -> System ID -> Address Number Exchange -> Primary user controls Secondary device screen). Hide unwanted comparison screens and keep it simple.
+
+* [2026-08-01T11:51:04+05:30] Create Windows installation steps and background runner for http://localhost:12345 (running silently in background and opening in Standalone App Mode). Initialize and sync with GitHub repository https://github.com/jDroid-X/jDroid-X-Desk.
