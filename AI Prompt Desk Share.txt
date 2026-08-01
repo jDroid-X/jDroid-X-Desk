@@ -1,6 +1,756 @@
 Act as an IT Infrastructure and Remote Access expert.
 
-Compare the Top 3 remote desktop/device sharing applications (e.g., AnyDesk, TeamViewer, RustDesk).
+Act as a team of world-class software architects, system designers, cybersecurity experts, networking engineers, DevOps engineers, UI/UX designers, QA engineers, performance engineers, database architects, and product managers.
+
+Your mission is to design a production-ready Remote Desktop & Device Control application that is comparable to AnyDesk, TeamViewer, RustDesk, Splashtop, Chrome Remote Desktop, and Microsoft Remote Desktop.
+
+Your objective is NOT to simply generate code.
+
+Think like an enterprise software company.
+
+Before implementation perform complete Requirement Analysis, Architecture Design, Risk Analysis, Dependency Mapping, Security Review, Performance Planning, Testing Strategy and Deployment Planning.
+
+====================================================
+1. BUSINESS REQUIREMENT DOCUMENT
+====================================================
+
+Identify
+
+Problem Statement
+
+Target Users
+
+Use Cases
+
+Business Goals
+
+Functional Requirements
+
+Non-functional Requirements
+
+Future Roadmap
+
+Assumptions
+
+Constraints
+
+Licensing
+
+Privacy
+
+Compliance
+
+Success Criteria
+
+====================================================
+2. FEATURE ANALYSIS
+====================================================
+
+Design every feature including
+
+Remote Desktop
+
+Remote Mouse
+
+Remote Keyboard
+
+Touch Gestures
+
+Clipboard Sync
+
+File Transfer
+
+Drag and Drop
+
+Audio Streaming
+
+Microphone Sharing
+
+Webcam Sharing
+
+Screen Recording
+
+Session Recording
+
+Multi Monitor
+
+Multiple Remote Sessions
+
+Remote Printing
+
+Chat
+
+Voice Call
+
+Video Call
+
+Whiteboard
+
+Annotation
+
+Remote Restart
+
+Wake On LAN
+
+Power Off
+
+Remote Lock
+
+Remote Logout
+
+Remote Terminal
+
+Command Execution
+
+Task Manager
+
+Registry Editor
+
+Service Manager
+
+Device Information
+
+System Monitoring
+
+Performance Monitoring
+
+Hardware Monitoring
+
+Remote Notifications
+
+Session Sharing
+
+User Switching
+
+Permission Management
+
+Unattended Access
+
+Temporary Session
+
+Invitation Link
+
+One Time Password
+
+QR Code Pairing
+
+PIN Based Access
+
+Persistent Devices
+
+Favorite Devices
+
+Groups
+
+Device Tags
+
+Address Book
+
+Cloud Synchronization
+
+Offline Queue
+
+Bandwidth Limiter
+
+Adaptive Streaming
+
+GPU Encoding
+
+Hardware Acceleration
+
+LAN Discovery
+
+Internet Discovery
+
+Relay Server
+
+Direct P2P Connection
+
+NAT Traversal
+
+TURN
+
+STUN
+
+WebRTC
+
+UDP
+
+TCP
+
+IPv4
+
+IPv6
+
+VPN Support
+
+Proxy Support
+
+Firewall Bypass
+
+Reconnect Logic
+
+Auto Resume
+
+====================================================
+3. USER ROLES
+====================================================
+
+Administrator
+
+Technician
+
+Customer
+
+Guest
+
+Support Agent
+
+Read Only User
+
+Auditor
+
+Super Administrator
+
+====================================================
+4. COMPLETE WORKFLOW
+====================================================
+
+Generate workflow diagrams for
+
+Registration
+
+Authentication
+
+Device Registration
+
+Connection Request
+
+Authorization
+
+Secure Handshake
+
+Session Establishment
+
+Encryption
+
+Streaming
+
+Remote Input
+
+Clipboard Sync
+
+File Transfer
+
+Disconnection
+
+Session Recovery
+
+Logging
+
+Audit Trail
+
+====================================================
+5. UI / UX DESIGN
+====================================================
+
+Design every screen
+
+Splash
+
+Login
+
+Registration
+
+Dashboard
+
+Device List
+
+Favorites
+
+Recent Devices
+
+Connection Screen
+
+Remote Desktop
+
+Toolbar
+
+Settings
+
+Permissions
+
+Notifications
+
+Session History
+
+Profile
+
+Admin Console
+
+Logs
+
+Analytics
+
+Help
+
+Feedback
+
+====================================================
+6. FRONTEND DESIGN
+====================================================
+
+Architecture
+
+Reusable Components
+
+Navigation
+
+State Management
+
+Offline Support
+
+Caching
+
+Accessibility
+
+Themes
+
+Localization
+
+Animations
+
+====================================================
+7. BACKEND DESIGN
+====================================================
+
+Authentication Server
+
+Signaling Server
+
+Relay Server
+
+Session Manager
+
+Notification Service
+
+File Transfer Service
+
+Streaming Service
+
+Monitoring Service
+
+Analytics Service
+
+Logging Service
+
+Update Service
+
+====================================================
+8. DATABASE DESIGN
+====================================================
+
+Users
+
+Devices
+
+Sessions
+
+Permissions
+
+Tokens
+
+Logs
+
+Events
+
+Audit Trail
+
+Settings
+
+Organizations
+
+Licenses
+
+Subscriptions
+
+Notifications
+
+Favorites
+
+Connection History
+
+====================================================
+9. NETWORK ARCHITECTURE
+====================================================
+
+Direct Connection
+
+Relay Connection
+
+Peer to Peer
+
+TURN
+
+STUN
+
+WebRTC
+
+TCP
+
+UDP
+
+NAT Traversal
+
+Connection Recovery
+
+Bandwidth Optimization
+
+Adaptive Quality
+
+Frame Compression
+
+Packet Recovery
+
+Heartbeat
+
+Keep Alive
+
+====================================================
+10. SECURITY
+====================================================
+
+AES-256
+
+TLS 1.3
+
+ECDH
+
+RSA
+
+Session Keys
+
+Perfect Forward Secrecy
+
+Zero Trust
+
+MFA
+
+Biometric Login
+
+Device Fingerprinting
+
+Whitelisting
+
+Blacklisting
+
+Rate Limiting
+
+Anti Brute Force
+
+Replay Protection
+
+Certificate Pinning
+
+Secure Storage
+
+Encrypted Database
+
+Secure Clipboard
+
+Screen Privacy
+
+Permission Levels
+
+Consent Dialog
+
+Audit Logging
+
+====================================================
+11. PERFORMANCE
+====================================================
+
+Low Bandwidth
+
+High Latency
+
+Packet Loss
+
+GPU Encoding
+
+CPU Optimization
+
+Memory Optimization
+
+Battery Optimization
+
+Network Compression
+
+Frame Deduplication
+
+Delta Encoding
+
+Adaptive FPS
+
+Adaptive Resolution
+
+====================================================
+12. AI FEATURES
+====================================================
+
+AI Connection Diagnosis
+
+AI Performance Optimizer
+
+AI Network Optimizer
+
+AI Session Summary
+
+AI Log Analyzer
+
+AI Security Alert
+
+AI Bug Detection
+
+AI User Assistant
+
+AI Troubleshooter
+
+====================================================
+13. TESTING
+====================================================
+
+Unit Testing
+
+Integration Testing
+
+System Testing
+
+Regression Testing
+
+Performance Testing
+
+Stress Testing
+
+Load Testing
+
+Security Testing
+
+Penetration Testing
+
+Accessibility Testing
+
+Offline Testing
+
+Network Failure Testing
+
+Crash Recovery Testing
+
+Device Compatibility Testing
+
+====================================================
+14. ERROR HANDLING
+====================================================
+
+Connection Lost
+
+Authentication Failure
+
+Relay Failure
+
+Server Offline
+
+Timeout
+
+Invalid Credentials
+
+Permission Denied
+
+Network Slow
+
+Packet Loss
+
+Disk Full
+
+Memory Full
+
+GPU Failure
+
+====================================================
+15. LOGGING
+====================================================
+
+Connection Logs
+
+Authentication Logs
+
+Audit Logs
+
+Security Logs
+
+Performance Logs
+
+Crash Logs
+
+Network Logs
+
+User Activity
+
+====================================================
+16. DEPLOYMENT
+====================================================
+
+Development
+
+Testing
+
+Staging
+
+Production
+
+CI/CD
+
+Rollback
+
+Monitoring
+
+Auto Update
+
+Crash Reporting
+
+====================================================
+17. QA CHECKLIST
+====================================================
+
+Generate
+
+Functional Checklist
+
+Security Checklist
+
+Performance Checklist
+
+UI Checklist
+
+Backend Checklist
+
+Database Checklist
+
+API Checklist
+
+Deployment Checklist
+
+====================================================
+18. DOS AND DON'TS
+====================================================
+
+List every best practice and common mistake for
+
+Architecture
+
+Networking
+
+Security
+
+Database
+
+Streaming
+
+Remote Control
+
+Synchronization
+
+Authentication
+
+Deployment
+
+Testing
+
+Maintenance
+
+====================================================
+19. RISK ANALYSIS
+====================================================
+
+Identify
+
+Critical Risks
+
+Technical Risks
+
+Business Risks
+
+Security Risks
+
+Scalability Risks
+
+Performance Risks
+
+Maintainability Risks
+
+Mitigation Strategy
+
+====================================================
+20. FINAL DELIVERABLES
+====================================================
+
+Produce
+
+1. Business Requirement Document (BRD)
+
+2. Functional Requirement Specification (FRS)
+
+3. Software Requirement Specification (SRS)
+
+4. System Architecture Document
+
+5. UI/UX Design Specification
+
+6. API Documentation
+
+7. Database Schema
+
+8. Network Architecture
+
+9. Security Architecture
+
+10. Sequence Diagrams
+
+11. Activity Diagrams
+
+12. Class Diagrams
+
+13. Component Diagrams
+
+14. Deployment Diagram
+
+15. Data Flow Diagram
+
+16. MVC/MVVM Project Structure
+
+17. Folder Structure
+
+18. Coding Standards
+
+19. Testing Strategy
+
+20. Release Checklist
+
+21. Production Readiness Checklist
+
+22. Future Enhancement Roadmap
+
+====================================================
+RULES
+====================================================
+
+• Follow SOLID, DRY, KISS, YAGNI, Clean Architecture, MVC/MVVM, Repository Pattern, Dependency Injection, CQRS (where beneficial), and secure coding principles.
+• Design for scalability, modularity, extensibility, maintainability, and offline resilience.
+• Prefer reusable components and avoid duplicate logic.
+• Identify dependencies, bottlenecks, race conditions, security vulnerabilities, and edge cases before implementation.
+• Validate every design decision against performance, security, maintainability, and user experience.
+• Do not proceed to implementation until every requirement, workflow, dependency, and risk has been analyzed and documented.
+
 
 For each application provide:
 
