@@ -1,0 +1,11 @@
+# jDroid-X-Desk Project Chat Request Ledger
+# Path: C:\Users\jiten\jAnitGravity\jDroid-X-Desk\Chat Request.txt
+# Filter: Excludes prompts starting with "Do you think", "redo this activity", or duplicate requests.
+
+* [2026-08-01T10:58:30+05:30] Act as an IT Infrastructure and Remote Access expert. Compare the Top 3 remote desktop applications (AnyDesk, TeamViewer, RustDesk) across 29 technical categories with clear tables and workflow diagrams. Build a responsive web application (jDroid-X-Desk) working in both laptop and mobile viewports with dedicated pages/modals for About Me, Help, User Manual, Version, and License.
+
+* [2026-08-01T11:28:29+05:30] Read the text files in C:\Users\jiten\jAnitGravity\jDroid-X-Desk (AI Prompt Desk Share.txt & Desk Test Script.txt) and build a continuous system log monitoring engine for 2-system traceability (System A Client <--> System B Host).
+
+* [2026-08-01T11:34:12+05:30] Create and update "Chat Request.txt" with datetime stamps in bullet points for all project user chat requests. List all implementation plans and tasks created since the beginning of this project and save them in the requirement folder as imp_plan_## and Task_##.
+
+* [2026-08-01T11:40:55+05:30] Streamline the application process to focus purely on the unified working combination of remote control apps (Run app -> System ID -> Address Number Exchange -> Primary user controls Secondary device screen). Hide unwanted comparison screens and keep it simple.

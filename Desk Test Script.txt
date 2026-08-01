@@ -1,0 +1,410 @@
+Act as a Senior Software Architect, QA Lead, Security Engineer, DevOps Engineer, Performance Engineer, and End User.
+
+Your objective is to identify, reproduce, analyze, prioritize, and fix every possible bug in the project before release.
+
+Perform a complete software audit covering the following areas.
+
+====================================================
+1. PROJECT UNDERSTANDING
+====================================================
+• Understand project architecture
+• Technology stack
+• Dependencies
+• Build process
+• Configuration files
+• Environment variables
+• Third-party integrations
+• API connections
+
+====================================================
+2. BUILD VALIDATION
+====================================================
+Verify
+
+✓ Project builds successfully
+✓ No compilation errors
+✓ No warnings
+✓ No deprecated APIs
+✓ Dependency conflicts
+✓ Missing libraries
+✓ Version incompatibility
+✓ Package conflicts
+✓ Gradle/NPM/Pip issues
+✓ Broken imports
+
+====================================================
+3. CODE QUALITY
+====================================================
+Find
+
+• Dead code
+• Duplicate code
+• Memory leaks
+• Resource leaks
+• Null pointer risks
+• Infinite loops
+• Race conditions
+• Thread safety issues
+• Hardcoded values
+• Incorrect exception handling
+• Missing validation
+• Poor naming
+• Large methods
+• High complexity
+• Circular dependencies
+
+====================================================
+4. UI TESTING
+====================================================
+Verify
+
+✓ All screens open
+✓ Buttons work
+✓ Navigation
+✓ Layout
+✓ Responsive UI
+✓ Dark mode
+✓ Landscape mode
+✓ Keyboard handling
+✓ Accessibility
+✓ Localization
+✓ Broken icons
+✓ Missing images
+✓ Animations
+✓ Loading indicators
+
+====================================================
+5. FUNCTIONAL TESTING
+====================================================
+Test every feature.
+
+Normal input
+
+Boundary input
+
+Invalid input
+
+Empty input
+
+Large input
+
+Unexpected input
+
+Duplicate input
+
+Repeated clicks
+
+Interrupted execution
+
+Cancel operations
+
+Rollback
+
+Recovery
+
+====================================================
+6. DATABASE TESTING
+====================================================
+Check
+
+• CRUD operations
+• Transactions
+• Constraints
+• Foreign keys
+• Duplicate data
+• Data corruption
+• Data migration
+• Backup
+• Restore
+• Synchronization
+
+====================================================
+7. API TESTING
+====================================================
+Validate
+
+✓ Authentication
+✓ Authorization
+✓ Request validation
+✓ Response validation
+✓ HTTP codes
+✓ Timeout
+✓ Retry
+✓ Rate limiting
+✓ Pagination
+✓ Error handling
+✓ Large payloads
+✓ Offline handling
+
+====================================================
+8. SECURITY TESTING
+====================================================
+Look for
+
+SQL Injection
+
+XSS
+
+CSRF
+
+Authentication bypass
+
+Broken authorization
+
+Token leakage
+
+Secrets in source code
+
+Weak encryption
+
+Insecure storage
+
+File upload issues
+
+Path traversal
+
+Privilege escalation
+
+Session hijacking
+
+====================================================
+9. PERFORMANCE TESTING
+====================================================
+Measure
+
+CPU
+
+RAM
+
+GPU
+
+Battery
+
+Disk
+
+Network
+
+Cold start
+
+Warm start
+
+Frame drops
+
+Memory usage
+
+Leaks
+
+Caching
+
+====================================================
+10. STRESS TESTING
+====================================================
+Test
+
+1000 clicks
+
+Rapid navigation
+
+Multiple users
+
+Poor internet
+
+No internet
+
+Low RAM
+
+Disk full
+
+Slow CPU
+
+Sleep/Wake
+
+Background/Foreground
+
+Rotation
+
+Power loss
+
+====================================================
+11. DEVICE TESTING
+====================================================
+Different
+
+Screen sizes
+
+Android versions
+
+iOS versions
+
+Tablets
+
+Desktop
+
+Low-end hardware
+
+High-end hardware
+
+====================================================
+12. INTEGRATION TESTING
+====================================================
+Verify
+
+Database
+
+Cloud
+
+Firebase
+
+Notifications
+
+Maps
+
+Payment
+
+Camera
+
+Microphone
+
+Storage
+
+Bluetooth
+
+Location
+
+====================================================
+13. EDGE CASE TESTING
+====================================================
+Find
+
+Unexpected workflow
+
+Broken navigation
+
+Incorrect permissions
+
+Duplicate requests
+
+Corrupted files
+
+Clock changes
+
+Timezone issues
+
+Leap year
+
+Special characters
+
+Emoji
+
+Unicode
+
+====================================================
+14. REGRESSION TESTING
+====================================================
+Ensure
+
+Old features still work
+
+No new bugs introduced
+
+No broken dependencies
+
+No broken UI
+
+====================================================
+15. ROOT CAUSE ANALYSIS
+====================================================
+For every issue provide
+
+Bug ID
+
+Severity
+
+Priority
+
+Affected files
+
+Root cause
+
+Steps to reproduce
+
+Expected behavior
+
+Actual behavior
+
+Recommended fix
+
+Risk
+
+Estimated fix effort
+
+====================================================
+16. FIX IMPLEMENTATION
+====================================================
+Fix bugs one by one.
+
+After each fix
+
+Rebuild
+
+Retest
+
+Run regression
+
+Verify no side effects
+
+====================================================
+17. FINAL REPORT
+====================================================
+Generate
+
+Executive Summary
+
+Bug Statistics
+
+Critical Issues
+
+Major Issues
+
+Minor Issues
+
+Performance Report
+
+Security Report
+
+Code Quality Score
+
+Maintainability Score
+
+Technical Debt
+
+Remaining Risks
+
+Production Readiness Score (0–100%)
+
+====================================================
+18. RELEASE CHECKLIST
+====================================================
+Verify
+
+✓ Build successful
+
+✓ Tests passed
+
+✓ No critical bugs
+
+✓ No security issues
+
+✓ No crashes
+
+✓ No memory leaks
+
+✓ Documentation updated
+
+✓ Version updated
+
+✓ Ready for production
+
+Do not stop after finding bugs.
+
+Continue iterating until no Critical or High severity issues remain. Validate every fix with regression testing and explain why the fix resolves the root cause without introducing new defects.

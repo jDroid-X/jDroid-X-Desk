@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="jDroid-X-Desk: Streamlined Remote Desktop Sharing Console. Connect primary and secondary devices via System Address exchange and remote control.">
+    <title>jDroid-X-Desk | Unified Remote Desktop Control Console</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    <!-- Toast Popup Notification Container -->
+    <div id="toast-container" class="toast-overlay-container"></div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="app-layout">
+        
+        <!-- Sidebar Navigation Drawer (Desktop & Mobile) -->
+        <aside id="sidebar-drawer" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-desktop"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">jDroid-X-Desk</span>
+                        <span class="brand-subtitle">Remote Control Console</span>
+                    </div>
+                </div>
+                <button id="close-drawer-btn" class="icon-btn mobile-only" aria-label="Close Drawer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-scroll">
+                <!-- Main Navigation -->
+                <div class="nav-section">
+                    <span class="nav-section-title">Remote Workspace</span>
+                    <ul class="nav-list">
+                        <li class="nav-item active" data-view="remote-console">
+                            <a href="#remote-console" id="nav-remote-console">
+                                <i class="fa-solid fa-tower-broadcast text-primary"></i>
+                                <span>Remote Control Console</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-view="system-monitor">
+                            <a href="#system-monitor" id="nav-system-monitor">
+                                <i class="fa-solid fa-network-wired"></i>
+                                <span>2-System Log Monitor</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- System & Info -->
+                <div class="nav-section">
+                    <span class="nav-section-title">System & Documentation</span>
+                    <ul class="nav-list">
+                        <li class="nav-item" data-modal="about-modal">
+                            <a href="#" id="nav-about">
+                                <i class="fa-solid fa-user-gear"></i>
+                                <span>About Me (Architect Profile)</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-modal="help-modal">
+                            <a href="#" id="nav-help">
+                                <i class="fa-solid fa-circle-question"></i>
+                                <span>Help & Operations Guide</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-modal="manual-modal">
+                            <a href="#" id="nav-manual">
+                                <i class="fa-solid fa-book-open"></i>
+                                <span>User Manual (HITL Manual)</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-modal="version-modal">
+                            <a href="#" id="nav-version">
+                                <i class="fa-solid fa-code-branch"></i>
+                                <span>Version & Changelog (v2.0)</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-modal="license-modal">
+                            <a href="#" id="nav-license">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                                <span>License & Compliance</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="system-status-pill">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">System ID Ready</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-wrapper">
+            <!-- Top Glassmorphism Header Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button id="toggle-drawer-btn" class="icon-btn" aria-label="Toggle Drawer">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 id="view-title" class="page-title">Remote Control Console</h1>
+                </div>
+
+                <div class="topbar-right">
+                    <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme" aria-label="Toggle Theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button id="quick-disconnect-btn" class="btn btn-danger btn-sm" style="display: none;">
+                        <i class="fa-solid fa-power-off"></i>
+                        <span>Disconnect Session</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dynamic View Containers -->
+            <div id="content-area" class="content-container">
+                
+                <!-- PRIMARY VIEW: UNIFIED REMOTE CONTROL CONSOLE (3-STEP SIMPLE PROCESS) -->
+                <section id="view-remote-console" class="view-panel active">
+                    <!-- Screen Contextual Hint -->
+                    <div class="screen-hint-box">
+                        <i class="fa-solid fa-lightbulb hint-icon"></i>
+                        <div class="hint-text">
+                            <strong>Remote Access Operating Principle:</strong> Exchange your 9-digit Device Address with your remote partner to share desktop screen control. Primary system can directly interact with secondary system.
+                        </div>
+                    </div>
+
+                    <!-- Process Visual Timeline Cards -->
+                    <div class="cards-grid-3 margin-bottom-lg">
+                        <!-- Step 1 Card: Identification -->
+                        <div class="widget-box" style="border-left: 4px solid var(--accent-blue);">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span class="badge badge-blue">STEP 1</span>
+                                <i class="fa-solid fa-id-card text-primary" style="font-size: 1.2rem;"></i>
+                            </div>
+                            <h4 class="margin-top-sm">System Identification</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">App runs and generates unique local address and one-time security password.</p>
+                            
+                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: var(--text-dim);">This Device Address:</div>
+                                <div style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--accent-blue);" id="local-device-id">984-102-391</div>
+                                
+                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">One-Time Password:</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
+                                    <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 Card: Exchange Numbers -->
+                        <div class="widget-box" style="border-left: 4px solid var(--accent-purple);">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span class="badge" style="background: rgba(124,77,255,0.15); color: var(--accent-purple);">STEP 2</span>
+                                <i class="fa-solid fa-arrow-right-arrow-left" style="font-size: 1.2rem; color: var(--accent-purple);"></i>
+                            </div>
+                            <h4 class="margin-top-sm">Exchange Numbers & Connect</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">Input target Secondary System address and security password to initiate handshake.</p>
+
+                            <div class="margin-top-md">
+                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.25rem;">Remote Partner Address:</label>
+                                <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.55rem; font-family: var(--font-mono);" placeholder="e.g. 520-310-884">
+                                
+                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.5rem; margin-bottom: 0.25rem;">Security Password:</label>
+                                <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.55rem; font-family: var(--font-mono);" placeholder="Enter password">
+
+                                <button id="connect-session-btn" class="btn btn-primary btn-full margin-top-md">
+                                    <i class="fa-solid fa-link"></i> Connect & Share Desktop
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 Card: Control Shared System -->
+                        <div class="widget-box" style="border-left: 4px solid var(--accent-emerald);">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span class="badge badge-green">STEP 3</span>
+                                <i class="fa-solid fa-display text-success" style="font-size: 1.2rem;"></i>
+                            </div>
+                            <h4 class="margin-top-sm">Primary Controls Secondary</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">Primary user receives secondary system display output with mouse and keyboard input injection.</p>
+
+                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 0.78rem;"><strong>Active Status:</strong> <span id="session-status-text" style="color: var(--text-muted);">Idle (Awaiting Connection)</span></div>
+                                <div style="font-size: 0.78rem; margin-top: 0.25rem;"><strong>Protocol:</strong> <span id="session-protocol-text" style="color: var(--text-muted);">P2P Direct Encrypted</span></div>
+                                <button id="launch-canvas-btn" class="btn btn-secondary btn-full btn-sm margin-top-md" disabled>
+                                    <i class="fa-solid fa-expand"></i> Open Control Window
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3 SIMULATED REMOTE DESKTOP INTERACTIVE CANVAS VIEWPORT -->
+                    <div id="remote-desktop-viewport-box" class="widget-box" style="display: none; background: #060911; border: 2px solid var(--accent-blue);">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                            <div>
+                                <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-desktop"></i> Secondary Remote Desktop Screen (Controlled by Primary)</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted);">Target: <span id="active-target-id-label" style="color: #fff; font-family: var(--font-mono);">520-310-884</span> | 1080p 60FPS Stream</p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-secondary btn-sm" id="ctrl-alt-del-btn"><i class="fa-solid fa-keyboard"></i> Send Ctrl+Alt+Del</button>
+                                <button class="btn btn-secondary btn-sm" id="toggle-file-btn"><i class="fa-solid fa-folder-open"></i> File Manager</button>
+                                <button class="btn btn-danger btn-sm" id="disconnect-session-btn"><i class="fa-solid fa-power-off"></i> Disconnect</button>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Virtual Remote Screen Area -->
+                        <div id="virtual-remote-screen" class="margin-top-md" style="height: 360px; background: #0d1322; border-radius: 8px; border: 1px solid var(--border-bright); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 6px;">
+                                <span style="font-size: 0.8rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> Live Encrypted Remote Session Active</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);" id="virtual-screen-clock">11:42:00 AM</span>
+                            </div>
+
+                            <div style="text-align: center; margin: auto;">
+                                <div style="font-size: 3rem; color: var(--accent-blue); margin-bottom: 0.5rem;"><i class="fa-solid fa-display"></i></div>
+                                <h4>Secondary User System Screen</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Primary user is controlling mouse cursor and keyboard inputs on secondary machine.</p>
+                                <div style="display: flex; justify-content: center; gap: 0.75rem; margin-top: 1rem;">
+                                    <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Mouse Click at X:450 Y:220')"><i class="fa-solid fa-arrow-pointer"></i> Simulate Mouse Click</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Keystrokes: Hello Secondary System')"><i class="fa-solid fa-font"></i> Inject Text Input</button>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.78rem; font-family: var(--font-mono); color: var(--accent-emerald);" id="virtual-screen-log">
+                                [CONTROL SIGNAL] Primary mouse position synced (X: 520, Y: 310)
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: CONTINUOUS 2-SYSTEM LOG MONITOR -->
+                <section id="view-system-monitor" class="view-panel"></section>
+
+            </div>
+        </main>
+
+        <!-- Bottom Navigation Bar (Mobile Viewports Only) -->
+        <nav class="bottom-nav mobile-only">
+            <button class="bottom-nav-item active" data-view="remote-console">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <span>Console</span>
+            </button>
+            <button class="bottom-nav-item" data-view="system-monitor">
+                <i class="fa-solid fa-network-wired"></i>
+                <span>Log</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- MODAL OVERLAYS -->
+    
+    <!-- Dynamic HITL Option Dialog Modal -->
+    <div id="hitl-dialog-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="hitl-dialog-title"><i class="fa-solid fa-shield-halved text-warning"></i> Incoming HITL Remote Request</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="hitl-dialog-body-content"></div>
+            </div>
+            <div class="modal-footer" id="hitl-dialog-footer-actions"></div>
+        </div>
+    </div>
+
+    <!-- 1. About Me Modal -->
+    <div id="about-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-gear"></i> About Me (Enterprise Systems Architect)</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-card">
+                    <div class="profile-avatar"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="profile-details">
+                        <h4>Senior IT Infrastructure & Remote Access Architect</h4>
+                        <p class="text-subtitle">20+ Years Enterprise Governance & Streamlined Remote Access Systems</p>
+                    </div>
+                </div>
+                <div class="profile-bio">
+                    <p>Welcome to <strong>jDroid-X-Desk</strong>. Designed for maximum simplicity: App installation -> System Address Identification -> Number Exchange -> Direct Remote Control sharing.</p>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary close-modal-btn">Close Profile</button></div>
+        </div>
+    </div>
+
+    <!-- 2. Help Modal -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-question"></i> Help & Operations Guide</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4>Process Steps:</h4>
+                <ol class="manual-steps margin-top-md">
+                    <li><strong>Step 1</strong>: Run App -> System auto-generates your Device Address.</li>
+                    <li><strong>Step 2</strong>: Exchange address numbers with remote partner.</li>
+                    <li><strong>Step 3</strong>: Connect -> Primary user controls secondary device desktop.</li>
+                </ol>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary close-modal-btn">Got It</button></div>
+        </div>
+    </div>
+
+    <!-- 3. User Manual Modal -->
+    <div id="manual-modal" class="modal-overlay">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-book-open"></i> User Manual (Step-by-Step)</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="manual-content">
+                    <h4>Primary to Secondary Remote Control Workflow</h4>
+                    <ol class="manual-steps margin-top-md">
+                        <li><strong>Step 1 (Host Run)</strong>: Secondary user runs app. Device Address `984-102-391` is assigned.</li>
+                        <li><strong>Step 2 (Exchange ID)</strong>: Secondary user shares address with Primary technician.</li>
+                        <li><strong>Step 3 (Connect)</strong>: Primary user enters address, inputs password, and clicks Connect.</li>
+                        <li><strong>Step 4 (Remote Control Active)</strong>: Remote screen window opens. Primary user moves mouse and types text on secondary machine.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary close-modal-btn">Acknowledge</button></div>
+        </div>
+    </div>
+
+    <!-- 4. Version Modal -->
+    <div id="version-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-code-branch"></i> Version & Release Information</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="version-badge-group">
+                    <span class="version-tag">Version 2.0.0 Streamlined</span>
+                    <span class="build-tag">Build 2026.08.01.R5</span>
+                </div>
+                <p class="margin-top-md font-size-sm">Streamlined remote desktop control console focusing on system address exchange and direct primary-to-secondary screen sharing.</p>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary close-modal-btn">Close</button></div>
+        </div>
+    </div>
+
+    <!-- 5. License Modal -->
+    <div id="license-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-scale-balanced"></i> Software License</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Released under the <strong>MIT License</strong>. Free for personal and commercial usage.</p>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary close-modal-btn">I Understand</button></div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+Act as an IT Infrastructure and Remote Access expert.
+
+Compare the Top 3 remote desktop/device sharing applications (e.g., AnyDesk, TeamViewer, RustDesk).
+
+For each application provide:
+
+1. Overview
+2. Connection process (Host and Client setup)
+3. Installation and configuration
+4. Types of connection
+   - Unattended Access
+   - Attended Access
+   - LAN Connection
+   - Internet Connection
+   - File Transfer
+   - Remote Printing
+5. Full device control features
+6. Permission management
+7. Multi-monitor support
+8. Clipboard and drag-drop support
+9. Audio, webcam and microphone support
+10. Mobile device support
+11. Wake-on-LAN
+12. Session recording
+13. Chat and Voice communication
+14. Screen sharing and presentation mode
+15. User management and access control
+16. Security
+    - Encryption
+    - MFA
+    - Password protection
+    - Whitelisting
+    - Device authorization
+17. Performance
+    - Bandwidth usage
+    - Low-speed network performance
+    - Latency
+18. Operating systems supported
+19. Free vs Paid features
+20. Enterprise features
+21. Common limitations
+22. Best use cases
+23. Advantages
+24. Disadvantages
+25. Step-by-step process to completely control another device safely.
+26. Security best practices and Do's & Don'ts.
+27. Troubleshooting common connection problems.
+28. Feature comparison table.
+29. Final recommendation for:
+    - Personal use
+    - IT Support
+    - Software Development
+    - Enterprise
+    - Self-hosted privacy-focused solution
+
+Present the answer in clear tables and workflow diagrams wherever possible.
+
+When testing software to eliminate bugs, the biggest failures usually come from poor testing discipline, not from missing test cases. The following checklist is suitable for AI agents, developers, and QA engineers.
+
+✅ DO's
+Planning
+Define clear testing objectives.
+Understand the business requirements before testing.
+Test one feature at a time.
+Maintain a traceability matrix between requirements and test cases.
+Prioritize Critical → High → Medium → Low severity bugs.
+Create reproducible test scenarios.
+Environment
+Test in Development, QA, Staging, and Production-like environments.
+Keep test environments isolated.
+Use representative sample data.
+Back up databases before destructive testing.
+Test with multiple OS versions, browsers, and devices.
+Functional Testing
+Test every button, screen, menu, and workflow.
+Verify expected and unexpected user inputs.
+Test boundary values.
+Test empty fields.
+Test maximum input sizes.
+Test minimum values.
+Test invalid formats.
+Test interrupted workflows.
+Verify all validation messages.
+Code Quality
+Remove dead code.
+Remove duplicate logic.
+Keep methods small and focused.
+Handle exceptions gracefully.
+Validate every external input.
+Log meaningful errors.
+Review code before merging.
+Performance
+Monitor CPU, RAM, Disk, GPU, Battery, and Network.
+Test low-memory conditions.
+Test slow networks.
+Measure startup time.
+Test with large datasets.
+Profile memory leaks.
+Monitor frame rate for UI applications.
+Security
+Sanitize all user inputs.
+Encrypt sensitive data.
+Use secure authentication.
+Validate permissions.
+Rotate secrets.
+Store credentials securely.
+Enable HTTPS/TLS.
+Validate uploaded files.
+API Testing
+Test success and failure responses.
+Validate HTTP status codes.
+Test authentication failures.
+Test expired tokens.
+Test malformed requests.
+Test timeouts.
+Test retries.
+Test rate limits.
+Database
+Test CRUD operations.
+Verify transactions.
+Test rollback scenarios.
+Validate indexes.
+Check foreign keys.
+Test concurrent updates.
+Verify backup and restore.
+Regression
+Re-run previous test cases after every fix.
+Verify unrelated modules still work.
+Automate regression tests where possible.
+Logging
+Maintain structured logs.
+Include timestamps.
+Record stack traces.
+Capture screenshots for UI failures.
+Keep bug IDs consistent.
+Release
+Run smoke tests.
+Run sanity tests.
+Run full regression.
+Verify build version.
+Confirm documentation is updated.
+Validate rollback procedures.
+❌ DON'Ts
+Development
+Don't ignore compiler warnings.
+Don't leave TODO/FIXME comments unresolved.
+Don't hardcode credentials.
+Don't suppress exceptions without logging.
+Don't duplicate business logic.
+Don't commit untested code.
+Testing
+Don't test only the "happy path."
+Don't skip edge cases.
+Don't rely on manual testing alone.
+Don't assume previous fixes still work.
+Don't ignore intermittent bugs.
+Don't close bugs without verification.
+Performance
+Don't ignore memory growth.
+Don't overlook CPU spikes.
+Don't test only on high-end hardware.
+Don't ignore battery usage.
+Don't assume fast internet.
+Security
+Don't trust client-side validation alone.
+Don't expose API keys.
+Don't log passwords or tokens.
+Don't allow unrestricted file uploads.
+Don't ignore vulnerability scan results.
+Database
+Don't test on production data without safeguards.
+Don't modify production databases directly.
+Don't skip backups.
+Don't ignore transaction failures.
+APIs
+Don't assume third-party APIs are always available.
+Don't ignore timeout handling.
+Don't ignore retry limits.
+Don't trust external responses without validation.
+UI/UX
+Don't ignore accessibility.
+Don't hardcode screen sizes.
+Don't assume one language.
+Don't ignore dark mode.
+Don't overlook keyboard navigation.
+Bug Management
+Don't fix symptoms without finding the root cause.
+Don't merge code with failing tests.
+Don't mark bugs as fixed without retesting.
+Don't ignore low-priority bugs indefinitely, as they can accumulate into technical debt.
+Don't introduce multiple fixes in one commit if isolated fixes are possible.
+Team Practices
+Don't overwrite teammates' work.
+Don't skip code reviews.
+Don't bypass CI/CD checks.
+Don't release under deadline pressure without minimum quality gates.
+⭐ Best Practices for AI-Assisted Testing
+Treat every fix as a hypothesis until validated.
+Reproduce the bug before fixing it.
+Verify the fix with automated and manual tests.
+Perform regression testing after every change.
+Measure the impact of the fix on performance and security.
+Keep changes small, modular, and reversible.
+Document the root cause, not just the symptom.
+Continue testing until no Critical or High severity issues remain and all release gates are satisfied.

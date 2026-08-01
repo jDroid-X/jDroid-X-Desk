@@ -1,0 +1,26 @@
+{
+  "name": "jdroid-x-desk",
+  "version": "2.0.0",
+  "description": "Unified Remote Desktop Control Console & Continuous Traceability Engine",
+  "main": "app.js",
+  "scripts": {
+    "start": "serve . -p 12345",
+    "dev": "serve . -p 12345",
+    "background-start": "wscript.exe start_jdroid_app.vbs",
+    "app-mode": "start msedge --app=http://localhost:12345",
+    "sync-git": "git add . && git commit -m 'v2.0 Streamlined Remote Desktop App & Continuous Traceability Engine' && git push -u origin main"
+  },
+  "keywords": [
+    "remote-desktop",
+    "screen-sharing",
+    "anydesk",
+    "teamviewer",
+    "rustdesk",
+    "traceability-log"
+  ],
+  "author": "Antigravity AI Systems Architect",
+  "license": "MIT",
+  "dependencies": {
+    "serve": "^14.2.4"
+  }
+}
