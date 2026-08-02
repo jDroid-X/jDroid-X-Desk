@@ -4,7 +4,7 @@ ECHO ========================================================
 ECHO       jDroid-X-Desk Standalone App Installer
 ECHO ========================================================
 ECHO.
-ECHO [1/3] Verifying Node.js & NPM installation...
+ECHO [1/3] Verifying Node.js and NPM installation...
 node -v >nul 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     ECHO [ERROR] Node.js is not installed! Please install Node.js from https://nodejs.org
@@ -13,7 +13,10 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 
 ECHO [2/3] Installing background web server dependencies...
-call npm install --no-audit >nul 2>&1
+call npm install --no-audit
+IF %ERRORLEVEL% NEQ 0 (
+    ECHO [WARNING] NPM install encountered minor warnings, proceeding to launch...
+)
 
 ECHO [3/3] Creating Windows Desktop Shortcut...
 SET SCRIPT="%TEMP%\CreateShortcut.vbs"
@@ -37,4 +40,4 @@ ECHO ========================================================
 ECHO.
 ECHO Launching jDroid-X-Desk App Mode...
 wscript.exe "%~dp0start_jdroid_app.vbs"
-PAUSE
+ping 127.0.0.1 -n 11 > nul

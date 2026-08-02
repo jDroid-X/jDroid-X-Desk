@@ -4,8 +4,8 @@
   "description": "Unified Remote Desktop Control Console & Continuous Traceability Engine",
   "main": "app.js",
   "scripts": {
-    "start": "serve . -p 12345",
-    "dev": "serve . -p 12345",
+    "start": "node server.js",
+    "dev": "node server.js",
     "background-start": "wscript.exe start_jdroid_app.vbs",
     "app-mode": "start msedge --app=http://localhost:12345",
     "sync-git": "git add . && git commit -m 'v2.0 Streamlined Remote Desktop App & Continuous Traceability Engine' && git push -u origin main"
@@ -21,6 +21,7 @@
   "author": "Antigravity AI Systems Architect",
   "license": "MIT",
   "dependencies": {
+    "express": "^5.2.1",
     "serve": "^14.2.4"
   }
 }

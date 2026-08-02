@@ -844,3 +844,224 @@ html, body {
         color: var(--accent-blue);
     }
 }
+
+/* ==========================================
+   Launch Popup Styling
+   ========================================== */
+.launch-popup-card {
+    max-width: 550px;
+}
+
+.about-me-section, .hint-section, .preferences-section {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.about-me-section h4, .hint-section h4 {
+    margin-bottom: 0.5rem;
+    color: var(--accent-blue);
+    font-family: var(--font-heading);
+}
+
+.hint-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.hint-section ul li {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    user-select: none;
+}
+
+.checkbox-container:last-child {
+    margin-bottom: 0;
+}
+
+.checkbox-container input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-blue);
+    cursor: pointer;
+}
+
+/* ==========================================
+   Logo & Navigation Drawer Enhancements
+   ========================================== */
+.brand-logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.modal-logo-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.header-logo-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    margin-right: 0.5rem;
+}
+
+.header-brand-mini {
+    display: flex;
+    align-items: center;
+}
+
+.nav-text-block {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.nav-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.nav-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.screen-hint-box {
+    background: rgba(0, 102, 255, 0.06);
+    border: 1px solid rgba(0, 102, 255, 0.2);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    backdrop-filter: blur(8px);
+}
+
+.screen-hint-box .hint-icon {
+    font-size: 1.25rem;
+    color: var(--accent-warning);
+}
+
+.screen-hint-box .hint-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+/* Filter Button Groups */
+.filter-btn-group {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.filter-btn-group .btn {
+    border-radius: var(--radius-pill);
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+}
+
+.filter-btn-group .btn.active {
+    background: var(--accent-blue);
+    color: #fff;
+}
+
+/* ==========================================
+   Jarvis-Style HUD Widget Styling
+   ========================================== */
+.jarvis-hud-container {
+    padding: 0.75rem;
+    background: transparent;
+}
+
+.jarvis-hud-card {
+    background: rgba(6, 11, 24, 0.85);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.12);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    backdrop-filter: blur(12px);
+}
+
+.jarvis-hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 242, 254, 0.15);
+    padding-bottom: 0.4rem;
+}
+
+.jarvis-title {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--accent-blue);
+}
+
+.jarvis-pulse-dot {
+    width: 7px;
+    height: 7px;
+    background: #00e676;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #00e676;
+    animation: jarvisPulse 1.5s infinite;
+}
+
+@keyframes jarvisPulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.jarvis-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+}
+
+.jarvis-metric {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.3rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.jarvis-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+}
+
+.jarvis-value {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+

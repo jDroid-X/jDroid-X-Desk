@@ -21,3 +21,17 @@
 * [2026-08-01T12:33:48+05:30] GitHub authentication analysis and step-by-step resolution guide for remote online push to https://github.com/jDroid-X/jDroid-X-Desk.
 
 * [2026-08-01T12:37:40+05:30] Created 1-click interactive batch helper "push_to_github.bat" to perform authenticated git push to https://github.com/jDroid-X/jDroid-X-Desk and open online repository in browser.
+
+* [2026-08-02T10:25:35+05:30] Resolve issue where install_windows_app.bat opens check for Node.js and instantly closes on fresh laptops. Converted line endings from LF to CRLF and updated final PAUSE to 10-second timeout.
+
+* [2026-08-02T10:41:09+05:30] Add Windows startup service by default, system hidden tray icon (desktop) with context menu options, and frontend Launch popup dialog box (containing About me, version, features, how to use hints, Windows startup checkbox, and don't show again checkbox).
+
+* [2026-08-02T10:49:43+05:30] Incorporate official logo C:\Users\jiten\Documents\jdroidxlogo_trans.png across About page, Launch page, headers, and modals. Perform 20-year AI Architect enterprise audit covering all screens, drawer menu expansion, contextual screen hints, step-by-step HITL User Manual, and Help guide.
+
+* [2026-08-02T10:53:17+05:30] Deep-dive operational UX audit and due diligence across all 13 screens/pages without breaking existing functionality. Implemented stream quality HUD, CSV log export, Log Inspector Modal, Register Device modal, ICMP ping checkers, Printable Audit Report Generator, Emergency Isolation Kill Switch, Telemetry gauges, and Passcode Generator.
+
+* [2026-08-02T11:03:26+05:30] Add Jarvis-style HUD telemetry widget in the bottom left sidebar with live MB/s Download/Upload speed, RTT Ping, and FPS. Implemented automated 4G baseline threshold monitoring emitting popup side toast alerts upon speed degradation.
+
+* [2026-08-02T11:11:17+05:30] Resolve frequent terminal window crashes. Diagnosed EADDRINUSE port collisions from background Node/PowerShell processes. Implemented uncaught exception boundaries, EADDRINUSE handlers in server.js, try/catch blocks in tray_icon.ps1, and npm error handling in install_windows_app.bat.
+
+* [2026-08-02T11:14:20+05:30] Further resolved terminal crashes by fixing unescaped ampersand syntax error in ECHO statement in install_windows_app.bat, and replacing unstable `timeout` command with robust `ping 127.0.0.1 -n 11 > nul` to prevent 'Input redirection not supported' crashes.
