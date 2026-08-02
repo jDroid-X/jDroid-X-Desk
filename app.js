@@ -328,6 +328,13 @@ class AppController {
             emailInput.value = `${this.systemModel.deviceId.toLowerCase()}@jdroid-x-desk.com`;
         }
 
+        // Dynamically update UI elements showing the hardware ID
+        const localDeviceIdEl = document.getElementById('local-device-id');
+        if (localDeviceIdEl) localDeviceIdEl.textContent = this.systemModel.deviceId.toUpperCase();
+        
+        const localNodeDescEl = document.getElementById('local-node-desc');
+        if (localNodeDescEl) localNodeDescEl.textContent = `Local Node: ${this.systemModel.deviceId.toUpperCase()} (Windows 11 Enterprise)`;
+
         // UX-1: Wire password visibility toggle
         const togglePassBtn  = document.getElementById('toggle-pass-visibility');
         const togglePassIcon = document.getElementById('toggle-pass-icon');
