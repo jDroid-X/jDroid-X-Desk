@@ -1,20 +1,24 @@
 try {
     Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
     Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+    Add-Content -Path "tray.log" -Value "Loaded Assemblies"
 
     $NotifyIcon = New-Object System.Windows.Forms.NotifyIcon
+    Add-Content -Path "tray.log" -Value "Created NotifyIcon"
 
     try {
         $NotifyIcon.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon("$env:SystemRoot\System32\shell32.dll")
     } catch {
         $NotifyIcon.Icon = [System.Drawing.SystemIcons]::Application
     }
+    Add-Content -Path "tray.log" -Value "Set Icon"
 
     $NotifyIcon.Text = "jDroid-X-Desk"
     $NotifyIcon.Visible = $True
+    Add-Content -Path "tray.log" -Value "Set Visible"
 
     $ContextMenu = New-Object System.Windows.Forms.ContextMenu
-
+    
     $OpenMenuItem = New-Object System.Windows.Forms.MenuItem
     $OpenMenuItem.Text = "Open jDroid-X-Desk"
     $OpenMenuItem.Add_Click({
@@ -44,9 +48,11 @@ try {
     $ContextMenu.MenuItems.Add($ExitMenuItem)
 
     $NotifyIcon.ContextMenu = $ContextMenu
+    Add-Content -Path "tray.log" -Value "Running Application Loop"
 
     [System.Windows.Forms.Application]::Run()
 } catch {
+    Add-Content -Path "tray.log" -Value "ERROR: $($_.Exception.Message)"
     # Exit gracefully without throwing terminal errors
     Exit 0
 }

@@ -26,7 +26,7 @@ ECHO Launching Remote Desktop Console...
 :: Launch System Tray Icon securely in the visible user session
 wmic process where "name='powershell.exe'" get commandline | findstr "tray_icon.ps1" >nul
 IF %ERRORLEVEL% NEQ 0 (
-    start /b powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0tray_icon.ps1"
+    start "" powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0tray_icon.ps1"
 )
 
 :: Launch the background VBScript
