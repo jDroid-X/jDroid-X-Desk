@@ -32,6 +32,11 @@ class SystemSettingsModel {
         this.pingThreshold = 100;
         this.toastDuration = 4;
         
+        // Firebase Cloud configuration
+        this.firebaseApiKey = localStorage.getItem('jdx_fb_api_key') || 'AIzaSyDPKwsEsNY32Owt1tx-t34nIjDvhf-cuTI';
+        this.firebaseProjectId = localStorage.getItem('jdx_fb_project_id') || 'jdroid-x-desk';
+        this.firebaseDbUrl = localStorage.getItem('jdx_fb_db_url') || 'https://jdroid-x-desk-default-rtdb.firebaseio.com';
+
         // Network Metadata simulation
         this.connType = "5G Direct P2P";
         this.ipAddress = "192.168.1.55";
@@ -119,31 +124,36 @@ class AppView {
 
     showToast(type, title, desc) {
         if (!this.toastContainer) return;
-        
+
         const toast = document.createElement('div');
         toast.className = `toast-card toast-${type}`;
-        
+
         let iconClass = 'fa-circle-info';
         if (type === 'success') iconClass = 'fa-circle-check';
-        if (type === 'error') iconClass = 'fa-circle-xmark';
+        if (type === 'error')   iconClass = 'fa-circle-xmark';
         if (type === 'warning') iconClass = 'fa-triangle-exclamation';
 
+        // UX-7: Dismissible toast — add close button
         toast.innerHTML = `
             <i class="fa-solid ${iconClass}"></i>
-            <div>
+            <div style="flex:1">
                 <div class="toast-title">${title}</div>
                 <div class="toast-desc">${desc}</div>
             </div>
+            <button class="toast-close-btn" aria-label="Dismiss">&times;</button>
         `;
 
-        this.toastContainer.appendChild(toast);
-        
-        setTimeout(() => {
+        const dismissToast = () => {
             toast.style.opacity = '0';
-            toast.style.transform = 'translateX(-100%)';
+            toast.style.transform = 'translateX(110%)';
             toast.style.transition = 'all 0.3s ease';
             setTimeout(() => toast.remove(), 300);
-        }, (window.appController?.settingsModel?.toastDuration || 4) * 1000);
+        };
+
+        toast.querySelector('.toast-close-btn').addEventListener('click', dismissToast);
+        this.toastContainer.appendChild(toast);
+
+        setTimeout(dismissToast, (window.appController?.settingsModel?.toastDuration || 4) * 1000);
     }
 
     renderHintBanner(text) {
@@ -284,6 +294,9 @@ class AppController {
         this.view = new AppView();
         this.currentView = 'remote-console';
         this.monInterval = null;
+        this.telemetryInterval = null; // Bug 5: tracked reference to prevent duplicate intervals
+        this.loginAttempts = 0;        // SEC-2: brute-force lockout counter
+        this.loginLockedUntil = 0;     // SEC-2: lockout timestamp
     }
 
     async init() {
@@ -292,21 +305,198 @@ class AppController {
         this.bindThemeToggle();
         this.bindRemoteConnectLogic();
         this.bindSettingsEvents();
-        
+        this.bindLoginGate();
+
+        // UX-1: Wire password visibility toggle
+        const togglePassBtn  = document.getElementById('toggle-pass-visibility');
+        const togglePassIcon = document.getElementById('toggle-pass-icon');
+        const passInput      = document.getElementById('login-password-input');
+        if (togglePassBtn && passInput && togglePassIcon) {
+            togglePassBtn.addEventListener('click', () => {
+                const isHidden = passInput.type === 'password';
+                passInput.type = isHidden ? 'text' : 'password';
+                togglePassIcon.className = isHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+            });
+        }
+
+        /** UX-2: Helper to hide the preloader with a smooth fade */
+        const hidePreloader = () => {
+            const preloader = document.getElementById('app-preloader');
+            if (preloader) {
+                preloader.style.transition = 'opacity 0.4s ease';
+                preloader.style.opacity = '0';
+                setTimeout(() => { preloader.style.display = 'none'; }, 450);
+            }
+        };
+
+        // Check Firebase Auth state first — hide preloader after resolution
+        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+            firebase.auth().onAuthStateChanged((user) => {
+                hidePreloader();
+                if (user) {
+                    this.unlockConsole(user.email || 'Authenticated User');
+                } else {
+                    const gate = document.getElementById('login-gate-overlay');
+                    if (gate) gate.style.display = 'flex';
+                }
+            });
+        } else {
+            try {
+                if (firebase.apps.length === 0) {
+                    firebase.initializeApp({
+                        apiKey: this.settingsModel.firebaseApiKey,
+                        authDomain: `${this.settingsModel.firebaseProjectId}.firebaseapp.com`,
+                        databaseURL: this.settingsModel.firebaseDbUrl,
+                        projectId: this.settingsModel.firebaseProjectId
+                    });
+                }
+                firebase.auth().onAuthStateChanged((user) => {
+                    hidePreloader();
+                    if (user) {
+                        this.unlockConsole(user.email || 'Authenticated User');
+                    } else {
+                        const gate = document.getElementById('login-gate-overlay');
+                        if (gate) gate.style.display = 'flex';
+                    }
+                });
+            } catch (e) {
+                // Firebase unavailable — hide preloader and show login gate
+                hidePreloader();
+                const gate = document.getElementById('login-gate-overlay');
+                if (gate) gate.style.display = 'flex';
+            }
+        }
+    }
+
+
+    async unlockConsole(userEmail) {
+        const isOfflineMode = (userEmail === 'Offline Demo Mode');
+
+        // Hide login gate with smooth transition
+        const gate = document.getElementById('login-gate-overlay');
+        if (gate) {
+            gate.style.transition = 'opacity 0.4s ease';
+            gate.style.opacity = '0';
+            setTimeout(() => { gate.classList.add('login-gate-hidden'); }, 400);
+        }
+
+        // Fetch hardware ID
         try {
             const res = await fetch('/api/hardware-id');
             const data = await res.json();
             this.systemModel.deviceId = data.deviceId || 'JDX-ERR-0000';
         } catch (e) {
-            this.systemModel.deviceId = 'JDX-OFLN-0000';
+            let fallbackId = localStorage.getItem('jdx_fallback_device_id');
+            if (!fallbackId) {
+                const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
+                fallbackId = `JDX-OFLN-${randomHex}`;
+                localStorage.setItem('jdx_fallback_device_id', fallbackId);
+            }
+            this.systemModel.deviceId = fallbackId;
         }
-        
+
+        // Update session chip in sidebar
+        const profileEmail = document.getElementById('logged-in-user-email');
+        if (profileEmail) profileEmail.textContent = userEmail;
+
+        // UX-8: Show amber dot and 'Demo Mode' label for offline bypass
+        const sessionLabel = document.querySelector('.user-session-label');
+        const sessionDot   = document.getElementById('session-online-dot');
+        if (isOfflineMode) {
+            if (sessionLabel) sessionLabel.textContent = 'Demo Mode (Offline)';
+            if (sessionDot)   sessionDot.style.background = 'var(--accent-amber, #ffab40)';
+            if (sessionDot)   sessionDot.style.boxShadow  = '0 0 6px rgba(255,171,64,0.8)';
+        } else {
+            if (sessionLabel) sessionLabel.textContent = 'Active Session';
+            if (sessionDot)   sessionDot.style.background = '';
+            if (sessionDot)   sessionDot.style.boxShadow  = '';
+        }
+
+        // Reset login attempt counter on successful auth
+        this.loginAttempts = 0;
+        this.loginLockedUntil = 0;
+
         this.renderCurrentView();
         this.startJarvisTelemetryLoop();
+        this.initFirebasePresence();
+
+        this.traceModel.addLog('SECURITY_AUDIT', 'AUTH_SUCCESS', `User authenticated: ${userEmail}. Console unlocked.`);
+        this.view.showToast('success', 'Authentication Success', `Welcome back, ${userEmail}`);
+    }
+
+    bindLoginGate() {
+        const submitBtn = document.getElementById('login-submit-btn');
+        const bypassBtn = document.getElementById('login-bypass-btn');
+        const errorMsg  = document.getElementById('login-error-msg');
+
+        if (submitBtn) {
+            submitBtn.onclick = async () => {
+                // SEC-2: Brute-force lockout — 5 attempts triggers 30s cooldown
+                const now = Date.now();
+                if (this.loginLockedUntil > now) {
+                    const secsLeft = Math.ceil((this.loginLockedUntil - now) / 1000);
+                    if (errorMsg) { errorMsg.textContent = `⛔ Too many attempts. Try again in ${secsLeft}s.`; errorMsg.style.display = 'block'; }
+                    return;
+                }
+
+                const email = document.getElementById('login-email-input').value.trim();
+                const pass  = document.getElementById('login-password-input').value;
+
+                if (!email || !pass) {
+                    if (errorMsg) { errorMsg.textContent = '⚠ Email and password are required.'; errorMsg.style.display = 'block'; }
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+
+                try {
+                    if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+                        firebase.initializeApp({
+                            apiKey: this.settingsModel.firebaseApiKey,
+                            authDomain: `${this.settingsModel.firebaseProjectId}.firebaseapp.com`,
+                            databaseURL: this.settingsModel.firebaseDbUrl,
+                            projectId: this.settingsModel.firebaseProjectId
+                        });
+                    }
+                    const cred = await firebase.auth().signInWithEmailAndPassword(email, pass);
+                    this.loginAttempts = 0;
+                    this.unlockConsole(cred.user.email);
+                } catch (err) {
+                    this.loginAttempts++;
+                    const remaining = 5 - this.loginAttempts;
+                    let errText = `⚠ ${err.message}`;
+                    if (this.loginAttempts >= 5) {
+                        this.loginLockedUntil = Date.now() + 30000;
+                        this.loginAttempts = 0;
+                        errText = '⛔ Account locked for 30 seconds due to too many failed attempts.';
+                    } else {
+                        errText += ` (${remaining} attempt${remaining !== 1 ? 's' : ''} remaining)`;
+                    }
+                    if (errorMsg) { errorMsg.textContent = errText; errorMsg.style.display = 'block'; }
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Authenticate & Unlock Console';
+                    this.traceModel.addLog('ERROR', 'AUTH_FAILED', `Login attempt ${this.loginAttempts}/5 failed: ${err.message}`);
+                }
+            };
+        }
+
+        if (bypassBtn) {
+            bypassBtn.onclick = (e) => {
+                e.preventDefault();
+                this.unlockConsole('Offline Demo Mode');
+                this.traceModel.addLog('WARN', 'AUTH_BYPASSED', 'User bypassed authentication — running in offline demo mode.');
+            };
+        }
     }
 
     startJarvisTelemetryLoop() {
-        setInterval(() => {
+        // Bug 5 Fix: Clear any existing interval before starting a new one
+        if (this.telemetryInterval) {
+            clearInterval(this.telemetryInterval);
+            this.telemetryInterval = null;
+        }
+        this.telemetryInterval = setInterval(() => {
             // Simulate realistic 4G network jitter & speed variations in MB/s
             const jitter = (Math.random() - 0.48) * 0.4;
             let dl = parseFloat((this.systemModel.telemetry.downloadMBs + jitter).toFixed(2));
@@ -381,6 +571,14 @@ class AppController {
         }, 2000);
     }
 
+    stopJarvisTelemetryLoop() {
+        // Bug 5 Fix: Safely stop telemetry to prevent duplicate intervals after logout
+        if (this.telemetryInterval) {
+            clearInterval(this.telemetryInterval);
+            this.telemetryInterval = null;
+        }
+    }
+
     bindSettingsEvents() {
         const dlThresh = document.getElementById('settings-dl-threshold');
         const dlVal = document.getElementById('settings-dl-val');
@@ -415,6 +613,166 @@ class AppController {
                 toastVal.textContent = this.settingsModel.toastDuration;
             };
         }
+
+        // Firebase Settings Bindings
+        const fbApiKeyInput = document.getElementById('settings-fb-api-key');
+        const fbProjIdInput = document.getElementById('settings-fb-project-id');
+        const fbDbUrlInput = document.getElementById('settings-fb-db-url');
+        const fbSaveBtn = document.getElementById('settings-fb-save-btn');
+
+        if (fbApiKeyInput) fbApiKeyInput.value = this.settingsModel.firebaseApiKey;
+        if (fbProjIdInput) fbProjIdInput.value = this.settingsModel.firebaseProjectId;
+        if (fbDbUrlInput) fbDbUrlInput.value = this.settingsModel.firebaseDbUrl;
+
+        if (fbSaveBtn) {
+            fbSaveBtn.onclick = () => {
+                const key = fbApiKeyInput.value.trim();
+                const proj = fbProjIdInput.value.trim();
+                const url = fbDbUrlInput.value.trim();
+
+                if (!key) {
+                    this.view.showToast('error', 'Validation Error', 'Firebase API Key cannot be empty.');
+                    return;
+                }
+
+                this.settingsModel.firebaseApiKey = key;
+                this.settingsModel.firebaseProjectId = proj;
+                this.settingsModel.firebaseDbUrl = url;
+
+                localStorage.setItem('jdx_fb_api_key', key);
+                localStorage.setItem('jdx_fb_project_id', proj);
+                localStorage.setItem('jdx_fb_db_url', url);
+
+                this.view.showToast('success', 'Credentials Saved', 'Firebase configuration credentials updated successfully.');
+                this.traceModel.addLog('SECURITY_AUDIT', 'CONFIG_CHANGE', 'Firebase signaling API credentials updated by operator');
+                
+                // Dynamic hot-reload of presence connection
+                if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                    firebase.app().delete().then(() => {
+                        this.initFirebasePresence();
+                    }).catch((err) => {
+                        console.error('[FIREBASE] App deletion failed:', err);
+                        this.initFirebasePresence();
+                    });
+                } else {
+                    this.initFirebasePresence();
+                }
+            };
+        }
+    }
+
+    initFirebasePresence(retryCount = 0) {
+        const MAX_RETRIES = 5;
+
+        if (typeof firebase === 'undefined') {
+            console.warn('[FIREBASE] SDK not loaded or offline mode.');
+            this.traceModel.addLog('WARN', 'FIREBASE_OFFLINE', 'Firebase client SDK not loaded. Presence monitoring skipped.');
+            this.updateFirebaseStatusUI('OFFLINE', 'Firebase SDK library not loaded');
+            return;
+        }
+
+        const config = {
+            apiKey: this.settingsModel.firebaseApiKey,
+            authDomain: `${this.settingsModel.firebaseProjectId}.firebaseapp.com`,
+            databaseURL: this.settingsModel.firebaseDbUrl,
+            projectId: this.settingsModel.firebaseProjectId
+        };
+
+        this.updateFirebaseStatusUI('CONNECTING', 'Connecting to Cloud Realtime Database...');
+
+        try {
+            if (firebase.apps.length === 0) {
+                firebase.initializeApp(config);
+            }
+
+            const db = firebase.database();
+            const auth = firebase.auth();
+            const deviceId = this.systemModel.deviceId;
+
+            // Bug 6 Fix: Guard against JDX-INIT-0000 with max retries + exponential backoff
+            if (deviceId === 'JDX-INIT-0000') {
+                if (retryCount >= MAX_RETRIES) {
+                    // Fall back to localStorage offline ID instead of infinite loop
+                    let fallbackId = localStorage.getItem('jdx_fallback_device_id');
+                    if (!fallbackId) {
+                        const rnd = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
+                        fallbackId = `JDX-OFLN-${rnd}`;
+                        localStorage.setItem('jdx_fallback_device_id', fallbackId);
+                    }
+                    this.systemModel.deviceId = fallbackId;
+                    this.traceModel.addLog('WARN', 'FIREBASE_FALLBACK_ID', `Max device ID retries reached. Using fallback: ${fallbackId}`);
+                    this.initFirebasePresence(0); // restart with fallback ID now set
+                    return;
+                }
+                const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s, 8s, 16s
+                setTimeout(() => this.initFirebasePresence(retryCount + 1), delay);
+                return;
+            }
+
+            // Bug 2 & 3 Fix: Only sign in anonymously if no authenticated user already exists.
+            // This prevents overwriting a valid email-authenticated session with an anonymous one.
+            const setupPresence = () => {
+                const presenceRef = db.ref(`devices/${deviceId}`);
+                const amOnline = db.ref('.info/connected');
+                amOnline.on('value', (snapshot) => {
+                    if (snapshot.val() === true) {
+                        presenceRef.update({
+                            deviceId: deviceId,
+                            online: true,
+                            lastSeen: new Date().toISOString(),
+                            clientType: 'jDroid-X-Desk'
+                        });
+                        presenceRef.onDisconnect().update({
+                            online: false,
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP
+                        });
+                        this.traceModel.addLog('SECURITY_AUDIT', 'FIREBASE_PRESENCE_ACTIVE', `System registered online at /devices/${deviceId}`);
+                        this.updateFirebaseStatusUI('CONNECTED', `Connected as ${deviceId}`);
+                    } else {
+                        this.updateFirebaseStatusUI('DISCONNECTED', 'Waiting to reconnect...');
+                    }
+                });
+            };
+
+            if (auth.currentUser) {
+                // Already authenticated (email or otherwise) — skip signInAnonymously
+                setupPresence();
+            } else {
+                auth.signInAnonymously().then(setupPresence).catch((authErr) => {
+                    console.error('[FIREBASE AUTH] Anonymous auth failed:', authErr.message);
+                    this.traceModel.addLog('ERROR', 'FIREBASE_AUTH_FAILED', `Firebase Auth: ${authErr.message}`);
+                    this.updateFirebaseStatusUI('ERROR', `Auth Error: ${authErr.message}`);
+                });
+            }
+
+        } catch (err) {
+            console.error('[FIREBASE] Initialization failed:', err.message);
+            this.traceModel.addLog('ERROR', 'FIREBASE_INIT_FAILED', `Firebase presence init error: ${err.message}`);
+            this.updateFirebaseStatusUI('ERROR', `Init Error: ${err.message}`);
+        }
+    }
+
+
+    updateFirebaseStatusUI(status, message) {
+        const banner = document.getElementById('settings-fb-status-banner');
+        if (!banner) return;
+
+        let icon = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        let cls = 'badge badge-blue';
+
+        if (status === 'CONNECTED') {
+            icon = '<i class="fa-solid fa-cloud-arrow-up"></i>';
+            cls = 'badge badge-green';
+        } else if (status === 'OFFLINE' || status === 'DISCONNECTED') {
+            icon = '<i class="fa-solid fa-cloud-sun"></i>';
+            cls = 'badge badge-orange';
+        } else if (status === 'ERROR') {
+            icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            cls = 'badge badge-red';
+        }
+
+        banner.className = cls;
+        banner.innerHTML = `${icon} Cloud Signaling: ${status} (${message})`;
     }
 
     bindNavigation() {
@@ -484,13 +842,23 @@ class AppController {
     bindThemeToggle() {
         const themeBtn = document.getElementById('theme-toggle-btn');
         if (themeBtn) {
+            // UX-6: Restore saved theme preference on load
+            const savedTheme = localStorage.getItem('jdx_theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                const icon = themeBtn.querySelector('i');
+                if (icon) icon.className = 'fa-solid fa-sun';
+            }
+
             themeBtn.addEventListener('click', () => {
                 document.body.classList.toggle('light-theme');
                 const icon = themeBtn.querySelector('i');
                 if (document.body.classList.contains('light-theme')) {
                     icon.className = 'fa-solid fa-sun';
+                    localStorage.setItem('jdx_theme', 'light');
                 } else {
                     icon.className = 'fa-solid fa-moon';
+                    localStorage.setItem('jdx_theme', 'dark');
                 }
             });
         }
@@ -523,7 +891,7 @@ class AppController {
                     return;
                 }
 
-                const formattedId = `${cleanId.slice(0,3)}-${cleanId.slice(3,6)}-${cleanVal = cleanId.slice(6,9)}`;
+                const formattedId = `${cleanId.slice(0,3)}-${cleanId.slice(3,6)}-${cleanId.slice(6,9)}`;
                 
                 this.systemModel.activeSession = formattedId;
 
@@ -864,6 +1232,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Logout Nav Handler — Firebase Sign Out + Re-show Login Gate
+    const logoutBtn = document.getElementById('nav-logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            // UX-5: Use DialogView instead of native confirm()
+            const dialogView = new DialogView();
+            dialogView.show(
+                'Sign Out Confirmation',
+                '<p style="color:var(--text-main)">Sign out of jDroid-X-Desk? You will need to re-authenticate to access the console.</p>',
+                async () => {
+                    // Bug 5 Fix: Stop telemetry before logout to prevent interval leak
+                    window.appController.stopJarvisTelemetryLoop();
+
+                    try {
+                        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                            await firebase.auth().signOut();
+                        }
+                    } catch (err) { console.warn('Firebase signOut error:', err); }
+
+                    // Reset session chip
+                    const emailEl = document.getElementById('logged-in-user-email');
+                    if (emailEl) emailEl.textContent = 'Not authenticated';
+                    const sessionLabel = document.querySelector('.user-session-label');
+                    if (sessionLabel) sessionLabel.textContent = 'Active Session';
+                    const sessionDot = document.getElementById('session-online-dot');
+                    if (sessionDot) { sessionDot.style.background = ''; sessionDot.style.boxShadow = ''; }
+
+                    // Re-display login gate
+                    const gate = document.getElementById('login-gate-overlay');
+                    if (gate) { gate.style.opacity = '1'; gate.style.transition = ''; gate.classList.remove('login-gate-hidden'); gate.style.display = 'flex'; }
+
+                    // Clear password field
+                    const passEl = document.getElementById('login-password-input');
+                    if (passEl) passEl.value = '';
+                    const errEl = document.getElementById('login-error-msg');
+                    if (errEl) errEl.style.display = 'none';
+
+                    window.appController.traceModel.addLog('SECURITY_AUDIT', 'LOGOUT', 'User signed out from Firebase session.');
+                    return true;
+                }
+            );
+        });
+    }
+
     // Settings Panel Startup Checkbox Sync
     const settingsStartupCheckbox = document.getElementById('settings-startup-checkbox');
     if (settingsStartupCheckbox) {
@@ -935,8 +1348,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 
 class ValidationUtil {
+    /** UX-3 Fix: Validates IPv4 address OR CIDR subnet (e.g. 192.168.1.0/24) */
     static isValidIP(ip) {
-        return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip);
+        if (!ip || typeof ip !== 'string') return false;
+        const parts = ip.trim().split('/');
+        const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        if (!ipv4Regex.test(parts[0])) return false;
+        if (parts.length === 2) {
+            const cidr = parseInt(parts[1], 10);
+            if (isNaN(cidr) || cidr < 0 || cidr > 32) return false;
+        }
+        return true;
     }
     static isNotEmpty(str) {
         return str && str.trim().length > 0;
@@ -1046,7 +1468,7 @@ class SafeZoneController {
         const zones = await this.model.fetchAll();
         this.listContainer.innerHTML = '';
         if (zones.length === 0) {
-            this.listContainer.innerHTML = '<div class="list-item" style="opacity: 0.5; justify-content: center;">No Safe Zones found.</div>';
+            this.listContainer.innerHTML = '<div class="list-item" style="opacity: 0.5; justify-content: center;">No Safe Zones found. Click "Add Safe Zone" to get started.</div>';
             return;
         }
         zones.forEach(zone => {
@@ -1055,13 +1477,15 @@ class SafeZoneController {
             item.innerHTML = `
                 <div class="list-item-content">
                     <span class="list-item-title"><i class="fa-solid fa-server text-emerald"></i> ${ValidationUtil.escapeHTML(zone.name)}</span>
-                    <span class="list-item-sub">${ValidationUtil.escapeHTML(zone.ip)}</span>
+                    <span class="list-item-sub">${ValidationUtil.escapeHTML(zone.ip)} &nbsp;<span class="badge badge-green" style="font-size:0.6rem;">WHITELISTED</span></span>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn btn-danger btn-sm delete-btn" data-id="${zone.id}"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-outline btn-sm edit-sz-btn" data-id="${zone.id}" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${zone.id}" title="Delete"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
-            item.querySelector('.delete-btn').addEventListener('click', () => this.deleteZone(zone.id));
+            item.querySelector('.edit-sz-btn').addEventListener('click', () => this.showEditDialog(zone));
+            item.querySelector('.delete-btn').addEventListener('click', () => this.deleteZone(zone.id, zone.name));
             this.listContainer.appendChild(item);
         });
     }
@@ -1073,37 +1497,55 @@ class SafeZoneController {
                 <input type="text" id="sz-name" class="input-text" placeholder="e.g. Home Network">
             </div>
             <div class="form-group">
-                <label>IP Address / Subnet</label>
-                <input type="text" id="sz-ip" class="input-text" placeholder="e.g. 192.168.1.1">
+                <label>IP Address / Subnet (IPv4 or CIDR)</label>
+                <input type="text" id="sz-ip" class="input-text" placeholder="e.g. 192.168.1.1 or 192.168.1.0/24">
             </div>
         `;
         this.dialogView.show('Add Safe Zone', bodyHtml, () => {
             const name = document.getElementById('sz-name').value;
-            const ip = document.getElementById('sz-ip').value;
-            
-            if (!ValidationUtil.isNotEmpty(name)) {
-                window.appController.view.showToast('error', 'Validation Failed', 'Zone name cannot be empty.');
-                return false;
-            }
-            if (!ValidationUtil.isValidIP(ip)) {
-                window.appController.view.showToast('error', 'Validation Failed', 'Please enter a valid IPv4 address.');
-                return false;
-            }
-            
-            this.model.add(ip, name).then(() => {
-                window.appController.view.showToast('success', 'Safe Zone Added', `${name} has been whitelisted.`);
-                this.renderList();
-            });
+            const ip   = document.getElementById('sz-ip').value;
+            if (!ValidationUtil.isNotEmpty(name)) { window.appController.view.showToast('error', 'Validation Failed', 'Zone name cannot be empty.'); return false; }
+            if (!ValidationUtil.isValidIP(ip))    { window.appController.view.showToast('error', 'Validation Failed', 'Please enter a valid IPv4 address or CIDR subnet.'); return false; }
+            this.model.add(ip, name).then(() => { window.appController.view.showToast('success', 'Safe Zone Added', `${name} has been whitelisted.`); this.renderList(); });
             return true;
         });
     }
 
-    async deleteZone(id) {
-        if(confirm('Are you sure you want to delete this Safe Zone?')) {
-            await this.model.remove(id);
-            window.appController.view.showToast('info', 'Safe Zone Deleted', 'The safe zone was removed.');
-            this.renderList();
-        }
+    /** UX-4: Pre-filled edit dialog for existing safe zone */
+    showEditDialog(zone) {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Zone Name</label>
+                <input type="text" id="sz-name" class="input-text" value="${ValidationUtil.escapeHTML(zone.name)}" placeholder="e.g. Home Network">
+            </div>
+            <div class="form-group">
+                <label>IP Address / Subnet (IPv4 or CIDR)</label>
+                <input type="text" id="sz-ip" class="input-text" value="${ValidationUtil.escapeHTML(zone.ip)}" placeholder="e.g. 192.168.1.1 or 192.168.1.0/24">
+            </div>
+        `;
+        this.dialogView.show('Edit Safe Zone', bodyHtml, () => {
+            const name = document.getElementById('sz-name').value;
+            const ip   = document.getElementById('sz-ip').value;
+            if (!ValidationUtil.isNotEmpty(name)) { window.appController.view.showToast('error', 'Validation Failed', 'Zone name cannot be empty.'); return false; }
+            if (!ValidationUtil.isValidIP(ip))    { window.appController.view.showToast('error', 'Validation Failed', 'Please enter a valid IPv4 address or CIDR subnet.'); return false; }
+            fetch(`/api/safe-zones/${zone.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, name }) })
+                .then(r => r.json()).then(() => { window.appController.view.showToast('success', 'Safe Zone Updated', `${name} updated successfully.`); this.renderList(); });
+            return true;
+        });
+    }
+
+    /** UX-5: Replace native confirm() with DialogView */
+    async deleteZone(id, name) {
+        this.dialogView.show(
+            'Delete Safe Zone',
+            `<p style="color:var(--text-main)">Are you sure you want to remove <strong>${ValidationUtil.escapeHTML(name)}</strong> from the whitelist?</p>`,
+            async () => {
+                await this.model.remove(id);
+                window.appController.view.showToast('info', 'Safe Zone Deleted', 'The safe zone was removed from the whitelist.');
+                this.renderList();
+                return true;
+            }
+        );
     }
 }
 
@@ -1128,7 +1570,7 @@ class GroupController {
         const groups = await this.model.fetchAll();
         this.listContainer.innerHTML = '';
         if (groups.length === 0) {
-            this.listContainer.innerHTML = '<div class="list-item" style="opacity: 0.5; justify-content: center;">No Groups found.</div>';
+            this.listContainer.innerHTML = '<div class="list-item" style="opacity: 0.5; justify-content: center;">No Groups found. Click "Create Group" to get started.</div>';
             return;
         }
         groups.forEach(group => {
@@ -1137,13 +1579,15 @@ class GroupController {
             item.innerHTML = `
                 <div class="list-item-content">
                     <span class="list-item-title"><i class="fa-solid fa-users text-info"></i> ${ValidationUtil.escapeHTML(group.name)}</span>
-                    <span class="list-item-sub">${ValidationUtil.escapeHTML(group.description || 'No description')}</span>
+                    <span class="list-item-sub">${ValidationUtil.escapeHTML(group.description || 'No description')} &nbsp;<span class="badge badge-blue" style="font-size:0.6rem;">${group.members} member${group.members !== 1 ? 's' : ''}</span></span>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn btn-danger btn-sm delete-btn" data-id="${group.id}"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-outline btn-sm edit-grp-btn" data-id="${group.id}" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${group.id}" title="Delete"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
-            item.querySelector('.delete-btn').addEventListener('click', () => this.deleteGroup(group.id));
+            item.querySelector('.edit-grp-btn').addEventListener('click', () => this.showEditDialog(group));
+            item.querySelector('.delete-btn').addEventListener('click', () => this.deleteGroup(group.id, group.name));
             this.listContainer.appendChild(item);
         });
     }
@@ -1162,26 +1606,46 @@ class GroupController {
         this.dialogView.show('Create Group', bodyHtml, () => {
             const name = document.getElementById('grp-name').value;
             const desc = document.getElementById('grp-desc').value;
-            
-            if (!ValidationUtil.isNotEmpty(name)) {
-                window.appController.view.showToast('error', 'Validation Failed', 'Group name cannot be empty.');
-                return false;
-            }
-            
-            this.model.add(name, desc).then(() => {
-                window.appController.view.showToast('success', 'Group Created', `Group ${name} created successfully.`);
-                this.renderList();
-            });
+            if (!ValidationUtil.isNotEmpty(name)) { window.appController.view.showToast('error', 'Validation Failed', 'Group name cannot be empty.'); return false; }
+            this.model.add(name, desc).then(() => { window.appController.view.showToast('success', 'Group Created', `Group ${name} created successfully.`); this.renderList(); });
             return true;
         });
     }
 
-    async deleteGroup(id) {
-        if(confirm('Are you sure you want to delete this group?')) {
-            await this.model.remove(id);
-            window.appController.view.showToast('info', 'Group Deleted', 'The group was removed.');
-            this.renderList();
-        }
+    /** UX-4: Pre-filled edit dialog for existing group */
+    showEditDialog(group) {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Group Name</label>
+                <input type="text" id="grp-name" class="input-text" value="${ValidationUtil.escapeHTML(group.name)}" placeholder="e.g. IT Admins">
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <input type="text" id="grp-desc" class="input-text" value="${ValidationUtil.escapeHTML(group.description || '')}" placeholder="e.g. Level 2 Support Team">
+            </div>
+        `;
+        this.dialogView.show('Edit Group', bodyHtml, () => {
+            const name = document.getElementById('grp-name').value;
+            const desc = document.getElementById('grp-desc').value;
+            if (!ValidationUtil.isNotEmpty(name)) { window.appController.view.showToast('error', 'Validation Failed', 'Group name cannot be empty.'); return false; }
+            fetch(`/api/groups/${group.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, description: desc }) })
+                .then(r => r.json()).then(() => { window.appController.view.showToast('success', 'Group Updated', `Group ${name} updated successfully.`); this.renderList(); });
+            return true;
+        });
+    }
+
+    /** UX-5: Replace native confirm() with DialogView */
+    async deleteGroup(id, name) {
+        this.dialogView.show(
+            'Delete Group',
+            `<p style="color:var(--text-main)">Are you sure you want to delete group <strong>${ValidationUtil.escapeHTML(name)}</strong>? This cannot be undone.</p>`,
+            async () => {
+                await this.model.remove(id);
+                window.appController.view.showToast('info', 'Group Deleted', 'The group was removed.');
+                this.renderList();
+                return true;
+            }
+        );
     }
 }
 

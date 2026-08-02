@@ -14,6 +14,56 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="dark-theme">
+    <!-- UX-2: App Preloader — shown while Firebase auth state resolves -->
+    <div id="app-preloader" style="position:fixed;inset:0;z-index:999999;background:rgba(4,8,20,0.98);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;">
+        <img src="assets/jdroidxlogo_trans.png" alt="Loading" style="width:64px;height:64px;filter:drop-shadow(0 0 20px rgba(0,102,255,0.7));animation:logoPulse 1.5s ease-in-out infinite;">
+        <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;">
+            <div id="preloader-bar" style="height:100%;width:30%;background:linear-gradient(90deg,#0066ff,#00f2fe);border-radius:99px;animation:preloaderSlide 1.2s ease-in-out infinite;"></div>
+        </div>
+        <span style="font-size:0.8rem;color:rgba(255,255,255,0.4);font-family:monospace;">Verifying authentication...</span>
+    </div>
+    <!-- Firebase Authentication Login Portal Gate -->
+    <div id="login-gate-overlay" class="login-gate-container" style="display: flex;">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" class="login-logo-img">
+                <h2>jDroid-X-Desk Login</h2>
+                <p class="login-subtitle">Secure Remote Control Console Access</p>
+            </div>
+            <div class="login-body">
+                <div id="login-error-msg" class="badge badge-red" style="display: none; width: 100%; text-align: center; margin-bottom: 1rem; padding: 0.5rem; font-size: 0.8rem;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Invalid credentials or database offline.
+                </div>
+                
+                <div class="margin-top-md">
+                    <label for="login-email-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-envelope text-primary"></i> Email Address</label>
+                    <input type="email" id="login-email-input" class="search-bar-mini" style="width: 100%; padding: 0.6rem; font-family: var(--font-mono);" value="jiten@jdroid-x-desk.com" placeholder="name@jdroid-x-desk.com">
+                </div>
+                
+                <div class="margin-top-md">
+                    <label for="login-password-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-lock text-primary"></i> Password</label>
+                    <!-- UX-1: Password visibility toggle wrapper -->
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" id="login-password-input" class="search-bar-mini" style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 0.6rem; font-family: var(--font-mono);" placeholder="Enter security password">
+                        <button id="toggle-pass-visibility" type="button" aria-label="Toggle password visibility" style="position:absolute;right:0.6rem;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0;font-size:0.9rem;">
+                            <i class="fa-solid fa-eye" id="toggle-pass-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="login-submit-btn" class="btn btn-primary btn-full margin-top-lg">
+                    <i class="fa-solid fa-right-to-bracket"></i> Authenticate & Unlock Console
+                </button>
+                
+                <div class="margin-top-md" style="text-align: center;">
+                    <a href="#" id="login-bypass-btn" style="font-size: 0.78rem; color: var(--accent-blue); text-decoration: none; font-weight: 500;">
+                        <i class="fa-solid fa-eye-slash"></i> Bypass & Run Offline Demo Mode
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Popup Notification Container -->
     <div id="toast-container" class="toast-overlay-container"></div>
 
@@ -207,6 +257,15 @@
                                 </div>
                             </a>
                         </li>
+                        <li class="nav-item" id="nav-logout-item">
+                            <a href="#" id="nav-logout-btn">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-warning"></i>
+                                <div class="nav-text-block">
+                                    <span class="nav-title">Logout</span>
+                                    <span class="nav-sub">Sign out &amp; re-authenticate</span>
+                                </div>
+                            </a>
+                        </li>
                         <li class="nav-item" id="nav-exit-app">
                             <a href="#" id="nav-exit">
                                 <i class="fa-solid fa-power-off text-danger"></i>
@@ -222,6 +281,15 @@
 
             <!-- Sidebar Footer: jDroid-X Matrix Live Telemetry HUD -->
             <div class="sidebar-footer jarvis-hud-container">
+                <!-- Logged-in User Session Chip -->
+                <div class="user-session-chip">
+                    <i class="fa-solid fa-circle-user text-primary"></i>
+                    <div class="user-session-info">
+                        <span id="logged-in-user-email" class="user-session-email">Not authenticated</span>
+                        <span class="user-session-label">Active Session</span>
+                    </div>
+                    <span id="session-online-dot" class="session-status-dot"></span>
+                </div>
                 <div class="jarvis-hud-card">
                     <div class="jarvis-hud-header">
                         <div class="jarvis-title"><i class="fa-solid fa-microchip text-info"></i> jDroid-X Matrix</div>
@@ -736,6 +804,33 @@
                             <input type="range" id="settings-toast-duration" min="2" max="15" step="1" value="4" style="width: 100%; margin-top: 0.5rem;">
                         </div>
                     </div>
+
+                    <div class="widget-box margin-top-md">
+                        <h3><i class="fa-solid fa-fire text-danger"></i> Google Cloud Firebase Signaling</h3>
+                        
+                        <!-- Connection Status Banner -->
+                        <div class="margin-top-sm">
+                            <div id="settings-fb-status-banner" class="badge badge-blue" style="width: 100%; text-align: center; display: block; padding: 0.5rem; font-weight: 600;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Cloud Signaling: INITIALIZING
+                            </div>
+                        </div>
+
+                        <div class="margin-top-md">
+                            <label for="settings-fb-api-key" style="display: block; margin-bottom: 0.25rem;">Firebase API Key:</label>
+                            <input type="text" id="settings-fb-api-key" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="Firebase API Key">
+                        </div>
+                        <div class="margin-top-md">
+                            <label for="settings-fb-project-id" style="display: block; margin-bottom: 0.25rem;">Firebase Project ID:</label>
+                            <input type="text" id="settings-fb-project-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="Firebase Project ID">
+                        </div>
+                        <div class="margin-top-md">
+                            <label for="settings-fb-db-url" style="display: block; margin-bottom: 0.25rem;">Firebase Realtime Database URL:</label>
+                            <input type="text" id="settings-fb-db-url" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="https://your-project.firebaseio.com">
+                        </div>
+                        <button id="settings-fb-save-btn" class="btn btn-primary btn-sm margin-top-md">
+                            <i class="fa-solid fa-save"></i> Save Firebase Credentials
+                        </button>
+                    </div>
                 </section>
 
                 <!-- VIEW 13: PRIVACY CONTROLS -->
@@ -1099,6 +1194,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Google Firebase Client SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <!-- Application Script -->
     <script src="app.js"></script>
