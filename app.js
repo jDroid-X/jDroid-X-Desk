@@ -410,7 +410,11 @@ class AppController {
                         apiKey: this.settingsModel.firebaseApiKey,
                         authDomain: `${this.settingsModel.firebaseProjectId}.firebaseapp.com`,
                         databaseURL: this.settingsModel.firebaseDbUrl,
-                        projectId: this.settingsModel.firebaseProjectId
+                        projectId: this.settingsModel.firebaseProjectId,
+                        storageBucket: `${this.settingsModel.firebaseProjectId}.firebasestorage.app`,
+                        messagingSenderId: this.settingsModel.firebaseMessagingSenderId,
+                        appId: this.settingsModel.firebaseAppId,
+                        measurementId: this.settingsModel.firebaseMeasurementId
                     });
                 }
                 firebase.auth().onAuthStateChanged((user) => {
@@ -825,6 +829,7 @@ class AppController {
                     console.error('[FIREBASE AUTH] Anonymous auth failed:', authErr.message);
                     this.traceModel.addLog('ERROR', 'FIREBASE_AUTH_FAILED', `Firebase Auth: ${authErr.message}`);
                     this.updateFirebaseStatusUI('ERROR', `Auth Error: ${authErr.message}`);
+                    this.updateFirebaseStatusUI('DISCONNECTED', 'Offline Mode (Auth Failed)');
                 });
             }
 
@@ -1768,8 +1773,15 @@ class DeviceModel {
     async fetchAll() {
         try {
             const r = await fetch('/api/devices');
-            const d = await r.json();
-            return d.data || [];
+            if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+            const text = await r.text();
+            try {
+                const d = JSON.parse(text);
+                return d.data || [];
+            } catch (je) {
+                console.error("Failed to parse /api/devices response as JSON:", text.substring(0, 100));
+                return [];
+            }
         } catch(e) { console.error(e); return []; }
     }
     async add(d) {
