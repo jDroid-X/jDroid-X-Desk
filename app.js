@@ -33,7 +33,7 @@ class SystemSettingsModel {
         this.toastDuration = 4;
         
         // Firebase Cloud configuration
-        this.firebaseApiKey = localStorage.getItem('jdx_fb_api_key') || 'AIzaSyBEembUT9ulpNm2z_UpmyqTmjIy1NdtAb0';
+        this.firebaseApiKey = localStorage.getItem('jdx_fb_api_key') || 'AIzaSyCUfP_cQmVghxDYfUiuPDUycTBAUU9VR-8';
         this.firebaseProjectId = localStorage.getItem('jdx_fb_project_id') || 'jfirebaselogin';
         this.firebaseDbUrl = localStorage.getItem('jdx_fb_db_url') || 'https://jfirebaselogin-default-rtdb.firebaseio.com';
 
