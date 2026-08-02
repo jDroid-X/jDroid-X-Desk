@@ -200,11 +200,11 @@ class AppView {
                 </div>
 
                 <!-- 2-System Topology Visualizer -->
-                <div class="margin-top-md" style="background: var(--bg-tertiary); border: 1px solid var(--border-bright); border-radius: var(--radius-md); padding: 1.25rem;">
+                <div class="margin-top-md" style="background: var(--bg-tertiary); border: 1px solid var(--border-bright); border-radius: var(--radius-md); padding: 0.5rem;">
                     <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; text-align: center;">
-                        <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-blue);">
+                        <div style="background: var(--bg-card); padding: 0.4rem; border-radius: 8px; border-left: 4px solid var(--accent-blue);">
                             <i class="fa-solid fa-laptop-code" style="font-size: 1.8rem; color: var(--accent-blue);"></i>
-                            <h4 style="font-size: 0.95rem; margin-top: 0.4rem;">System A (Primary)</h4>
+                            <h4 style="font-size: 0.95rem; margin-top: 0.16rem;">System A (Primary)</h4>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">${sysA.id} | ${sysA.ip}</div>
                         </div>
 
@@ -216,9 +216,9 @@ class AppView {
                             <div style="font-size: 0.72rem; color: var(--text-dim);">Avg RTT: 16 ms | Packet Loss: 0.0%</div>
                         </div>
 
-                        <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-emerald);">
+                        <div style="background: var(--bg-card); padding: 0.4rem; border-radius: 8px; border-left: 4px solid var(--accent-emerald);">
                             <i class="fa-solid fa-server" style="font-size: 1.8rem; color: var(--accent-emerald);"></i>
-                            <h4 style="font-size: 0.95rem; margin-top: 0.4rem;">System B (Secondary)</h4>
+                            <h4 style="font-size: 0.95rem; margin-top: 0.16rem;">System B (Secondary)</h4>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">${sysB.id} | ${sysB.ip}</div>
                         </div>
                     </div>
@@ -226,7 +226,7 @@ class AppView {
 
                 <!-- Filter & Terminal Table -->
                 <div class="margin-top-lg">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
                         <span style="font-weight: 600; font-size: 0.9rem;"><i class="fa-solid fa-list-ul"></i> Live System Traceability Log Stream</span>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <label style="font-size: 0.8rem; color: var(--text-muted);">Filter Level:</label>
@@ -241,16 +241,16 @@ class AppView {
                         </div>
                     </div>
 
-                    <div style="overflow-x: auto; background: #080c14; border: 1px solid var(--border-bright); border-radius: 10px; padding: 0.75rem; max-height: 380px; overflow-y: auto;">
+                    <div style="overflow-x: auto; background: #080c14; border: 1px solid var(--border-bright); border-radius: 10px; padding: 0.3rem; max-height: 380px; overflow-y: auto;">
                         <table style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.78rem;">
                             <thead>
                                 <tr style="border-bottom: 1px solid var(--border-bright); color: var(--text-muted); text-align: left;">
-                                    <th style="padding: 0.5rem;">Packet ID</th>
-                                    <th style="padding: 0.5rem;">Timestamp (UTC)</th>
-                                    <th style="padding: 0.5rem;">Level</th>
-                                    <th style="padding: 0.5rem;">Stage</th>
-                                    <th style="padding: 0.5rem;">Trace Payload Message</th>
-                                    <th style="padding: 0.5rem;">RTT</th>
+                                    <th style="padding: 0.2rem;">Packet ID</th>
+                                    <th style="padding: 0.2rem;">Timestamp (UTC)</th>
+                                    <th style="padding: 0.2rem;">Level</th>
+                                    <th style="padding: 0.2rem;">Stage</th>
+                                    <th style="padding: 0.2rem;">Trace Payload Message</th>
+                                    <th style="padding: 0.2rem;">RTT</th>
                                 </tr>
                             </thead>
                             <tbody id="mon-terminal-tbody">
@@ -273,12 +273,12 @@ class AppView {
 
             return `
                 <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 0.45rem; color: var(--text-dim);">${l.id}</td>
-                    <td style="padding: 0.45rem; color: var(--text-muted);">${l.timestamp.split('T')[1].replace('Z','')}</td>
-                    <td style="padding: 0.45rem; color: ${lvlColor}; font-weight: 600;">${l.level}</td>
-                    <td style="padding: 0.45rem; color: var(--accent-blue);">${l.stage}</td>
-                    <td style="padding: 0.45rem; color: var(--text-main);">${l.message}</td>
-                    <td style="padding: 0.45rem; color: var(--accent-emerald);">${l.rttMs} ms</td>
+                    <td style="padding: 0.18rem; color: var(--text-dim);">${l.id}</td>
+                    <td style="padding: 0.18rem; color: var(--text-muted);">${l.timestamp.split('T')[1].replace('Z','')}</td>
+                    <td style="padding: 0.18rem; color: ${lvlColor}; font-weight: 600;">${l.level}</td>
+                    <td style="padding: 0.18rem; color: var(--accent-blue);">${l.stage}</td>
+                    <td style="padding: 0.18rem; color: var(--text-main);">${l.message}</td>
+                    <td style="padding: 0.18rem; color: var(--accent-emerald);">${l.rttMs} ms</td>
                 </tr>
             `;
         }).join('');
@@ -1003,6 +1003,10 @@ class AppController {
     }
 
     switchView(viewId) {
+        if (viewId === 'logout') {
+            // Intercept logout view to execute logic
+        }
+
         this.currentView = viewId;
 
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -1029,6 +1033,20 @@ class AppController {
         }
 
         this.renderCurrentView();
+    }
+
+    performLogout() {
+        if (window.firebase) {
+            window.firebase.auth().signOut().then(() => {
+                localStorage.removeItem('jdx_fallback_device_id');
+                window.location.reload();
+            }).catch(e => {
+                this.view.showToast('error', 'Logout Error', e.message);
+            });
+        } else {
+            localStorage.removeItem('jdx_fallback_device_id');
+            window.location.reload();
+        }
     }
 
     bindSystemMonitorEvents() {
@@ -1770,7 +1788,7 @@ class DeviceController {
         const devices = await this.model.fetchAll();
         this.listEl.innerHTML = '';
         if (devices.length === 0) {
-            this.listEl.innerHTML = '<li style="padding: 1rem; text-align: center; color: var(--text-muted);">No devices registered yet.</li>';
+            this.listEl.innerHTML = '<li style="padding: 0.4rem; text-align: center; color: var(--text-muted);">No devices registered yet.</li>';
             return;
         }
 
@@ -1781,7 +1799,7 @@ class DeviceController {
             li.innerHTML = `
                 <div>
                     <h4 style="margin: 0; color: var(--text-color);"><i class="fa-solid fa-laptop text-primary"></i> ${ValidationUtil.escapeHTML(d.name)}</h4>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Access: ${ValidationUtil.escapeHTML(d.accessLevel)} | Status: <span class="${d.status === 'Online' ? 'text-emerald' : 'text-warning'}">${ValidationUtil.escapeHTML(d.status)}</span></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">Access: ${ValidationUtil.escapeHTML(d.accessLevel)} | Status: <span class="${d.status === 'Online' ? 'text-emerald' : 'text-warning'}">${ValidationUtil.escapeHTML(d.status)}</span></div>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
                     <button class="btn btn-secondary btn-sm edit-btn"><i class="fa-solid fa-pen"></i></button>

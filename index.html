@@ -31,25 +31,25 @@
                 <p class="login-subtitle">Secure Remote Control Console Access</p>
             </div>
             <div class="login-body">
-                <div id="login-error-msg" class="badge badge-red" style="display: none; width: 100%; text-align: center; margin-bottom: 1rem; padding: 0.5rem; font-size: 0.8rem;">
+                <div id="login-error-msg" class="badge badge-red" style="display: none; width: 100%; text-align: center; margin-bottom: 0.4rem; padding: 0.2rem; font-size: 0.8rem;">
                     <i class="fa-solid fa-triangle-exclamation"></i> Invalid credentials or database offline.
                 </div>
                 
                 <div class="margin-top-md">
-                    <label for="login-email-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-laptop text-primary"></i> This Device Address</label>
-                    <input type="email" id="login-email-input" class="search-bar-mini" style="width: 100%; padding: 0.6rem; font-family: var(--font-mono);" value="jiten@jdroid-x-desk.com" placeholder="name@jdroid-x-desk.com">
+                    <label for="login-email-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.1rem;"><i class="fa-solid fa-laptop text-primary"></i> This Device Address</label>
+                    <input type="email" id="login-email-input" class="search-bar-mini" style="width: 100%; padding: 0.24rem; font-family: var(--font-mono);" value="jiten@jdroid-x-desk.com" placeholder="name@jdroid-x-desk.com">
                 </div>
                 
                 <div class="margin-top-md">
-                    <label for="login-password-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-lock text-primary"></i> Password</label>
+                    <label for="login-password-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.1rem;"><i class="fa-solid fa-lock text-primary"></i> Password</label>
                     <!-- UX-1: Password visibility toggle wrapper -->
                     <div style="position: relative; display: flex; align-items: center;">
-                        <input type="password" id="login-password-input" class="search-bar-mini" style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 0.6rem; font-family: var(--font-mono);" value="Admin@1234" placeholder="Enter security password">
-                        <button id="toggle-pass-visibility" type="button" aria-label="Toggle password visibility" style="position:absolute;right:0.6rem;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0;font-size:0.9rem;">
+                        <input type="password" id="login-password-input" class="search-bar-mini" style="width: 100%; padding: 0.24rem 1rem 0.24rem 0.24rem; font-family: var(--font-mono);" value="Admin@1234" placeholder="Enter security password">
+                        <button id="toggle-pass-visibility" type="button" aria-label="Toggle password visibility" style="position:absolute;right:0.6rem;background:none;border:none;cursor:pointer;color:var(--text-muted);padding: 0;font-size:0.9rem;">
                             <i class="fa-solid fa-eye" id="toggle-pass-icon"></i>
                         </button>
                     </div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem; text-align: right;">Default Device Password Applied</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.16rem; text-align: right;">Default Device Password Applied</div>
                 </div>
                 
                 <button id="login-submit-btn" class="btn btn-primary btn-full margin-top-lg">
@@ -231,8 +231,8 @@
                 <div class="nav-section">
                     <span class="nav-section-title">Help & Documentation</span>
                     <ul class="nav-list">
-                        <li class="nav-item" data-modal="help-modal">
-                            <a href="#" id="nav-help">
+                        <li class="nav-item" data-view="help-support">
+                            <a href="#help-support" id="nav-help">
                                 <i class="fa-solid fa-circle-question text-info"></i>
                                 <div class="nav-text-block">
                                     <span class="nav-title">Help & Support</span>
@@ -240,8 +240,8 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item" data-modal="manual-modal">
-                            <a href="#" id="nav-manual">
+                        <li class="nav-item" data-view="user-manual">
+                            <a href="#user-manual" id="nav-manual">
                                 <i class="fa-solid fa-book-open text-primary"></i>
                                 <div class="nav-text-block">
                                     <span class="nav-title">User Manual (HITL)</span>
@@ -249,8 +249,8 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item" data-modal="about-modal">
-                            <a href="#" id="nav-about">
+                        <li class="nav-item" data-view="about-app">
+                            <a href="#about-app" id="nav-about">
                                 <i class="fa-solid fa-shield-halved text-purple"></i>
                                 <div class="nav-text-block">
                                     <span class="nav-title">About App</span>
@@ -258,12 +258,12 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item" id="nav-logout-item">
-                            <a href="#" id="nav-logout-btn">
+                        <li class="nav-item" data-view="logout">
+                            <a href="#logout" id="nav-logout-btn">
                                 <i class="fa-solid fa-arrow-right-from-bracket text-warning"></i>
                                 <div class="nav-text-block">
                                     <span class="nav-title">Logout</span>
-                                    <span class="nav-sub">Sign out &amp; re-authenticate</span>
+                                    <span class="nav-sub">Sign out & re-authenticate</span>
                                 </div>
                             </a>
                         </li>
@@ -386,11 +386,11 @@
                             <h4 class="margin-top-sm">System Identification</h4>
                             <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">App runs and generates unique local address and one-time security password.</p>
                             
-                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px;">
+                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px;">
                                 <div style="font-size: 0.75rem; color: var(--text-dim);">This Device Address:</div>
                                 <div style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--accent-blue);" id="local-device-id">984-102-391</div>
                                 
-                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">One-Time Password:</div>
+                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem;">One-Time Password:</div>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
                                     <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
@@ -408,11 +408,11 @@
                             <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">Input target Secondary System address and security password to initiate handshake.</p>
 
                             <div class="margin-top-md">
-                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.25rem;">Remote Partner Address:</label>
-                                <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.55rem; font-family: var(--font-mono);" placeholder="e.g. 520-310-884">
+                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.1rem;">Remote Partner Address:</label>
+                                <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.22rem; font-family: var(--font-mono);" placeholder="e.g. 520-310-884">
                                 
-                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.5rem; margin-bottom: 0.25rem;">Security Password:</label>
-                                <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.55rem; font-family: var(--font-mono);" placeholder="Enter password">
+                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.2rem; margin-bottom: 0.1rem;">Security Password:</label>
+                                <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.22rem; font-family: var(--font-mono);" placeholder="Enter password">
 
                                 <button id="connect-session-btn" class="btn btn-primary btn-full margin-top-md">
                                     <i class="fa-solid fa-link"></i> Connect & Share Desktop
@@ -429,9 +429,9 @@
                             <h4 class="margin-top-sm">Primary Controls Secondary</h4>
                             <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">Primary user receives secondary system display output with mouse and keyboard input injection.</p>
 
-                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px;">
+                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px;">
                                 <div style="font-size: 0.78rem;"><strong>Active Status:</strong> <span id="session-status-text" style="color: var(--text-muted);">Idle (Awaiting Connection)</span></div>
-                                <div style="font-size: 0.78rem; margin-top: 0.25rem;"><strong>Protocol:</strong> <span id="session-protocol-text" style="color: var(--text-muted);">P2P Direct Encrypted</span></div>
+                                <div style="font-size: 0.78rem; margin-top: 0.1rem;"><strong>Protocol:</strong> <span id="session-protocol-text" style="color: var(--text-muted);">P2P Direct Encrypted</span></div>
                                 <button id="launch-canvas-btn" class="btn btn-secondary btn-full btn-sm margin-top-md" disabled>
                                     <i class="fa-solid fa-expand"></i> Open Control Window
                                 </button>
@@ -441,13 +441,13 @@
 
                     <!-- STEP 3 SIMULATED REMOTE DESKTOP INTERACTIVE CANVAS VIEWPORT -->
                     <div id="remote-desktop-viewport-box" class="widget-box" style="display: none; background: #060911; border: 2px solid var(--accent-blue);">
-                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
                             <div>
                                 <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-desktop"></i> Secondary Remote Desktop Screen (Controlled by Primary)</h3>
                                 <p style="font-size: 0.8rem; color: var(--text-muted);">Target: <span id="active-target-id-label" style="color: #fff; font-family: var(--font-mono);">520-310-884</span> | <span id="stream-hud-specs" class="text-emerald">1080p 60FPS | 14ms | 1.8 Mbps</span></p>
                             </div>
                             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <select id="stream-quality-select" class="search-bar-mini" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">
+                                <select id="stream-quality-select" class="search-bar-mini" style="padding: 0.14rem 0.2rem; font-size: 0.75rem;">
                                     <option value="1080p">1080p 60FPS (HD)</option>
                                     <option value="720p">720p 30FPS (Balanced)</option>
                                     <option value="turbo">Turbo Mode (Low Bandwidth)</option>
@@ -461,23 +461,23 @@
                         </div>
 
                         <!-- Interactive Virtual Remote Screen Area -->
-                        <div id="virtual-remote-screen" class="margin-top-md" style="height: 360px; background: #0d1322; border-radius: 8px; border: 1px solid var(--border-bright); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 6px;">
+                        <div id="virtual-remote-screen" class="margin-top-md" style="height: 360px; background: #0d1322; border-radius: 8px; border: 1px solid var(--border-bright); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 0.4rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 6px;">
                                 <span style="font-size: 0.8rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> Live Encrypted Remote Session Active</span>
                                 <span style="font-size: 0.75rem; color: var(--text-muted);" id="virtual-screen-clock">11:42:00 AM</span>
                             </div>
 
                             <div style="text-align: center; margin: auto;">
-                                <div style="font-size: 3rem; color: var(--accent-blue); margin-bottom: 0.5rem;"><i class="fa-solid fa-display"></i></div>
+                                <div style="font-size: 3rem; color: var(--accent-blue); margin-bottom: 0.2rem;"><i class="fa-solid fa-display"></i></div>
                                 <h4>Secondary User System Screen</h4>
-                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Primary user is controlling mouse cursor and keyboard inputs on secondary machine.</p>
-                                <div style="display: flex; justify-content: center; gap: 0.75rem; margin-top: 1rem;">
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.1rem;">Primary user is controlling mouse cursor and keyboard inputs on secondary machine.</p>
+                                <div style="display: flex; justify-content: center; gap: 0.75rem; margin-top: 0.4rem;">
                                     <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Mouse Click at X:450 Y:220')"><i class="fa-solid fa-arrow-pointer"></i> Simulate Mouse Click</button>
                                     <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Keystrokes: Hello Secondary System')"><i class="fa-solid fa-font"></i> Inject Text Input</button>
                                 </div>
                             </div>
 
-                            <div style="background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.78rem; font-family: var(--font-mono); color: var(--accent-emerald);" id="virtual-screen-log">
+                            <div style="background: rgba(0,0,0,0.6); padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.78rem; font-family: var(--font-mono); color: var(--accent-emerald);" id="virtual-screen-log">
                                 [CONTROL SIGNAL] Primary mouse position synced (X: 520, Y: 310)
                             </div>
                         </div>
@@ -517,7 +517,7 @@
                     <div class="list-box-container margin-top-md" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; min-height: 200px;">
                         <ul id="device-list-ul" style="list-style: none; padding: 0; margin: 0;">
                             <!-- List Box items injected by JS -->
-                            <li style="padding: 1rem; text-align: center; color: var(--text-muted);">Loading devices...</li>
+                            <li style="padding: 0.4rem; text-align: center; color: var(--text-muted);">Loading devices...</li>
                         </ul>
                     </div>
                 </section>
@@ -531,7 +531,7 @@
                         </div>
                     </div>
                     <div class="widget-box" style="min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #080d1a;">
-                        <i class="fa-solid fa-earth-americas" style="font-size: 4rem; color: var(--accent-blue); margin-bottom: 1rem;"></i>
+                        <i class="fa-solid fa-earth-americas" style="font-size: 4rem; color: var(--accent-blue); margin-bottom: 0.4rem;"></i>
                         <h3>Active Mesh Topology: 2 Systems Connected</h3>
                         <p class="text-subtitle margin-top-sm">System A (10.0.4.120) <i class="fa-solid fa-arrow-right-arrow-left text-emerald"></i> System B (10.0.4.145)</p>
                         <div style="display: flex; gap: 0.75rem;" class="margin-top-md">
@@ -552,7 +552,7 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;" class="margin-bottom-md">
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="text" class="search-bar-mini" placeholder="Filter history by ID or IP..." style="padding: 0.4rem 0.75rem; width: 240px;">
+                            <input type="text" class="search-bar-mini" placeholder="Filter history by ID or IP..." style="padding: 0.16rem 0.3rem; width: 240px;">
                         </div>
                         <button class="btn btn-primary btn-sm" id="btn-generate-audit-report"><i class="fa-solid fa-file-pdf"></i> Generate Printable Audit Report</button>
                     </div>
@@ -560,7 +560,7 @@
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                             <thead>
                                 <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                                    <th style="padding: 0.75rem;">Timestamp</th>
+                                    <th style="padding: 0.3rem;">Timestamp</th>
                                     <th>Target Device</th>
                                     <th>Remote IP</th>
                                     <th>Duration</th>
@@ -569,14 +569,14 @@
                             </thead>
                             <tbody>
                                 <tr style="border-bottom: 1px solid var(--bg-tertiary);">
-                                    <td style="padding: 0.75rem; font-family: var(--font-mono);">Today, 10:24 AM</td>
+                                    <td style="padding: 0.3rem; font-family: var(--font-mono);">Today, 10:24 AM</td>
                                     <td>SYS-B-SECONDARY-520</td>
                                     <td>10.0.4.145</td>
                                     <td>18m 42s</td>
                                     <td><span class="badge badge-green">Completed</span></td>
                                 </tr>
                                 <tr style="border-bottom: 1px solid var(--bg-tertiary);">
-                                    <td style="padding: 0.75rem; font-family: var(--font-mono);">Yesterday, 04:15 PM</td>
+                                    <td style="padding: 0.3rem; font-family: var(--font-mono);">Yesterday, 04:15 PM</td>
                                     <td>SYS-B-SECONDARY-520</td>
                                     <td>10.0.4.145</td>
                                     <td>45m 10s</td>
@@ -602,12 +602,12 @@
                     <div class="cards-grid-3">
                         <div class="widget-box">
                             <h4><i class="fa-solid fa-user-check text-primary"></i> Primary Support Tech</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">ID: 520-310-884</p>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">ID: 520-310-884</p>
                             <button class="btn btn-primary btn-sm margin-top-md btn-full" onclick="document.getElementById('target-id-input').value='520-310-884'; window.appController.switchView('remote-console');"><i class="fa-solid fa-bolt"></i> Quick Connect</button>
                         </div>
                         <div class="widget-box">
                             <h4><i class="fa-solid fa-user-gear text-purple"></i> Backup Engineer</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">ID: 104-882-991</p>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">ID: 104-882-991</p>
                             <button class="btn btn-secondary btn-sm margin-top-md btn-full" onclick="document.getElementById('target-id-input').value='104-882-991'; window.appController.switchView('remote-console');"><i class="fa-solid fa-bolt"></i> Quick Connect</button>
                         </div>
                     </div>
@@ -628,7 +628,7 @@
                     <div class="widget-box">
                         <h3><i class="fa-solid fa-shield-halved text-emerald"></i> Access Control Perimeter</h3>
                         <p class="text-subtitle margin-top-sm">Configured Trusted Subnets:</p>
-                        <div style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.85rem;" class="margin-top-sm">
+                        <div style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.85rem;" class="margin-top-sm">
                             <div><i class="fa-solid fa-circle-check text-emerald"></i> 10.0.4.0/24 (Local Enterprise LAN) - Allowed</div>
                             <div class="margin-top-xs"><i class="fa-solid fa-circle-xmark text-danger"></i> Public WAN Direct Access - Require One-Time Passcode</div>
                         </div>
@@ -672,7 +672,7 @@
                         <button class="btn btn-secondary btn-sm" onclick="window.appController.view.showToast('info', 'Alerts Cleared', 'All notifications marked as read.')"><i class="fa-solid fa-check-double"></i> Mark All Read</button>
                     </div>
                     <div class="widget-box">
-                        <div style="display: flex; gap: 0.75rem; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div style="display: flex; gap: 0.75rem; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
                             <i class="fa-solid fa-circle-check text-emerald" style="font-size: 1.5rem;"></i>
                             <div>
                                 <strong>Background Web Server Running</strong>
@@ -757,11 +757,11 @@
                         <h3><i class="fa-solid fa-gauge-high text-primary"></i> Global HUD Thresholds</h3>
                         <div class="margin-top-md">
                             <label for="settings-dl-threshold">Minimum Download Speed Alarm Threshold (MB/s): <span id="settings-dl-val">1.0</span></label>
-                            <input type="range" id="settings-dl-threshold" min="0.1" max="5.0" step="0.1" value="1.0" style="width: 100%; margin-top: 0.5rem;">
+                            <input type="range" id="settings-dl-threshold" min="0.1" max="5.0" step="0.1" value="1.0" style="width: 100%; margin-top: 0.2rem;">
                         </div>
                         <div class="margin-top-md">
                             <label for="settings-ping-threshold">Maximum Ping Alarm Threshold (ms): <span id="settings-ping-val">100</span></label>
-                            <input type="range" id="settings-ping-threshold" min="20" max="500" step="10" value="100" style="width: 100%; margin-top: 0.5rem;">
+                            <input type="range" id="settings-ping-threshold" min="20" max="500" step="10" value="100" style="width: 100%; margin-top: 0.2rem;">
                         </div>
                         <div class="margin-top-md">
                             <label class="checkbox-container">
@@ -776,7 +776,7 @@
                         <h3><i class="fa-solid fa-bell text-warning"></i> UI & Notifications</h3>
                         <div class="margin-top-md">
                             <label for="settings-toast-duration">Toast Notification Display Duration (seconds): <span id="settings-toast-val">4</span></label>
-                            <input type="range" id="settings-toast-duration" min="2" max="15" step="1" value="4" style="width: 100%; margin-top: 0.5rem;">
+                            <input type="range" id="settings-toast-duration" min="2" max="15" step="1" value="4" style="width: 100%; margin-top: 0.2rem;">
                         </div>
                     </div>
 
@@ -785,38 +785,100 @@
                         
                         <!-- Connection Status Banner -->
                         <div class="margin-top-sm">
-                            <div id="settings-fb-status-banner" class="badge badge-blue" style="width: 100%; text-align: center; display: block; padding: 0.5rem; font-weight: 600;">
+                            <div id="settings-fb-status-banner" class="badge badge-blue" style="width: 100%; text-align: center; display: block; padding: 0.2rem; font-weight: 600;">
                                 <i class="fa-solid fa-spinner fa-spin"></i> Cloud Signaling: INITIALIZING
                             </div>
                         </div>
 
                         <div class="margin-top-md">
-                            <label for="settings-fb-api-key" style="display: block; margin-bottom: 0.25rem;">Firebase API Key:</label>
-                            <input type="text" id="settings-fb-api-key" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="Firebase API Key">
+                            <label for="settings-fb-api-key" style="display: block; margin-bottom: 0.1rem;">Firebase API Key:</label>
+                            <input type="text" id="settings-fb-api-key" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Firebase API Key">
                         </div>
                         <div class="margin-top-md">
-                            <label for="settings-fb-project-id" style="display: block; margin-bottom: 0.25rem;">Firebase Project ID:</label>
-                            <input type="text" id="settings-fb-project-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="Firebase Project ID">
+                            <label for="settings-fb-project-id" style="display: block; margin-bottom: 0.1rem;">Firebase Project ID:</label>
+                            <input type="text" id="settings-fb-project-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Firebase Project ID">
                         </div>
                         <div class="margin-top-md">
-                            <label for="settings-fb-db-url" style="display: block; margin-bottom: 0.25rem;">Firebase Realtime Database URL:</label>
-                            <input type="text" id="settings-fb-db-url" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="https://your-project.firebaseio.com">
+                            <label for="settings-fb-db-url" style="display: block; margin-bottom: 0.1rem;">Firebase Realtime Database URL:</label>
+                            <input type="text" id="settings-fb-db-url" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="https://your-project.firebaseio.com">
                         </div>
                         <div class="margin-top-md">
-                            <label for="settings-fb-messaging-sender-id" style="display: block; margin-bottom: 0.25rem;">Messaging Sender ID:</label>
-                            <input type="text" id="settings-fb-messaging-sender-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="Messaging Sender ID">
+                            <label for="settings-fb-messaging-sender-id" style="display: block; margin-bottom: 0.1rem;">Messaging Sender ID:</label>
+                            <input type="text" id="settings-fb-messaging-sender-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Messaging Sender ID">
                         </div>
                         <div class="margin-top-md">
-                            <label for="settings-fb-app-id" style="display: block; margin-bottom: 0.25rem;">App ID:</label>
-                            <input type="text" id="settings-fb-app-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="App ID">
+                            <label for="settings-fb-app-id" style="display: block; margin-bottom: 0.1rem;">App ID:</label>
+                            <input type="text" id="settings-fb-app-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="App ID">
                         </div>
                         <div class="margin-top-md">
-                            <label for="settings-fb-measurement-id" style="display: block; margin-bottom: 0.25rem;">Measurement ID:</label>
-                            <input type="text" id="settings-fb-measurement-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.5rem;" placeholder="Measurement ID">
+                            <label for="settings-fb-measurement-id" style="display: block; margin-bottom: 0.1rem;">Measurement ID:</label>
+                            <input type="text" id="settings-fb-measurement-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Measurement ID">
                         </div>
                         <button id="settings-fb-save-btn" class="btn btn-primary btn-sm margin-top-md">
                             <i class="fa-solid fa-save"></i> Save Firebase Credentials
                         </button>
+                    </div>
+                </section>
+
+                <!-- VIEW: HELP & SUPPORT -->
+                <section id="view-help-support" class="view-panel">
+                    <div class="screen-hint-box">
+                        <i class="fa-solid fa-lightbulb hint-icon"></i>
+                        <div class="hint-text">
+                            <strong>Support Hub:</strong> Get operational help and troubleshoot common remote access issues.
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3 class="settings-title">FAQ & Troubleshooting</h3>
+                        <div style="padding: 0.4rem; color: var(--text-muted);">No common issues found for your node yet. Check back later or contact the admin team.</div>
+                    </div>
+                </section>
+
+                <!-- VIEW: USER MANUAL -->
+                <section id="view-user-manual" class="view-panel">
+                    <div class="screen-hint-box">
+                        <i class="fa-solid fa-book-open hint-icon"></i>
+                        <div class="hint-text">
+                            <strong>Documentation:</strong> Read the step-by-step HITL manual for proper system operations.
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3 class="settings-title">Documentation Index</h3>
+                        <div style="padding: 0.4rem; color: var(--text-muted);">Manual is currently synchronizing with the central repository...</div>
+                    </div>
+                </section>
+
+                <!-- VIEW: ABOUT APP -->
+                <section id="view-about-app" class="view-panel">
+                    <div class="screen-hint-box">
+                        <i class="fa-solid fa-shield-halved hint-icon"></i>
+                        <div class="hint-text">
+                            <strong>System Info:</strong> Version 2.0 (Ultra Compact Edition) Architecture.
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3 class="settings-title">Application Details</h3>
+                        <div style="padding: 0.4rem;">
+                            <p><strong>Version:</strong> 2.0.0 (Enterprise)</p>
+                            <p><strong>Build Date:</strong> August 2026</p>
+                            <p><strong>License:</strong> Private Commercial (Authorized personnel only)</p>
+                            <p class="margin-top-sm" style="color: var(--text-muted);">This software uses end-to-end Ed25519 encryption for all remote P2P traffic. Unauthorized usage is strictly prohibited and logged.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW: LOGOUT -->
+                <section id="view-logout" class="view-panel">
+                    <div class="screen-hint-box">
+                        <i class="fa-solid fa-arrow-right-from-bracket hint-icon text-warning"></i>
+                        <div class="hint-text">
+                            <strong>Secure Logout:</strong> Terminate your current session and wipe ephemeral credentials.
+                        </div>
+                    </div>
+                    <div class="settings-group" style="text-align: center; padding: 0.8rem;">
+                        <h3 class="settings-title" style="border:none;">Are you sure you want to sign out?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 0.6rem;">All active remote sessions will be immediately terminated.</p>
+                        <button class="btn btn-primary" onclick="window.appController.performLogout()">Yes, Sign Out Safely</button>
                     </div>
                 </section>
 
@@ -936,7 +998,7 @@
             </div>
             <div class="modal-body">
                 <h4>System Prerequisites & Network Ports:</h4>
-                <div class="margin-top-sm" style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px; font-size: 0.82rem;">
+                <div class="margin-top-sm" style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px; font-size: 0.82rem;">
                     <div><i class="fa-solid fa-check text-emerald"></i> <strong>Node.js Prerequisite:</strong> Node.js v16.0.0 or higher must be installed.</div>
                     <div class="margin-top-xs"><i class="fa-solid fa-check text-emerald"></i> <strong>Express Server Port:</strong> TCP Port <code>12345</code> (Local Web Interface & API).</div>
                     <div class="margin-top-xs"><i class="fa-solid fa-check text-emerald"></i> <strong>STUN/TURN Signal Port:</strong> UDP Port <code>21116</code> (Encrypted P2P Handshake).</div>
@@ -944,9 +1006,9 @@
 
                 <h4 class="margin-top-md">Cross-Platform Installation Procedures:</h4>
                 <ul class="manual-steps margin-top-sm" style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 0.5rem;"><strong>Windows 10 / 11:</strong> Run <code>install_windows_app.bat</code>. Starts Node server, launches Edge App Mode, and adds PowerShell System Tray icon.</li>
-                    <li style="margin-bottom: 0.5rem;"><strong>macOS / Linux:</strong> Open terminal in directory, run <code>npm install</code>, then <code>node server.js</code>. Access via <code>http://localhost:12345</code>.</li>
-                    <li style="margin-bottom: 0.5rem;"><strong>Mobile (Android / iOS):</strong> Open Chrome or Safari and enter <code>http://&lt;HOST-IP&gt;:12345</code>. Features responsive mobile layout.</li>
+                    <li style="margin-bottom: 0.2rem;"><strong>Windows 10 / 11:</strong> Run <code>install_windows_app.bat</code>. Starts Node server, launches Edge App Mode, and adds PowerShell System Tray icon.</li>
+                    <li style="margin-bottom: 0.2rem;"><strong>macOS / Linux:</strong> Open terminal in directory, run <code>npm install</code>, then <code>node server.js</code>. Access via <code>http://localhost:12345</code>.</li>
+                    <li style="margin-bottom: 0.2rem;"><strong>Mobile (Android / iOS):</strong> Open Chrome or Safari and enter <code>http://&lt;HOST-IP&gt;:12345</code>. Features responsive mobile layout.</li>
                 </ul>
             </div>
             <div class="modal-footer"><button class="btn btn-primary close-modal-btn">Got It</button></div>
@@ -962,7 +1024,7 @@
             </div>
             <div class="modal-body">
                 <div class="manual-content">
-                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.4rem;">
                         <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" style="width: 48px; height: 48px; object-fit: contain;">
                         <div>
                             <h4 style="margin: 0;">Human-In-The-Loop (HITL) Operational Manual & RCA Protocol</h4>
@@ -983,7 +1045,7 @@
                     <h4 class="margin-top-md">Part 2: 10-Field Log Metadata & Human Root Cause Analysis (RCA) Guide</h4>
                     <p style="font-size: 0.82rem; color: var(--text-muted);" class="margin-top-xs">Every telemetry entry contains 10 auditable metadata fields updated continuously (every 2.0s) and on instant events (0ms):</p>
                     
-                    <div style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px; font-size: 0.8rem; font-family: var(--font-mono);" class="margin-top-sm">
+                    <div style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px; font-size: 0.8rem; font-family: var(--font-mono);" class="margin-top-sm">
                         <div>1. <strong>Packet ID</strong> (e.g. TRC-1001) - Sequence ordering verification</div>
                         <div>2. <strong>Timestamp</strong> (UTC ISO format) - Exact event timing</div>
                         <div>3. <strong>Level</strong> (INFO / TRACE / WARN / ERROR / SECURITY_AUDIT) - Severity rating</div>
@@ -1098,7 +1160,7 @@
                     <div><strong>Stage:</strong> <span id="insp-stage">STUN_HANDSHAKE</span></div>
                     <div><strong>Timestamp:</strong> <span id="insp-time">2026-08-02T10:50:00Z</span></div>
                     <div class="margin-top-sm"><strong>Message Payload:</strong></div>
-                    <div style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 6px; margin-top: 0.25rem;" id="insp-msg"></div>
+                    <div style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 6px; margin-top: 0.1rem;" id="insp-msg"></div>
                 </div>
             </div>
             <div class="modal-footer"><button class="btn btn-secondary close-modal-btn">Close Inspector</button></div>
@@ -1113,13 +1175,13 @@
                 <button class="close-modal-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <div style="background: #fff; color: #000; padding: 1.5rem; border-radius: 8px; font-family: var(--font-sans);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 0.5rem;">
+                <div style="background: #fff; color: #000; padding: 0.6rem; border-radius: 8px; font-family: var(--font-sans);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 0.2rem;">
                         <h2>jDroid-X-Desk Remote Access Audit</h2>
                         <span>Generated: 2026-08-02</span>
                     </div>
                     <p class="margin-top-md"><strong>Audit Status:</strong> Verified & Signed (Ed25519 Compliant)</p>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.85rem;" border="1" cellpadding="6">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 0.4rem; font-size: 0.85rem;" border="1" cellpadding="6">
                         <thead>
                             <tr style="background: #f0f0f0;">
                                 <th>Session ID</th>
@@ -1158,10 +1220,10 @@
             <div class="modal-body">
                 <input type="hidden" id="device-modal-id">
                 <label style="font-size: 0.8rem;">Device Name (Alphanumeric only):</label>
-                <input type="text" id="device-modal-name" class="search-bar-mini" placeholder="e.g. Office Desktop" style="width: 100%; margin-top: 0.25rem;">
+                <input type="text" id="device-modal-name" class="search-bar-mini" placeholder="e.g. Office Desktop" style="width: 100%; margin-top: 0.1rem;">
                 
-                <label style="font-size: 0.8rem; display: block; margin-top: 0.75rem;">Access Level:</label>
-                <select id="device-modal-access" class="search-bar-mini" style="width: 100%; margin-top: 0.25rem; background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 4px;">
+                <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">Access Level:</label>
+                <select id="device-modal-access" class="search-bar-mini" style="width: 100%; margin-top: 0.1rem; background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.2rem; border-radius: 4px;">
                     <option value="Standard">Standard (Read-Only)</option>
                     <option value="Admin">Admin (Full Control)</option>
                     <option value="Restricted">Restricted (No Access)</option>
