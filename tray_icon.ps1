@@ -7,7 +7,7 @@ try {
     Add-Content -Path "tray.log" -Value "Created NotifyIcon"
 
     try {
-        $NotifyIcon.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon("$env:SystemRoot\System32\shell32.dll")
+        $NotifyIcon.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon("$env:SystemRoot\System32\wscript.exe")
     } catch {
         $NotifyIcon.Icon = [System.Drawing.SystemIcons]::Application
     }

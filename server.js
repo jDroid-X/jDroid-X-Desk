@@ -7,6 +7,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = 12345;
+const DB_PATH = path.join(__dirname, 'database.json');
 
 // Prevent Process Crashes on Uncaught Exceptions
 process.on('uncaughtException', (err) => {
@@ -19,6 +20,72 @@ process.on('unhandledRejection', (reason, promise) => {
 
 app.use(express.json());
 app.use(express.static(__dirname));
+
+// --- Database Logic ---
+function readDB() {
+    if (!fs.existsSync(DB_PATH)) {
+        fs.writeFileSync(DB_PATH, JSON.stringify({ safeZones: [], groups: [] }, null, 2));
+    }
+    try {
+        const raw = fs.readFileSync(DB_PATH, 'utf8');
+        return JSON.parse(raw);
+    } catch (e) {
+        console.error('[DATABASE CORRUPTION] Failed to parse database.json. Resetting store.', e.message);
+        const backupPath = `${DB_PATH}.backup_${Date.now()}`;
+        if (fs.existsSync(DB_PATH)) fs.renameSync(DB_PATH, backupPath);
+        const fallbackSchema = { safeZones: [], groups: [] };
+        fs.writeFileSync(DB_PATH, JSON.stringify(fallbackSchema, null, 2));
+        return fallbackSchema;
+    }
+}
+
+function writeDB(data) {
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+}
+
+// --- API Endpoints: Safe Zones ---
+app.get('/api/safe-zones', (req, res) => {
+    const db = readDB();
+    res.json({ success: true, data: db.safeZones || [] });
+});
+
+app.post('/api/safe-zones', (req, res) => {
+    const db = readDB();
+    const newZone = { id: Date.now().toString(), ip: req.body.ip, name: req.body.name, addedAt: new Date().toISOString() };
+    db.safeZones = db.safeZones || [];
+    db.safeZones.push(newZone);
+    writeDB(db);
+    res.json({ success: true, data: newZone });
+});
+
+app.delete('/api/safe-zones/:id', (req, res) => {
+    const db = readDB();
+    db.safeZones = (db.safeZones || []).filter(z => z.id !== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
+
+// --- API Endpoints: Groups ---
+app.get('/api/groups', (req, res) => {
+    const db = readDB();
+    res.json({ success: true, data: db.groups || [] });
+});
+
+app.post('/api/groups', (req, res) => {
+    const db = readDB();
+    const newGroup = { id: Date.now().toString(), name: req.body.name, description: req.body.description, members: 0, addedAt: new Date().toISOString() };
+    db.groups = db.groups || [];
+    db.groups.push(newGroup);
+    writeDB(db);
+    res.json({ success: true, data: newGroup });
+});
+
+app.delete('/api/groups/:id', (req, res) => {
+    const db = readDB();
+    db.groups = (db.groups || []).filter(g => g.id !== req.params.id);
+    writeDB(db);
+    res.json({ success: true });
+});
 
 app.post('/api/startup', (req, res) => {
     try {
@@ -39,7 +106,11 @@ app.post('/api/startup', (req, res) => {
                 oLink.Save
             `;
             const tempVbs = path.join(__dirname, 'temp_startup_shortcut.vbs');
-            fs.writeFileSync(tempVbs, vbsScript);
+            try {
+                fs.writeFileSync(tempVbs, vbsScript);
+            } catch(writeErr) {
+                 return res.status(500).json({ success: false, error: 'Failed to write temporary VBS script. Permission denied.' });
+            }
             exec(`cscript //nologo "${tempVbs}"`, (err) => {
                 if (fs.existsSync(tempVbs)) fs.unlinkSync(tempVbs);
                 if (err) return res.status(500).json({ success: false, error: err.message });

@@ -756,6 +756,40 @@
                     </div>
                 </section>
 
+                <!-- VIEW: SAFE ZONES -->
+                <section id="view-safe-zones" class="view-panel" style="display: none;">
+                    <div class="widget-box">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3><i class="fa-solid fa-shield-cat text-emerald"></i> Safe Zones & IP Whitelist</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted);">Manage approved locations and IP addresses.</p>
+                            </div>
+                            <button id="btn-add-safe-zone" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add Safe Zone</button>
+                        </div>
+                        <div id="safe-zones-list" class="list-box margin-top-md">
+                            <!-- Populated dynamically via JS -->
+                            <div class="list-item" style="opacity: 0.5; justify-content: center;">No Safe Zones found.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW: MEETMYFRIEND GROUPS -->
+                <section id="view-remote-contacts" class="view-panel" style="display: none;">
+                    <div class="widget-box">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3><i class="fa-solid fa-users-gear text-info"></i> MeetMyFriend Groups</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted);">Organize your trusted connections into groups.</p>
+                            </div>
+                            <button id="btn-add-group" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Create Group</button>
+                        </div>
+                        <div id="groups-list" class="list-box margin-top-md">
+                            <!-- Populated dynamically via JS -->
+                            <div class="list-item" style="opacity: 0.5; justify-content: center;">No Groups found.</div>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </main>
 
@@ -1048,6 +1082,20 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="window.appController.view.showToast('success', 'Device Registered', 'New endpoint saved to fleet roster.'); document.getElementById('add-device-modal').classList.remove('active');">Save Device</button>
                 <button class="btn btn-secondary close-modal-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Modal Overlay Container -->
+    <div id="dynamic-modal-overlay" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header" id="dynamic-modal-title">Modal Title</div>
+            <div class="modal-body" id="dynamic-modal-body">
+                <!-- Content injected dynamically -->
+            </div>
+            <div class="modal-footer" id="dynamic-modal-footer">
+                <button class="btn btn-secondary" id="dynamic-modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="dynamic-modal-confirm">Confirm</button>
             </div>
         </div>
     </div>

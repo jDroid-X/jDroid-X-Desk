@@ -930,4 +930,269 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ==========================================
+// NEW MVC MODULES (UI/UX Additions)
+// ==========================================
 
+class ValidationUtil {
+    static isValidIP(ip) {
+        return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip);
+    }
+    static isNotEmpty(str) {
+        return str && str.trim().length > 0;
+    }
+    static escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+}
+
+class SafeZoneModel {
+    async fetchAll() {
+        try {
+            const res = await fetch('/api/safe-zones');
+            const data = await res.json();
+            return data.data;
+        } catch(e) { return []; }
+    }
+    async add(ip, name) {
+        const res = await fetch('/api/safe-zones', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip, name })
+        });
+        return res.json();
+    }
+    async remove(id) {
+        return fetch(`/api/safe-zones/${id}`, { method: 'DELETE' });
+    }
+}
+
+class GroupModel {
+    async fetchAll() {
+        try {
+            const res = await fetch('/api/groups');
+            const data = await res.json();
+            return data.data;
+        } catch(e) { return []; }
+    }
+    async add(name, description) {
+        const res = await fetch('/api/groups', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description })
+        });
+        return res.json();
+    }
+    async remove(id) {
+        return fetch(`/api/groups/${id}`, { method: 'DELETE' });
+    }
+}
+
+class DialogView {
+    constructor() {
+        this.overlay = document.getElementById('dynamic-modal-overlay');
+        this.title = document.getElementById('dynamic-modal-title');
+        this.body = document.getElementById('dynamic-modal-body');
+        this.btnCancel = document.getElementById('dynamic-modal-cancel');
+        this.btnConfirm = document.getElementById('dynamic-modal-confirm');
+        
+        if (this.btnCancel) {
+            this.btnCancel.addEventListener('click', () => this.close());
+        }
+    }
+
+    show(title, bodyHtml, onConfirm) {
+        if(!this.overlay) return;
+        this.title.textContent = title;
+        this.body.innerHTML = bodyHtml;
+        this.overlay.classList.add('active');
+        
+        this.btnConfirm.onclick = () => {
+            if (onConfirm()) {
+                this.close();
+            }
+        };
+    }
+
+    close() {
+        if(this.overlay) this.overlay.classList.remove('active');
+    }
+}
+
+class SafeZoneController {
+    constructor(model, dialogView) {
+        this.model = model;
+        this.dialogView = dialogView;
+        this.listContainer = document.getElementById('safe-zones-list');
+        this.btnAdd = document.getElementById('btn-add-safe-zone');
+        
+        if (this.btnAdd) {
+            this.btnAdd.addEventListener('click', () => this.showAddDialog());
+        }
+    }
+
+    async init() {
+        await this.renderList();
+    }
+
+    async renderList() {
+        if (!this.listContainer) return;
+        const zones = await this.model.fetchAll();
+        this.listContainer.innerHTML = '';
+        if (zones.length === 0) {
+            this.listContainer.innerHTML = '<div class="list-item" style="opacity: 0.5; justify-content: center;">No Safe Zones found.</div>';
+            return;
+        }
+        zones.forEach(zone => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="list-item-content">
+                    <span class="list-item-title"><i class="fa-solid fa-server text-emerald"></i> ${ValidationUtil.escapeHTML(zone.name)}</span>
+                    <span class="list-item-sub">${ValidationUtil.escapeHTML(zone.ip)}</span>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${zone.id}"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            item.querySelector('.delete-btn').addEventListener('click', () => this.deleteZone(zone.id));
+            this.listContainer.appendChild(item);
+        });
+    }
+
+    showAddDialog() {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Zone Name</label>
+                <input type="text" id="sz-name" class="input-text" placeholder="e.g. Home Network">
+            </div>
+            <div class="form-group">
+                <label>IP Address / Subnet</label>
+                <input type="text" id="sz-ip" class="input-text" placeholder="e.g. 192.168.1.1">
+            </div>
+        `;
+        this.dialogView.show('Add Safe Zone', bodyHtml, () => {
+            const name = document.getElementById('sz-name').value;
+            const ip = document.getElementById('sz-ip').value;
+            
+            if (!ValidationUtil.isNotEmpty(name)) {
+                window.appController.view.showToast('error', 'Validation Failed', 'Zone name cannot be empty.');
+                return false;
+            }
+            if (!ValidationUtil.isValidIP(ip)) {
+                window.appController.view.showToast('error', 'Validation Failed', 'Please enter a valid IPv4 address.');
+                return false;
+            }
+            
+            this.model.add(ip, name).then(() => {
+                window.appController.view.showToast('success', 'Safe Zone Added', `${name} has been whitelisted.`);
+                this.renderList();
+            });
+            return true;
+        });
+    }
+
+    async deleteZone(id) {
+        if(confirm('Are you sure you want to delete this Safe Zone?')) {
+            await this.model.remove(id);
+            window.appController.view.showToast('info', 'Safe Zone Deleted', 'The safe zone was removed.');
+            this.renderList();
+        }
+    }
+}
+
+class GroupController {
+    constructor(model, dialogView) {
+        this.model = model;
+        this.dialogView = dialogView;
+        this.listContainer = document.getElementById('groups-list');
+        this.btnAdd = document.getElementById('btn-add-group');
+        
+        if (this.btnAdd) {
+            this.btnAdd.addEventListener('click', () => this.showAddDialog());
+        }
+    }
+
+    async init() {
+        await this.renderList();
+    }
+
+    async renderList() {
+        if (!this.listContainer) return;
+        const groups = await this.model.fetchAll();
+        this.listContainer.innerHTML = '';
+        if (groups.length === 0) {
+            this.listContainer.innerHTML = '<div class="list-item" style="opacity: 0.5; justify-content: center;">No Groups found.</div>';
+            return;
+        }
+        groups.forEach(group => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="list-item-content">
+                    <span class="list-item-title"><i class="fa-solid fa-users text-info"></i> ${ValidationUtil.escapeHTML(group.name)}</span>
+                    <span class="list-item-sub">${ValidationUtil.escapeHTML(group.description || 'No description')}</span>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${group.id}"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            item.querySelector('.delete-btn').addEventListener('click', () => this.deleteGroup(group.id));
+            this.listContainer.appendChild(item);
+        });
+    }
+
+    showAddDialog() {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Group Name</label>
+                <input type="text" id="grp-name" class="input-text" placeholder="e.g. IT Admins">
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <input type="text" id="grp-desc" class="input-text" placeholder="e.g. Level 2 Support Team">
+            </div>
+        `;
+        this.dialogView.show('Create Group', bodyHtml, () => {
+            const name = document.getElementById('grp-name').value;
+            const desc = document.getElementById('grp-desc').value;
+            
+            if (!ValidationUtil.isNotEmpty(name)) {
+                window.appController.view.showToast('error', 'Validation Failed', 'Group name cannot be empty.');
+                return false;
+            }
+            
+            this.model.add(name, desc).then(() => {
+                window.appController.view.showToast('success', 'Group Created', `Group ${name} created successfully.`);
+                this.renderList();
+            });
+            return true;
+        });
+    }
+
+    async deleteGroup(id) {
+        if(confirm('Are you sure you want to delete this group?')) {
+            await this.model.remove(id);
+            window.appController.view.showToast('info', 'Group Deleted', 'The group was removed.');
+            this.renderList();
+        }
+    }
+}
+
+// Initialize New MVC Modules
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const dialogView = new DialogView();
+        window.safeZoneController = new SafeZoneController(new SafeZoneModel(), dialogView);
+        window.groupController = new GroupController(new GroupModel(), dialogView);
+        
+        window.safeZoneController.init();
+        window.groupController.init();
+    }, 500);
+});

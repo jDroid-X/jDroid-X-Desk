@@ -52,7 +52,7 @@ ECHO App running on background server at http://localhost:12345
 ECHO ========================================================
 ECHO.
 ECHO Launching jDroid-X-Desk App Mode...
-wmic process where "name='powershell.exe'" get commandline | findstr "tray_icon.ps1" >nul
+powershell -Command "$p = Get-CimInstance Win32_Process; if (($p | Where-Object CommandLine -Match 'tray_icon.ps1').Count -gt 0) { exit 0 } else { exit 1 }"
 IF %ERRORLEVEL% NEQ 0 (
     start "" powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0tray_icon.ps1"
 )
