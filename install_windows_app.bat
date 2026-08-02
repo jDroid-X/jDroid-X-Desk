@@ -6,16 +6,25 @@ ECHO ========================================================
 ECHO.
 ECHO [1/3] Verifying Node.js and NPM installation...
 node -v >nul 2>&1
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO [WARNING] Node.js is not installed!
-    ECHO [INFO] Auto-downloading Node.js installer (this may take a minute)...
-    powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.17.0/node-v20.17.0-x64.msi' -OutFile '%TEMP%\node_installer.msi'"
-    ECHO [INFO] Launching Node.js Installer... Please complete the setup in the popup window.
-    start /wait %TEMP%\node_installer.msi
-    ECHO [SUCCESS] Node.js installation finished! Please restart this installer.
+IF %ERRORLEVEL% EQU 0 GOTO NODE_INSTALLED
+
+ECHO [WARNING] Node.js is not installed!
+ECHO [INFO] Auto-downloading Node.js installer (this may take a minute)...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.17.0/node-v20.17.0-x64.msi' -OutFile '%TEMP%\node_installer.msi'"
+
+IF NOT EXIST "%TEMP%\node_installer.msi" (
+    ECHO [ERROR] Download failed. Check your internet connection or run script as Administrator.
     ping 127.0.0.1 -n 11 > nul
     EXIT /B 1
 )
+
+ECHO [INFO] Launching Node.js Installer... Please complete the setup in the popup window.
+start /wait %TEMP%\node_installer.msi
+ECHO [SUCCESS] Node.js installation finished!
+ECHO [INFO] Resuming installation seamlessly...
+SET "PATH=%PATH%;C:\Program Files\nodejs;C:\Program Files (x86)\nodejs"
+
+:NODE_INSTALLED
 ECHO [2/3] Installing background web server dependencies...
 call npm install --no-audit
 IF %ERRORLEVEL% NEQ 0 (
