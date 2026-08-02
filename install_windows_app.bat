@@ -52,5 +52,9 @@ ECHO App running on background server at http://localhost:12345
 ECHO ========================================================
 ECHO.
 ECHO Launching jDroid-X-Desk App Mode...
+wmic process where "name='powershell.exe'" get commandline | findstr "tray_icon.ps1" >nul
+IF %ERRORLEVEL% NEQ 0 (
+    start /b powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0tray_icon.ps1"
+)
 wscript.exe "%~dp0start_jdroid_app.vbs"
 ping 127.0.0.1 -n 11 > nul

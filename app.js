@@ -9,7 +9,7 @@
 
 class LocalSystemModel {
     constructor() {
-        this.deviceId = '984-102-391';
+        this.deviceId = 'JDX-INIT-0000';
         this.oneTimePass = 'k9X#m2P8';
         this.activeSession = null;
         
@@ -286,12 +286,21 @@ class AppController {
         this.monInterval = null;
     }
 
-    init() {
+    async init() {
         this.bindNavigation();
         this.bindModals();
         this.bindThemeToggle();
         this.bindRemoteConnectLogic();
         this.bindSettingsEvents();
+        
+        try {
+            const res = await fetch('/api/hardware-id');
+            const data = await res.json();
+            this.systemModel.deviceId = data.deviceId || 'JDX-ERR-0000';
+        } catch (e) {
+            this.systemModel.deviceId = 'JDX-OFLN-0000';
+        }
+        
         this.renderCurrentView();
         this.startJarvisTelemetryLoop();
     }

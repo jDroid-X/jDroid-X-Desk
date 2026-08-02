@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const { exec, spawn } = require('child_process');
 const fs = require('fs');
+const os = require('os');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = 12345;
@@ -59,42 +61,41 @@ app.post('/api/shutdown', (req, res) => {
     setTimeout(() => process.exit(0), 1000);
 });
 
-// Function to safely launch System Tray Icon
-function launchSystemTray() {
-    const psScript = path.join(__dirname, 'tray_icon.ps1');
-    if (!fs.existsSync(psScript)) return;
-
-    // Check if tray_icon.ps1 is already running to prevent duplicates
-    exec('wmic process where "name=\'powershell.exe\'" get commandline', (err, stdout) => {
-        if (!err && stdout && stdout.includes('tray_icon.ps1')) {
-            console.log('[TRAY] System Tray Icon is already active.');
-            return;
+app.get('/api/hardware-id', (req, res) => {
+    try {
+        const interfaces = os.networkInterfaces();
+        let macAddress = '00:00:00:00:00:00';
+        for (const name of Object.keys(interfaces)) {
+            for (const iface of interfaces[name]) {
+                if (!iface.internal && iface.mac !== '00:00:00:00:00:00') {
+                    macAddress = iface.mac;
+                    break;
+                }
+            }
+            if (macAddress !== '00:00:00:00:00:00') break;
         }
-
-        const trayProcess = spawn('powershell.exe', [
-            '-ExecutionPolicy', 'Bypass',
-            '-WindowStyle', 'Hidden',
-            '-File', psScript
-        ], {
-            detached: true,
-            stdio: 'ignore'
-        });
-        trayProcess.unref();
-        console.log('[TRAY] System Tray Icon spawned successfully.');
-    });
-}
+        
+        const hostname = os.hostname();
+        const rawString = `${hostname}-${macAddress}`;
+        const hash = crypto.createHash('md5').update(rawString).digest('hex').toUpperCase();
+        
+        // Format as JDX-XXXX-XXXX
+        const deviceId = `JDX-${hash.substring(0, 4)}-${hash.substring(4, 8)}`;
+        res.json({ success: true, deviceId: deviceId });
+    } catch (err) {
+        res.json({ success: true, deviceId: 'JDX-RAND-0000' });
+    }
+});
 
 // Start Server with EADDRINUSE Error Boundary
 const server = app.listen(PORT, () => {
     console.log(`[SUCCESS] jDroid-X-Desk Server running on http://localhost:${PORT}`);
-    launchSystemTray();
 });
 
 server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
         console.log(`[INFO] Port ${PORT} is already in use by an active jDroid-X-Desk process.`);
         console.log(`[INFO] Server is already running at http://localhost:${PORT}`);
-        launchSystemTray();
     } else {
         console.error('[SERVER ERROR] Failed to start server:', err.message);
     }
