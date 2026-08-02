@@ -515,7 +515,12 @@ class AppController {
                     this.loginAttempts = 0;
                     this.unlockConsole(cred.user.email);
                 } catch (err) {
-                    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-login-credentials' || err.code === 'auth/invalid-credential') {
+                    const isInvalidLogin = err.code === 'auth/user-not-found' || 
+                                           err.code === 'auth/invalid-login-credentials' || 
+                                           err.code === 'auth/invalid-credential' ||
+                                           (typeof err.message === 'string' && err.message.includes('INVALID_LOGIN_CREDENTIALS'));
+                    
+                    if (isInvalidLogin) {
                         try {
                             // Attempt auto-registration if account doesn't exist
                             const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
