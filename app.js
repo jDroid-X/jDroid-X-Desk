@@ -34,8 +34,8 @@ class SystemSettingsModel {
         
         // Firebase Cloud configuration
         this.firebaseApiKey = localStorage.getItem('jdx_fb_api_key') || 'AIzaSyDPKwsEsNY32Owt1tx-t34nIjDvhf-cuTI';
-        this.firebaseProjectId = localStorage.getItem('jdx_fb_project_id') || 'jdroid-x-desk';
-        this.firebaseDbUrl = localStorage.getItem('jdx_fb_db_url') || 'https://jdroid-x-desk-default-rtdb.firebaseio.com';
+        this.firebaseProjectId = localStorage.getItem('jdx_fb_project_id') || 'jdroid-x';
+        this.firebaseDbUrl = localStorage.getItem('jdx_fb_db_url') || 'https://jdroid-x-default-rtdb.firebaseio.com';
 
         // Network Metadata simulation
         this.connType = "5G Direct P2P";
