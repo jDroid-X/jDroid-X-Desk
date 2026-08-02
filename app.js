@@ -970,16 +970,21 @@ class AppController {
 
         if (connectBtn) {
             connectBtn.addEventListener('click', () => {
-                const inputId = document.getElementById('target-id-input').value.trim();
+                const inputId = document.getElementById('target-id-input').value.trim().toUpperCase();
                 const inputPass = document.getElementById('target-pass-input').value.trim();
 
-                const cleanId = inputId.replace(/\D/g, '');
-                if (cleanId.length !== 9) {
-                    this.view.showToast('error', 'Invalid Address', 'Please enter a valid 9-digit Secondary Device Address (e.g. 520-310-884).');
+                let formattedId = '';
+                const newStructureRegex = /^JDX-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+                const cleanOldId = inputId.replace(/\D/g, '');
+
+                if (newStructureRegex.test(inputId)) {
+                    formattedId = inputId;
+                } else if (cleanOldId.length === 9) {
+                    formattedId = `${cleanOldId.slice(0,3)}-${cleanOldId.slice(3,6)}-${cleanOldId.slice(6,9)}`;
+                } else {
+                    this.view.showToast('error', 'Invalid Address', 'Please enter a valid Device Address (e.g. 520-310-884 or JDX-ABCD-1234).');
                     return;
                 }
-
-                const formattedId = `${cleanId.slice(0,3)}-${cleanId.slice(3,6)}-${cleanId.slice(6,9)}`;
                 
                 this.systemModel.activeSession = formattedId;
 
@@ -1234,7 +1239,7 @@ class AppController {
         const addContactBtn = document.getElementById('btn-open-add-contact');
         if (addContactBtn) {
             addContactBtn.onclick = () => {
-                const id = prompt('Enter 9-Digit Partner System Address:', '710-224-900');
+                const id = prompt('Enter Partner System Address (e.g. 710-224-900 or JDX-ABCD-1234):', '');
                 if (id) {
                     this.view.showToast('success', 'Contact Saved', `Partner ID ${id} added to MeetMyFriend group.`);
                 }
