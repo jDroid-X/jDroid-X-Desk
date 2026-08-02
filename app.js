@@ -36,6 +36,9 @@ class SystemSettingsModel {
         this.firebaseApiKey = localStorage.getItem('jdx_fb_api_key') || 'AIzaSyCUfP_cQmVghxDYfUiuPDUycTBAUU9VR-8';
         this.firebaseProjectId = localStorage.getItem('jdx_fb_project_id') || 'jfirebaselogin';
         this.firebaseDbUrl = localStorage.getItem('jdx_fb_db_url') || 'https://jfirebaselogin-default-rtdb.firebaseio.com';
+        this.firebaseMessagingSenderId = localStorage.getItem('jdx_fb_messaging_sender_id') || '734511435834';
+        this.firebaseAppId = localStorage.getItem('jdx_fb_app_id') || '1:734511435834:web:bcd459e356b15c0cfbe503';
+        this.firebaseMeasurementId = localStorage.getItem('jdx_fb_measurement_id') || 'G-NTGPTX1H22';
 
         // Network Metadata simulation
         this.connType = "5G Direct P2P";
@@ -469,7 +472,11 @@ class AppController {
                             apiKey: this.settingsModel.firebaseApiKey,
                             authDomain: `${this.settingsModel.firebaseProjectId}.firebaseapp.com`,
                             databaseURL: this.settingsModel.firebaseDbUrl,
-                            projectId: this.settingsModel.firebaseProjectId
+                            projectId: this.settingsModel.firebaseProjectId,
+                            storageBucket: `${this.settingsModel.firebaseProjectId}.firebasestorage.app`,
+                            messagingSenderId: this.settingsModel.firebaseMessagingSenderId,
+                            appId: this.settingsModel.firebaseAppId,
+                            measurementId: this.settingsModel.firebaseMeasurementId
                         });
                     }
                     const cred = await firebase.auth().signInWithEmailAndPassword(email, pass);
@@ -648,17 +655,26 @@ class AppController {
         const fbApiKeyInput = document.getElementById('settings-fb-api-key');
         const fbProjIdInput = document.getElementById('settings-fb-project-id');
         const fbDbUrlInput = document.getElementById('settings-fb-db-url');
+        const fbSenderIdInput = document.getElementById('settings-fb-messaging-sender-id');
+        const fbAppIdInput = document.getElementById('settings-fb-app-id');
+        const fbMeasurementIdInput = document.getElementById('settings-fb-measurement-id');
         const fbSaveBtn = document.getElementById('settings-fb-save-btn');
 
         if (fbApiKeyInput) fbApiKeyInput.value = this.settingsModel.firebaseApiKey;
         if (fbProjIdInput) fbProjIdInput.value = this.settingsModel.firebaseProjectId;
         if (fbDbUrlInput) fbDbUrlInput.value = this.settingsModel.firebaseDbUrl;
+        if (fbSenderIdInput) fbSenderIdInput.value = this.settingsModel.firebaseMessagingSenderId;
+        if (fbAppIdInput) fbAppIdInput.value = this.settingsModel.firebaseAppId;
+        if (fbMeasurementIdInput) fbMeasurementIdInput.value = this.settingsModel.firebaseMeasurementId;
 
         if (fbSaveBtn) {
             fbSaveBtn.onclick = () => {
                 const key = fbApiKeyInput.value.trim();
                 const proj = fbProjIdInput.value.trim();
                 const url = fbDbUrlInput.value.trim();
+                const sender = (fbSenderIdInput) ? fbSenderIdInput.value.trim() : this.settingsModel.firebaseMessagingSenderId;
+                const appId = (fbAppIdInput) ? fbAppIdInput.value.trim() : this.settingsModel.firebaseAppId;
+                const measurementId = (fbMeasurementIdInput) ? fbMeasurementIdInput.value.trim() : this.settingsModel.firebaseMeasurementId;
 
                 if (!key) {
                     this.view.showToast('error', 'Validation Error', 'Firebase API Key cannot be empty.');
@@ -668,10 +684,16 @@ class AppController {
                 this.settingsModel.firebaseApiKey = key;
                 this.settingsModel.firebaseProjectId = proj;
                 this.settingsModel.firebaseDbUrl = url;
+                this.settingsModel.firebaseMessagingSenderId = sender;
+                this.settingsModel.firebaseAppId = appId;
+                this.settingsModel.firebaseMeasurementId = measurementId;
 
                 localStorage.setItem('jdx_fb_api_key', key);
                 localStorage.setItem('jdx_fb_project_id', proj);
                 localStorage.setItem('jdx_fb_db_url', url);
+                localStorage.setItem('jdx_fb_messaging_sender_id', sender);
+                localStorage.setItem('jdx_fb_app_id', appId);
+                localStorage.setItem('jdx_fb_measurement_id', measurementId);
 
                 this.view.showToast('success', 'Credentials Saved', 'Firebase configuration credentials updated successfully.');
                 this.traceModel.addLog('SECURITY_AUDIT', 'CONFIG_CHANGE', 'Firebase signaling API credentials updated by operator');
@@ -705,7 +727,11 @@ class AppController {
             apiKey: this.settingsModel.firebaseApiKey,
             authDomain: `${this.settingsModel.firebaseProjectId}.firebaseapp.com`,
             databaseURL: this.settingsModel.firebaseDbUrl,
-            projectId: this.settingsModel.firebaseProjectId
+            projectId: this.settingsModel.firebaseProjectId,
+            storageBucket: `${this.settingsModel.firebaseProjectId}.firebasestorage.app`,
+            messagingSenderId: this.settingsModel.firebaseMessagingSenderId,
+            appId: this.settingsModel.firebaseAppId,
+            measurementId: this.settingsModel.firebaseMeasurementId
         };
 
         this.updateFirebaseStatusUI('CONNECTING', 'Connecting to Cloud Realtime Database...');
