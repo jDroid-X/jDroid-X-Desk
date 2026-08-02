@@ -27,10 +27,6 @@ class LocalSystemModel {
 class SystemSettingsModel {
     constructor() {
         this.startupEnabled = false;
-        this.dynamic5GEnabled = true;
-        this.dlThreshold = 1.0;
-        this.pingThreshold = 100;
-        this.toastDuration = 4;
         
         // Firebase Cloud configuration
         this.firebaseApiKey = localStorage.getItem('jdx_fb_api_key') || 'AIzaSyCUfP_cQmVghxDYfUiuPDUycTBAUU9VR-8';
@@ -39,6 +35,42 @@ class SystemSettingsModel {
         this.firebaseMessagingSenderId = localStorage.getItem('jdx_fb_messaging_sender_id') || '734511435834';
         this.firebaseAppId = localStorage.getItem('jdx_fb_app_id') || '1:734511435834:web:bcd459e356b15c0cfbe503';
         this.firebaseMeasurementId = localStorage.getItem('jdx_fb_measurement_id') || 'G-NTGPTX1H22';
+
+        // 13-Screen Smart Grid Configurations
+        this.dashAutoConnect = localStorage.getItem('jdx_set_dash_auto') === 'true';
+        this.dashResolution = localStorage.getItem('jdx_set_dash_res') || '1080p';
+        
+        this.monVerbose = localStorage.getItem('jdx_set_mon_verbose') === 'true';
+        this.monBuffer = parseInt(localStorage.getItem('jdx_set_mon_buffer') || '50', 10);
+        
+        this.fleetAutoPing = localStorage.getItem('jdx_set_fleet_ping') === 'true';
+        this.fleetTimeout = parseInt(localStorage.getItem('jdx_set_fleet_timeout') || '120', 10);
+        
+        this.mapTheme = localStorage.getItem('jdx_set_map_theme') || 'Dark Vector';
+        this.mapCluster = localStorage.getItem('jdx_set_map_cluster') !== 'false';
+        
+        this.histPurge = parseInt(localStorage.getItem('jdx_set_hist_purge') || '30', 10);
+        this.histAcc = parseInt(localStorage.getItem('jdx_set_hist_acc') || '50', 10);
+        
+        this.grpSync = localStorage.getItem('jdx_set_grp_sync') || 'Real-time';
+        
+        this.zoneRadius = parseInt(localStorage.getItem('jdx_set_zone_rad') || '200', 10);
+        this.zoneSeverity = localStorage.getItem('jdx_set_zone_sev') || 'Critical (Alarm)';
+        
+        this.guardMfa = localStorage.getItem('jdx_set_grd_mfa') !== 'false';
+        this.guardInherit = localStorage.getItem('jdx_set_grd_inherit') === 'true';
+        
+        this.notifSound = localStorage.getItem('jdx_set_notif_sound') !== 'false';
+        this.toastDuration = parseInt(localStorage.getItem('jdx_set_toast_duration') || '4', 10);
+        
+        this.healthBatt = parseInt(localStorage.getItem('jdx_set_hlth_batt') || '15', 10);
+        this.healthTemp = parseInt(localStorage.getItem('jdx_set_hlth_temp') || '80', 10);
+        
+        this.profSync = localStorage.getItem('jdx_set_prof_sync') !== 'false';
+        this.profIdle = parseInt(localStorage.getItem('jdx_set_prof_idle') || '30', 10);
+        
+        this.privTelemetry = localStorage.getItem('jdx_set_priv_telemetry') === 'true';
+        this.privBackup = localStorage.getItem('jdx_set_priv_backup') !== 'false';
 
         // Network Metadata simulation
         this.connType = "5G Direct P2P";
@@ -617,64 +649,63 @@ class AppController {
     }
 
     bindSettingsEvents() {
-        const dlThresh = document.getElementById('settings-dl-threshold');
-        const dlVal = document.getElementById('settings-dl-val');
-        if (dlThresh && dlVal) {
-            dlThresh.oninput = (e) => {
-                this.settingsModel.dlThreshold = parseFloat(e.target.value);
-                dlVal.textContent = this.settingsModel.dlThreshold.toFixed(1);
-            };
-        }
+        // Universal binding helper for settings
+        const bindInput = (id, key, isCheckbox, isInt) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            
+            if (isCheckbox) {
+                el.checked = this.settingsModel[key];
+                el.onchange = (e) => {
+                    this.settingsModel[key] = e.target.checked;
+                    localStorage.setItem(`jdx_${id}`, e.target.checked.toString());
+                };
+            } else {
+                el.value = this.settingsModel[key];
+                el.onchange = (e) => {
+                    const val = isInt ? parseInt(e.target.value, 10) : e.target.value;
+                    this.settingsModel[key] = val;
+                    localStorage.setItem(`jdx_${id}`, val.toString());
+                };
+            }
+        };
 
-        const pingThresh = document.getElementById('settings-ping-threshold');
-        const pingVal = document.getElementById('settings-ping-val');
-        if (pingThresh && pingVal) {
-            pingThresh.oninput = (e) => {
-                this.settingsModel.pingThreshold = parseInt(e.target.value, 10);
-                pingVal.textContent = this.settingsModel.pingThreshold;
-            };
-        }
-
-        const dyn5G = document.getElementById('settings-dynamic-5g');
-        if (dyn5G) {
-            dyn5G.onchange = (e) => {
-                this.settingsModel.dynamic5GEnabled = e.target.checked;
-            };
-        }
-
-        const toastDur = document.getElementById('settings-toast-duration');
-        const toastVal = document.getElementById('settings-toast-val');
-        if (toastDur && toastVal) {
-            toastDur.oninput = (e) => {
-                this.settingsModel.toastDuration = parseInt(e.target.value, 10);
-                toastVal.textContent = this.settingsModel.toastDuration;
-            };
-        }
+        bindInput('set-dash-auto', 'dashAutoConnect', true);
+        bindInput('set-dash-res', 'dashResolution', false);
+        bindInput('set-mon-verbose', 'monVerbose', true);
+        bindInput('set-mon-buffer', 'monBuffer', false, true);
+        bindInput('set-fleet-ping', 'fleetAutoPing', true);
+        bindInput('set-fleet-timeout', 'fleetTimeout', false, true);
+        bindInput('set-map-theme', 'mapTheme', false);
+        bindInput('set-map-cluster', 'mapCluster', true);
+        bindInput('set-hist-purge', 'histPurge', false, true);
+        bindInput('set-hist-acc', 'histAcc', false, true);
+        bindInput('set-grp-sync', 'grpSync', false);
+        bindInput('set-zone-rad', 'zoneRadius', false, true);
+        bindInput('set-zone-sev', 'zoneSeverity', false);
+        bindInput('set-grd-mfa', 'guardMfa', true);
+        bindInput('set-grd-inherit', 'guardInherit', true);
+        bindInput('set-notif-sound', 'notifSound', true);
+        bindInput('settings-toast-duration', 'toastDuration', false, true);
+        bindInput('set-hlth-batt', 'healthBatt', false, true);
+        bindInput('set-hlth-temp', 'healthTemp', false, true);
+        bindInput('set-prof-sync', 'profSync', true);
+        bindInput('set-prof-idle', 'profIdle', false, true);
+        bindInput('set-priv-telemetry', 'privTelemetry', true);
+        bindInput('set-priv-backup', 'privBackup', true);
 
         // Firebase Settings Bindings
-        const fbApiKeyInput = document.getElementById('settings-fb-api-key');
-        const fbProjIdInput = document.getElementById('settings-fb-project-id');
-        const fbDbUrlInput = document.getElementById('settings-fb-db-url');
-        const fbSenderIdInput = document.getElementById('settings-fb-messaging-sender-id');
-        const fbAppIdInput = document.getElementById('settings-fb-app-id');
-        const fbMeasurementIdInput = document.getElementById('settings-fb-measurement-id');
-        const fbSaveBtn = document.getElementById('settings-fb-save-btn');
+        const fbApiKeyInput = document.getElementById('settings-fb-api');
+        const fbAppIdInput = document.getElementById('settings-fb-app');
+        const fbSaveBtn = document.getElementById('btn-save-firebase');
 
         if (fbApiKeyInput) fbApiKeyInput.value = this.settingsModel.firebaseApiKey;
-        if (fbProjIdInput) fbProjIdInput.value = this.settingsModel.firebaseProjectId;
-        if (fbDbUrlInput) fbDbUrlInput.value = this.settingsModel.firebaseDbUrl;
-        if (fbSenderIdInput) fbSenderIdInput.value = this.settingsModel.firebaseMessagingSenderId;
         if (fbAppIdInput) fbAppIdInput.value = this.settingsModel.firebaseAppId;
-        if (fbMeasurementIdInput) fbMeasurementIdInput.value = this.settingsModel.firebaseMeasurementId;
 
         if (fbSaveBtn) {
             fbSaveBtn.onclick = () => {
-                const key = fbApiKeyInput.value.trim();
-                const proj = fbProjIdInput.value.trim();
-                const url = fbDbUrlInput.value.trim();
-                const sender = (fbSenderIdInput) ? fbSenderIdInput.value.trim() : this.settingsModel.firebaseMessagingSenderId;
-                const appId = (fbAppIdInput) ? fbAppIdInput.value.trim() : this.settingsModel.firebaseAppId;
-                const measurementId = (fbMeasurementIdInput) ? fbMeasurementIdInput.value.trim() : this.settingsModel.firebaseMeasurementId;
+                const key = fbApiKeyInput ? fbApiKeyInput.value.trim() : '';
+                const appId = fbAppIdInput ? fbAppIdInput.value.trim() : '';
 
                 if (!key) {
                     this.view.showToast('error', 'Validation Error', 'Firebase API Key cannot be empty.');
@@ -682,18 +713,9 @@ class AppController {
                 }
 
                 this.settingsModel.firebaseApiKey = key;
-                this.settingsModel.firebaseProjectId = proj;
-                this.settingsModel.firebaseDbUrl = url;
-                this.settingsModel.firebaseMessagingSenderId = sender;
                 this.settingsModel.firebaseAppId = appId;
-                this.settingsModel.firebaseMeasurementId = measurementId;
-
                 localStorage.setItem('jdx_fb_api_key', key);
-                localStorage.setItem('jdx_fb_project_id', proj);
-                localStorage.setItem('jdx_fb_db_url', url);
-                localStorage.setItem('jdx_fb_messaging_sender_id', sender);
                 localStorage.setItem('jdx_fb_app_id', appId);
-                localStorage.setItem('jdx_fb_measurement_id', measurementId);
 
                 this.view.showToast('success', 'Credentials Saved', 'Firebase configuration credentials updated successfully.');
                 this.traceModel.addLog('SECURITY_AUDIT', 'CONFIG_CHANGE', 'Firebase signaling API credentials updated by operator');

@@ -36,7 +36,7 @@
     --radius-lg: 16px;
     --radius-pill: 9999px;
     
-    --sidebar-width: 270px;
+    --sidebar-width: 220px;
     --topbar-height: 64px;
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -295,6 +295,9 @@ html, body {
 
 .view-panel {
     display: none;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .view-panel.active {
@@ -1286,6 +1289,13 @@ html, body {
     display: none !important;
 }
 
+/* Horizontal Compaction Settings Grid */
+.settings-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.6rem;
+    align-items: start;
+}
 /* Light theme compatibility */
 .light-theme .login-gate-container {
     background: rgba(230, 240, 255, 0.97);

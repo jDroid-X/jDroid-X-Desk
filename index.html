@@ -734,89 +734,155 @@
                 <!-- VIEW 12: SYSTEM SETTINGS -->
                 <section id="view-system-settings" class="view-panel">
                     <div class="screen-hint-box">
-                        <i class="fa-solid fa-lightbulb hint-icon"></i>
+                        <i class="fa-solid fa-sliders hint-icon text-info"></i>
                         <div class="hint-text">
-                            <strong>Settings Principle:</strong> Global configuration parameters mapping to the SystemSettingsModel. Customize thresholds, behaviors, and environmental variables dynamically.
-                        </div>
-                    </div>
-                    <div class="widget-box">
-                        <h3><i class="fa-solid fa-sliders text-info"></i> System Preferences</h3>
-                        <div class="margin-top-md">
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="settings-startup-checkbox">
-                                <span class="checkmark"></span>
-                                Start jDroid-X-Desk automatically with Windows Startup
-                            </label>
-                        </div>
-                        <div class="margin-top-lg">
-                            <button class="btn btn-secondary btn-sm" id="btn-verify-startup-status"><i class="fa-solid fa-check-circle"></i> Verify Windows Startup Status</button>
+                            <strong>Global Smart-Fit Settings Matrix:</strong> Unified configurations across all 13 primary views to optimize telemetry, alerts, and rendering.
                         </div>
                     </div>
 
-                    <div class="widget-box margin-top-md">
-                        <h3><i class="fa-solid fa-gauge-high text-primary"></i> Global HUD Thresholds</h3>
-                        <div class="margin-top-md">
-                            <label for="settings-dl-threshold">Minimum Download Speed Alarm Threshold (MB/s): <span id="settings-dl-val">1.0</span></label>
-                            <input type="range" id="settings-dl-threshold" min="0.1" max="5.0" step="0.1" value="1.0" style="width: 100%; margin-top: 0.2rem;">
-                        </div>
-                        <div class="margin-top-md">
-                            <label for="settings-ping-threshold">Maximum Ping Alarm Threshold (ms): <span id="settings-ping-val">100</span></label>
-                            <input type="range" id="settings-ping-threshold" min="20" max="500" step="10" value="100" style="width: 100%; margin-top: 0.2rem;">
-                        </div>
-                        <div class="margin-top-md">
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="settings-dynamic-5g" checked>
-                                <span class="checkmark"></span>
-                                Enable Dynamic 5G Threshold Adjustment (Boosts limits by +20% on 5G/Direct)
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="widget-box margin-top-md">
-                        <h3><i class="fa-solid fa-bell text-warning"></i> UI & Notifications</h3>
-                        <div class="margin-top-md">
-                            <label for="settings-toast-duration">Toast Notification Display Duration (seconds): <span id="settings-toast-val">4</span></label>
-                            <input type="range" id="settings-toast-duration" min="2" max="15" step="1" value="4" style="width: 100%; margin-top: 0.2rem;">
-                        </div>
-                    </div>
-
-                    <div class="widget-box margin-top-md">
-                        <h3><i class="fa-solid fa-fire text-danger"></i> Google Cloud Firebase Signaling</h3>
-                        
-                        <!-- Connection Status Banner -->
-                        <div class="margin-top-sm">
-                            <div id="settings-fb-status-banner" class="badge badge-blue" style="width: 100%; text-align: center; display: block; padding: 0.2rem; font-weight: 600;">
-                                <i class="fa-solid fa-spinner fa-spin"></i> Cloud Signaling: INITIALIZING
+                    <!-- Global Firebase Setup -->
+                    <div class="widget-box margin-bottom-md" style="background: var(--bg-tertiary); border: 1px solid var(--accent-red-glow);">
+                        <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-fire text-danger"></i> Core Infrastructure (Firebase & Cloud)</h3>
+                        <div class="settings-grid-compact">
+                            <div>
+                                <label style="font-size: 0.8rem; margin-bottom: 0.2rem; display: block;">Firebase App ID</label>
+                                <input type="text" id="settings-fb-app" class="input-text" placeholder="1:xxx:web:yyy" style="width: 100%; font-family: var(--font-mono); font-size: 0.75rem;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; margin-bottom: 0.2rem; display: block;">API Key</label>
+                                <input type="text" id="settings-fb-api" class="input-text" placeholder="AIzaSy..." style="width: 100%; font-family: var(--font-mono); font-size: 0.75rem;">
+                            </div>
+                            <div style="grid-column: 1 / -1; margin-top: 0.5rem;">
+                                <button class="btn btn-primary btn-sm" id="btn-save-firebase"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Re-Initialize Cloud Sync</button>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="margin-top-md">
-                            <label for="settings-fb-api-key" style="display: block; margin-bottom: 0.1rem;">Firebase API Key:</label>
-                            <input type="text" id="settings-fb-api-key" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Firebase API Key">
+                    <div class="settings-grid-compact">
+                        <!-- 1. Dashboard -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-tower-broadcast text-primary"></i> 1. Dashboard</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-dash-auto"><span class="checkmark"></span>Auto-Connect Nodes
+                            </label>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Stream Resolution</label>
+                            <select id="set-dash-res" class="search-bar-mini" style="width: 100%;"><option>1080p</option><option>720p (Fast)</option></select>
                         </div>
-                        <div class="margin-top-md">
-                            <label for="settings-fb-project-id" style="display: block; margin-bottom: 0.1rem;">Firebase Project ID:</label>
-                            <input type="text" id="settings-fb-project-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Firebase Project ID">
+                        
+                        <!-- 2. System Monitor -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-network-wired text-warning"></i> 2. System Monitor</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-mon-verbose"><span class="checkmark"></span>Verbose Packet Logs
+                            </label>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Buffer Size (MB)</label>
+                            <input type="number" id="set-mon-buffer" class="input-text" value="50" style="width: 100%;">
                         </div>
-                        <div class="margin-top-md">
-                            <label for="settings-fb-db-url" style="display: block; margin-bottom: 0.1rem;">Firebase Realtime Database URL:</label>
-                            <input type="text" id="settings-fb-db-url" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="https://your-project.firebaseio.com">
+
+                        <!-- 3. Children & Fleet -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-laptop-code text-info"></i> 3. Device Fleet</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-fleet-ping"><span class="checkmark"></span>Auto Background Ping
+                            </label>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Offline Timeout (s)</label>
+                            <input type="number" id="set-fleet-timeout" class="input-text" value="120" style="width: 100%;">
                         </div>
-                        <div class="margin-top-md">
-                            <label for="settings-fb-messaging-sender-id" style="display: block; margin-bottom: 0.1rem;">Messaging Sender ID:</label>
-                            <input type="text" id="settings-fb-messaging-sender-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Messaging Sender ID">
+
+                        <!-- 4. Live Map -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-earth-americas text-emerald"></i> 4. Live Map</h4>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Map Theme</label>
+                            <select id="set-map-theme" class="search-bar-mini" style="width: 100%;"><option>Dark Vector</option><option>Satellite</option></select>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-map-cluster" checked><span class="checkmark"></span>Marker Clustering
+                            </label>
                         </div>
-                        <div class="margin-top-md">
-                            <label for="settings-fb-app-id" style="display: block; margin-bottom: 0.1rem;">App ID:</label>
-                            <input type="text" id="settings-fb-app-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="App ID">
+
+                        <!-- 5. Location History -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-clock-rotate-left text-purple"></i> 5. Location History</h4>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Auto-Purge (Days)</label>
+                            <input type="number" id="set-hist-purge" class="input-text" value="30" style="width: 100%;">
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Accuracy Threshold (m)</label>
+                            <input type="number" id="set-hist-acc" class="input-text" value="50" style="width: 100%;">
                         </div>
-                        <div class="margin-top-md">
-                            <label for="settings-fb-measurement-id" style="display: block; margin-bottom: 0.1rem;">Measurement ID:</label>
-                            <input type="text" id="settings-fb-measurement-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); padding: 0.2rem;" placeholder="Measurement ID">
+
+                        <!-- 6. Groups -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-users-gear text-info"></i> 6. Groups</h4>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Cloud Sync Frequency</label>
+                            <select id="set-grp-sync" class="search-bar-mini" style="width: 100%;"><option>Real-time</option><option>15 mins</option></select>
                         </div>
-                        <button id="settings-fb-save-btn" class="btn btn-primary btn-sm margin-top-md">
-                            <i class="fa-solid fa-save"></i> Save Firebase Credentials
-                        </button>
+
+                        <!-- 7. Safe Zones -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-shield-cat text-emerald"></i> 7. Safe Zones</h4>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Default Radius (m)</label>
+                            <input type="number" id="set-zone-rad" class="input-text" value="200" style="width: 100%;">
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Breach Alert Severity</label>
+                            <select id="set-zone-sev" class="search-bar-mini" style="width: 100%;"><option>Critical (Alarm)</option><option>Silent</option></select>
+                        </div>
+
+                        <!-- 8. Guardians -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-user-shield text-danger"></i> 8. Guardians</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-grd-mfa" checked><span class="checkmark"></span>Require MFA Check
+                            </label>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-grd-inherit"><span class="checkmark"></span>Admin Inheritance
+                            </label>
+                        </div>
+
+                        <!-- 9. Notifications -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-bell text-warning"></i> 9. Notifications</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-notif-sound" checked><span class="checkmark"></span>Play Alert Sounds
+                            </label>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Toast Duration (s)</label>
+                            <input type="number" id="settings-toast-duration" class="input-text" value="4" style="width: 100%;">
+                        </div>
+
+                        <!-- 10. Device Health -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-heart-pulse text-danger"></i> 10. Device Health</h4>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Battery Alarm (%)</label>
+                            <input type="number" id="set-hlth-batt" class="input-text" value="15" style="width: 100%;">
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Temp Alarm (°C)</label>
+                            <input type="number" id="set-hlth-temp" class="input-text" value="80" style="width: 100%;">
+                        </div>
+
+                        <!-- 11. Profile -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-user text-purple"></i> 11. Profile</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-prof-sync" checked><span class="checkmark"></span>Sync Avatars
+                            </label>
+                            <label class="margin-top-sm" style="font-size: 0.75rem; display: block;">Idle Timeout (mins)</label>
+                            <input type="number" id="set-prof-idle" class="input-text" value="30" style="width: 100%;">
+                        </div>
+
+                        <!-- 12. App Settings -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-gears text-info"></i> 12. App Base</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="settings-startup-checkbox"><span class="checkmark"></span>Start with OS
+                            </label>
+                            <button class="btn btn-secondary btn-sm margin-top-sm" id="btn-verify-startup-status" style="width: 100%;">Verify Reg</button>
+                        </div>
+
+                        <!-- 13. Privacy -->
+                        <div class="widget-box" style="padding: 0.8rem;">
+                            <h4 style="margin:0 0 0.5rem 0;"><i class="fa-solid fa-user-secret text-dim"></i> 13. Privacy</h4>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-priv-telemetry"><span class="checkmark"></span>Allow Analytics
+                            </label>
+                            <label class="checkbox-container margin-top-sm" style="font-size: 0.75rem;">
+                                <input type="checkbox" id="set-priv-backup" checked><span class="checkmark"></span>Cloud Backup Configs
+                            </label>
+                        </div>
                     </div>
                 </section>
 
