@@ -469,6 +469,17 @@ class AppController {
                     this.loginAttempts = 0;
                     this.unlockConsole(cred.user.email);
                 } catch (err) {
+                    if (err.code === 'auth/user-not-found') {
+                        try {
+                            const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+                            this.loginAttempts = 0;
+                            this.unlockConsole(cred.user.email);
+                            return;
+                        } catch (createErr) {
+                            err = createErr;
+                        }
+                    }
+
                     this.loginAttempts++;
                     const remaining = 5 - this.loginAttempts;
                     let errText = `⚠ ${err.message}`;

@@ -36,7 +36,7 @@
                 </div>
                 
                 <div class="margin-top-md">
-                    <label for="login-email-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-envelope text-primary"></i> Email Address</label>
+                    <label for="login-email-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-laptop text-primary"></i> This Device Address</label>
                     <input type="email" id="login-email-input" class="search-bar-mini" style="width: 100%; padding: 0.6rem; font-family: var(--font-mono);" value="jiten@jdroid-x-desk.com" placeholder="name@jdroid-x-desk.com">
                 </div>
                 
@@ -44,11 +44,12 @@
                     <label for="login-password-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-lock text-primary"></i> Password</label>
                     <!-- UX-1: Password visibility toggle wrapper -->
                     <div style="position: relative; display: flex; align-items: center;">
-                        <input type="password" id="login-password-input" class="search-bar-mini" style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 0.6rem; font-family: var(--font-mono);" placeholder="Enter security password">
+                        <input type="password" id="login-password-input" class="search-bar-mini" style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 0.6rem; font-family: var(--font-mono);" value="Admin@1234" placeholder="Enter security password">
                         <button id="toggle-pass-visibility" type="button" aria-label="Toggle password visibility" style="position:absolute;right:0.6rem;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0;font-size:0.9rem;">
                             <i class="fa-solid fa-eye" id="toggle-pass-icon"></i>
                         </button>
                     </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem; text-align: right;">Default Device Password Applied</div>
                 </div>
                 
                 <button id="login-submit-btn" class="btn btn-primary btn-full margin-top-lg">
