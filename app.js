@@ -24,6 +24,20 @@ class LocalSystemModel {
     }
 }
 
+class SystemSettingsModel {
+    constructor() {
+        this.startupEnabled = false;
+        this.dynamic5GEnabled = true;
+        this.dlThreshold = 1.0;
+        this.pingThreshold = 100;
+        this.toastDuration = 4;
+        
+        // Network Metadata simulation
+        this.connType = "5G Direct P2P";
+        this.ipAddress = "192.168.1.55";
+    }
+}
+
 class SystemTraceabilityLogModel {
     constructor() {
         this.systemA = { id: 'SYS-A-PRIMARY-984', ip: '10.0.4.120', role: 'Primary Technician' };
@@ -126,10 +140,10 @@ class AppView {
         
         setTimeout(() => {
             toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
+            toast.style.transform = 'translateX(-100%)';
             toast.style.transition = 'all 0.3s ease';
             setTimeout(() => toast.remove(), 300);
-        }, 3500);
+        }, (window.appController?.settingsModel?.toastDuration || 4) * 1000);
     }
 
     renderHintBanner(text) {
@@ -265,6 +279,7 @@ class AppView {
 class AppController {
     constructor() {
         this.systemModel = new LocalSystemModel();
+        this.settingsModel = new SystemSettingsModel();
         this.traceModel = new SystemTraceabilityLogModel();
         this.view = new AppView();
         this.currentView = 'remote-console';
@@ -276,6 +291,7 @@ class AppController {
         this.bindModals();
         this.bindThemeToggle();
         this.bindRemoteConnectLogic();
+        this.bindSettingsEvents();
         this.renderCurrentView();
         this.startJarvisTelemetryLoop();
     }
@@ -315,16 +331,31 @@ class AppController {
             if (pingEl) pingEl.textContent = `${ping} ms`;
             if (fpsEl) fpsEl.textContent = `${fps} FPS`;
 
-            // 4G Baseline Threshold Audit (Min 1.0 MB/s Download, Max 100ms Ping)
-            const isDegraded = dl < 1.0 || ping > 100 || fps < 20;
+            // Update connection metadata DOM
+            const connEl = document.getElementById('hud-conn-type');
+            const ipEl = document.getElementById('hud-ip-address');
+            if (connEl) connEl.textContent = this.settingsModel.connType;
+            if (ipEl) ipEl.textContent = this.settingsModel.ipAddress;
+
+            // Apply Settings Thresholds with Dynamic 5G Adjustments
+            let activeDlThreshold = this.settingsModel.dlThreshold;
+            let activePingThreshold = this.settingsModel.pingThreshold;
+
+            if (this.settingsModel.dynamic5GEnabled && this.settingsModel.connType.includes('5G')) {
+                // Boost required DL threshold by 20% to avoid frequent 5G jitter alerts
+                activeDlThreshold = parseFloat((activeDlThreshold * 1.2).toFixed(2));
+            }
+
+            // Threshold Audit
+            const isDegraded = dl < activeDlThreshold || ping > activePingThreshold || fps < 20;
 
             if (statusEl) {
                 if (isDegraded) {
                     statusEl.className = 'badge badge-red';
-                    statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 4G Speed Degraded';
+                    statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Network Degraded';
                 } else {
                     statusEl.className = 'badge badge-green';
-                    statusEl.innerHTML = '<i class="fa-solid fa-shield-halved"></i> 4G Baseline Optimal';
+                    statusEl.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Baseline Optimal';
                 }
             }
 
@@ -334,11 +365,47 @@ class AppController {
                 this.systemModel.telemetry.lastAlarmTime = now;
                 this.view.showToast(
                     'warning',
-                    '4G Threshold Warning',
-                    `Speed dropped to ${dl.toFixed(2)} MB/s (Ping: ${ping}ms). Consider switching to Turbo Mode.`
+                    'Network Threshold Warning',
+                    `Speed dropped to ${dl.toFixed(2)} MB/s (Ping: ${ping}ms). Target min DL is ${activeDlThreshold} MB/s.`
                 );
             }
         }, 2000);
+    }
+
+    bindSettingsEvents() {
+        const dlThresh = document.getElementById('settings-dl-threshold');
+        const dlVal = document.getElementById('settings-dl-val');
+        if (dlThresh && dlVal) {
+            dlThresh.oninput = (e) => {
+                this.settingsModel.dlThreshold = parseFloat(e.target.value);
+                dlVal.textContent = this.settingsModel.dlThreshold.toFixed(1);
+            };
+        }
+
+        const pingThresh = document.getElementById('settings-ping-threshold');
+        const pingVal = document.getElementById('settings-ping-val');
+        if (pingThresh && pingVal) {
+            pingThresh.oninput = (e) => {
+                this.settingsModel.pingThreshold = parseInt(e.target.value, 10);
+                pingVal.textContent = this.settingsModel.pingThreshold;
+            };
+        }
+
+        const dyn5G = document.getElementById('settings-dynamic-5g');
+        if (dyn5G) {
+            dyn5G.onchange = (e) => {
+                this.settingsModel.dynamic5GEnabled = e.target.checked;
+            };
+        }
+
+        const toastDur = document.getElementById('settings-toast-duration');
+        const toastVal = document.getElementById('settings-toast-val');
+        if (toastDur && toastVal) {
+            toastDur.oninput = (e) => {
+                this.settingsModel.toastDuration = parseInt(e.target.value, 10);
+                toastVal.textContent = this.settingsModel.toastDuration;
+            };
+        }
     }
 
     bindNavigation() {

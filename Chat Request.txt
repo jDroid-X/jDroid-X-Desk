@@ -35,3 +35,9 @@
 * [2026-08-02T11:11:17+05:30] Resolve frequent terminal window crashes. Diagnosed EADDRINUSE port collisions from background Node/PowerShell processes. Implemented uncaught exception boundaries, EADDRINUSE handlers in server.js, try/catch blocks in tray_icon.ps1, and npm error handling in install_windows_app.bat.
 
 * [2026-08-02T11:14:20+05:30] Further resolved terminal crashes by fixing unescaped ampersand syntax error in ECHO statement in install_windows_app.bat, and replacing unstable `timeout` command with robust `ping 127.0.0.1 -n 11 > nul` to prevent 'Input redirection not supported' crashes.
+
+* [2026-08-02T11:31:34+05:30] Addressed terminal crashing on fresh laptops lacking Node.js. Replaced crash-inducing `PAUSE` command with automatic Node.js MSI downloading (`Invoke-WebRequest`) and installation launcher via PowerShell. Installer now elegantly prompts the user through the Node setup instead of failing abruptly.
+
+* [2026-08-02T11:44:40+05:30] Deep-dive audit across all 13 view panels to centralize hardcoded telemetry parameters into OOPS-based SystemSettingsModel (View 12). Added interactive configuration for Alert Thresholds, Toast Durations, and Dynamic 5G Logic (boosting required bandwidth buffer by 20% to eliminate frequent toast spam on high-speed connections). Renamed telemetry footer to 'jDroid-X Matrix' featuring Light/Dark theme compatibility and live IP/Tunnel metadata. Repositioned toast engine to spawn from bottom-left corner and removed brand logo background.
+
+* [2026-08-02T11:54:24+05:30] Created `Launch-Desk.bat` smart launcher that checks if Node.js and dependencies are already installed. If installed, it bypasses the installation sequence and launches the app directly; otherwise, it triggers the full setup process.

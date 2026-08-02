@@ -307,38 +307,16 @@ html, body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Contextual Screen Hint Box */
-.screen-hint-box {
-    background: linear-gradient(135deg, rgba(255, 171, 0, 0.1), rgba(0, 242, 254, 0.05));
-    border: 1px solid rgba(255, 171, 0, 0.3);
-    border-radius: var(--radius-md);
-    padding: 0.85rem 1.15rem;
-    margin-bottom: 1.25rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.85rem;
-}
 
-.hint-icon {
-    font-size: 1.2rem;
-    color: var(--accent-amber);
-    margin-top: 0.15rem;
-}
-
-.hint-text {
-    font-size: 0.84rem;
-    color: var(--text-main);
-    line-height: 1.45;
-}
 
 /* Live Toast Popup Overlay */
 .toast-overlay-container {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    bottom: 20px;
+    left: 20px;
     z-index: 2000;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     gap: 0.75rem;
     pointer-events: none;
 }
@@ -356,7 +334,12 @@ html, body {
     gap: 0.85rem;
     min-width: 280px;
     max-width: 420px;
-    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInLeft {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
 .toast-card.toast-success { border-left-color: var(--accent-emerald); }
@@ -998,12 +981,19 @@ html, body {
 }
 
 .jarvis-hud-card {
-    background: rgba(6, 11, 24, 0.85);
-    border: 1px solid rgba(0, 242, 254, 0.25);
-    box-shadow: 0 0 14px rgba(0, 242, 254, 0.12);
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    box-shadow: var(--shadow-md);
     border-radius: var(--radius-md);
     padding: 0.75rem;
     backdrop-filter: blur(12px);
+}
+
+.brand-logo-img, .header-logo-img, .modal-logo-img {
+    background: transparent !important;
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 2px;
 }
 
 .jarvis-hud-header {

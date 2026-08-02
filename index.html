@@ -220,12 +220,23 @@
                 </div>
             </div>
 
-            <!-- Sidebar Footer: Jarvis-Style Live Telemetry HUD -->
+            <!-- Sidebar Footer: jDroid-X Matrix Live Telemetry HUD -->
             <div class="sidebar-footer jarvis-hud-container">
                 <div class="jarvis-hud-card">
                     <div class="jarvis-hud-header">
-                        <div class="jarvis-title"><i class="fa-solid fa-microchip text-info"></i> JARVIS METRICS HUD</div>
+                        <div class="jarvis-title"><i class="fa-solid fa-microchip text-info"></i> jDroid-X Matrix</div>
                         <span class="jarvis-pulse-dot"></span>
+                    </div>
+
+                    <div class="jarvis-grid-2 margin-top-xs" style="grid-template-columns: 1fr;">
+                        <div class="jarvis-metric">
+                            <span class="jarvis-label"><i class="fa-solid fa-network-wired text-cyan"></i> CONN:</span>
+                            <span id="hud-conn-type" class="jarvis-value text-cyan">5G Direct P2P</span>
+                        </div>
+                        <div class="jarvis-metric">
+                            <span class="jarvis-label"><i class="fa-solid fa-location-crosshairs text-muted"></i> IP:</span>
+                            <span id="hud-ip-address" class="jarvis-value text-muted">192.168.1.55</span>
+                        </div>
                     </div>
 
                     <div class="jarvis-grid-2 margin-top-xs">
@@ -682,7 +693,7 @@
                     <div class="screen-hint-box">
                         <i class="fa-solid fa-lightbulb hint-icon"></i>
                         <div class="hint-text">
-                            <strong>Settings Principle:</strong> Windows Startup service configuration, notification triggers, and desktop shortcuts.
+                            <strong>Settings Principle:</strong> Global configuration parameters mapping to the SystemSettingsModel. Customize thresholds, behaviors, and environmental variables dynamically.
                         </div>
                     </div>
                     <div class="widget-box">
@@ -696,6 +707,33 @@
                         </div>
                         <div class="margin-top-lg">
                             <button class="btn btn-secondary btn-sm" id="btn-verify-startup-status"><i class="fa-solid fa-check-circle"></i> Verify Windows Startup Status</button>
+                        </div>
+                    </div>
+
+                    <div class="widget-box margin-top-md">
+                        <h3><i class="fa-solid fa-gauge-high text-primary"></i> Global HUD Thresholds</h3>
+                        <div class="margin-top-md">
+                            <label for="settings-dl-threshold">Minimum Download Speed Alarm Threshold (MB/s): <span id="settings-dl-val">1.0</span></label>
+                            <input type="range" id="settings-dl-threshold" min="0.1" max="5.0" step="0.1" value="1.0" style="width: 100%; margin-top: 0.5rem;">
+                        </div>
+                        <div class="margin-top-md">
+                            <label for="settings-ping-threshold">Maximum Ping Alarm Threshold (ms): <span id="settings-ping-val">100</span></label>
+                            <input type="range" id="settings-ping-threshold" min="20" max="500" step="10" value="100" style="width: 100%; margin-top: 0.5rem;">
+                        </div>
+                        <div class="margin-top-md">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="settings-dynamic-5g" checked>
+                                <span class="checkmark"></span>
+                                Enable Dynamic 5G Threshold Adjustment (Boosts limits by +20% on 5G/Direct)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="widget-box margin-top-md">
+                        <h3><i class="fa-solid fa-bell text-warning"></i> UI & Notifications</h3>
+                        <div class="margin-top-md">
+                            <label for="settings-toast-duration">Toast Notification Display Duration (seconds): <span id="settings-toast-val">4</span></label>
+                            <input type="range" id="settings-toast-duration" min="2" max="15" step="1" value="4" style="width: 100%; margin-top: 0.5rem;">
                         </div>
                     </div>
                 </section>
