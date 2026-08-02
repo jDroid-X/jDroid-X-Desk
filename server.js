@@ -87,6 +87,23 @@ app.put('/api/groups/:id', validateBody(['name']), (req, res) => {
 });
 app.delete('/api/groups/:id', (req, res) => { const db = readDB(); db.groups = db.groups.filter(g => g.id !== req.params.id); writeDB(db); res.json({ success: true }); });
 
+app.get('/api/devices', (req, res) => { const db = readDB(); res.json({ success: true, data: db.devices }); });
+app.post('/api/devices', validateBody(['name', 'accessLevel']), (req, res) => {
+    const db = readDB();
+    // Regex validation on server side for device name (Alphanumeric and spaces only)
+    if (!/^[a-zA-Z0-9 ]+$/.test(req.body.name)) return res.status(400).json({ success: false, error: 'Device Name contains invalid characters.' });
+    const d = { id: Date.now().toString(), name: req.body.name.trim(), accessLevel: req.body.accessLevel.trim(), status: 'Pending', addedAt: new Date().toISOString() };
+    db.devices.push(d); writeDB(db); res.json({ success: true, data: d });
+});
+app.put('/api/devices/:id', validateBody(['name', 'accessLevel']), (req, res) => {
+    const db = readDB(); const i = db.devices.findIndex(d => d.id === req.params.id);
+    if (i === -1) return res.status(404).json({ success: false, error: 'Device not found.' });
+    if (!/^[a-zA-Z0-9 ]+$/.test(req.body.name)) return res.status(400).json({ success: false, error: 'Device Name contains invalid characters.' });
+    db.devices[i] = { ...db.devices[i], name: req.body.name.trim(), accessLevel: req.body.accessLevel.trim(), updatedAt: new Date().toISOString() };
+    writeDB(db); res.json({ success: true, data: db.devices[i] });
+});
+app.delete('/api/devices/:id', (req, res) => { const db = readDB(); db.devices = db.devices.filter(d => d.id !== req.params.id); writeDB(db); res.json({ success: true }); });
+
 app.get('/api/firebase-config', (req, res) => {
     res.json({ success: true, config: { apiKey: process.env.JDX_FB_API_KEY || null, projectId: process.env.JDX_FB_PROJECT_ID || null, databaseURL: process.env.JDX_FB_DB_URL || null } });
 });

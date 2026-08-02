@@ -514,37 +514,11 @@
                         <button class="btn btn-primary btn-sm" id="btn-open-add-device"><i class="fa-solid fa-plus"></i> Register New Device</button>
                     </div>
 
-                    <div class="cards-grid-3">
-                        <div class="widget-box">
-                            <div class="widget-header">
-                                <h3><i class="fa-solid fa-desktop text-primary"></i> Primary Workstation</h3>
-                                <span class="badge badge-blue">Host</span>
-                            </div>
-                            <p class="card-desc" id="local-node-desc">Local Node: 984-102-391 (Windows 11 Enterprise)</p>
-                            <div class="stat"><span class="label">Status:</span><span class="value text-emerald">Active / Online</span></div>
-                            <div class="stat"><span class="label">Uptime:</span><span class="value">4h 12m</span></div>
-                            <button class="btn btn-secondary btn-sm btn-full margin-top-md" onclick="window.appController.pingDevice('Primary Workstation')"><i class="fa-solid fa-wifi"></i> Ping Node</button>
-                        </div>
-                        <div class="widget-box">
-                            <div class="widget-header">
-                                <h3><i class="fa-solid fa-laptop text-info"></i> Secondary Remote Laptop</h3>
-                                <span class="badge badge-green">Paired</span>
-                            </div>
-                            <p class="card-desc">Target Node: 520-310-884 (Windows 10 Pro)</p>
-                            <div class="stat"><span class="label">Status:</span><span class="value text-emerald">Ready for Handshake</span></div>
-                            <div class="stat"><span class="label">Latency:</span><span class="value">14ms</span></div>
-                            <button class="btn btn-secondary btn-sm btn-full margin-top-md" onclick="window.appController.pingDevice('Secondary Remote Laptop')"><i class="fa-solid fa-wifi"></i> Ping Node</button>
-                        </div>
-                        <div class="widget-box">
-                            <div class="widget-header">
-                                <h3><i class="fa-solid fa-mobile-screen text-warning"></i> Android Companion</h3>
-                                <span class="badge badge-purple">Standby</span>
-                            </div>
-                            <p class="card-desc">Node: 310-994-102 (Android 14)</p>
-                            <div class="stat"><span class="label">Status:</span><span class="value text-dim">Idle</span></div>
-                            <div class="stat"><span class="label">Battery:</span><span class="value">92%</span></div>
-                            <button class="btn btn-secondary btn-sm btn-full margin-top-md" onclick="window.appController.pingDevice('Android Companion')"><i class="fa-solid fa-wifi"></i> Ping Node</button>
-                        </div>
+                    <div class="list-box-container margin-top-md" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; min-height: 200px;">
+                        <ul id="device-list-ul" style="list-style: none; padding: 0; margin: 0;">
+                            <!-- List Box items injected by JS -->
+                            <li style="padding: 1rem; text-align: center; color: var(--text-muted);">Loading devices...</li>
+                        </ul>
                     </div>
                 </section>
 
@@ -1174,22 +1148,28 @@
         </div>
     </div>
 
-    <!-- Register Device Modal -->
+    <!-- Register/Edit Device Modal -->
     <div id="add-device-modal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-plus"></i> Register New Endpoint</h3>
-                <button class="close-modal-btn">&times;</button>
+                <h3 id="device-modal-title"><i class="fa-solid fa-laptop-code"></i> Register Device</h3>
+                <button class="close-modal-btn" id="close-device-modal-top">&times;</button>
             </div>
             <div class="modal-body">
-                <label style="font-size: 0.8rem;">Device Name:</label>
-                <input type="text" class="search-bar-mini" placeholder="e.g. Office Desktop" style="width: 100%; margin-top: 0.25rem;">
-                <label style="font-size: 0.8rem; display: block; margin-top: 0.75rem;">System Address (ID):</label>
-                <input type="text" class="search-bar-mini" placeholder="e.g. 710-224-900" style="width: 100%; margin-top: 0.25rem;">
+                <input type="hidden" id="device-modal-id">
+                <label style="font-size: 0.8rem;">Device Name (Alphanumeric only):</label>
+                <input type="text" id="device-modal-name" class="search-bar-mini" placeholder="e.g. Office Desktop" style="width: 100%; margin-top: 0.25rem;">
+                
+                <label style="font-size: 0.8rem; display: block; margin-top: 0.75rem;">Access Level:</label>
+                <select id="device-modal-access" class="search-bar-mini" style="width: 100%; margin-top: 0.25rem; background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 4px;">
+                    <option value="Standard">Standard (Read-Only)</option>
+                    <option value="Admin">Admin (Full Control)</option>
+                    <option value="Restricted">Restricted (No Access)</option>
+                </select>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="window.appController.view.showToast('success', 'Device Registered', 'New endpoint saved to fleet roster.'); document.getElementById('add-device-modal').classList.remove('active');">Save Device</button>
-                <button class="btn btn-secondary close-modal-btn">Cancel</button>
+                <button class="btn btn-primary" id="device-modal-save-btn">Save Device</button>
+                <button class="btn btn-secondary close-modal-btn" id="device-modal-cancel-btn">Cancel</button>
             </div>
         </div>
     </div>

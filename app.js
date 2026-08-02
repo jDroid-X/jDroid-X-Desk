@@ -1711,8 +1711,145 @@ document.addEventListener('DOMContentLoaded', () => {
         const dialogView = new DialogView();
         window.safeZoneController = new SafeZoneController(new SafeZoneModel(), dialogView);
         window.groupController = new GroupController(new GroupModel(), dialogView);
+        window.deviceController = new DeviceController(new DeviceModel());
         
         window.safeZoneController.init();
         window.groupController.init();
+        window.deviceController.init();
     }, 500);
 });
+
+class DeviceModel {
+    async fetchAll() {
+        try {
+            const r = await fetch('/api/devices');
+            const d = await r.json();
+            return d.data || [];
+        } catch(e) { console.error(e); return []; }
+    }
+    async add(d) {
+        const r = await fetch('/api/devices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+        return await r.json();
+    }
+    async update(id, d) {
+        const r = await fetch(`/api/devices/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+        return await r.json();
+    }
+    async remove(id) {
+        await fetch(`/api/devices/${id}`, { method: 'DELETE' });
+    }
+}
+
+class DeviceController {
+    constructor(model) {
+        this.model = model;
+        this.listEl = document.getElementById('device-list-ul');
+        this.modal = document.getElementById('add-device-modal');
+        this.nameInput = document.getElementById('device-modal-name');
+        this.accessInput = document.getElementById('device-modal-access');
+        this.idInput = document.getElementById('device-modal-id');
+        this.title = document.getElementById('device-modal-title');
+        this.saveBtn = document.getElementById('device-modal-save-btn');
+        
+        const openBtn = document.getElementById('btn-open-add-device');
+        if(openBtn) openBtn.onclick = () => this.openAddModal();
+        
+        if(this.saveBtn) this.saveBtn.onclick = () => this.saveDevice();
+        
+        document.querySelectorAll('#add-device-modal .close-modal-btn').forEach(btn => {
+            btn.onclick = () => this.closeModal();
+        });
+    }
+
+    async init() {
+        await this.renderList();
+    }
+
+    async renderList() {
+        if (!this.listEl) return;
+        const devices = await this.model.fetchAll();
+        this.listEl.innerHTML = '';
+        if (devices.length === 0) {
+            this.listEl.innerHTML = '<li style="padding: 1rem; text-align: center; color: var(--text-muted);">No devices registered yet.</li>';
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+        devices.forEach(d => {
+            const li = document.createElement('li');
+            li.style.cssText = 'padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;';
+            li.innerHTML = `
+                <div>
+                    <h4 style="margin: 0; color: var(--text-color);"><i class="fa-solid fa-laptop text-primary"></i> ${ValidationUtil.escapeHTML(d.name)}</h4>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Access: ${ValidationUtil.escapeHTML(d.accessLevel)} | Status: <span class="${d.status === 'Online' ? 'text-emerald' : 'text-warning'}">${ValidationUtil.escapeHTML(d.status)}</span></div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm edit-btn"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-secondary btn-sm delete-btn"><i class="fa-solid fa-trash text-danger"></i></button>
+                </div>
+            `;
+            li.querySelector('.edit-btn').onclick = () => this.openEditModal(d);
+            li.querySelector('.delete-btn').onclick = () => this.deleteDevice(d.id, d.name);
+            frag.appendChild(li);
+        });
+        this.listEl.appendChild(frag);
+    }
+
+    openAddModal() {
+        if(this.idInput) this.idInput.value = '';
+        if(this.nameInput) this.nameInput.value = '';
+        if(this.accessInput) this.accessInput.value = 'Standard';
+        if(this.title) this.title.innerHTML = '<i class="fa-solid fa-plus"></i> Register Device';
+        if(this.modal) this.modal.classList.add('active');
+    }
+
+    openEditModal(d) {
+        if(this.idInput) this.idInput.value = d.id;
+        if(this.nameInput) this.nameInput.value = d.name;
+        if(this.accessInput) this.accessInput.value = d.accessLevel;
+        if(this.title) this.title.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Device';
+        if(this.modal) this.modal.classList.add('active');
+    }
+
+    closeModal() {
+        if(this.modal) this.modal.classList.remove('active');
+    }
+
+    async saveDevice() {
+        const id = this.idInput.value;
+        const name = this.nameInput.value.trim();
+        const access = this.accessInput.value;
+
+        // Strict Regex Validation
+        const nameRegex = /^[a-zA-Z0-9 ]+$/;
+        if (!name || !nameRegex.test(name)) {
+            window.appController.view.showToast('error', 'Validation Error', 'Device name must be alphanumeric and cannot be empty.');
+            return;
+        }
+
+        try {
+            if (id) {
+                const res = await this.model.update(id, { name, accessLevel: access });
+                if(!res.success) throw new Error(res.error);
+                window.appController.view.showToast('success', 'Device Updated', 'Device details saved.');
+            } else {
+                const res = await this.model.add({ name, accessLevel: access });
+                if(!res.success) throw new Error(res.error);
+                window.appController.view.showToast('success', 'Device Registered', 'New device added to fleet.');
+            }
+            this.closeModal();
+            await this.renderList();
+        } catch (e) {
+            window.appController.view.showToast('error', 'Save Failed', e.message);
+        }
+    }
+
+    async deleteDevice(id, name) {
+        // Fallback to JS confirm for simplicity as DialogView might require other setup
+        if (confirm('Are you sure you want to delete this device? This cannot be undone.')) {
+            await this.model.remove(id);
+            window.appController.view.showToast('info', 'Device Deleted', 'The device was removed from the fleet.');
+            await this.renderList();
+        }
+    }
+}
