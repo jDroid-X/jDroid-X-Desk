@@ -307,6 +307,27 @@ class AppController {
         this.bindSettingsEvents();
         this.bindLoginGate();
 
+        // Fetch hardware ID early for login email prepopulation
+        try {
+            const res = await fetch('/api/hardware-id');
+            const data = await res.json();
+            this.systemModel.deviceId = data.deviceId || 'JDX-ERR-0000';
+        } catch (e) {
+            let fallbackId = localStorage.getItem('jdx_fallback_device_id');
+            if (!fallbackId) {
+                const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
+                fallbackId = `JDX-OFLN-${randomHex}`;
+                localStorage.setItem('jdx_fallback_device_id', fallbackId);
+            }
+            this.systemModel.deviceId = fallbackId;
+        }
+
+        // Prepopulate login email with device address
+        const emailInput = document.getElementById('login-email-input');
+        if (emailInput) {
+            emailInput.value = `${this.systemModel.deviceId.toLowerCase()}@jdroid-x-desk.com`;
+        }
+
         // UX-1: Wire password visibility toggle
         const togglePassBtn  = document.getElementById('toggle-pass-visibility');
         const togglePassIcon = document.getElementById('toggle-pass-icon');
@@ -378,21 +399,6 @@ class AppController {
             gate.style.transition = 'opacity 0.4s ease';
             gate.style.opacity = '0';
             setTimeout(() => { gate.classList.add('login-gate-hidden'); }, 400);
-        }
-
-        // Fetch hardware ID
-        try {
-            const res = await fetch('/api/hardware-id');
-            const data = await res.json();
-            this.systemModel.deviceId = data.deviceId || 'JDX-ERR-0000';
-        } catch (e) {
-            let fallbackId = localStorage.getItem('jdx_fallback_device_id');
-            if (!fallbackId) {
-                const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
-                fallbackId = `JDX-OFLN-${randomHex}`;
-                localStorage.setItem('jdx_fallback_device_id', fallbackId);
-            }
-            this.systemModel.deviceId = fallbackId;
         }
 
         // Update session chip in sidebar
