@@ -1,0 +1,442 @@
+========================================================
+   jDroid-X-Desk CONSOLIDATED REQUIREMENT PLAN (RD)
+========================================================
+
+--- PLAN 01 ---
+# [imp_plan_01] Remote Access Suite (jDroid-X-Desk) & 29-Point Technical Comparison
+
+**Date**: 2026-08-01  
+**Goal**: Initial technical evaluation of AnyDesk, TeamViewer, and RustDesk across 29 categories and architectural setup of the `jDroid-X-Desk` responsive web app.
+
+## Summary of Proposed Changes
+1. **`REMOTE_DESKTOP_COMPARISON_GUIDE.md`**: Publication-ready research document covering all 29 categories, Mermaid sequence diagrams for connection handshakes, NAT traversal, and persona recommendations.
+2. **`jDroid-X-Desk` Web App**: OOPS MVC responsive web app (`index.html`, `styles.css`, `app.js`) with desktop sidebar drawer, mobile bottom bar, and 5 system modals (About Me, Help, User Manual, Version, License).
+
+## Verification Plan
+- Launch dev server (`serve`) on port 3000.
+- Verify browser navigation via `browser_subagent`.
+
+
+--- PLAN 02 ---
+# [imp_plan_02] v1.1 HITL Edition & Interactive Scenario Calculators
+
+**Date**: 2026-08-01  
+**Goal**: Integrate Human-in-the-Loop (HITL) step-by-step operational manual, contextual screen hints on every view, interactive Bandwidth & Latency Calculator, Side-by-Side Comparator, and Enterprise Compliance Audit.
+
+## Summary of Proposed Changes
+1. **Contextual Screen Hints**: Add top `<div class="screen-hint-box">` with `<i class="fa-solid fa-lightbulb"></i>` across all 12 views and 5 modals.
+2. **Interactive Bandwidth & Latency Calculator**: Calculate live streaming payload bandwidth and frame delay based on resolution (720p/1080p/4K), FPS (30/60), and network speed.
+3. **Side-by-Side Application Comparator**: Dual-card comparative viewer for AnyDesk, TeamViewer, and RustDesk.
+4. **HITL Operational User Manual**: Detailed 6-phase step-by-step HITL manual in `#manual-modal`.
+
+## Verification Plan
+- Verify interactive sliders and view transitions in browser.
+
+
+--- PLAN 03 ---
+# [imp_plan_03] v1.2 Toast Notification Overlay & HITL Option Dialog Modal
+
+**Date**: 2026-08-01  
+**Goal**: Integrate real-time Toast Notification Engine, interactive Remote ID connection console on Dashboard, dynamic HITL Option Dialog Modal, and publish RAG Critical Test Report artifact.
+
+## Summary of Proposed Changes
+1. **Toast Notification Overlay Engine (`#toast-container`)**: Real-time animated popup cards for Success, Error, Warning, and Info feedback.
+2. **Interactive Remote ID Connection Console**: Input field with 9-digit format regex validation (`984-102-391`).
+3. **Dynamic HITL Option Dialog Modal (`#hitl-dialog-modal`)**: Host request prompt modal offering `[Accept Session]`, `[Decline Session]`, `[Elevate Privileges]`, and `[Change Protocol]` buttons.
+4. **`RAG_CRITICAL_TEST_REPORT.md`**: 12 Pass/Fail test scenarios covering NAT traversal, UAC freezes, packet loss, brute force lockout, and HIPAA/GDPR compliance.
+
+## Verification Plan
+- Test Remote ID input validation and trigger HITL option dialog modal in browser.
+
+
+--- PLAN 04 ---
+# [imp_plan_04] v1.3 Continuous 2-System Traceability Logging Engine
+
+**Date**: 2026-08-01  
+**Goal**: Integrate continuous real-time 2-system telemetry logging engine after auditing `AI Prompt Desk Share.txt` and `Desk Test Script.txt`.
+
+## Summary of Proposed Changes
+1. **2-System Log Monitor View (`view-system-monitor`)**: Live continuous telemetry stream between System A (`SYS-A-TECH-984`) and System B (`SYS-B-HOST-391`).
+2. **Stream Controls & JSON Export**: `[Start Continuous Monitoring]`, `[Pause Stream]`, `[Inject Trace Event]`, and `[Export Log Audit (JSON)]`.
+3. **Log Level Filtering**: Filter terminal logs by `ALL`, `INFO`, `TRACE`, `WARN`, `ERROR`, and `SECURITY_AUDIT`.
+4. **`SYSTEM_TRACEABILITY_LOG_AUDIT.md`**: Telemetry schema documentation, cryptographically signed audit logs, and compliance alignment.
+
+## Verification Plan
+- Start continuous stream and test JSON export in browser.
+
+
+--- PLAN 05 ---
+# [imp_plan_05] Streamlined Unified Remote Desktop Control Console (v2.0)
+
+**Date**: 2026-08-01  
+**Goal**: Refactor the web app to remove marketing comparison clutter and focus strictly on the core 3-step remote access combination process (Run/Identify -> Exchange ID Numbers -> Primary Controls Secondary Screen).
+
+## Summary of Proposed Changes
+1. **Unified Remote Control Console (`#view-remote-console`)**:
+   - Step 1: System Identification (`984-102-391` + copy button).
+   - Step 2: Exchange Numbers & Password + Connect button.
+   - Step 3: Interactive Remote Desktop Viewport Canvas allowing Primary user to simulate mouse/keyboard inputs on Secondary machine.
+2. **Simplified Navigation Drawer**: Remote Control Console, 2-System Log Monitor, and System Modals (About Me, Help, User Manual, Version, License).
+
+## Verification Plan
+- Verify 3-step workflow and virtual remote screen canvas execution in browser.
+
+
+--- PLAN 06 ---
+# [imp_plan_06] Windows Installer Scripting, Background Server (Port 12345) & GitHub Sync
+
+**Date**: 2026-08-01  
+**Goal**: Create Windows 1-click installer scripts (`install_windows_app.bat`), silent background service launcher (`start_jdroid_app.vbs` on `http://localhost:12345`), standalone browser app launcher (`--app`), and sync with `https://github.com/jDroid-X/jDroid-X-Desk`.
+
+## Summary of Proposed Changes
+1. **`start_jdroid_app.vbs`**: Runs `npx serve . -p 12345` silently in the background without a DOS popup, then opens Edge in `--app=http://localhost:12345` mode.
+2. **`install_windows_app.bat`**: 1-Click installer verifying Node.js, installing dependencies, creating Desktop Shortcut `jDroid-X-Desk`, and starting app.
+3. **`stop_jdroid_app.bat`**: Stops background server processes listening on port 12345.
+4. **`INSTALL_GUIDE_WINDOWS.md`**: Step-by-step installation & GitHub sync manual.
+5. **Git Repository Setup**: Initialized Git repository in `c:\Users\jiten\jAnitGravity\jDroid-X-Desk`, set remote origin to `https://github.com/jDroid-X/jDroid-X-Desk.git`, and committed root commit `5bbcb41`.
+
+## Verification Plan
+- Verify scripts and commit log status.
+
+
+--- PLAN 07 ---
+# [imp_plan_07] Master Prompt Audit & Enterprise Specification Verification (AI Prompt Desk Share.txt)
+
+**Date**: 2026-08-01  
+**Goal**: Verify 100% compliance against `AI Prompt Desk Share.txt` across all 20 architectural sections (BRD, Feature Analysis, Security, Performance, AI Features, QA Checklist, Do's and Don'ts) and 29 comparative dimensions.
+
+## Summary of Verification
+1. **Business Requirement & System Architecture**: Delivered in `REMOTE_DESKTOP_COMPARISON_GUIDE.md` and `walkthrough.md`.
+2. **2-System Continuous Telemetry**: Delivered in `SYSTEM_TRACEABILITY_LOG_AUDIT.md` and `view-system-monitor`.
+3. **12 Pass/Fail Test Scenarios**: Delivered in `RAG_CRITICAL_TEST_REPORT.md`.
+4. **Streamlined Web App (`jDroid-X-Desk v2.0`)**: 3-step remote control console (`index.html`, `styles.css`, `app.js`).
+5. **Windows Standalone App & Git Sync**: `install_windows_app.bat`, `start_jdroid_app.vbs` on port 12345, and GitHub remote origin `https://github.com/jDroid-X/jDroid-X-Desk.git`.
+
+## Verification Plan
+- Git status clean check & commit confirmation.
+
+
+--- PLAN 08 ---
+# [imp_plan_08] GitHub Repository Remote Push & Synchronization
+
+**Date**: 2026-08-01  
+**Goal**: Synchronize all local commits (`5bbcb41`, `4be78cf`, `3a4a19f`) with the remote GitHub repository `https://github.com/jDroid-X/jDroid-X-Desk.git`.
+
+## Summary of Execution
+1. Configured git remote `origin` to `https://github.com/jDroid-X/jDroid-X-Desk.git`.
+2. Created branch `main` and staged all workspace files including source code, requirement folder archives, Windows installer scripts, and continuous log audit documents.
+3. Executed `git push -u origin main` and updated npm package sync script `npm run sync-git`.
+
+## Verification Plan
+- Git status & commit history verification.
+
+
+--- PLAN 09 ---
+# [imp_plan_09] Current Workspace Folder Synchronization with GitHub
+
+**Date**: 2026-08-01  
+**Goal**: Synchronize all files in current folder `c:\Users\jiten\jAnitGravity\jDroid-X-Desk` with remote GitHub repository `https://github.com/jDroid-X/jDroid-X-Desk.git`.
+
+## Summary of Changes & Execution
+1. Verified current folder git repository `c:\Users\jiten\jAnitGravity\jDroid-X-Desk\.git`.
+2. Verified active branch `main` and remote origin `https://github.com/jDroid-X/jDroid-X-Desk.git`.
+3. Executed `git push origin main --force` to push all current folder commits (`5bbcb41`, `4be78cf`, `3a4a19f`, `443629d`).
+
+## Verification Plan
+- Working tree clean check & commit history log.
+
+
+--- PLAN 10 ---
+# [imp_plan_10] GitHub Online Push Authentication Resolution
+
+**Date**: 2026-08-01  
+**Goal**: Identify why online GitHub repository (`https://github.com/jDroid-X/jDroid-X-Desk.git`) was waiting for push confirmation, and provide the exact 1-step authentication instructions.
+
+## Summary of Analysis
+1. All local source files, installer scripts, continuous traceability logs, and 13 requirement records are 100% committed to local Git repository `c:\Users\jiten\jAnitGravity\jDroid-X-Desk\.git`.
+2. Remote origin is correctly configured to `https://github.com/jDroid-X/jDroid-X-Desk.git`.
+3. Non-interactive CLI commands wait for GitHub Credential Manager browser login.
+4. Provided exact 1-step terminal command `git push -u origin main` or Personal Access Token URL syntax to complete the online push.
+
+## Verification Plan
+- Terminal instruction verification and local git status check.
+
+
+--- PLAN 11 ---
+# [imp_plan_11] 1-Click Interactive GitHub Push Helper (push_to_github.bat)
+
+**Date**: 2026-08-01  
+**Goal**: Create an interactive 1-click batch script `push_to_github.bat` in `c:\Users\jiten\jAnitGravity\jDroid-X-Desk` that prompts Windows Git Credential Manager for online authentication and opens `https://github.com/jDroid-X/jDroid-X-Desk` in browser.
+
+## Summary of Changes
+1. **`push_to_github.bat`**:
+   - Executes `git push -u origin main --force`.
+   - Handles fallback push to `main:master`.
+   - Opens `https://github.com/jDroid-X/jDroid-X-Desk` automatically in browser upon completion.
+
+## Verification Plan
+- Verify script creation & git commit status.
+
+
+--- PLAN 12 ---
+# [imp_plan_12] Windows Batch Installer Line Ending Remediation & Timeout Update
+
+**Date**: 2026-08-02  
+**Goal**: Resolve issue where `install_windows_app.bat` exited instantly on fresh laptops due to Unix `LF` line endings breaking the CMD multi-line `IF` statement parser.
+
+## Summary of Changes
+1. **Line Ending Conversion**:
+   - Converted `install_windows_app.bat`, `push_to_github.bat`, and `stop_jdroid_app.bat` from `LF` to standard Windows `CRLF` line endings.
+2. **Timeout Update**:
+   - Replaced final `PAUSE` command in `install_windows_app.bat` with `timeout /t 10` for automated 10-second terminal closing.
+
+## Verification Plan
+- Verified CRLF match using PowerShell `Get-Content -Raw`.
+
+
+--- PLAN 13 ---
+# [imp_plan_13] Express Backend, PowerShell System Tray & Launch Popup
+
+**Date**: 2026-08-02  
+**Goal**: Introduce a custom Node.js Express server to handle native OS commands, a PowerShell system tray script, and an interactive frontend Launch Popup dialog.
+
+## Summary of Changes
+1. **`server.js`**: Replaced static `serve` with Express server providing `/api/startup` and `/api/shutdown` endpoints.
+2. **`tray_icon.ps1`**: Created native PowerShell script displaying a System Tray icon with "Open App" and "Stop Server & Exit" menu.
+3. **`index.html` & `app.js`**: Added Welcome Launch Popup modal with "Start with Windows" and "Don't show again" checkboxes.
+
+
+--- PLAN 14 ---
+# [imp_plan_14] Official Logo Integration, Standard Navigation Drawer & HITL User Manual
+
+**Date**: 2026-08-02  
+**Goal**: Integrate official `jdroidxlogo_trans.png` asset, expand navigation drawer to 17 standard menu items (Rule 7 compliant), add Contextual Screen Hints across all views, and expand the 6-step HITL User Manual.
+
+## Summary of Changes
+1. **Logo Asset**: Copied `jdroidxlogo_Trans.png` to `assets/jdroidxlogo_trans.png` and embedded across brand header and modals.
+2. **Drawer Overhaul**: Expanded sidebar drawer to cover all 17 standard sections with icons and sub-titles.
+3. **Screen Hints**: Added `.screen-hint-box` banners across all 13 view panels.
+4. **HITL Manual**: Updated User Manual modal with detailed 6-step human operational guide.
+
+
+--- PLAN 15 ---
+# [imp_plan_15] Deep-Dive 13-Screen Operational UX Perfection & Diagnostic Tools
+
+**Date**: 2026-08-02  
+**Goal**: Address every potential HITL operational failure mode across all 13 screens with interactive HUD tools, log inspectors, report generators, emergency kill switches, and diagnostics.
+
+## Summary of Changes
+1. **Console HUD & Controls**: Stream Quality presets (1080p/720p/Turbo), Stream HUD metrics, Clipboard & Audio toggles.
+2. **Audit Engine**: CSV Log Exporter & Log Inspector Modal.
+3. **Device Fleet**: Register Device modal & ICMP Ping checkers.
+4. **History**: Printable Audit Report Generator modal.
+5. **Guardians**: Emergency Isolation Kill Switch button with safety modal.
+6. **Health**: Real-time CPU/RAM/Port gauges & Self-Diagnostic Benchmark engine.
+7. **Privacy**: One-Touch Passcode Generator & Security Strength Meter.
+
+
+--- PLAN 16 ---
+# [imp_plan_16] Jarvis-Style HUD Sidebar Telemetry & 4G Threshold Warning Alarms
+
+**Date**: 2026-08-02  
+**Goal**: Add sci-fi Jarvis HUD widget to bottom left sidebar displaying live streaming telemetry (Download/Upload speed in MB/s, RTT Ping, FPS) and emit automatic side toast popup alarms when speeds drop below 4G standards.
+
+## Summary of Changes
+1. **Sidebar Footer (`index.html`)**: Added `.jarvis-hud-card` widget with live Download (MB/s), Upload (MB/s), Ping (ms), and FPS readout.
+2. **Sci-Fi Styles (`styles.css`)**: Glowing cyan/emerald borders, pulsating radar dot, JetBrains Mono fonts.
+3. **Telemetry & Threshold Loop (`app.js`)**: Real-time MB/s telemetry ticker, 4G baseline auditor (Min 1.0 MB/s Download, Max 100ms Ping), automatic side toast warning popups on degradation.
+
+
+--- PLAN 17 ---
+# [imp_plan_17] Terminal Crash Remediation & Server Error Boundaries
+
+**Date**: 2026-08-02  
+**Goal**: Identify and resolve root cause of frequent terminal crashes when launching `install_windows_app.bat` or `start_jdroid_app.vbs`.
+
+## Summary of Changes
+1. **Root Cause Identified**:
+   - Multiple lingering background instances of `node.exe` and `powershell.exe` were occupying Port `12345`.
+   - Express threw unhandled `EADDRINUSE` exception, causing `node server.js` to crash immediately and terminate the CMD window.
+   - PowerShell `tray_icon.ps1` lacked error handling for duplicate tray instances.
+2. **Server Fault Tolerance (`server.js`)**:
+   - Added `process.on('uncaughtException')` and `process.on('unhandledRejection')` guards.
+   - Added `EADDRINUSE` error handler to `app.listen()`. If Port 12345 is already in use, the server logs status and continues execution safely without crashing.
+   - Added `WMIC` process check to prevent spawning duplicate `tray_icon.ps1` instances.
+3. **PowerShell Fault Tolerance (`tray_icon.ps1`)**:
+   - Wrapped script in `try { ... } catch { ... }` blocks with fallback system icons and web launch handlers.
+4. **Installer Error Handling (`install_windows_app.bat`)**:
+   - Fixed unescaped ampersand (`&`) in `ECHO` statement that caused CMD to misinterpret `NPM` as a command and crash.
+   - Replaced `timeout /t 10` with `ping 127.0.0.1 -n 11 > nul` to prevent `ERROR: Input redirection is not supported` crashes in non-interactive terminal environments.
+   - Added error level checking for `npm install`.
+
+## Verification Plan
+- Tested `node server.js` and confirmed log output: `[SUCCESS] jDroid-X-Desk Server running on http://localhost:12345`.
+
+
+--- PLAN 18 ---
+# [imp_plan_18] Automated Node.js Provisioning & PowerShell Installer
+
+**Date**: 2026-08-02  
+**Goal**: Address terminal crashes on fresh laptops lacking Node.js by replacing the `PAUSE` command in the Windows installer with an automatic PowerShell download and installation launcher.
+
+## Summary of Changes
+1. **Windows Installer (`install_windows_app.bat`)**:
+   - Replaced basic crash-prone checking with dynamic PowerShell script execution.
+   - Removed the simple `PAUSE` command when Node.js is missing.
+2. **PowerShell Setup Script Integration**:
+   - Programmed `Invoke-WebRequest` to download the official Node.js MSI package directly from Node.js servers.
+   - Configured silent installer execution with auto-restart path variables.
+   - Instructed the user gracefully through the setup process.
+
+## Verification Plan
+- Tested installer run on environment lacking Node.js; verified download trigger and installer prompt.
+
+
+--- PLAN 19 ---
+# [imp_plan_19] Telemetry Settings Model Integration & View 12 Config
+
+**Date**: 2026-08-02  
+**Goal**: Centralize hardcoded parameters into SystemSettingsModel (View 12) with custom threshold/toast configs, theme-aware telemetry footer (jDroid-X Matrix), and repositioned bottom-left toasts.
+
+## Summary of Changes
+1. **OOPS Model (`app.js`)**:
+   - Added `SystemSettingsModel` capturing `Alert Thresholds`, `Toast Durations`, and `Dynamic 5G Logic` (which increases bandwidth thresholds by 20% to prevent notification spam on high-speed lines).
+2. **Telemetry Footer / View 12 (`index.html` & `app.js`)**:
+   - Renamed telemetry footer to "jDroid-X Matrix" containing dynamic theme indicators, live IP, and Tunnel metadata.
+   - Wired inputs in Settings View (View 12) to update `SystemSettingsModel` dynamically.
+3. **UI / Styling Refinements (`styles.css` & `app.js`)**:
+   - Repositioned the toast notification engine to display in the bottom-left corner.
+   - Removed brand logo background decoration from the toast notifications to maximize visibility.
+   - Ensured footer is light/dark theme compatible.
+
+## Verification Plan
+- Tested changes by updating thresholds in View 12 settings panel and verified toast behavior.
+
+
+--- PLAN 20 ---
+# [imp_plan_20] Smart Launcher Development (Launch-Desk.bat)
+
+**Date**: 2026-08-02  
+**Goal**: Design a 1-click batch launcher `Launch-Desk.bat` that automatically checks local dependencies and starts the application, avoiding redundant installations.
+
+## Summary of Changes
+1. **Launch Script (`Launch-Desk.bat`)**:
+   - Implemented checks for Node.js (`where node`).
+   - Implemented checks for `node_modules` presence.
+   - If dependencies exist, bypasses the setup phase and runs `npm start` immediately.
+   - If missing, launches `install_windows_app.bat` to perform the full setup.
+
+## Verification Plan
+- Tested `Launch-Desk.bat` in both installed and fresh directory scenarios to verify routing logic.
+
+
+--- PLAN 21 ---
+# [imp_plan_21] Installer Crash Resolution & Environment Sync
+
+**Date**: 2026-08-02  
+**Goal**: Resolve downloader crashes on fresh systems by securing TLS 1.2 protocol for Invoke-WebRequest and dynamically patching local PATH environment variables inside the installer.
+
+## Summary of Changes
+1. **Security Sync (`install_windows_app.bat` / PowerShell)**:
+   - Injected `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12` into the PowerShell download command.
+2. **Environment Path Fix**:
+   - Appended `C:\Program Files\nodejs` directly to the execution session's PATH variable immediately post-install.
+   - Allowed `npm install` and app startup to run instantly in the same CMD instance without a reboot or terminal restart.
+
+## Verification Plan
+- Simulated fresh laptop installation flow and verified seamless installer flow from download to launch.
+
+
+--- PLAN 22 ---
+# [imp_plan_22] Cross-Platform Unix Installation & Launch Scripts
+
+**Date**: 2026-08-02  
+**Goal**: Build native Unix installation and startup compatibility for macOS and Linux operating systems with proper process management and desktop shortcut bindings.
+
+## Summary of Changes
+1. **OS Detection & Package Managers (`install_unix_app.sh`)**:
+   - Built a shell script supporting macOS (`Darwin`) and Linux.
+   - Programmed package manager detection (`brew`, `apt-get`, `dnf`) to auto-install Node.js.
+2. **Launch & Terminate Utilities**:
+   - `Launch-Desk.sh`: Starts the backend Node server using `nohup` in the background and launches MS Edge or default browser.
+   - `stop_jdroid_app.sh`: Automatically finds and terminates the active process bound to port 12345.
+3. **Desktop Integrations**:
+   - Generated native `.command` launch shortcuts for macOS.
+   - Generated `.desktop` integration files for Linux XDG-compliant environments.
+   - Set proper Unix file executable permissions (`chmod +x`).
+
+## Verification Plan
+- Tested scripts on a Unix environment (macOS/Linux shell) to verify package lookup and desktop configuration generator paths.
+
+
+--- PLAN 23 ---
+# [imp_plan_23] Hardware-Based Device ID Generation & Tray Decoupling
+
+**Date**: 2026-08-02  
+**Goal**: Remove hardcoded identifier strings and generate a unique hardware fingerprint using hostname and MAC Address hashing, while making the tray icon visible by spawning it in the active user desktop session.
+
+## Summary of Changes
+1. **Hardware ID Backend API (`server.js`)**:
+   - Replaced static ID `984-102-391` with a dynamic API route (`/api/hardware-id`).
+   - Retrieved local MAC addresses and hostname, ran SHA-256 hash, and formatted it into a structured `JDX-XXXX-XXXX` token.
+2. **Dynamic UI Update (`app.js` & `index.html`)**:
+   - Configured app to fetch dynamic ID on launch and update the Host Address elements.
+3. **Tray Icon Decoupling (`Launch-Desk.bat` & `install_windows_app.bat` & `server.js`)**:
+   - Decoupled `tray_icon.ps1` from the background hidden Node server process.
+   - Spowned `tray_icon.ps1` directly in the active CMD script window so it runs within the user's interactive desktop window session, ensuring visibility of the system tray icon.
+
+## Verification Plan
+- Inspected active device ID on launch; verified it follows the hash-generated `JDX-` format.
+- Checked Windows system tray area for the active jDroid-X Desk icon.
+
+
+--- PLAN 24 ---
+# [imp_plan_24] AI Prompt Integration & Compliance Comparison (Desk-Prompt)
+
+**Date**: 2026-08-02  
+**Goal**: Club all past chat logs, plans, and tasks into unified, actionable AI Agentic prompts (Desk-Prompt-Plan.txt and Desk-Prompt-Task.txt) representing the Master Requirements Document (RD), then compare the codebase and update any missing elements.
+
+## Summary of Changes
+1. **Prompt Consolidation**:
+   - Create `Desk-Prompt-Plan.txt` containing the complete consolidated set of implementation plans and specifications.
+   - Create `Desk-Prompt-Task.txt` containing the consolidated set of executed objectives and tasks.
+2. **Codebase Comparison & Audit**:
+   - Compare the combined prompt requirements with current application code (`index.html`, `styles.css`, `app.js`, `server.js`).
+   - Identify any missing items, discrepancies, or features and update them to reach 100% execution.
+3. **Requirement Directory Integration**:
+   - Ensure all requirement plans (`imp_plan_01.md` through `imp_plan_24.md`) and tasks (`Task_01.md` through `Task_27.md`) are aligned and saved.
+
+## Verification Plan
+- Verify that `Desk-Prompt-Plan.txt` and `Desk-Prompt-Task.txt` exist and accurately reflect all historical development steps.
+
+
+
+--- PLAN 25 ---
+# [imp_plan_25] Multi-Agent Comprehensive System Synchronization & Security Audit
+
+**Date**: 2026-08-02  
+**Goal**: Run all agents (Frontend, Backend, UI/UX, Security, Integration, DB Architect) to synchronize the system. Identify and fix any logical gaps, bugs, or memory leaks across the OOPS MVC structure, and implement pending UI controls (buttons, modals, validations) required by the master plan.
+
+## Summary of Changes
+1. **Critical Bug Fixes**:
+   - Fixed global variable leak (cleanVal) in remote connect logic.
+   - Prevented signInAnonymously() from overwriting existing authenticated email sessions.
+   - Tracked and cleared telemetryInterval to fix memory leak upon logout.
+   - Guarded Firebase presence initialization with a 5-retry limit & exponential backoff.
+   - Implemented atomic DB writes via fs.renameSync() temp files to prevent JSON corruption.
+2. **UI/UX Expansion**:
+   - Integrated password visibility toggle within the login gate.
+   - Added fullscreen app preloader spinner while Firebase auth resolves.
+   - Expanded input validation (ValidationUtil) to accept CIDR subnets.
+   - Added Edit functionality and replaced all blocking confirm() dialogs with styled DialogView modals.
+   - Persisted theme settings to localStorage.
+   - Applied amber/yellow styling to the user session chip when operating in offline demo mode.
+3. **Backend & Security Enhancements**:
+   - Added POST endpoint input validation middleware enforcing max length.
+   - Deployed PUT /api/safe-zones/:id and PUT /api/groups/:id endpoints for editing.
+   - Migrated database schema to automatically provision sessions and devices tables.
+   - Prevented brute-force attacks via 5-attempt login lockout (30s cooldown).
+
+## Verification Plan
+- Complete audit checklist, verify no syntax errors, run dev server, simulate offline bypass and correct logouts, and test safe zone dialogs.
+
