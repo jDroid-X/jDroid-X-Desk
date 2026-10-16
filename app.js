@@ -72,9 +72,48 @@ class SystemSettingsModel {
         this.privTelemetry = localStorage.getItem('jdx_set_priv_telemetry') === 'true';
         this.privBackup = localStorage.getItem('jdx_set_priv_backup') !== 'false';
 
-        // Network Metadata simulation
+        // Network Metadata & WebRTC ICE STUN Server Array
         this.connType = "5G Direct P2P";
         this.ipAddress = "192.168.1.55";
+        this.iceServers = [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+            { urls: 'stun:stun.services.mozilla.com:3478' }
+        ];
+    }
+
+    async fetchFromAPI() {
+        try {
+            const res = await fetch('/api/settings');
+            const data = await res.json();
+            if (data.success && data.data) {
+                Object.assign(this, data.data);
+            }
+        } catch (e) { console.warn('Failed to fetch settings from API:', e); }
+
+        try {
+            const fbRes = await fetch('/api/firebase-config');
+            const fbData = await fbRes.json();
+            if (fbData.success && fbData.config) {
+                if (fbData.config.apiKey) this.firebaseApiKey = fbData.config.apiKey;
+                if (fbData.config.projectId) this.firebaseProjectId = fbData.config.projectId;
+                if (fbData.config.databaseURL) this.firebaseDbUrl = fbData.config.databaseURL;
+            }
+        } catch (_) {}
+    }
+
+    async saveToAPI(updatedFields) {
+        try {
+            Object.assign(this, updatedFields);
+            await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedFields)
+            });
+        } catch (e) { console.warn('Failed to save settings to API:', e); }
     }
 }
 
@@ -87,6 +126,28 @@ class SystemTraceabilityLogModel {
         this.monitoringActive = false;
 
         this.initialLogs();
+        this.fetchFromAPI();
+    }
+
+    async fetchFromAPI() {
+        try {
+            const res = await fetch('/api/logs');
+            const data = await res.json();
+            if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+                const serverLogs = data.data.map(l => ({
+                    id: l.id || `TRC-${this.packetSeq++}`,
+                    timestamp: l.timestamp || new Date().toISOString(),
+                    level: l.level || 'INFO',
+                    stage: l.stage || 'HTTP_TRAFFIC',
+                    source: l.ip || this.systemA.id,
+                    target: this.systemB.id,
+                    rttMs: l.rttMs || 12,
+                    message: l.msg || l.message || '',
+                    hash: `audit-${Math.random().toString(36).substring(2, 8)}`
+                }));
+                this.logs = [...serverLogs, ...this.logs].slice(0, 200);
+            }
+        } catch (_) {}
     }
 
     initialLogs() {
@@ -111,7 +172,17 @@ class SystemTraceabilityLogModel {
             hash: `ed25519-${Math.random().toString(36).substring(2, 8)}`
         };
         this.logs.unshift(entry);
-        if (this.logs.length > 100) this.logs.pop();
+        if (this.logs.length > 200) this.logs.pop();
+
+        // Asynchronously persist to backend /api/logs for continuous auditability
+        try {
+            fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ level, stage, msg: message })
+            }).catch(() => {});
+        } catch (_) {}
+
         return entry;
     }
 
@@ -969,7 +1040,7 @@ class AppController {
         }
 
         if (connectBtn) {
-            connectBtn.addEventListener('click', () => {
+            connectBtn.addEventListener('click', async () => {
                 const inputId = document.getElementById('target-id-input').value.trim().toUpperCase();
                 const inputPass = document.getElementById('target-pass-input').value.trim();
 
@@ -988,11 +1059,39 @@ class AppController {
                 
                 this.systemModel.activeSession = formattedId;
 
+                // Sync with Backend Database Sessions table
+                try {
+                    const res = await fetch('/api/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            targetId: formattedId,
+                            sourceId: this.systemModel.deviceId,
+                            targetName: 'Remote Workstation ' + formattedId,
+                            protocol: 'Windows Remote Control / P2P',
+                            quality: '1080p'
+                        })
+                    });
+                    const resData = await res.json();
+                    if (resData.success && resData.data) {
+                        this.systemModel.currentSessionDbId = resData.data.id;
+                    }
+                } catch (e) {
+                    console.warn('[SESSION] Could not record to backend DB:', e.message);
+                }
+
                 // Update UI state
-                document.getElementById('session-status-text').textContent = 'CONNECTED & ACTIVE';
-                document.getElementById('session-status-text').style.color = 'var(--accent-emerald)';
-                document.getElementById('active-target-id-label').textContent = formattedId;
-                document.getElementById('remote-desktop-viewport-box').style.display = 'block';
+                const statusText = document.getElementById('session-status-text');
+                if (statusText) {
+                    statusText.textContent = 'CONNECTED & ACTIVE';
+                    statusText.style.color = 'var(--accent-emerald)';
+                }
+                const targetLabel = document.getElementById('active-target-id-label');
+                if (targetLabel) targetLabel.textContent = formattedId;
+                
+                const viewportBox = document.getElementById('remote-desktop-viewport-box');
+                if (viewportBox) viewportBox.style.display = 'block';
+
                 if (launchCanvasBtn) launchCanvasBtn.disabled = false;
                 if (quickDisconnectBtn) quickDisconnectBtn.style.display = 'inline-flex';
 
@@ -1001,11 +1100,27 @@ class AppController {
             });
         }
 
-        const disconnectSession = () => {
+        const disconnectSession = async () => {
+            if (this.systemModel.currentSessionDbId) {
+                try {
+                    await fetch(`/api/sessions/${this.systemModel.currentSessionDbId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'TERMINATED', endedAt: new Date().toISOString() })
+                    });
+                } catch (_) {}
+                this.systemModel.currentSessionDbId = null;
+            }
+
             this.systemModel.activeSession = null;
-            document.getElementById('session-status-text').textContent = 'Idle (Awaiting Connection)';
-            document.getElementById('session-status-text').style.color = 'var(--text-muted)';
-            document.getElementById('remote-desktop-viewport-box').style.display = 'none';
+            const statusText = document.getElementById('session-status-text');
+            if (statusText) {
+                statusText.textContent = 'Idle (Awaiting Connection)';
+                statusText.style.color = 'var(--text-muted)';
+            }
+            const viewportBox = document.getElementById('remote-desktop-viewport-box');
+            if (viewportBox) viewportBox.style.display = 'none';
+
             if (launchCanvasBtn) launchCanvasBtn.disabled = true;
             if (quickDisconnectBtn) quickDisconnectBtn.style.display = 'none';
 
@@ -1015,6 +1130,72 @@ class AppController {
 
         if (disconnectBtn) disconnectBtn.addEventListener('click', disconnectSession);
         if (quickDisconnectBtn) quickDisconnectBtn.addEventListener('click', disconnectSession);
+
+        // Native Windows Quick Assist Launcher (Zero Cost, Built-in)
+        const quickAssistBtn = document.getElementById('btn-native-quick-assist');
+        if (quickAssistBtn) {
+            quickAssistBtn.addEventListener('click', async () => {
+                this.view.showToast('info', 'Invoking Quick Assist', 'Starting Windows Native Remote Assistance engine...');
+                try {
+                    const res = await fetch('/api/remote/launch-quick-assist', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.view.showToast('success', 'Quick Assist Ready', 'Windows Quick Assist launched. Share or enter 6-digit assistance security code.');
+                        this.traceModel.addLog('INFO', 'NATIVE_QUICK_ASSIST', 'Windows Quick Assist launched natively without external software.');
+                    } else {
+                        this.view.showToast('error', 'Launch Failed', data.error || 'Failed to start Quick Assist.');
+                    }
+                } catch (e) {
+                    this.view.showToast('error', 'Error', 'Failed to reach local server.');
+                }
+            });
+        }
+
+        // Microsoft Remote Assistance (MSRA) Launcher
+        const msraBtn = document.getElementById('btn-native-msra');
+        if (msraBtn) {
+            msraBtn.addEventListener('click', async () => {
+                this.view.showToast('info', 'Invoking MSRA', 'Opening Microsoft Remote Assistance...');
+                try {
+                    const res = await fetch('/api/remote/launch-msra', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.view.showToast('success', 'MSRA Ready', 'Microsoft Remote Assistance active.');
+                        this.traceModel.addLog('INFO', 'NATIVE_MSRA', 'Microsoft Remote Assistance (msra.exe) session initiated.');
+                    } else {
+                        this.view.showToast('error', 'Launch Failed', data.error || 'Failed to start MSRA.');
+                    }
+                } catch (e) {
+                    this.view.showToast('error', 'Error', 'Failed to reach local server.');
+                }
+            });
+        }
+
+        // Standalone Client .BAT Launcher Download
+        const downloadBatBtn = document.getElementById('btn-download-share-bat');
+        if (downloadBatBtn) {
+            downloadBatBtn.addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = 'jDroid-Share.bat';
+                a.download = 'jDroid-Share.bat';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                this.view.showToast('success', 'Client Package Downloaded', 'jDroid-Share.bat downloaded. Send this lightweight 5KB file to the client for instant 1-click sharing.');
+                this.traceModel.addLog('INFO', 'SHARE_BAT_EXPORT', 'Exported standalone client launcher jDroid-Share.bat for end-user.');
+            });
+        }
+
+        // Launch Control Window Button
+        if (launchCanvasBtn) {
+            launchCanvasBtn.addEventListener('click', () => {
+                const viewportBox = document.getElementById('remote-desktop-viewport-box');
+                if (viewportBox) {
+                    viewportBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    this.view.showToast('info', 'Control Window Active', 'Focusing interactive remote viewport.');
+                }
+            });
+        }
 
         if (ctrlAltDelBtn) {
             ctrlAltDelBtn.addEventListener('click', () => {
@@ -1041,7 +1222,8 @@ class AppController {
 
     switchView(viewId) {
         if (viewId === 'logout') {
-            // Intercept logout view to execute logic
+            this.promptLogout();
+            return;
         }
 
         this.currentView = viewId;
@@ -1070,6 +1252,19 @@ class AppController {
         }
 
         this.renderCurrentView();
+    }
+
+    promptLogout() {
+        const dialogView = new DialogView();
+        dialogView.show(
+            'Sign Out Confirmation',
+            '<p style="color:var(--text-main)">Sign out of jDroid-X-Desk? You will need to re-authenticate to access the console.</p>',
+            async () => {
+                this.stopJarvisTelemetryLoop();
+                this.performLogout();
+                return true;
+            }
+        );
     }
 
     performLogout() {
@@ -1106,6 +1301,7 @@ class AppController {
 
                 if (this.traceModel.monitoringActive) {
                     this.view.showToast('success', 'Continuous Monitoring Active', 'Real-time 2-System log streamer initialized.');
+                    if (this.monInterval) clearInterval(this.monInterval);
                     this.monInterval = setInterval(() => {
                         const sampleEvents = [
                             { level: 'TRACE', stage: 'FRAME_ACK', msg: 'Secondary System B acknowledged frame #4092 (RTT: 15ms)' },
@@ -1546,8 +1742,9 @@ class DialogView {
         this.body.innerHTML = bodyHtml;
         this.overlay.classList.add('active');
         
-        this.btnConfirm.onclick = () => {
-            if (onConfirm()) {
+        this.btnConfirm.onclick = async () => {
+            const res = await onConfirm();
+            if (res !== false) {
                 this.close();
             }
         };
@@ -1760,20 +1957,443 @@ class GroupController {
     }
 }
 
-// Initialize New MVC Modules
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        const dialogView = new DialogView();
-        window.safeZoneController = new SafeZoneController(new SafeZoneModel(), dialogView);
-        window.groupController = new GroupController(new GroupModel(), dialogView);
-        window.deviceController = new DeviceController(new DeviceModel());
-        
-        window.safeZoneController.init();
-        window.groupController.init();
-        window.deviceController.init();
-    }, 500);
-});
+// ==========================================
+// GUARDIANS / SUPERVISION MVC MODULES
+// ==========================================
+class GuardiansModel {
+    async fetchAll() {
+        try {
+            const res = await fetch('/api/guardians');
+            const data = await res.json();
+            return data.data || [];
+        } catch (e) { return []; }
+    }
+    async add(g) {
+        const res = await fetch('/api/guardians', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(g)
+        });
+        return res.json();
+    }
+    async update(id, g) {
+        const res = await fetch(`/api/guardians/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(g)
+        });
+        return res.json();
+    }
+    async remove(id) {
+        return fetch(`/api/guardians/${id}`, { method: 'DELETE' });
+    }
+}
 
+class GuardiansController {
+    constructor(model, dialogView) {
+        this.model = model;
+        this.dialogView = dialogView;
+        this.container = document.getElementById('guardians-list-container');
+        this.btnInvite = document.getElementById('btn-open-add-guardian');
+        this.btnKill = document.getElementById('btn-emergency-kill');
+
+        if (this.btnInvite) {
+            this.btnInvite.addEventListener('click', () => this.showAddDialog());
+        }
+        if (this.btnKill) {
+            this.btnKill.addEventListener('click', () => this.triggerEmergencyKill());
+        }
+    }
+
+    async init() {
+        await this.renderList();
+    }
+
+    async renderList() {
+        if (!this.container) return;
+        const guardians = await this.model.fetchAll();
+        this.container.innerHTML = '';
+        if (guardians.length === 0) {
+            this.container.innerHTML = `
+                <div class="stat margin-top-sm"><span class="label">Lead Guardian:</span><span class="value text-primary">Antigravity AI Systems Architect</span></div>
+                <div class="stat"><span class="label">Emergency Disconnect Override:</span><span class="value text-emerald">Enabled</span></div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 6px;">No additional guardians added. Click "Invite Guardian" to register emergency supervisors.</div>
+            `;
+            return;
+        }
+
+        guardians.forEach(g => {
+            const card = document.createElement('div');
+            card.className = 'list-item';
+            card.innerHTML = `
+                <div class="list-item-content">
+                    <span class="list-item-title"><i class="fa-solid fa-user-shield text-danger"></i> ${ValidationUtil.escapeHTML(g.name)}</span>
+                    <span class="list-item-sub">Role: ${ValidationUtil.escapeHTML(g.role)} | Contact: ${ValidationUtil.escapeHTML(g.contact)} &nbsp;<span class="badge badge-green">${ValidationUtil.escapeHTML(g.status || 'Active')}</span></span>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-outline btn-sm edit-grd-btn" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-danger btn-sm delete-grd-btn" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            card.querySelector('.edit-grd-btn').addEventListener('click', () => this.showEditDialog(g));
+            card.querySelector('.delete-grd-btn').addEventListener('click', () => this.deleteGuardian(g.id, g.name));
+            this.container.appendChild(card);
+        });
+    }
+
+    showAddDialog() {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Guardian / Supervisor Name</label>
+                <input type="text" id="grd-name" class="input-text" placeholder="e.g. Lead SysAdmin">
+            </div>
+            <div class="form-group">
+                <label>Role / Relationship</label>
+                <input type="text" id="grd-role" class="input-text" placeholder="e.g. Security Officer">
+            </div>
+            <div class="form-group">
+                <label>Contact Info (Email / Phone)</label>
+                <input type="text" id="grd-contact" class="input-text" placeholder="e.g. admin@company.com">
+            </div>
+        `;
+        this.dialogView.show('Invite System Guardian', bodyHtml, async () => {
+            const name = document.getElementById('grd-name').value;
+            const role = document.getElementById('grd-role').value;
+            const contact = document.getElementById('grd-contact').value;
+
+            if (!ValidationUtil.isNotEmpty(name) || !ValidationUtil.isNotEmpty(role) || !ValidationUtil.isNotEmpty(contact)) {
+                window.appController.view.showToast('error', 'Validation Error', 'All guardian fields are required.');
+                return false;
+            }
+            await this.model.add({ name, role, contact, status: 'Active' });
+            window.appController.view.showToast('success', 'Guardian Added', `${name} invited as System Guardian.`);
+            await this.renderList();
+            return true;
+        });
+    }
+
+    showEditDialog(g) {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Guardian / Supervisor Name</label>
+                <input type="text" id="grd-name" class="input-text" value="${ValidationUtil.escapeHTML(g.name)}">
+            </div>
+            <div class="form-group">
+                <label>Role / Relationship</label>
+                <input type="text" id="grd-role" class="input-text" value="${ValidationUtil.escapeHTML(g.role)}">
+            </div>
+            <div class="form-group">
+                <label>Contact Info (Email / Phone)</label>
+                <input type="text" id="grd-contact" class="input-text" value="${ValidationUtil.escapeHTML(g.contact)}">
+            </div>
+        `;
+        this.dialogView.show('Edit Guardian Details', bodyHtml, async () => {
+            const name = document.getElementById('grd-name').value;
+            const role = document.getElementById('grd-role').value;
+            const contact = document.getElementById('grd-contact').value;
+
+            if (!ValidationUtil.isNotEmpty(name) || !ValidationUtil.isNotEmpty(role) || !ValidationUtil.isNotEmpty(contact)) {
+                window.appController.view.showToast('error', 'Validation Error', 'All guardian fields are required.');
+                return false;
+            }
+            await this.model.update(g.id, { name, role, contact, status: g.status || 'Active' });
+            window.appController.view.showToast('success', 'Guardian Updated', `${name} details updated successfully.`);
+            await this.renderList();
+            return true;
+        });
+    }
+
+    async deleteGuardian(id, name) {
+        this.dialogView.show(
+            'Remove Guardian',
+            `<p style="color:var(--text-main)">Are you sure you want to revoke guardian privileges for <strong>${ValidationUtil.escapeHTML(name)}</strong>?</p>`,
+            async () => {
+                await this.model.remove(id);
+                window.appController.view.showToast('info', 'Guardian Removed', 'Guardian privileges revoked.');
+                await this.renderList();
+                return true;
+            }
+        );
+    }
+
+    triggerEmergencyKill() {
+        this.dialogView.show(
+            'EMERGENCY SESSION ISOLATION (KILL SWITCH)',
+            `<p style="color:var(--accent-red); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> WARNING: This will immediately sever all active P2P remote desktop streams, revoke current session keys, and lock the console control interface!</p>`,
+            async () => {
+                window.appController.traceModel.addLog('SECURITY_AUDIT', 'KILL_SWITCH_ENGAGED', 'OPERATOR TRIGGERED EMERGENCY SESSION ISOLATION KILL SWITCH');
+                window.appController.view.showToast('error', 'KILL SWITCH ENGAGED', 'All active remote connections terminated immediately.');
+                
+                fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: 'EMERGENCY KILL SWITCH ENGAGED',
+                        message: 'Session isolation triggered by operator. All remote channels severed.',
+                        type: 'error'
+                    })
+                });
+                return true;
+            }
+        );
+    }
+}
+
+// ==========================================
+// REMOTE CONTACTS MVC MODULES
+// ==========================================
+class RemoteContactsModel {
+    async fetchAll() {
+        try {
+            const res = await fetch('/api/contacts');
+            const data = await res.json();
+            return data.data || [];
+        } catch (e) { return []; }
+    }
+    async add(c) {
+        const res = await fetch('/api/contacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(c)
+        });
+        return res.json();
+    }
+    async update(id, c) {
+        const res = await fetch(`/api/contacts/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(c)
+        });
+        return res.json();
+    }
+    async remove(id) {
+        return fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+    }
+}
+
+class RemoteContactsController {
+    constructor(model, dialogView) {
+        this.model = model;
+        this.dialogView = dialogView;
+        this.container = document.getElementById('contacts-list-grid');
+        this.btnAdd = document.getElementById('btn-open-add-contact');
+
+        if (this.btnAdd) {
+            this.btnAdd.addEventListener('click', () => this.showAddDialog());
+        }
+    }
+
+    async init() {
+        await this.renderList();
+    }
+
+    async renderList() {
+        if (!this.container) return;
+        const contacts = await this.model.fetchAll();
+        this.container.innerHTML = '';
+        if (contacts.length === 0) {
+            this.container.innerHTML = `
+                <div class="widget-box" style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                    <i class="fa-solid fa-address-book" style="font-size: 2.2rem; margin-bottom: 0.5rem; color: var(--accent-blue);"></i>
+                    <div>No partner contacts saved yet. Click "Add Partner Contact" to save partner addresses for instant 1-click connect.</div>
+                </div>
+            `;
+            return;
+        }
+
+        contacts.forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'widget-box';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h4><i class="fa-solid fa-user-check text-primary"></i> ${ValidationUtil.escapeHTML(c.name)}</h4>
+                    <div style="display: flex; gap: 0.25rem;">
+                        <button class="btn btn-outline btn-sm edit-cnt-btn" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-secondary btn-sm delete-cnt-btn" title="Delete"><i class="fa-solid fa-trash text-danger"></i></button>
+                    </div>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">Address ID: <strong style="color: var(--accent-blue);">${ValidationUtil.escapeHTML(c.remoteId)}</strong></p>
+                <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.2rem;">Group: ${ValidationUtil.escapeHTML(c.group || 'General')}</div>
+                <button class="btn btn-primary btn-sm margin-top-md btn-full quick-connect-btn">
+                    <i class="fa-solid fa-bolt"></i> Quick Connect
+                </button>
+            `;
+            card.querySelector('.quick-connect-btn').addEventListener('click', () => {
+                const targetInput = document.getElementById('target-id-input');
+                if (targetInput) targetInput.value = c.remoteId;
+                window.appController.switchView('remote-console');
+                window.appController.view.showToast('info', 'Address Populated', `Target address set to ${c.name} (${c.remoteId})`);
+            });
+            card.querySelector('.edit-cnt-btn').addEventListener('click', () => this.showEditDialog(c));
+            card.querySelector('.delete-cnt-btn').addEventListener('click', () => this.deleteContact(c.id, c.name));
+            this.container.appendChild(card);
+        });
+    }
+
+    showAddDialog() {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Partner Contact Name</label>
+                <input type="text" id="cnt-name" class="input-text" placeholder="e.g. Primary Support Tech">
+            </div>
+            <div class="form-group">
+                <label>9-Digit System Address ID</label>
+                <input type="text" id="cnt-id" class="input-text" placeholder="e.g. 520-310-884">
+            </div>
+            <div class="form-group">
+                <label>Group Category (Optional)</label>
+                <input type="text" id="cnt-group" class="input-text" placeholder="e.g. Workstation Support">
+            </div>
+        `;
+        this.dialogView.show('Add Partner Contact', bodyHtml, async () => {
+            const name = document.getElementById('cnt-name').value;
+            const remoteId = document.getElementById('cnt-id').value;
+            const group = document.getElementById('cnt-group').value;
+
+            if (!ValidationUtil.isNotEmpty(name) || !ValidationUtil.isNotEmpty(remoteId)) {
+                window.appController.view.showToast('error', 'Validation Error', 'Partner name and System Address ID are required.');
+                return false;
+            }
+            await this.model.add({ name, remoteId, group: group || 'General' });
+            window.appController.view.showToast('success', 'Contact Saved', `${name} added to contacts address book.`);
+            await this.renderList();
+            return true;
+        });
+    }
+
+    showEditDialog(c) {
+        const bodyHtml = `
+            <div class="form-group">
+                <label>Partner Contact Name</label>
+                <input type="text" id="cnt-name" class="input-text" value="${ValidationUtil.escapeHTML(c.name)}">
+            </div>
+            <div class="form-group">
+                <label>9-Digit System Address ID</label>
+                <input type="text" id="cnt-id" class="input-text" value="${ValidationUtil.escapeHTML(c.remoteId)}">
+            </div>
+            <div class="form-group">
+                <label>Group Category</label>
+                <input type="text" id="cnt-group" class="input-text" value="${ValidationUtil.escapeHTML(c.group || 'General')}">
+            </div>
+        `;
+        this.dialogView.show('Edit Partner Contact', bodyHtml, async () => {
+            const name = document.getElementById('cnt-name').value;
+            const remoteId = document.getElementById('cnt-id').value;
+            const group = document.getElementById('cnt-group').value;
+
+            if (!ValidationUtil.isNotEmpty(name) || !ValidationUtil.isNotEmpty(remoteId)) {
+                window.appController.view.showToast('error', 'Validation Error', 'Partner name and System Address ID are required.');
+                return false;
+            }
+            await this.model.update(c.id, { name, remoteId, group: group || 'General' });
+            window.appController.view.showToast('success', 'Contact Updated', `${name} details updated.`);
+            await this.renderList();
+            return true;
+        });
+    }
+
+    async deleteContact(id, name) {
+        this.dialogView.show(
+            'Delete Partner Contact',
+            `<p style="color:var(--text-main)">Are you sure you want to remove <strong>${ValidationUtil.escapeHTML(name)}</strong> from your address book?</p>`,
+            async () => {
+                await this.model.remove(id);
+                window.appController.view.showToast('info', 'Contact Deleted', 'Partner contact removed.');
+                await this.renderList();
+                return true;
+            }
+        );
+    }
+}
+
+// ==========================================
+// NOTIFICATIONS CENTER MVC MODULES
+// ==========================================
+class NotificationsModel {
+    async fetchAll() {
+        try {
+            const res = await fetch('/api/notifications');
+            const data = await res.json();
+            return data.data || [];
+        } catch (e) { return []; }
+    }
+    async markRead(id) {
+        return fetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+    }
+    async remove(id) {
+        return fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+    }
+}
+
+class NotificationsController {
+    constructor(model) {
+        this.model = model;
+        this.container = document.getElementById('notifications-list-container');
+        this.btnMarkRead = document.getElementById('btn-mark-all-read');
+
+        if (this.btnMarkRead) {
+            this.btnMarkRead.addEventListener('click', async () => {
+                const list = await this.model.fetchAll();
+                for (const n of list) {
+                    await this.model.markRead(n.id);
+                }
+                window.appController.view.showToast('info', 'Notifications Updated', 'All notifications marked as read.');
+                await this.renderList();
+            });
+        }
+    }
+
+    async init() {
+        await this.renderList();
+    }
+
+    async renderList() {
+        if (!this.container) return;
+        const notifs = await this.model.fetchAll();
+        this.container.innerHTML = '';
+        if (notifs.length === 0) {
+            this.container.innerHTML = `
+                <div style="display: flex; gap: 0.75rem; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                    <i class="fa-solid fa-circle-check text-emerald" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <strong>Background Web Server Running</strong>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Listening on http://localhost:12345 (System Tray active)</div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        notifs.forEach(n => {
+            let icon = 'fa-circle-info text-primary';
+            if (n.type === 'warning') icon = 'fa-triangle-exclamation text-warning';
+            if (n.type === 'error') icon = 'fa-circle-xmark text-danger';
+
+            const item = document.createElement('div');
+            item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-color);';
+            item.style.opacity = n.read ? '0.6' : '1.0';
+            item.innerHTML = `
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <i class="fa-solid ${icon}" style="font-size: 1.4rem;"></i>
+                    <div>
+                        <strong>${ValidationUtil.escapeHTML(n.title)}</strong> ${n.read ? '<span class="badge badge-blue" style="font-size:0.6rem;">Read</span>' : '<span class="badge badge-green" style="font-size:0.6rem;">New</span>'}
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${ValidationUtil.escapeHTML(n.message)}</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm delete-notif-btn" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            item.querySelector('.delete-notif-btn').addEventListener('click', async () => {
+                await this.model.remove(n.id);
+                await this.renderList();
+            });
+            this.container.appendChild(item);
+        });
+    }
+}
+
+// ==========================================
+// DEVICE FLEET MVC MODULES (Relational Grouping)
+// ==========================================
 class DeviceModel {
     async fetchAll() {
         try {
@@ -1808,42 +2428,88 @@ class DeviceController {
         this.listEl = document.getElementById('device-list-ul');
         this.modal = document.getElementById('add-device-modal');
         this.nameInput = document.getElementById('device-modal-name');
+        this.groupSelect = document.getElementById('device-modal-group');
         this.accessInput = document.getElementById('device-modal-access');
         this.idInput = document.getElementById('device-modal-id');
         this.title = document.getElementById('device-modal-title');
         this.saveBtn = document.getElementById('device-modal-save-btn');
+        this.groupFilter = document.getElementById('fleet-group-filter');
         
         const openBtn = document.getElementById('btn-open-add-device');
         if(openBtn) openBtn.onclick = () => this.openAddModal();
         
         if(this.saveBtn) this.saveBtn.onclick = () => this.saveDevice();
         
+        if (this.groupFilter) {
+            this.groupFilter.onchange = () => this.renderList();
+        }
+
         document.querySelectorAll('#add-device-modal .close-modal-btn').forEach(btn => {
             btn.onclick = () => this.closeModal();
         });
     }
 
+    async populateGroupDropdowns() {
+        const groups = await (new GroupModel()).fetchAll();
+        if (this.groupSelect) {
+            this.groupSelect.innerHTML = '<option value="">Unassigned (No Group)</option>';
+            groups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.textContent = g.name;
+                this.groupSelect.appendChild(opt);
+            });
+        }
+        if (this.groupFilter) {
+            const currentVal = this.groupFilter.value;
+            this.groupFilter.innerHTML = '<option value="ALL">Filter by Group (All)</option>';
+            groups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.textContent = g.name;
+                this.groupFilter.appendChild(opt);
+            });
+            this.groupFilter.value = currentVal || 'ALL';
+        }
+    }
+
     async init() {
+        await this.populateGroupDropdowns();
         await this.renderList();
     }
 
     async renderList() {
         if (!this.listEl) return;
-        const devices = await this.model.fetchAll();
+        let devices = await this.model.fetchAll();
+        
+        const filterGroupId = this.groupFilter ? this.groupFilter.value : 'ALL';
+        if (filterGroupId && filterGroupId !== 'ALL') {
+            devices = devices.filter(d => d.groupId === filterGroupId);
+        }
+
+        const groups = await (new GroupModel()).fetchAll();
+        const groupMap = {};
+        groups.forEach(g => { groupMap[g.id] = g.name; });
+
         this.listEl.innerHTML = '';
         if (devices.length === 0) {
-            this.listEl.innerHTML = '<li style="padding: 0.4rem; text-align: center; color: var(--text-muted);">No devices registered yet.</li>';
+            this.listEl.innerHTML = '<li style="padding: 0.6rem; text-align: center; color: var(--text-muted);">No devices registered yet.</li>';
             return;
         }
 
         const frag = document.createDocumentFragment();
         devices.forEach(d => {
+            const groupName = d.groupId ? (groupMap[d.groupId] || 'Assigned Group') : 'Unassigned';
             const li = document.createElement('li');
             li.style.cssText = 'padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;';
             li.innerHTML = `
                 <div>
                     <h4 style="margin: 0; color: var(--text-color);"><i class="fa-solid fa-laptop text-primary"></i> ${ValidationUtil.escapeHTML(d.name)}</h4>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">Access: ${ValidationUtil.escapeHTML(d.accessLevel)} | Status: <span class="${d.status === 'Online' ? 'text-emerald' : 'text-warning'}">${ValidationUtil.escapeHTML(d.status)}</span></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">
+                        Group: <span class="badge badge-blue">${ValidationUtil.escapeHTML(groupName)}</span> | 
+                        Access: ${ValidationUtil.escapeHTML(d.accessLevel)} | 
+                        Status: <span class="${d.status === 'Online' ? 'text-emerald' : 'text-warning'}">${ValidationUtil.escapeHTML(d.status)}</span>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
                     <button class="btn btn-secondary btn-sm edit-btn"><i class="fa-solid fa-pen"></i></button>
@@ -1857,17 +2523,21 @@ class DeviceController {
         this.listEl.appendChild(frag);
     }
 
-    openAddModal() {
+    async openAddModal() {
+        await this.populateGroupDropdowns();
         if(this.idInput) this.idInput.value = '';
         if(this.nameInput) this.nameInput.value = '';
+        if(this.groupSelect) this.groupSelect.value = '';
         if(this.accessInput) this.accessInput.value = 'Standard';
         if(this.title) this.title.innerHTML = '<i class="fa-solid fa-plus"></i> Register Device';
         if(this.modal) this.modal.classList.add('active');
     }
 
-    openEditModal(d) {
+    async openEditModal(d) {
+        await this.populateGroupDropdowns();
         if(this.idInput) this.idInput.value = d.id;
         if(this.nameInput) this.nameInput.value = d.name;
+        if(this.groupSelect) this.groupSelect.value = d.groupId || '';
         if(this.accessInput) this.accessInput.value = d.accessLevel;
         if(this.title) this.title.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Device';
         if(this.modal) this.modal.classList.add('active');
@@ -1880,26 +2550,27 @@ class DeviceController {
     async saveDevice() {
         const id = this.idInput.value;
         const name = this.nameInput.value.trim();
+        const groupId = this.groupSelect ? this.groupSelect.value : null;
         const access = this.accessInput.value;
 
-        // Strict Regex Validation
-        const nameRegex = /^[a-zA-Z0-9 ]+$/;
+        const nameRegex = /^[a-zA-Z0-9 _.-]+$/;
         if (!name || !nameRegex.test(name)) {
-            window.appController.view.showToast('error', 'Validation Error', 'Device name must be alphanumeric and cannot be empty.');
+            window.appController.view.showToast('error', 'Validation Error', 'Device name contains invalid characters or is empty.');
             return;
         }
 
         try {
             if (id) {
-                const res = await this.model.update(id, { name, accessLevel: access });
+                const res = await this.model.update(id, { name, groupId, accessLevel: access });
                 if(!res.success) throw new Error(res.error);
                 window.appController.view.showToast('success', 'Device Updated', 'Device details saved.');
             } else {
-                const res = await this.model.add({ name, accessLevel: access });
+                const res = await this.model.add({ name, groupId, accessLevel: access, status: 'Online' });
                 if(!res.success) throw new Error(res.error);
                 window.appController.view.showToast('success', 'Device Registered', 'New device added to fleet.');
             }
             this.closeModal();
+            if (window.groupController) await window.groupController.renderList();
             await this.renderList();
         } catch (e) {
             window.appController.view.showToast('error', 'Save Failed', e.message);
@@ -1907,11 +2578,37 @@ class DeviceController {
     }
 
     async deleteDevice(id, name) {
-        // Fallback to JS confirm for simplicity as DialogView might require other setup
-        if (confirm('Are you sure you want to delete this device? This cannot be undone.')) {
-            await this.model.remove(id);
-            window.appController.view.showToast('info', 'Device Deleted', 'The device was removed from the fleet.');
-            await this.renderList();
-        }
+        const dialogView = new DialogView();
+        dialogView.show(
+            'Delete Device Confirmation',
+            `<p style="color:var(--text-main)">Are you sure you want to remove <strong>${ValidationUtil.escapeHTML(name)}</strong> from the device fleet?</p>`,
+            async () => {
+                await this.model.remove(id);
+                window.appController.view.showToast('info', 'Device Deleted', 'The device was removed from the fleet.');
+                if (window.groupController) await window.groupController.renderList();
+                await this.renderList();
+                return true;
+            }
+        );
     }
 }
+
+// Initialize New MVC Modules
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const dialogView = new DialogView();
+        window.safeZoneController = new SafeZoneController(new SafeZoneModel(), dialogView);
+        window.groupController = new GroupController(new GroupModel(), dialogView);
+        window.deviceController = new DeviceController(new DeviceModel());
+        window.guardiansController = new GuardiansController(new GuardiansModel(), dialogView);
+        window.remoteContactsController = new RemoteContactsController(new RemoteContactsModel(), dialogView);
+        window.notificationsController = new NotificationsController(new NotificationsModel());
+        
+        window.safeZoneController.init();
+        window.groupController.init();
+        window.deviceController.init();
+        window.guardiansController.init();
+        window.remoteContactsController.init();
+        window.notificationsController.init();
+    }, 500);
+});

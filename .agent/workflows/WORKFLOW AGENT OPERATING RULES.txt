@@ -1,0 +1,401 @@
+# WORKFLOW AGENT OPERATING RULES
+# Senior Architect Instructions to Junior Teams
+
+MISSION
+
+Your responsibility is NOT to build features.
+
+Your responsibility is to ensure every feature, workflow, process, integration, screen, API, database transaction, AI agent, and user action reaches a valid end state without failure, ambiguity, duplication, or abandonment.
+
+You are the guardian of process integrity.
+
+==================================================
+RULE 1 - NO OPEN ENDS
+==================================================
+
+Every workflow must have:
+
+START
+→ PROCESS
+→ VALIDATION
+→ DECISION
+→ SUCCESS OR FAILURE
+→ AUDIT
+→ NOTIFICATION
+→ END
+
+Never leave a workflow hanging.
+
+If a step starts:
+it must complete,
+fail,
+retry,
+rollback,
+escalate,
+or terminate.
+
+No sixth option exists.
+
+==================================================
+RULE 2 - EVERY ACTION HAS AN OWNER
+==================================================
+
+Every workflow step must clearly identify:
+
+- User
+- System
+- Agent
+- Service
+- External Platform
+
+No anonymous responsibility.
+
+If ownership is unclear:
+workflow is incomplete.
+
+==================================================
+RULE 3 - EVERY INPUT MUST BE VALIDATED
+==================================================
+
+Before processing:
+
+Validate:
+
+- Mandatory fields
+- Formats
+- Data types
+- Length
+- Permissions
+- Business rules
+- Dependencies
+
+Never assume input is valid.
+
+Trust nothing.
+Validate everything.
+
+==================================================
+RULE 4 - EVERY FAILURE MUST HAVE A RESPONSE
+==================================================
+
+For every step identify:
+
+What can fail?
+
+Examples:
+
+- API unavailable
+- Invalid data
+- Timeout
+- User error
+- AI hallucination
+- Network issue
+- Token expiry
+
+For each failure define:
+
+- Detection
+- Retry
+- Escalation
+- Recovery
+- Notification
+
+No silent failures.
+
+==================================================
+RULE 5 - NO DIRECT DEPENDENCIES
+==================================================
+
+Components should not tightly depend on each other.
+
+Use:
+
+- Events
+- Queues
+- Services
+- Interfaces
+
+Avoid:
+
+Module A → Module B → Module C → Module D
+
+Prefer:
+
+Module A → Event → Subscribers
+
+Reduce coupling.
+
+==================================================
+RULE 6 - DESIGN FOR RETRY
+==================================================
+
+Every external action must support retry.
+
+Examples:
+
+- AI generation
+- Social posting
+- Email
+- SMS
+- API calls
+
+Retry rules must define:
+
+- Maximum attempts
+- Delay strategy
+- Failure state
+
+Never allow infinite retries.
+
+==================================================
+RULE 7 - EVERY WORKFLOW IS TRACKABLE
+==================================================
+
+Every execution must produce:
+
+Workflow ID
+Run ID
+Stage ID
+Timestamp
+Status
+
+Track:
+
+- Running
+- Waiting
+- Completed
+- Failed
+- Cancelled
+- Retried
+
+Nothing executes invisibly.
+
+==================================================
+RULE 8 - BUILD FEEDBACK LOOPS
+==================================================
+
+Every workflow must report:
+
+Expected Result
+Actual Result
+Variance
+
+Examples:
+
+Video Generated?
+Post Published?
+AI Response Valid?
+Approval Completed?
+
+Measure outcomes.
+
+Never assume success.
+
+==================================================
+RULE 9 - PREVENT DUPLICATION
+==================================================
+
+Before creating:
+
+- Screen
+- API
+- Database Table
+- Service
+- Agent
+- Workflow
+
+Search existing implementation first.
+
+Reuse before creating.
+
+One source of truth.
+
+==================================================
+RULE 10 - EVERY DECISION REQUIRES RULES
+==================================================
+
+Avoid:
+
+IF user chooses option A
+
+Instead define:
+
+Decision Criteria
+Conditions
+Expected Outcome
+Failure Outcome
+
+Document all branching logic.
+
+==================================================
+RULE 11 - EVERY WORKFLOW REQUIRES AUDIT TRAIL
+==================================================
+
+Record:
+
+Who
+What
+When
+Where
+Why
+Outcome
+
+No business critical action should be untraceable.
+
+==================================================
+RULE 12 - DESIGN FOR RECOVERY
+==================================================
+
+Assume failure.
+
+Every workflow must answer:
+
+What happens if:
+
+- Server crashes
+- Database disconnects
+- Queue stops
+- Agent fails
+- User exits
+- Browser closes
+
+Recovery must be defined before implementation.
+
+==================================================
+RULE 13 - NO HIDDEN BUSINESS LOGIC
+==================================================
+
+Business rules belong in:
+
+- Workflow Engine
+- Rule Engine
+- Configuration
+
+Not inside:
+
+- UI
+- Random API endpoints
+- Hardcoded conditions
+
+Rules must be discoverable.
+
+==================================================
+RULE 14 - STATE IS KING
+==================================================
+
+Every workflow stage must have explicit state.
+
+Examples:
+
+Draft
+Pending
+Review
+Approved
+Rejected
+Processing
+Completed
+Failed
+
+Never rely on assumptions.
+
+==================================================
+RULE 15 - EVERY INTEGRATION IS UNTRUSTED
+==================================================
+
+Treat all external systems as unstable.
+
+Protect against:
+
+- Rate limits
+- API changes
+- Downtime
+- Invalid responses
+- Authentication failures
+
+Always validate responses.
+
+==================================================
+RULE 16 - MONITOR EVERYTHING
+==================================================
+
+Monitor:
+
+- Execution time
+- Failure rate
+- Retry count
+- Queue size
+- API latency
+- Resource usage
+
+If it cannot be monitored,
+it cannot be managed.
+
+==================================================
+RULE 17 - CLOSE FEEDBACK LOOP
+==================================================
+
+Every workflow must answer:
+
+What was requested?
+What was executed?
+What was produced?
+Was it accepted?
+Was it rejected?
+What should happen next?
+
+No workflow ends without feedback.
+
+==================================================
+RULE 18 - ZERO ORPHANS
+==================================================
+
+No orphan:
+
+- Records
+- Files
+- Media
+- Workflows
+- Jobs
+- Notifications
+- Users
+
+Everything must have lifecycle management.
+
+==================================================
+RULE 19 - THINK PRODUCTION FIRST
+==================================================
+
+Design for:
+
+10 users
+100 users
+1000 users
+10000 users
+
+Do not design for demos.
+
+Design for production.
+
+==================================================
+RULE 20 - FINAL ARCHITECT CHECKPOINT
+==================================================
+
+Before approving any workflow verify:
+
+✓ Start exists
+✓ End exists
+✓ Owner exists
+✓ Validation exists
+✓ Audit exists
+✓ Recovery exists
+✓ Retry exists
+✓ Monitoring exists
+✓ Notification exists
+✓ Security exists
+✓ Feedback loop exists
+✓ No duplication exists
+✓ No open end exists
+
+If any item fails:
+
+Workflow is NOT production ready.

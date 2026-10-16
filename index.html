@@ -389,8 +389,9 @@
                             <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px;">
                                 <div style="font-size: 0.75rem; color: var(--text-dim);">This Device Address:</div>
                                 <div style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--accent-blue);" id="local-device-id">984-102-391</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;" id="local-node-desc">Local Node: Initializing Node Identity...</div>
                                 
-                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem;">One-Time Password:</div>
+                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem;">One-Time Password:</div>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
                                     <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
@@ -417,6 +418,15 @@
                                 <button id="connect-session-btn" class="btn btn-primary btn-full margin-top-md">
                                     <i class="fa-solid fa-link"></i> Connect & Share Desktop
                                 </button>
+                                
+                                <div style="display: flex; gap: 0.3rem; margin-top: 0.5rem;">
+                                    <button id="btn-native-quick-assist" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.72rem;" title="Direct Windows Quick Assist without extra software">
+                                        <i class="fa-brands fa-windows text-info"></i> Quick Assist
+                                    </button>
+                                    <button id="btn-native-msra" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.72rem;" title="Microsoft Remote Assistance (MSRA)">
+                                        <i class="fa-solid fa-headset text-warning"></i> MSRA
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -434,6 +444,9 @@
                                 <div style="font-size: 0.78rem; margin-top: 0.1rem;"><strong>Protocol:</strong> <span id="session-protocol-text" style="color: var(--text-muted);">P2P Direct Encrypted</span></div>
                                 <button id="launch-canvas-btn" class="btn btn-secondary btn-full btn-sm margin-top-md" disabled>
                                     <i class="fa-solid fa-expand"></i> Open Control Window
+                                </button>
+                                <button id="btn-download-share-bat" class="btn btn-outline btn-full btn-sm margin-top-xs" style="font-size: 0.72rem;">
+                                    <i class="fa-solid fa-file-arrow-down text-info"></i> Client .BAT Launcher
                                 </button>
                             </div>
                         </div>
@@ -505,11 +518,13 @@
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center;" class="margin-bottom-md">
-                        <div class="filter-btn-group">
-                            <button class="btn btn-secondary btn-sm active">All Devices (3)</button>
-                            <button class="btn btn-secondary btn-sm">Active (1)</button>
-                            <button class="btn btn-secondary btn-sm">Paired (1)</button>
-                            <button class="btn btn-secondary btn-sm">Standby (1)</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <div class="filter-btn-group">
+                                <button class="btn btn-secondary btn-sm active" id="fleet-filter-all">All Devices</button>
+                            </div>
+                            <select id="fleet-group-filter" class="search-bar-mini" style="background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                                <option value="ALL">Filter by Group (All)</option>
+                            </select>
                         </div>
                         <button class="btn btn-primary btn-sm" id="btn-open-add-device"><i class="fa-solid fa-plus"></i> Register New Device</button>
                     </div>
@@ -592,23 +607,35 @@
                     <div class="screen-hint-box">
                         <i class="fa-solid fa-lightbulb hint-icon"></i>
                         <div class="hint-text">
-                            <strong>MeetMyFriend Groups Principle:</strong> Manage trusted partner addresses and quick-connect groups for instant one-click remote assistance.
+                            <strong>MeetMyFriend Groups & Contacts Principle:</strong> Manage trusted partner addresses and organized connection groups for instant one-click remote assistance.
                         </div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;" class="margin-bottom-md">
-                        <span class="text-subtitle">Saved Remote Partners (2)</span>
-                        <button class="btn btn-primary btn-sm" id="btn-open-add-contact"><i class="fa-solid fa-user-plus"></i> Add Partner Contact</button>
-                    </div>
-                    <div class="cards-grid-3">
-                        <div class="widget-box">
-                            <h4><i class="fa-solid fa-user-check text-primary"></i> Primary Support Tech</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">ID: 520-310-884</p>
-                            <button class="btn btn-primary btn-sm margin-top-md btn-full" onclick="document.getElementById('target-id-input').value='520-310-884'; window.appController.switchView('remote-console');"><i class="fa-solid fa-bolt"></i> Quick Connect</button>
+
+                    <!-- Groups Management Card -->
+                    <div class="widget-box margin-bottom-md">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                            <div>
+                                <h3 style="margin: 0;"><i class="fa-solid fa-users-gear text-info"></i> Connection Groups</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.1rem 0 0 0;">Organize workstations into permission-based teams.</p>
+                            </div>
+                            <button id="btn-add-group" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Create Group</button>
                         </div>
-                        <div class="widget-box">
-                            <h4><i class="fa-solid fa-user-gear text-purple"></i> Backup Engineer</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">ID: 104-882-991</p>
-                            <button class="btn btn-secondary btn-sm margin-top-md btn-full" onclick="document.getElementById('target-id-input').value='104-882-991'; window.appController.switchView('remote-console');"><i class="fa-solid fa-bolt"></i> Quick Connect</button>
+                        <div id="groups-list" class="list-box">
+                            <div class="list-item" style="opacity: 0.5; justify-content: center;">Loading groups...</div>
+                        </div>
+                    </div>
+
+                    <!-- Contacts Management Card -->
+                    <div class="widget-box">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                            <div>
+                                <h3 style="margin: 0;"><i class="fa-solid fa-address-book text-primary"></i> Saved Partner Contacts</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.1rem 0 0 0;">Pre-approved partner systems for instant screen sharing.</p>
+                            </div>
+                            <button class="btn btn-primary btn-sm" id="btn-open-add-contact"><i class="fa-solid fa-user-plus"></i> Add Partner Contact</button>
+                        </div>
+                        <div id="contacts-list-grid" class="cards-grid-3 margin-top-md">
+                            <!-- Contacts rendered dynamically by RemoteContactsController -->
                         </div>
                     </div>
                 </section>
@@ -621,16 +648,26 @@
                             <strong>Safe Zones & Access Rules Principle:</strong> Define IP address subnets and perimeter rules to allow or block incoming remote control requests automatically.
                         </div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;" class="margin-bottom-md">
-                        <span class="text-subtitle">Active Perimeter Rules</span>
-                        <button class="btn btn-primary btn-sm" id="btn-open-add-subnet"><i class="fa-solid fa-plus"></i> Add Allowed Subnet</button>
+
+                    <div class="widget-box margin-bottom-md">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                            <div>
+                                <h3 style="margin: 0;"><i class="fa-solid fa-shield-cat text-emerald"></i> Safe Zones & IP Whitelist</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.1rem 0 0 0;">Approved enterprise locations and whitelisted IP subnets.</p>
+                            </div>
+                            <button id="btn-add-safe-zone" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add Safe Zone</button>
+                        </div>
+                        <div id="safe-zones-list" class="list-box">
+                            <div class="list-item" style="opacity: 0.5; justify-content: center;">Loading safe zones...</div>
+                        </div>
                     </div>
+
                     <div class="widget-box">
                         <h3><i class="fa-solid fa-shield-halved text-emerald"></i> Access Control Perimeter</h3>
-                        <p class="text-subtitle margin-top-sm">Configured Trusted Subnets:</p>
-                        <div style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.85rem;" class="margin-top-sm">
-                            <div><i class="fa-solid fa-circle-check text-emerald"></i> 10.0.4.0/24 (Local Enterprise LAN) - Allowed</div>
-                            <div class="margin-top-xs"><i class="fa-solid fa-circle-xmark text-danger"></i> Public WAN Direct Access - Require One-Time Passcode</div>
+                        <p class="text-subtitle margin-top-sm">Perimeter Policy:</p>
+                        <div style="background: var(--bg-tertiary); padding: 0.5rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.82rem;" class="margin-top-sm">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-circle-check text-emerald"></i> <span>Whitelisted Safe Zone Subnets - Direct P2P Tunnel Allowed</span></div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem;"><i class="fa-solid fa-circle-xmark text-danger"></i> <span>Public WAN Direct Access - Require One-Time Security Passcode</span></div>
                         </div>
                     </div>
                 </section>
@@ -648,9 +685,10 @@
                         <button class="btn btn-primary btn-sm" id="btn-open-add-guardian"><i class="fa-solid fa-user-shield"></i> Invite Guardian</button>
                     </div>
                     <div class="widget-box">
-                        <h3><i class="fa-solid fa-user-shield text-danger"></i> System Guardians</h3>
-                        <div class="stat margin-top-md"><span class="label">Lead Guardian:</span><span class="value text-primary">Antigravity AI Systems Architect</span></div>
-                        <div class="stat"><span class="label">Emergency Disconnect Override:</span><span class="value text-emerald">Enabled</span></div>
+                        <h3><i class="fa-solid fa-user-shield text-danger"></i> System Guardians Roster</h3>
+                        <div id="guardians-list-container" class="margin-top-md" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <!-- Guardians injected dynamically by GuardiansController -->
+                        </div>
                     </div>
                 </section>
 
@@ -664,20 +702,13 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;" class="margin-bottom-md">
                         <div class="filter-btn-group">
-                            <button class="btn btn-secondary btn-sm active">All</button>
-                            <button class="btn btn-secondary btn-sm">Info</button>
-                            <button class="btn btn-secondary btn-sm">Warning</button>
-                            <button class="btn btn-secondary btn-sm">Security Alerts</button>
+                            <button class="btn btn-secondary btn-sm active" id="notif-filter-all">All Notifications</button>
                         </div>
-                        <button class="btn btn-secondary btn-sm" onclick="window.appController.view.showToast('info', 'Alerts Cleared', 'All notifications marked as read.')"><i class="fa-solid fa-check-double"></i> Mark All Read</button>
+                        <button class="btn btn-secondary btn-sm" id="btn-mark-all-read"><i class="fa-solid fa-check-double"></i> Mark All Read</button>
                     </div>
                     <div class="widget-box">
-                        <div style="display: flex; gap: 0.75rem; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
-                            <i class="fa-solid fa-circle-check text-emerald" style="font-size: 1.5rem;"></i>
-                            <div>
-                                <strong>Background Web Server Running</strong>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">Listening on http://localhost:12345 (System Tray active)</div>
-                            </div>
+                        <div id="notifications-list-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <!-- Notifications injected dynamically by NotificationsController -->
                         </div>
                     </div>
                 </section>
@@ -742,7 +773,10 @@
 
                     <!-- Global Firebase Setup -->
                     <div class="widget-box margin-bottom-md" style="background: var(--bg-tertiary); border: 1px solid var(--accent-red-glow);">
-                        <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-fire text-danger"></i> Core Infrastructure (Firebase & Cloud)</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <h3 style="margin: 0;"><i class="fa-solid fa-fire text-danger"></i> Core Infrastructure (Firebase & Cloud)</h3>
+                            <span id="settings-fb-status-banner" class="badge badge-blue"><i class="fa-solid fa-spinner fa-spin"></i> Initializing Cloud Sync</span>
+                        </div>
                         <div class="settings-grid-compact">
                             <div>
                                 <label style="font-size: 0.8rem; margin-bottom: 0.2rem; display: block;">Firebase App ID</label>
@@ -962,40 +996,6 @@
                         <div class="stat"><span class="label">Input Injection Permission:</span><span class="value text-primary">Prompt Host User</span></div>
                         <div class="margin-top-md">
                             <button class="btn btn-primary btn-sm" id="btn-regenerate-pass"><i class="fa-solid fa-arrows-rotate"></i> Regenerate Security Passcode</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- VIEW: SAFE ZONES -->
-                <section id="view-safe-zones" class="view-panel" style="display: none;">
-                    <div class="widget-box">
-                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h3><i class="fa-solid fa-shield-cat text-emerald"></i> Safe Zones & IP Whitelist</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted);">Manage approved locations and IP addresses.</p>
-                            </div>
-                            <button id="btn-add-safe-zone" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add Safe Zone</button>
-                        </div>
-                        <div id="safe-zones-list" class="list-box margin-top-md">
-                            <!-- Populated dynamically via JS -->
-                            <div class="list-item" style="opacity: 0.5; justify-content: center;">No Safe Zones found.</div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- VIEW: MEETMYFRIEND GROUPS -->
-                <section id="view-remote-contacts" class="view-panel" style="display: none;">
-                    <div class="widget-box">
-                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h3><i class="fa-solid fa-users-gear text-info"></i> MeetMyFriend Groups</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted);">Organize your trusted connections into groups.</p>
-                            </div>
-                            <button id="btn-add-group" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Create Group</button>
-                        </div>
-                        <div id="groups-list" class="list-box margin-top-md">
-                            <!-- Populated dynamically via JS -->
-                            <div class="list-item" style="opacity: 0.5; justify-content: center;">No Groups found.</div>
                         </div>
                     </div>
                 </section>
@@ -1285,9 +1285,14 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="device-modal-id">
-                <label style="font-size: 0.8rem;">Device Name (Alphanumeric only):</label>
-                <input type="text" id="device-modal-name" class="search-bar-mini" placeholder="e.g. Office Desktop" style="width: 100%; margin-top: 0.1rem;">
+                <label style="font-size: 0.8rem;">Device Name (Alphanumeric, space, hyphen, dot, underscore):</label>
+                <input type="text" id="device-modal-name" class="search-bar-mini" placeholder="e.g. Office-Desktop-01" style="width: 100%; margin-top: 0.1rem;">
                 
+                <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">Assign Group:</label>
+                <select id="device-modal-group" class="search-bar-mini" style="width: 100%; margin-top: 0.1rem; background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.2rem; border-radius: 4px;">
+                    <option value="">Unassigned (No Group)</option>
+                </select>
+
                 <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">Access Level:</label>
                 <select id="device-modal-access" class="search-bar-mini" style="width: 100%; margin-top: 0.1rem; background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.2rem; border-radius: 4px;">
                     <option value="Standard">Standard (Read-Only)</option>

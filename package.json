@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "test": "node test.js",
     "background-start": "wscript.exe start_jdroid_app.vbs",
     "unix-start": "nohup node server.js > server_unix.log 2>&1 &",
     "unix-stop": "bash stop_jdroid_app.sh",

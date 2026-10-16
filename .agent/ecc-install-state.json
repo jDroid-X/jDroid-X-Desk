@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "ecc.install.v1",
+  "installedAt": "2026-05-06T06:31:49.134Z",
+  "target": {
+    "id": "antigravity-project",
+    "target": "antigravity",
+    "kind": "project",
+    "root": "C:\\Users\\dell\\jAnitGravity\\.kit\\.agent",
+    "installStatePath": "C:\\Users\\dell\\jAnitGravity\\.kit\\.agent\\ecc-install-state.json"
+  },
+  "request": {
+    "profile": null,
+    "modules": [
+      "operator-workflows"
+    ],
+    "includeComponents": [],
+    "excludeComponents": [],
+    "legacyLanguages": [],
+    "legacyMode": false
+  },
+  "resolution": {
+    "selectedModules": [
+      "platform-configs",
+      "operator-workflows"
+    ],
+    "skippedModules": []
+  },
+  "source": {
+    "repoVersion": "1.10.0",
+    "repoCommit": "1a50145d39c0fa415311da62e7a018edd4e6d976",
+    "manifestVersion": 1
+  },
+  "operations": [
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "C:\\Users\\dell\\jAnitGravity\\.kit\\everything-claude-code\\skills\\google-workspace-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\google-workspace-ops\\SKILL.md",
+      "destinationPath": "C:\\Users\\dell\\jAnitGravity\\.kit\\.agent\\skills\\google-workspace-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    }
+  ]
+}

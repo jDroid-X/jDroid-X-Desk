@@ -1,6 +1,8 @@
-node_fake -v  
-IF %0% NEQ 0 (  
-ECHO Downloading...  
-powershell -Command \" Invoke-WebRequest -Uri https://nodejs.org/dist/v20.17.0/node-v20.17.0-x64.msi -OutFile %C:\Users\jiten\AppData\Local\Temp%\node_installer.msi "\  
-ECHO Launching MSI  
-)  
+@echo off
+TITLE jDroid-X-Desk Stage 5 Verification Suite
+node test.js
+IF %ERRORLEVEL% EQU 0 (
+    ECHO [SUCCESS] All verification tests passed.
+) ELSE (
+    ECHO [ERROR] Verification suite detected failures.
+)

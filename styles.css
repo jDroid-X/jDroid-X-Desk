@@ -312,11 +312,11 @@ html, body {
 
 
 
-/* Live Toast Popup Overlay */
+/* Live Toast Popup Overlay (Slide In/Out from Right Bottom) */
 .toast-overlay-container {
     position: fixed;
     bottom: 20px;
-    left: 20px;
+    right: 20px;
     z-index: 2000;
     display: flex;
     flex-direction: column-reverse;
@@ -337,12 +337,7 @@ html, body {
     gap: 0.34rem;
     min-width: 280px;
     max-width: 420px;
-    animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slideInLeft {
-    from { transform: translateX(-100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .toast-card.toast-success { border-left-color: var(--accent-emerald); }
@@ -1402,4 +1397,161 @@ html, body {
 .badge-orange {
     background: rgba(255,171,64,0.15);
     color: #ffab40;
+}
+
+/* =============================================
+   REUSABLE UI COMPONENTS (Switch, Toggle, Flipper, Listbox)
+   ============================================= */
+
+/* 1. On/Off Cyber Switch */
+.ui-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.ui-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ui-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-bright);
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 24px;
+}
+
+.ui-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-muted);
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+}
+
+.ui-switch input:checked + .ui-switch-slider {
+    background-color: var(--accent-emerald);
+    border-color: var(--accent-emerald);
+    box-shadow: 0 0 10px var(--accent-emerald-glow);
+}
+
+.ui-switch input:checked + .ui-switch-slider:before {
+    transform: translateX(20px);
+    background-color: #ffffff;
+}
+
+/* 2. Left/Right Segmented Toggle */
+.ui-toggle-group {
+    display: inline-flex;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    gap: 2px;
+}
+
+.ui-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.25rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ui-toggle-btn.active, .ui-toggle-btn:hover {
+    background: var(--accent-blue);
+    color: #0b0f19;
+    box-shadow: 0 2px 6px var(--accent-blue-glow);
+}
+
+/* 3. 3D Card Flipper */
+.ui-flipper-container {
+    perspective: 1000px;
+    width: 100%;
+}
+
+.ui-flipper-card {
+    position: relative;
+    width: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.ui-flipper-card.is-flipped {
+    transform: rotateY(180deg);
+}
+
+.ui-flipper-front, .ui-flipper-back {
+    width: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius-md);
+}
+
+.ui-flipper-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: rotateY(180deg);
+}
+
+/* 4. Rich Listbox with Details */
+.ui-list-box {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.ui-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.ui-list-item:last-child {
+    border-bottom: none;
+}
+
+.ui-list-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.ui-list-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.ui-list-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.ui-list-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
