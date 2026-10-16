@@ -1,0 +1,52 @@
+# Screen-Action-Affordance Contract: Remote Console
+# File: requirement/remote-console.txt
+# Standard: Screen-First Outside-In OOPS-based MVC Governance (Tier P4 & P5)
+
+[SCREEN_IDENTIFIER]
+ViewId: remote-console
+Route: localhost:12345/#remote-console
+Title: jDroid-X-Desk | Unified Remote Desktop Control Console
+Theme: Light-First (AnyDesk Crisp Standard)
+
+[LAYOUT_HIERARCHY]
+Header:
+  - #toggle-drawer-btn (3D Menu Drawer)
+  - #theme-toggle-btn (Light / Dark Mode Switcher)
+  - #quick-disconnect-btn (Emergency Disconnect)
+Action Banner:
+  - #btn-download-share-bat (Instant Portable Client Export)
+Body Grid (2-Column Hero):
+  - Card 1: "This Desk" (Local Address & One-Time Passcode)
+    * #local-device-id (9-digit AnyDesk-style ID, e.g., 984-102-391)
+    * #local-device-pass (One-time auto-generated security password)
+    * #copy-id-btn (Clipboard copy trigger)
+    * #btn-open-invite-modal (Session invitation dialog opener)
+    * #local-node-desc (Network telemetry: IP, Hostname, OS)
+  - Card 2: "Remote Desk" (Partner Connection & Elevation)
+    * #target-id-input (Input for 9-digit partner ID or JDX-ABCD-1234)
+    * #target-pass-input (Security password for unattended/one-time access)
+    * #connect-session-btn (Establish P2P remote session)
+    * #launch-canvas-btn (Expand remote desktop stream)
+    * Native Relays:
+      - #btn-native-quick-assist (Windows Quick Assist protocol)
+      - #btn-native-terminal (Elevated Admin Remote Terminal)
+      - #btn-native-msra (Microsoft Remote Assistance msra.exe)
+Viewport Screen:
+  - #remote-desktop-viewport-box (Live remote desktop screen canvas)
+  - #stream-quality-select (1080p 60FPS / 720p / Turbo Mode)
+  - #btn-toggle-clipboard (Bi-directional clipboard sync)
+  - #btn-toggle-audio (Remote Opus 48kHz audio stream)
+  - #ctrl-alt-del-btn (SAS Ctrl+Alt+Del injection)
+  - #toggle-file-btn (Virtual file manager / transfer)
+  - #disconnect-session-btn (Graceful session teardown)
+
+[CONTROLLER_HANDLERS]
+- AppController.bindRemoteConnectLogic()
+- AppController.handleStartSession()
+- AppController.handleStopSession()
+- AppController.injectVirtualInput(actionStr)
+
+[MODEL_CONTRACTS]
+- SystemModel: deviceId, hardwareId, activeSession, telemetry
+- SessionModel: POST /api/sessions, PUT /api/sessions/:id
+- InvitesModel: POST /api/invites, GET /api/invites, PUT /api/invites/:id

@@ -1,0 +1,31 @@
+# Screen-Action-Affordance Contract: Fleet & Address Book
+# File: requirement/fleet-addressbook.txt
+# Standard: Screen-First Outside-In OOPS-based MVC Governance (Tier P4 & P5)
+
+[SCREEN_IDENTIFIER]
+ViewId: device-fleet
+Route: localhost:12345/#device-fleet
+Title: Address Book & Device Fleet | AnyDesk Parity
+
+[LAYOUT_HIERARCHY]
+Action Bar:
+  - #fleet-filter-all (Reset filter to all endpoints)
+  - #fleet-group-filter (Dropdown for permission groups)
+  - #btn-open-add-device (Modal trigger for registering new machine)
+Body:
+  - #device-list-ul (Dynamic device registry grid)
+  - Card Action Items:
+    * .connect-btn (Instant 1-click connect to remote partner)
+    * .edit-btn (Modify workstation alias, group, and access level)
+    * .delete-btn (Remove machine with confirmation dialog)
+
+[CONTROLLER_HANDLERS]
+- DeviceController.renderList()
+- DeviceController.openAddModal()
+- DeviceController.openEditModal(device)
+- DeviceController.saveDevice()
+- DeviceController.deleteDevice(id, name)
+
+[MODEL_CONTRACTS]
+- DeviceModel: GET /api/devices, POST /api/devices, PUT /api/devices/:id, DELETE /api/devices/:id
+- GroupModel: GET /api/groups

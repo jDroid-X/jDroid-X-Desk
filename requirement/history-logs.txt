@@ -1,0 +1,25 @@
+# Screen-Action-Affordance Contract: Connection History & Audit Logs
+# File: requirement/history-logs.txt
+# Standard: Screen-First Outside-In OOPS-based MVC Governance (Tier P4 & P5)
+
+[SCREEN_IDENTIFIER]
+ViewId: location-history & system-monitor
+Route: localhost:12345/#location-history
+Title: Session History & Traceability Audit Log
+
+[LAYOUT_HIERARCHY]
+History View:
+  - #btn-generate-audit-report (Printable PDF / HTML audit report generator)
+  - Table: Timestamp, Target Device, Remote IP, Duration, Status
+Monitor View:
+  - #system-monitor-content (Live event stream: handshake, virtual inputs, disconnects)
+  - Telemetry HUD: CPU load, RAM usage, Network ping, UAC status
+
+[CONTROLLER_HANDLERS]
+- AppController.bindSystemMonitorEvents()
+- AppController.startJarvisTelemetryLoop()
+- TraceModel.addLog(level, category, message)
+
+[MODEL_CONTRACTS]
+- TraceModel: GET /api/logs, POST /api/logs
+- TelemetryModel: GET /api/system-telemetry

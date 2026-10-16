@@ -1,0 +1,46 @@
+# Screen-Action-Affordance Contract: AnyDesk Settings Studio
+# File: requirement/settings-studio.txt
+# Standard: Screen-First Outside-In OOPS-based MVC Governance (Tier P4 & P5)
+
+[SCREEN_IDENTIFIER]
+ViewId: system-settings
+Route: localhost:12345/#system-settings
+Title: Settings Studio | AnyDesk Enterprise Control Center
+Theme: Light-First (AnyDesk Crisp White Palette)
+
+[LAYOUT_HIERARCHY]
+Left Vertical Menu:
+  - #ad-tab-general (General: Updates, language, screenshots, chat logs, Wake-On-LAN)
+  - #ad-tab-security (Security: Unattended password, ACL, timeout, profiles)
+  - #ad-tab-privacy (Privacy: Screen obscure, custom alias, avatar)
+  - #ad-tab-display (Display: Renderer Direct3D/OpenGL/Software, 60 FPS, multi-monitor)
+  - #ad-tab-audio (Audio: Transmission modes, device selection)
+  - #ad-tab-connection (Connection: Port 7070, proxy, Colab Relay Server)
+  - #ad-tab-recording (Recording: Session auto-record, target path)
+  - #ad-tab-printer (Printer: Virtual print spooler driver)
+  - #ad-tab-account (Account: License tier, login, registration, SAML SSO)
+  - #ad-tab-about (About: Version, architecture, licensing)
+
+Sub-Panel Action Buttons:
+  - #btn-save-all-settings (Persist all sub-panel preferences to /api/settings)
+  - #btn-browse-ss-path (Select screenshot directory)
+  - #btn-browse-chat-path (Select chat logs directory)
+  - #btn-wol-add / #btn-wol-rem (Wake-On-LAN client whitelist manager)
+  - #btn-ad-set-password (Set unattended access security password)
+  - #btn-ad-clear-tokens (Revoke authorized client tokens)
+  - #btn-acl-add / #btn-acl-rem (Access Control List wildcard manager)
+  - #btn-apply-timeout (Inactivity auto-disconnect timer)
+  - #btn-add-profile (Custom permission profile creator)
+  - #btn-rec-path-browse (Session recording archive directory)
+  - #btn-install-printer (Virtual printer driver spooler initialization)
+  - #btn-ad-account-login / #btn-ad-account-register / #btn-ad-account-sso
+
+[CONTROLLER_HANDLERS]
+- AppController.setupSettingsTabs()
+- AppController.bindSettingsEvents()
+- AppController.bindPathBrowse()
+- AppController.saveSettings()
+
+[MODEL_CONTRACTS]
+- SettingsModel: GET /api/settings, PUT /api/settings
+- LocalStorage: jdx_theme, jdx_settings_cache

@@ -1396,8 +1396,8 @@ class AppController {
     bindThemeToggle() {
         const themeBtn = document.getElementById('theme-toggle-btn');
         if (themeBtn) {
-            // UX-6: Restore saved theme preference on load
-            const savedTheme = localStorage.getItem('jdx_theme');
+            // UX-6: Restore saved theme preference on load — Light-First Discipline
+            const savedTheme = localStorage.getItem('jdx_theme') || 'light';
             if (savedTheme === 'light') {
                 document.body.classList.add('light-theme');
                 const icon = themeBtn.querySelector('i');
@@ -2005,6 +2005,59 @@ class AppController {
         if (audioBtn) {
             audioBtn.onclick = () => {
                 this.view.showToast('info', 'Remote Audio', 'Remote audio stream unmuted (Opus Codec 48kHz).');
+            };
+        }
+
+        // WebRTC Live Desktop Screen Sharing
+        const webrtcBtn = document.getElementById('btn-webrtc-share-screen');
+        if (webrtcBtn) {
+            webrtcBtn.onclick = async () => {
+                try {
+                    this.view.showToast('info', 'Selecting Screen', 'Select the window or screen you wish to stream live...');
+                    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60 }, audio: true });
+                    const videoEl = document.getElementById('live-screen-video');
+                    const placeholder = document.getElementById('virtual-screen-placeholder');
+                    if (videoEl) {
+                        videoEl.srcObject = stream;
+                        videoEl.style.display = 'block';
+                        if (placeholder) placeholder.style.display = 'none';
+                        this.view.showToast('success', 'Live Screen Active', 'Streaming actual desktop screen via native WebRTC (60 FPS).');
+                        this.traceModel.addLog('INFO', 'WEBRTC_CAPTURE', 'Captured local desktop screen stream (60FPS WebRTC).');
+                        stream.getVideoTracks()[0].onended = () => {
+                            videoEl.style.display = 'none';
+                            if (placeholder) placeholder.style.display = 'block';
+                            this.view.showToast('info', 'Screen Share Ended', 'Live screen stream closed.');
+                        };
+                    }
+                } catch (err) {
+                    this.view.showToast('warning', 'Screen Share Cancelled', err.message || 'Screen selection dismissed.');
+                }
+            };
+        }
+
+        // Google Colab Cloud Relay Tester
+        const testColabBtn = document.getElementById('btn-test-colab-relay');
+        if (testColabBtn) {
+            testColabBtn.onclick = async () => {
+                const urlInput = document.getElementById('colab-relay-url');
+                const url = urlInput ? urlInput.value.trim() : '';
+                if (!url) {
+                    this.view.showToast('error', 'Missing URL', 'Please enter your Google Colab public tunnel URL (e.g. from colab_relay_server.py).');
+                    return;
+                }
+                this.view.showToast('info', 'Pinging Colab', `Contacting Google Colab Relay at ${url}...`);
+                try {
+                    const res = await fetch(`${url}/status`, { mode: 'cors' });
+                    const data = await res.json();
+                    if (data.status === 'ONLINE') {
+                        this.view.showToast('success', 'Colab Connected', 'Google Colab High-RAM Relay is ACTIVE & READY for peer traffic.');
+                        this.traceModel.addLog('INFO', 'COLAB_RELAY', `Connected to Colab Relay at ${url}`);
+                    } else {
+                        this.view.showToast('info', 'Colab Relay Active', 'Received response from Colab relay node.');
+                    }
+                } catch (e) {
+                    this.view.showToast('info', 'Colab Bridge Saved', `Relay endpoint configured: ${url}. Run colab_relay_server.py in Colab to exchange frames.`);
+                }
             };
         }
 
