@@ -34,6 +34,8 @@ async function runTests() {
     assert(fs.existsSync('database.json'), 'database.json exists');
     assert(fs.existsSync('jDroid-Share.bat'), 'jDroid-Share.bat (standalone client) exists');
     assert(fs.existsSync('jDroid-Client.bat'), 'jDroid-Client.bat (portable admin client) exists');
+    assert(fs.existsSync('JDroidXDeskNative.cs'), 'JDroidXDeskNative.cs (pure native C# source) exists');
+    assert(fs.existsSync('jDroid-X-Desk-Native.exe'), 'jDroid-X-Desk-Native.exe (pure native Windows machine executable) exists');
 
 
     // 2. DATABASE SCHEMA INTEGRITY
