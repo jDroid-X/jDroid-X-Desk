@@ -23,7 +23,98 @@ const DEFAULT_SETTINGS = {
     theme: 'light',
     networkBaseline: '4G/5G Auto',
     autoStartup: false,
-    jarvisTelemetry: true
+    jarvisTelemetry: true,
+    language: 'autoselect',
+    general: {
+        hideLocalTaskbar: false,
+        requestComment: false,
+        openAddressBookOnStartup: false,
+        showAcceptWindowOnChat: false,
+        showPopupsForInvites: true,
+        soundOnIncoming: false,
+        transmitHotkeys: true,
+        screenshotPath: 'C:\\Users\\jiten\\Pictures\\AnyDesk',
+        chatLogPath: 'C:\\Users\\jiten\\AppData\\Roaming\\AnyDesk\\chat',
+        onlineStatusVisibility: true,
+        allowDataCollection: false
+    },
+    connection: {
+        allowDirectConnections: true,
+        localPort: 7070,
+        proxyMode: 'detect',
+        proxyType: 'HTTP(S)',
+        proxyAddress: '',
+        proxyPort: '',
+        proxyAuthMode: 'ntlm',
+        proxyUsername: '',
+        proxyPassword: ''
+    },
+    wakeOnLan: {
+        mode: 'enabled',
+        authorizedClients: []
+    },
+    screenRecording: {
+        enabled: true,
+        recordingPath: 'C:\\Users\\jiten\\Videos\\AnyDesk\\screen recordings',
+        audioInput: 'default',
+        micInput: 'default'
+    },
+    access: {
+        interactiveAccess: 'open_only',
+        unattendedPassword: '',
+        allowSaveLoginTokens: true,
+        enable2FA: false,
+        aclEnabled: false,
+        aclAddresses: [],
+        localDiscovery: true,
+        excludeFromDiscovery: false,
+        autoDisconnectMinutes: 10
+    },
+    permissions: {
+        globalPrint: true,
+        globalSyncClipboard: true,
+        globalSyncClipboardFiles: true,
+        globalLockOnEnd: false,
+        activeProfile: 'Default'
+    },
+    privacy: {
+        screenFrameEnabled: false,
+        screenFrameColor: '#ff6666',
+        screenFrameOpacity: 50,
+        screenFrameWidth: 5
+    },
+    display: {
+        quality: 'best_quality',
+        visualHelpers: 'show_on_movement',
+        followCursor: false,
+        followWindowFocus: false,
+        showSizeHelper: false,
+        viewMode: 'optimize_shrink',
+        edgeScrolling: false,
+        fullScreenMode: 'automatic',
+        hardwareAcceleration: 'direct3d',
+        use16BitRenderer: false,
+        rememberPerDesk: true
+    },
+    audio: {
+        transmission: 'audio_output',
+        outputDevice: 'default',
+        exclusivePlayback: false
+    },
+    recording: {
+        autoRecordIncoming: false,
+        autoRecordOutgoing: false,
+        sessionRecordPath: 'C:\\Users\\jiten\\Videos\\AnyDesk'
+    },
+    printer: {
+        incomingPrintJobs: 'default_printer',
+        autoPrint: false
+    },
+    account: {
+        email: '',
+        licenseKey: 'free-1',
+        licenseType: 'Free Non-Commercial'
+    }
 };
 
 const DEFAULT_SCHEMA = {

@@ -799,19 +799,147 @@ class AppController {
 
                 this.view.showToast('success', 'Credentials Saved', 'Firebase configuration credentials updated successfully.');
                 this.traceModel.addLog('SECURITY_AUDIT', 'CONFIG_CHANGE', 'Firebase signaling API credentials updated by operator');
-                
-                // Dynamic hot-reload of presence connection
-                if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-                    firebase.app().delete().then(() => {
-                        this.initFirebasePresence();
-                    }).catch((err) => {
-                        console.error('[FIREBASE] App deletion failed:', err);
-                        this.initFirebasePresence();
-                    });
-                } else {
-                    this.initFirebasePresence();
-                }
             };
+        }
+
+        // =========================================================================
+        // ANYDESK SETTINGS STUDIO (OOPS MVC CONTROLLER BINDINGS)
+        // =========================================================================
+        const adMenuItems = document.querySelectorAll('.anydesk-menu-item[data-ad-tab]');
+        const adPanels = document.querySelectorAll('.anydesk-content-panel');
+
+        adMenuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                adMenuItems.forEach(m => m.classList.remove('active'));
+                adPanels.forEach(p => p.classList.remove('active'));
+                
+                item.classList.add('active');
+                const targetPanelId = item.getAttribute('data-ad-tab');
+                const targetPanel = document.getElementById(targetPanelId);
+                if (targetPanel) targetPanel.classList.add('active');
+            });
+        });
+
+        // AnyDesk Settings Live Search
+        const adSearchInput = document.getElementById('ad-settings-search');
+        if (adSearchInput) {
+            adSearchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                const currentPanel = document.querySelector('.anydesk-content-panel.active');
+                if (!currentPanel) return;
+                
+                const sections = currentPanel.querySelectorAll('.anydesk-section');
+                sections.forEach(sec => {
+                    const text = sec.textContent.toLowerCase();
+                    sec.style.display = (!query || text.includes(query)) ? 'block' : 'none';
+                });
+            });
+        }
+
+        // Permission Profile Quick Switcher
+        const profileDefs = {
+            'prof-item-default': { sound: true, control: true, restart: true, privacy: false, cad: true, block: true, lock: true, signout: false, clipboard: true, clipTransfer: true, filemgr: true, sysinfo: true, draw: true, tcp: false, record: true, uac: false },
+            'prof-item-screen': { sound: true, control: false, restart: false, privacy: false, cad: false, block: false, lock: false, signout: false, clipboard: false, clipTransfer: false, filemgr: false, sysinfo: true, draw: true, tcp: false, record: false, uac: false },
+            'prof-item-full': { sound: true, control: true, restart: true, privacy: true, cad: true, block: true, lock: true, signout: true, clipboard: true, clipTransfer: true, filemgr: true, sysinfo: true, draw: true, tcp: true, record: true, uac: true },
+            'prof-item-unattended': { sound: true, control: true, restart: true, privacy: true, cad: true, block: true, lock: true, signout: true, clipboard: true, clipTransfer: true, filemgr: true, sysinfo: true, draw: false, tcp: true, record: true, uac: true }
+        };
+
+        Object.keys(profileDefs).forEach(profId => {
+            const btn = document.getElementById(profId);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    ['prof-item-default', 'prof-item-screen', 'prof-item-full', 'prof-item-unattended'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.background = (id === profId) ? '#efefef' : 'transparent';
+                    });
+                    const p = profileDefs[profId];
+                    const setCheck = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+                    setCheck('ad-p-sound', p.sound);
+                    setCheck('ad-p-control', p.control);
+                    setCheck('ad-p-restart', p.restart);
+                    setCheck('ad-p-privacy', p.privacy);
+                    setCheck('ad-p-cad', p.cad);
+                    setCheck('ad-p-block', p.block);
+                    setCheck('ad-p-lock', p.lock);
+                    setCheck('ad-p-signout', p.signout);
+                    setCheck('ad-p-clipboard', p.clipboard);
+                    setCheck('ad-p-clip-transfer', p.clipTransfer);
+                    setCheck('ad-p-filemgr', p.filemgr);
+                    setCheck('ad-p-sysinfo', p.sysinfo);
+                    setCheck('ad-p-draw', p.draw);
+                    setCheck('ad-p-tcp', p.tcp);
+                    setCheck('ad-p-record', p.record);
+                    setCheck('ad-p-uac', p.uac);
+                    this.view.showToast('info', 'Profile Applied', `Loaded permissions for: ${btn.textContent.trim()}`);
+                });
+            }
+        });
+
+        // Screen Frame Border Live Preview Toggle
+        const frameColorInput = document.getElementById('ad-priv-frame-color');
+        const frameWidthInput = document.getElementById('ad-priv-frame-width');
+        const frameOpacityInput = document.getElementById('ad-priv-frame-opacity');
+        const btnApplyFrame = document.getElementById('btn-apply-frame');
+
+        if (btnApplyFrame) {
+            btnApplyFrame.addEventListener('click', () => {
+                const color = frameColorInput ? frameColorInput.value : '#ff6666';
+                const width = frameWidthInput ? frameWidthInput.value : '5';
+                const opacity = frameOpacityInput ? (parseInt(frameOpacityInput.value, 10) / 100) : 0.5;
+                const enabled = document.getElementById('ad-priv-frame-enabled')?.checked;
+
+                const viewport = document.getElementById('remote-desktop-viewport-box');
+                if (viewport) {
+                    if (enabled) {
+                        viewport.style.boxShadow = `inset 0 0 0 ${width}px ${color}`;
+                        viewport.style.borderColor = color;
+                    } else {
+                        viewport.style.boxShadow = 'none';
+                        viewport.style.borderColor = 'var(--border-color)';
+                    }
+                }
+                this.view.showToast('success', 'Screen Frame Applied', `Privacy frame updated: ${width}px border`);
+            });
+        }
+
+        // Save All AnyDesk Settings
+        const btnSaveAll = document.getElementById('btn-save-all-settings');
+        if (btnSaveAll) {
+            btnSaveAll.addEventListener('click', async () => {
+                const settingsPayload = {
+                    theme: document.getElementById('ad-set-theme')?.value || 'light',
+                    language: document.getElementById('ad-set-lang')?.value || 'autoselect',
+                    relayServerUrl: document.getElementById('ad-relay-server-url')?.value || '',
+                    general: {
+                        hideLocalTaskbar: document.getElementById('ad-set-hide-taskbar')?.checked || false,
+                        requestComment: document.getElementById('ad-set-req-comment')?.checked || false,
+                        openAddressBookOnStartup: document.getElementById('ad-set-open-addrbook')?.checked || false,
+                        showAcceptWindowOnChat: document.getElementById('ad-set-accept-chat')?.checked || false,
+                        showPopupsForInvites: document.getElementById('ad-set-popup-invite')?.checked || true,
+                        soundOnIncoming: document.getElementById('ad-set-sound-conn')?.checked || false,
+                        transmitHotkeys: document.getElementById('ad-set-transmit-hotkeys')?.checked || true,
+                        onlineStatusVisibility: document.getElementById('ad-set-online-vis')?.checked || true,
+                        allowDataCollection: document.getElementById('ad-set-allow-telemetry')?.checked || false
+                    },
+                    connection: {
+                        allowDirectConnections: document.getElementById('ad-conn-direct')?.checked || true,
+                        localPort: parseInt(document.getElementById('ad-conn-port')?.value || '7070', 10),
+                        proxyType: document.getElementById('ad-proxy-type')?.value || 'HTTP(S)',
+                        proxyAddress: document.getElementById('ad-proxy-addr')?.value || '',
+                        proxyPort: document.getElementById('ad-proxy-port')?.value || ''
+                    },
+                    display: {
+                        followCursor: document.getElementById('ad-disp-follow-cursor')?.checked || false,
+                        followWindowFocus: document.getElementById('ad-disp-follow-focus')?.checked || false,
+                        showSizeHelper: document.getElementById('ad-disp-show-size')?.checked || false,
+                        edgeScrolling: document.getElementById('ad-disp-edge-scroll')?.checked || false
+                    }
+                };
+
+                await this.settingsModel.saveToAPI(settingsPayload);
+                this.view.showToast('success', 'Settings Saved', 'All AnyDesk settings saved and synchronized successfully.');
+                this.traceModel.addLog('CONFIG', 'SETTINGS_SAVED', 'AnyDesk Studio settings persisted to database');
+            });
         }
     }
 
