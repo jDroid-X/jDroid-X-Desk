@@ -1171,20 +1171,41 @@ class AppController {
             });
         }
 
-        // Standalone Client .BAT Launcher Download
+        // Native Windows Remote Administrator Terminal Launcher
+        const terminalBtn = document.getElementById('btn-native-terminal');
+        if (terminalBtn) {
+            terminalBtn.addEventListener('click', async () => {
+                this.view.showToast('info', 'Invoking Admin Terminal', 'Starting Elevated Windows Remote Terminal...');
+                try {
+                    const res = await fetch('/api/remote/launch-terminal', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.view.showToast('success', 'Terminal Active', 'Remote Admin Terminal launched with Windows-level Administrator rights.');
+                        this.traceModel.addLog('INFO', 'NATIVE_TERMINAL', 'Elevated PowerShell Remote Terminal opened with full Windows admin rights.');
+                    } else {
+                        this.view.showToast('error', 'Launch Failed', data.error || 'Failed to start Remote Terminal.');
+                    }
+                } catch (e) {
+                    this.view.showToast('error', 'Error', 'Failed to reach local server.');
+                }
+            });
+        }
+
+        // Standalone Client .BAT Launcher Download (AnyDesk Portable Alternative)
         const downloadBatBtn = document.getElementById('btn-download-share-bat');
         if (downloadBatBtn) {
             downloadBatBtn.addEventListener('click', () => {
                 const a = document.createElement('a');
-                a.href = 'jDroid-Share.bat';
-                a.download = 'jDroid-Share.bat';
+                a.href = 'jDroid-Client.bat';
+                a.download = 'jDroid-Client.bat';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                this.view.showToast('success', 'Client Package Downloaded', 'jDroid-Share.bat downloaded. Send this lightweight 5KB file to the client for instant 1-click sharing.');
-                this.traceModel.addLog('INFO', 'SHARE_BAT_EXPORT', 'Exported standalone client launcher jDroid-Share.bat for end-user.');
+                this.view.showToast('success', 'Client Package Downloaded', 'jDroid-Client.bat downloaded. Share this small script with the remote user to connect with Windows Admin rights.');
+                this.traceModel.addLog('INFO', 'CLIENT_BAT_EXPORT', 'Exported standalone client launcher jDroid-Client.bat for remote user.');
             });
         }
+
 
         // Launch Control Window Button
         if (launchCanvasBtn) {

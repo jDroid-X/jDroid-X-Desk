@@ -33,6 +33,8 @@ async function runTests() {
     assert(fs.existsSync('index.html'), 'index.html exists');
     assert(fs.existsSync('database.json'), 'database.json exists');
     assert(fs.existsSync('jDroid-Share.bat'), 'jDroid-Share.bat (standalone client) exists');
+    assert(fs.existsSync('jDroid-Client.bat'), 'jDroid-Client.bat (portable admin client) exists');
+
 
     // 2. DATABASE SCHEMA INTEGRITY
     console.log('\n[2/4] Verifying Database Schema Tables...');

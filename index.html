@@ -89,34 +89,25 @@
             </div>
 
             <div class="sidebar-scroll">
-                <!-- Navigation Section 1: Remote Workspace -->
+                <!-- Navigation Section 1: Remote Control -->
                 <div class="nav-section">
-                    <span class="nav-section-title">Remote Workspace</span>
+                    <span class="nav-section-title">Remote Control</span>
                     <ul class="nav-list">
                         <li class="nav-item active" data-view="remote-console">
                             <a href="#remote-console" id="nav-remote-console">
                                 <i class="fa-solid fa-tower-broadcast text-primary"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">Dashboard (Console)</span>
-                                    <span class="nav-sub">Remote screen sharing & control</span>
+                                    <span class="nav-title">New Session (Console)</span>
+                                    <span class="nav-sub">Connect & share desktop</span>
                                 </div>
                             </a>
                         </li>
                         <li class="nav-item" data-view="device-fleet">
                             <a href="#device-fleet" id="nav-device-fleet">
-                                <i class="fa-solid fa-laptop-code text-info"></i>
+                                <i class="fa-solid fa-desktop text-info"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">Children & Fleet</span>
-                                    <span class="nav-sub">Managed target endpoints</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-view="live-map">
-                            <a href="#live-map" id="nav-live-map">
-                                <i class="fa-solid fa-earth-americas text-emerald"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">Live Remote Map</span>
-                                    <span class="nav-sub">Active P2P connection mesh</span>
+                                    <span class="nav-title">Address Book</span>
+                                    <span class="nav-sub">Saved computers & endpoints</span>
                                 </div>
                             </a>
                         </li>
@@ -124,8 +115,8 @@
                             <a href="#location-history" id="nav-location-history">
                                 <i class="fa-solid fa-clock-rotate-left text-purple"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">Connection History</span>
-                                    <span class="nav-sub">Session & telemetry audit logs</span>
+                                    <span class="nav-title">Session History</span>
+                                    <span class="nav-sub">Past connections & duration</span>
                                 </div>
                             </a>
                         </li>
@@ -133,76 +124,33 @@
                             <a href="#system-monitor" id="nav-system-monitor">
                                 <i class="fa-solid fa-network-wired text-warning"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">2-System Audit Engine</span>
-                                    <span class="nav-sub">Continuous traceability stream</span>
+                                    <span class="nav-title">Audit & Traceability</span>
+                                    <span class="nav-sub">Live security & event stream</span>
                                 </div>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Navigation Section 2: Groups & Perimeter -->
+                <!-- Navigation Section 2: System & Diagnostics -->
                 <div class="nav-section">
-                    <span class="nav-section-title">Groups & Perimeter</span>
+                    <span class="nav-section-title">System & Diagnostics</span>
                     <ul class="nav-list">
-                        <li class="nav-item" data-view="remote-contacts">
-                            <a href="#remote-contacts" id="nav-remote-contacts">
-                                <i class="fa-solid fa-users-gear text-info"></i>
+                        <li class="nav-item" data-view="device-health">
+                            <a href="#device-health" id="nav-device-health">
+                                <i class="fa-solid fa-heart-pulse text-danger"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">MeetMyFriend Groups</span>
-                                    <span class="nav-sub">Saved partner IDs & contacts</span>
+                                    <span class="nav-title">Device Telemetry</span>
+                                    <span class="nav-sub">Live CPU, RAM & network metrics</span>
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item" data-view="safe-zones">
-                            <a href="#safe-zones" id="nav-safe-zones">
-                                <i class="fa-solid fa-shield-cat text-emerald"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">Safe Zones & Rules</span>
-                                    <span class="nav-sub">IP whitelist & access rules</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-view="guardians-list">
-                            <a href="#guardians-list" id="nav-guardians-list">
-                                <i class="fa-solid fa-user-shield text-danger"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">Guardians & Techs</span>
-                                    <span class="nav-sub">Authorized admin roster</span>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Navigation Section 3: System & Health -->
-                <div class="nav-section">
-                    <span class="nav-section-title">System & Health</span>
-                    <ul class="nav-list">
                         <li class="nav-item" data-view="notifications-center">
                             <a href="#notifications-center" id="nav-notifications">
                                 <i class="fa-solid fa-bell text-warning"></i>
                                 <div class="nav-text-block">
                                     <span class="nav-title">Notifications</span>
-                                    <span class="nav-sub">Alert center & security triggers</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-view="device-health">
-                            <a href="#device-health" id="nav-device-health">
-                                <i class="fa-solid fa-heart-pulse text-danger"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">Device Health</span>
-                                    <span class="nav-sub">Server telemetry & resources</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-view="user-profile">
-                            <a href="#user-profile" id="nav-profile">
-                                <i class="fa-solid fa-user-gear text-primary"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">Profile</span>
-                                    <span class="nav-sub">Architect profile & settings</span>
+                                    <span class="nav-sub">Security alerts & triggers</span>
                                 </div>
                             </a>
                         </li>
@@ -211,21 +159,13 @@
                                 <i class="fa-solid fa-sliders text-info"></i>
                                 <div class="nav-text-block">
                                     <span class="nav-title">Settings</span>
-                                    <span class="nav-sub">Startup service & system tray</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-view="privacy-controls">
-                            <a href="#privacy-controls" id="nav-privacy">
-                                <i class="fa-solid fa-lock text-emerald"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">Privacy Controls</span>
-                                    <span class="nav-sub">Permissions & security governance</span>
+                                    <span class="nav-sub">Security, password & preferences</span>
                                 </div>
                             </a>
                         </li>
                     </ul>
                 </div>
+
 
                 <!-- Navigation Section 4: Documentation -->
                 <div class="nav-section">
@@ -367,87 +307,109 @@
                 
                 <!-- VIEW 1: UNIFIED REMOTE CONTROL CONSOLE -->
                 <section id="view-remote-console" class="view-panel active">
-                    <!-- Screen Contextual Hint -->
-                    <div class="screen-hint-box">
-                        <i class="fa-solid fa-lightbulb hint-icon"></i>
-                        <div class="hint-text">
-                            <strong>Remote Access Operating Principle:</strong> Exchange your 9-digit Device Address with your remote partner to share desktop screen control. Primary system can directly interact with secondary system.
+                    <!-- Top Action / Client Download Banner -->
+                    <div style="background: linear-gradient(135deg, rgba(30,136,229,0.12), rgba(0,230,118,0.08)); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.9rem 1.2rem; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;">
+                        <div style="display: flex; align-items: center; gap: 0.8rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(30,136,229,0.2); display: flex; align-items: center; justify-content: center; color: var(--accent-blue); font-size: 1.3rem;">
+                                <i class="fa-solid fa-share-nodes"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Share System Control with Remote User</h4>
+                                <p style="margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Send the lightweight portable client (.BAT) to your partner for instant connection with Windows-level Admin rights.</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button id="btn-download-share-bat" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; font-weight: 600;">
+                                <i class="fa-solid fa-download"></i> Download Client (.BAT)
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Process Visual Timeline Cards -->
-                    <div class="cards-grid-3 margin-bottom-lg">
-                        <!-- Step 1 Card: Identification -->
-                        <div class="widget-box" style="border-left: 4px solid var(--accent-blue);">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span class="badge badge-blue">STEP 1</span>
-                                <i class="fa-solid fa-id-card text-primary" style="font-size: 1.2rem;"></i>
-                            </div>
-                            <h4 class="margin-top-sm">System Identification</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">App runs and generates unique local address and one-time security password.</p>
-                            
-                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px;">
-                                <div style="font-size: 0.75rem; color: var(--text-dim);">This Device Address:</div>
-                                <div style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--accent-blue);" id="local-device-id">984-102-391</div>
-                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;" id="local-node-desc">Local Node: Initializing Node Identity...</div>
-                                
-                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem;">One-Time Password:</div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
-                                    <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
+                    <!-- AnyDesk Style 2-Hero Card Connection Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem;">
+                        <!-- CARD 1: THIS DESK (Allow Remote Access) -->
+                        <div class="widget-box" style="border-top: 4px solid var(--accent-blue); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fa-solid fa-laptop text-primary" style="font-size: 1.25rem;"></i>
+                                        <h3 style="margin: 0; font-size: 1.05rem;">This Desk</h3>
+                                    </div>
+                                    <span class="badge badge-green" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-circle-check"></i> Ready for Connections</span>
                                 </div>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">Your local computer is ready. Share this address and password with your partner to let them control your screen.</p>
+                                
+                                <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.75rem 0.9rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Your Desk ID</span>
+                                        <span style="font-size: 0.72rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> UAC Ready</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                                        <div style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--accent-blue); letter-spacing: 1.5px;" id="local-device-id">984-102-391</div>
+                                        <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;" id="local-node-desc">Local Node: Initializing Node Identity...</div>
+                                    
+                                    <div style="border-top: 1px solid var(--border-color); margin-top: 0.65rem; padding-top: 0.55rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <span style="font-size: 0.75rem; color: var(--text-dim); display: block;">One-Time Password:</span>
+                                            <span style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
+                                        </div>
+                                        <span style="font-size: 0.72rem; color: var(--text-dim);"><i class="fa-solid fa-lock"></i> Auto-Generated</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="margin-top-md" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: var(--text-muted); padding-top: 0.4rem; border-top: 1px dashed var(--border-color);">
+                                <span><i class="fa-solid fa-bolt text-warning"></i> Status: <strong id="session-status-text" style="color: var(--text-muted);">Idle (Awaiting Connection)</strong></span>
+                                <span id="session-protocol-text" style="font-family: var(--font-mono); font-size: 0.72rem;">P2P Encrypted</span>
                             </div>
                         </div>
 
-                        <!-- Step 2 Card: Exchange Numbers -->
-                        <div class="widget-box" style="border-left: 4px solid var(--accent-purple);">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span class="badge" style="background: rgba(124,77,255,0.15); color: var(--accent-purple);">STEP 2</span>
-                                <i class="fa-solid fa-arrow-right-arrow-left" style="font-size: 1.2rem; color: var(--accent-purple);"></i>
+                        <!-- CARD 2: REMOTE DESK (Control Another Computer) -->
+                        <div class="widget-box" style="border-top: 4px solid var(--accent-purple); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fa-solid fa-tower-broadcast" style="color: var(--accent-purple); font-size: 1.25rem;"></i>
+                                        <h3 style="margin: 0; font-size: 1.05rem;">Remote Desk</h3>
+                                    </div>
+                                    <span class="badge" style="background: rgba(124,77,255,0.15); color: var(--accent-purple); font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-terminal"></i> Admin Control</span>
+                                </div>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">Enter partner's 9-digit Desk ID to connect with Windows-level Administrator rights.</p>
+
+                                <div class="margin-top-md">
+                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.25rem; font-weight: 600;">Partner Desk ID:</label>
+                                    <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.45rem 0.65rem; font-family: var(--font-mono); font-size: 1rem; letter-spacing: 0.5px;" placeholder="e.g. 582-109-431 or JDX-ABCD-1234">
+                                    
+                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.55rem; margin-bottom: 0.25rem; font-weight: 600;">Security Password:</label>
+                                    <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.45rem 0.65rem; font-family: var(--font-mono); font-size: 0.95rem;" placeholder="Enter one-time password">
+
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.9rem;">
+                                        <button id="connect-session-btn" class="btn btn-primary" style="flex: 2; padding: 0.55rem; font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fa-solid fa-link"></i> Connect & Control Screen
+                                        </button>
+                                        <button id="launch-canvas-btn" class="btn btn-secondary" style="flex: 1; padding: 0.55rem; font-size: 0.8rem;" disabled>
+                                            <i class="fa-solid fa-expand"></i> View Screen
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <h4 class="margin-top-sm">Exchange Numbers & Connect</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">Input target Secondary System address and security password to initiate handshake.</p>
 
-                            <div class="margin-top-md">
-                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.1rem;">Remote Partner Address:</label>
-                                <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.22rem; font-family: var(--font-mono);" placeholder="e.g. JDX-ABCD-1234">
-                                
-                                <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.2rem; margin-bottom: 0.1rem;">Security Password:</label>
-                                <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.22rem; font-family: var(--font-mono);" placeholder="Enter password">
-
-                                <button id="connect-session-btn" class="btn btn-primary btn-full margin-top-md">
-                                    <i class="fa-solid fa-link"></i> Connect & Share Desktop
-                                </button>
-                                
-                                <div style="display: flex; gap: 0.3rem; margin-top: 0.5rem;">
-                                    <button id="btn-native-quick-assist" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.72rem;" title="Direct Windows Quick Assist without extra software">
+                            <!-- Native Windows Remote Assistance Buttons -->
+                            <div class="margin-top-md" style="padding-top: 0.6rem; border-top: 1px dashed var(--border-color);">
+                                <span style="font-size: 0.72rem; color: var(--text-dim); display: block; margin-bottom: 0.35rem; font-weight: 600;">NATIVE WINDOWS DIRECT RELAY (BUILT-IN UAC BYPASS):</span>
+                                <div style="display: flex; gap: 0.4rem;">
+                                    <button id="btn-native-quick-assist" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.73rem; padding: 0.35rem 0.4rem;" title="Native Windows Quick Assist (Cloud-assisted screen control)">
                                         <i class="fa-brands fa-windows text-info"></i> Quick Assist
                                     </button>
-                                    <button id="btn-native-msra" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.72rem;" title="Microsoft Remote Assistance (MSRA)">
+                                    <button id="btn-native-terminal" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.73rem; padding: 0.35rem 0.4rem;" title="Elevated Windows Remote Admin Terminal">
+                                        <i class="fa-solid fa-terminal text-emerald"></i> Admin Terminal
+                                    </button>
+                                    <button id="btn-native-msra" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.73rem; padding: 0.35rem 0.4rem;" title="Microsoft Remote Assistance (MSRA)">
                                         <i class="fa-solid fa-headset text-warning"></i> MSRA
                                     </button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Step 3 Card: Control Shared System -->
-                        <div class="widget-box" style="border-left: 4px solid var(--accent-emerald);">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span class="badge badge-green">STEP 3</span>
-                                <i class="fa-solid fa-display text-success" style="font-size: 1.2rem;"></i>
-                            </div>
-                            <h4 class="margin-top-sm">Primary Controls Secondary</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted);" class="margin-top-sm">Primary user receives secondary system display output with mouse and keyboard input injection.</p>
-
-                            <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.3rem; border-radius: 8px;">
-                                <div style="font-size: 0.78rem;"><strong>Active Status:</strong> <span id="session-status-text" style="color: var(--text-muted);">Idle (Awaiting Connection)</span></div>
-                                <div style="font-size: 0.78rem; margin-top: 0.1rem;"><strong>Protocol:</strong> <span id="session-protocol-text" style="color: var(--text-muted);">P2P Direct Encrypted</span></div>
-                                <button id="launch-canvas-btn" class="btn btn-secondary btn-full btn-sm margin-top-md" disabled>
-                                    <i class="fa-solid fa-expand"></i> Open Control Window
-                                </button>
-                                <button id="btn-download-share-bat" class="btn btn-outline btn-full btn-sm margin-top-xs" style="font-size: 0.72rem;">
-                                    <i class="fa-solid fa-file-arrow-down text-info"></i> Client .BAT Launcher
-                                </button>
                             </div>
                         </div>
                     </div>

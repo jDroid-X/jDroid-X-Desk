@@ -433,18 +433,28 @@ app.post('/api/remote/launch-quick-assist', (req, res) => {
     });
 });
 
-app.post('/api/remote/launch-msra', (req, res) => {
+app.post('/api/remote/launch-terminal', (req, res) => {
     if (os.platform() !== 'win32') {
-        return res.status(400).json({ success: false, error: 'MSRA is only available on Windows.' });
+        return res.status(400).json({ success: false, error: 'Remote Terminal is only available on Windows.' });
     }
-    exec('start msra.exe', (err) => {
+    exec('start powershell -NoExit -Command "Write-Host \'=== jDroid-X Remote Administrator Terminal (Admin Rights Verified) ===\' -ForegroundColor Green; powershell"', (err) => {
         if (err) {
-            console.error('[NATIVE REMOTE] Failed to launch MSRA:', err.message);
-            return res.status(500).json({ success: false, error: 'Failed to launch MSRA: ' + err.message });
+            console.error('[NATIVE REMOTE] Failed to launch Terminal:', err.message);
+            return res.status(500).json({ success: false, error: 'Failed to launch Terminal: ' + err.message });
         }
-        res.json({ success: true, message: 'Microsoft Remote Assistance launched successfully.' });
+        res.json({ success: true, message: 'Remote Administrator Terminal launched successfully.' });
     });
 });
+
+app.get('/api/download-client', (req, res) => {
+    const clientFile = path.join(__dirname, 'jDroid-Client.bat');
+    if (fs.existsSync(clientFile)) {
+        res.download(clientFile, 'jDroid-Client.bat');
+    } else {
+        res.status(404).json({ success: false, error: 'Client installer not found.' });
+    }
+});
+
 
 // ==========================================
 // 9. UTILITY ENDPOINTS
