@@ -545,15 +545,23 @@
                             <strong>Live Map Mesh Principle:</strong> Visual P2P geographical and local network topology map showing active connection channels.
                         </div>
                     </div>
-                    <div class="widget-box" style="min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #080d1a;">
-                        <i class="fa-solid fa-earth-americas" style="font-size: 4rem; color: var(--accent-blue); margin-bottom: 0.4rem;"></i>
-                        <h3>Active Mesh Topology: 2 Systems Connected</h3>
-                        <p class="text-subtitle margin-top-sm">System A (10.0.4.120) <i class="fa-solid fa-arrow-right-arrow-left text-emerald"></i> System B (10.0.4.145)</p>
-                        <div style="display: flex; gap: 0.75rem;" class="margin-top-md">
-                            <span class="badge badge-green"><i class="fa-solid fa-shield-halved"></i> Direct P2P AES-256 Tunnel Active</span>
-                            <span class="badge badge-blue"><i class="fa-solid fa-server"></i> STUN Relay: stun.jdroid.net:3478</span>
+                    <div class="widget-box" style="min-height: 380px; display: flex; flex-direction: column; justify-content: space-between; background: #080d1a;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            <div>
+                                <h3 style="color: var(--accent-blue); margin: 0;"><i class="fa-solid fa-network-wired"></i> Distributed Node Mesh & Network Route</h3>
+                                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.1rem 0 0 0;">Live peer topology connecting local host and remote client workstations.</p>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="btn-test-mesh-route"><i class="fa-solid fa-bolt text-warning"></i> Test Mesh Route (Ping)</button>
                         </div>
-                        <button class="btn btn-secondary btn-sm margin-top-lg" onclick="window.appController.view.showToast('info', 'Topology Diagnostic', 'Mesh diagnostic ping: 14ms latency across direct P2P tunnel.')"><i class="fa-solid fa-bolt"></i> Test Mesh Route</button>
+                        
+                        <div id="mesh-nodes-display" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin: 1.2rem 0;">
+                            <!-- Injected dynamically by renderLiveMap() -->
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.75rem; color: var(--text-muted);">
+                            <span><i class="fa-solid fa-shield-halved text-emerald"></i> End-to-End Encrypted Tunnel (AES-GCM-256)</span>
+                            <span id="mesh-ping-result" class="text-emerald">Latency: 11ms | Zero Packet Loss</span>
+                        </div>
                     </div>
                 </section>
 
@@ -718,19 +726,28 @@
                     </div>
                     <div class="cards-grid-3">
                         <div class="widget-box">
-                            <h4>CPU Load</h4>
-                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-blue);" class="margin-top-sm">3.2%</div>
-                            <p style="font-size: 0.75rem; color: var(--text-muted);">Low impact background server</p>
+                            <h4><i class="fa-solid fa-microchip text-primary"></i> CPU Load & Model</h4>
+                            <div id="health-cpu-val" style="font-size: 1.8rem; font-weight: 700; color: var(--accent-blue);" class="margin-top-sm">Loading...</div>
+                            <p id="health-cpu-model" style="font-size: 0.75rem; color: var(--text-muted);">Detecting CPU architecture...</p>
                         </div>
                         <div class="widget-box">
-                            <h4>Memory Usage</h4>
-                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-emerald);" class="margin-top-sm">28.4 MB</div>
-                            <p style="font-size: 0.75rem; color: var(--text-muted);">Ultra lightweight Node process</p>
+                            <h4><i class="fa-solid fa-memory text-emerald"></i> Memory Allocation</h4>
+                            <div id="health-mem-val" style="font-size: 1.8rem; font-weight: 700; color: var(--accent-emerald);" class="margin-top-sm">Loading...</div>
+                            <p id="health-mem-sub" style="font-size: 0.75rem; color: var(--text-muted);">Real OS Memory Metrics</p>
                         </div>
                         <div class="widget-box">
-                            <h4>Background Status</h4>
-                            <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent-emerald);" class="margin-top-sm">System Tray Active</div>
-                            <p style="font-size: 0.75rem; color: var(--text-muted);">PowerShell NotifyIcon running</p>
+                            <h4><i class="fa-solid fa-clock text-warning"></i> OS Uptime & Platform</h4>
+                            <div id="health-uptime-val" style="font-size: 1.3rem; font-weight: 700; color: var(--accent-amber);" class="margin-top-sm">Detecting...</div>
+                            <p id="health-platform-sub" style="font-size: 0.75rem; color: var(--text-muted);">Windows 11 Native Node</p>
+                        </div>
+                    </div>
+
+                    <div class="widget-box margin-top-md">
+                        <div class="widget-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem; margin-bottom: 0.6rem;">
+                            <h4><i class="fa-solid fa-network-wired text-info"></i> Active Network Interfaces (NICs)</h4>
+                        </div>
+                        <div id="health-network-nics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; font-size: 0.8rem;">
+                            <div style="color: var(--text-muted);">Probing network adapters...</div>
                         </div>
                     </div>
                 </section>
@@ -743,13 +760,45 @@
                             <strong>Architect Profile Principle:</strong> Senior Systems Architect profile and design principles behind jDroid-X-Desk.
                         </div>
                     </div>
-                    <div class="widget-box">
+                    <div class="widget-box margin-bottom-md">
                         <div style="display: flex; gap: 1rem; align-items: center;">
                             <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" style="width: 64px; height: 64px; object-fit: contain;">
                             <div>
                                 <h2>Antigravity AI Systems Architect</h2>
                                 <p class="text-subtitle">20+ Years Enterprise Infrastructure & OOPS MVC Architecture</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="widget-box">
+                        <div class="widget-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                            <h3><i class="fa-solid fa-id-badge text-primary"></i> Operator Profile & Security Credentials</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.1rem 0 0 0;">Manage your console operator identity, clearance level, and dispatch credentials.</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                            <div class="form-group">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Operator Call Sign / Name:</label>
+                                <input type="text" id="profile-operator-name" class="search-bar-mini" style="width: 100%;" value="JEET">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Enterprise Organization:</label>
+                                <input type="text" id="profile-operator-org" class="search-bar-mini" style="width: 100%;" value="jDroid-X Global Systems">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Security Clearance Role:</label>
+                                <select id="profile-operator-role" class="search-bar-mini" style="width: 100%;">
+                                    <option value="Senior Systems Architect (Level 5)">Senior Systems Architect (Level 5)</option>
+                                    <option value="Enterprise Security Auditor">Enterprise Security Auditor</option>
+                                    <option value="Remote Operations Specialist">Remote Operations Specialist</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Assigned Master Console ID:</label>
+                                <input type="text" id="profile-console-id" class="search-bar-mini" style="width: 100%; font-family: var(--font-mono); background: var(--bg-tertiary);" readonly>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                            <button id="btn-save-operator-profile" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Save Profile Credentials</button>
                         </div>
                     </div>
                 </section>

@@ -3115,6 +3115,97 @@
       "stage": "TEST",
       "msg": "Automated test suite probe",
       "timestamp": "2026-10-16T16:53:18.455Z"
+    },
+    {
+      "id": "REQ-1792169643788-1001",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/settings",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 9,
+      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (9ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T16:54:03.788Z"
+    },
+    {
+      "id": "REQ-1792169881718-1000",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/settings",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 18,
+      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (18ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T16:58:01.718Z"
+    },
+    {
+      "id": "REQ-1792169881773-1001",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/hardware-id",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 41,
+      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (41ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T16:58:01.773Z"
+    },
+    {
+      "id": "REQ-1792169881826-1002",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/system-telemetry",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 34,
+      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (34ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T16:58:01.826Z"
+    },
+    {
+      "id": "REQ-1792169881918-1003",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "POST",
+      "url": "/api/sessions",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 18,
+      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (18ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T16:58:01.918Z"
+    },
+    {
+      "id": "REQ-1792169881953-1004",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "PUT",
+      "url": "/api/sessions/SES-1792169881903-616",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 16,
+      "msg": "[IN/OUT] PUT /api/sessions/SES-1792169881903-616 -> HTTP 200 (16ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T16:58:01.953Z"
+    },
+    {
+      "id": "REQ-1792169881976-1005",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "DELETE",
+      "url": "/api/sessions/SES-1792169881903-616",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 13,
+      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792169881903-616 -> HTTP 200 (13ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T16:58:01.976Z"
+    },
+    {
+      "id": "1792169881988",
+      "level": "INFO",
+      "stage": "TEST",
+      "msg": "Automated test suite probe",
+      "timestamp": "2026-10-16T16:58:01.988Z"
     }
   ]
 }
