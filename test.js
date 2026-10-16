@@ -75,12 +75,20 @@ async function runTests() {
     console.log('\n[4/4] Starting Server & Testing API Endpoints...');
     const TEST_PORT = 12399;
     const serverProc = spawn('node', ['server.js'], {
-        env: { ...process.env, PORT: TEST_PORT },
+        env: { ...process.env, PORT: String(TEST_PORT) },
         stdio: 'pipe'
     });
 
-    // Wait for server to boot
-    await new Promise(res => setTimeout(res, 1500));
+    // Wait for server to boot reliably
+    await new Promise(res => {
+        let booted = false;
+        serverProc.stdout.on('data', d => {
+            if (d.toString().includes('running on http')) {
+                if (!booted) { booted = true; res(); }
+            }
+        });
+        setTimeout(() => { if (!booted) res(); }, 4000);
+    });
 
     function makeRequest(method, pathName, body = null) {
         return new Promise((resolve, reject) => {

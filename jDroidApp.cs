@@ -1,6 +1,6 @@
 // ==============================================================================
 // jDroid-X-Desk Native Windows Application (C# / Win32 Machine Executable)
-// Architecture: Native WinForms with Embedded Browser Engine & Tray Management
+// Architecture: Native Win32 Tray Supervisor & Chromeless Modern Desktop App
 // Compiler: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe
 // ==============================================================================
 
@@ -15,13 +15,13 @@ using System.Runtime.InteropServices;
 
 namespace JDroidXDesk
 {
-    public class MainWindow : Form
+    public class Program : Form
     {
-        private WebBrowser browser;
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
         private Process nodeServerProcess;
-        private string appUrl = "http://localhost:12345";
+        private Process appProcess;
+        private static string appUrl = "http://localhost:12345";
 
         [DllImport("user32.dll")]
         private static extern bool SetProcessDPIAware();
@@ -29,43 +29,26 @@ namespace JDroidXDesk
         [STAThread]
         public static void Main(string[] args)
         {
-            try
-            {
-                SetProcessDPIAware();
-            }
-            catch { }
-
+            try { SetProcessDPIAware(); } catch { }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainWindow());
+            Application.Run(new Program());
         }
 
-        public MainWindow()
+        public Program()
         {
-            InitializeComponent();
+            this.WindowState = FormWindowState.Minimized;
+            this.ShowInTaskbar = false;
+            this.Visible = false;
+
             EnsureNodeServerRunning();
             SetupTrayIcon();
+            LaunchAppWindow();
         }
 
-        private void InitializeComponent()
+        protected override void SetVisibleCore(bool value)
         {
-            this.Text = "jDroid-X-Desk | Unified Remote Desktop Control Console";
-            this.Size = new Size(1380, 850);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.MinimumSize = new Size(960, 600);
-            this.BackColor = Color.FromArgb(244, 246, 249);
-
-            // Set browser emulation to IE11 / Edge standard in registry if possible
-            ConfigureWebBrowserRegistry();
-
-            browser = new WebBrowser();
-            browser.Dock = DockStyle.Fill;
-            browser.ScriptErrorsSuppressed = true;
-            browser.IsWebBrowserContextMenuEnabled = false;
-            browser.Navigate(appUrl);
-
-            this.Controls.Add(browser);
-            this.FormClosing += MainWindow_FormClosing;
+            base.SetVisibleCore(false);
         }
 
         private void EnsureNodeServerRunning()
@@ -80,26 +63,23 @@ namespace JDroidXDesk
                     if (resp.StatusCode == HttpStatusCode.OK) isPortOpen = true;
                 }
             }
-            catch
-            {
-                isPortOpen = false;
-            }
+            catch { isPortOpen = false; }
 
             if (!isPortOpen)
             {
                 try
                 {
-                    string scriptDir = AppDomain.CurrentDomain.BaseDirectory;
+                    string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                     ProcessStartInfo psi = new ProcessStartInfo();
                     psi.FileName = "cmd.exe";
                     psi.Arguments = "/c node server.js";
-                    psi.WorkingDirectory = scriptDir;
+                    psi.WorkingDirectory = baseDir;
                     psi.WindowStyle = ProcessWindowStyle.Hidden;
                     psi.CreateNoWindow = true;
                     psi.UseShellExecute = false;
 
                     nodeServerProcess = Process.Start(psi);
-                    Thread.Sleep(1500);
+                    Thread.Sleep(2000);
                 }
                 catch (Exception ex)
                 {
@@ -108,13 +88,53 @@ namespace JDroidXDesk
             }
         }
 
+        private void LaunchAppWindow()
+        {
+            try
+            {
+                string edgePath = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
+                if (!File.Exists(edgePath))
+                {
+                    edgePath = @"C:\Program Files\Microsoft\Edge\Application\msedge.exe";
+                }
+
+                string chromePath = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+                string userDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "jDroidXDeskApp");
+
+                string targetExe = null;
+                if (File.Exists(edgePath)) targetExe = edgePath;
+                else if (File.Exists(chromePath)) targetExe = chromePath;
+
+                if (targetExe != null)
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo();
+                    psi.FileName = targetExe;
+                    psi.Arguments = string.Format("--app=\"{0}\" --window-size=1380,850 --user-data-dir=\"{1}\"", appUrl, userDataDir);
+                    appProcess = Process.Start(psi);
+                }
+                else
+                {
+                    Process.Start(appUrl);
+                }
+            }
+            catch
+            {
+                try { Process.Start(appUrl); } catch { }
+            }
+        }
+
         private void SetupTrayIcon()
         {
             trayMenu = new ContextMenu();
-            trayMenu.MenuItems.Add("Open jDroid-X-Desk", (s, e) => { ShowWindow(); });
+            trayMenu.MenuItems.Add("Open jDroid-X-Desk Console", (s, e) => { LaunchAppWindow(); });
             trayMenu.MenuItems.Add("Copy My Desk ID", (s, e) => { CopyLocalAddress(); });
             trayMenu.MenuItems.Add("-");
-            trayMenu.MenuItems.Add("Launch Windows Quick Assist", (s, e) => { Process.Start("ms-quick-assist:"); });
+            trayMenu.MenuItems.Add("Launch Windows Quick Assist", (s, e) => {
+                try { Process.Start("ms-quick-assist:"); } catch { }
+            });
+            trayMenu.MenuItems.Add("Launch Remote Assistance (MSRA)", (s, e) => {
+                try { Process.Start("msra.exe"); } catch { }
+            });
             trayMenu.MenuItems.Add("Elevated Admin Terminal", (s, e) => {
                 ProcessStartInfo psi = new ProcessStartInfo("cmd.exe");
                 psi.Verb = "runas";
@@ -124,19 +144,11 @@ namespace JDroidXDesk
             trayMenu.MenuItems.Add("Exit & Shutdown", (s, e) => { ShutdownApplication(); });
 
             trayIcon = new NotifyIcon();
-            trayIcon.Text = "jDroid-X-Desk Remote Control Active";
+            trayIcon.Text = "jDroid-X-Desk (Running)";
             trayIcon.Icon = SystemIcons.Shield;
             trayIcon.ContextMenu = trayMenu;
             trayIcon.Visible = true;
-            trayIcon.DoubleClick += (s, e) => { ShowWindow(); };
-        }
-
-        private void ShowWindow()
-        {
-            this.Show();
-            this.WindowState = FormWindowState.Normal;
-            this.BringToFront();
-            this.Activate();
+            trayIcon.DoubleClick += (s, e) => { LaunchAppWindow(); };
         }
 
         private void CopyLocalAddress()
@@ -154,37 +166,9 @@ namespace JDroidXDesk
             }
         }
 
-        private void ConfigureWebBrowserRegistry()
-        {
-            try
-            {
-                string appName = Process.GetCurrentProcess().ProcessName + ".exe";
-                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION", true))
-                {
-                    if (key != null)
-                    {
-                        key.SetValue(appName, 11001, Microsoft.Win32.RegistryValueKind.DWord);
-                    }
-                }
-            }
-            catch { }
-        }
-
-        private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (e.CloseReason == CloseReason.UserClosing)
-            {
-                // Minimize to system tray instead of abrupt termination
-                e.Cancel = true;
-                this.Hide();
-                trayIcon.ShowBalloonTip(1500, "jDroid-X-Desk", "Minimized to tray. Double click icon to restore.", ToolTipIcon.Info);
-            }
-        }
-
         private void ShutdownApplication()
         {
-            trayIcon.Visible = false;
+            if (trayIcon != null) trayIcon.Visible = false;
             try
             {
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(appUrl + "/api/shutdown");
@@ -197,6 +181,11 @@ namespace JDroidXDesk
             if (nodeServerProcess != null && !nodeServerProcess.HasExited)
             {
                 try { nodeServerProcess.Kill(); } catch { }
+            }
+
+            if (appProcess != null && !appProcess.HasExited)
+            {
+                try { appProcess.Kill(); } catch { }
             }
 
             Application.Exit();

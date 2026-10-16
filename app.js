@@ -906,38 +906,73 @@ class AppController {
         const btnSaveAll = document.getElementById('btn-save-all-settings');
         if (btnSaveAll) {
             btnSaveAll.addEventListener('click', async () => {
+                // Collect Wake-on-LAN client list from DOM chips
+                const wolClients = [];
+                document.querySelectorAll('#ad-wol-clients-list .anydesk-chip').forEach(c => {
+                    const text = c.textContent.trim();
+                    if (text) wolClients.push(text);
+                });
+
+                // Collect ACL wildcard list from DOM
+                const aclRules = [];
+                document.querySelectorAll('#ad-acl-list .anydesk-acl-item span').forEach(s => {
+                    const text = s.textContent.trim();
+                    if (text) aclRules.push(text);
+                });
+
                 const settingsPayload = {
                     theme: document.getElementById('ad-set-theme')?.value || 'light',
                     language: document.getElementById('ad-set-lang')?.value || 'autoselect',
-                    relayServerUrl: document.getElementById('ad-relay-server-url')?.value || '',
                     general: {
                         hideLocalTaskbar: document.getElementById('ad-set-hide-taskbar')?.checked || false,
                         requestComment: document.getElementById('ad-set-req-comment')?.checked || false,
                         openAddressBookOnStartup: document.getElementById('ad-set-open-addrbook')?.checked || false,
                         showAcceptWindowOnChat: document.getElementById('ad-set-accept-chat')?.checked || false,
-                        showPopupsForInvites: document.getElementById('ad-set-popup-invite')?.checked || true,
+                        showPopupsForInvites: document.getElementById('ad-set-popup-invite')?.checked !== false,
                         soundOnIncoming: document.getElementById('ad-set-sound-conn')?.checked || false,
-                        transmitHotkeys: document.getElementById('ad-set-transmit-hotkeys')?.checked || true,
-                        onlineStatusVisibility: document.getElementById('ad-set-online-vis')?.checked || true,
-                        allowDataCollection: document.getElementById('ad-set-allow-telemetry')?.checked || false
+                        transmitHotkeys: document.getElementById('ad-set-transmit-hotkeys')?.checked !== false,
+                        onlineStatusVisibility: document.getElementById('ad-set-online-vis')?.checked !== false,
+                        allowDataCollection: document.getElementById('ad-set-allow-telemetry')?.checked || false,
+                        screenshotPath: document.getElementById('ad-ss-path-display')?.textContent.trim() || 'C:\\Users\\Default\\Pictures\\AnyDesk',
+                        chatLogPath: document.getElementById('ad-chat-path-display')?.textContent.trim() || 'C:\\Users\\Default\\AppData\\Roaming\\AnyDesk\\chat'
                     },
                     connection: {
-                        allowDirectConnections: document.getElementById('ad-conn-direct')?.checked || true,
+                        allowDirectConnections: document.getElementById('ad-conn-direct')?.checked !== false,
                         localPort: parseInt(document.getElementById('ad-conn-port')?.value || '7070', 10),
                         proxyType: document.getElementById('ad-proxy-type')?.value || 'HTTP(S)',
                         proxyAddress: document.getElementById('ad-proxy-addr')?.value || '',
-                        proxyPort: document.getElementById('ad-proxy-port')?.value || ''
+                        proxyPort: document.getElementById('ad-proxy-port')?.value || '',
+                        colabRelayUrl: document.getElementById('colab-relay-url')?.value.trim() || '',
+                        colabRelayEnabled: document.getElementById('ad-colab-relay-enabled')?.checked !== false
+                    },
+                    wakeOnLan: {
+                        mode: 'enabled',
+                        authorizedClients: wolClients
+                    },
+                    access: {
+                        aclEnabled: document.getElementById('ad-acl-enabled')?.checked || false,
+                        aclAddresses: aclRules,
+                        autoDisconnectMinutes: parseInt(document.getElementById('ad-timeout-select')?.value || '10', 10)
+                    },
+                    recording: {
+                        autoRecordIncoming: document.getElementById('ad-rec-incoming')?.checked || false,
+                        autoRecordOutgoing: document.getElementById('ad-rec-outgoing')?.checked || false,
+                        sessionRecordPath: document.getElementById('ad-sess-rec-path-display')?.textContent.trim() || 'C:\\Users\\Default\\Videos\\AnyDesk'
                     },
                     display: {
                         followCursor: document.getElementById('ad-disp-follow-cursor')?.checked || false,
                         followWindowFocus: document.getElementById('ad-disp-follow-focus')?.checked || false,
                         showSizeHelper: document.getElementById('ad-disp-show-size')?.checked || false,
                         edgeScrolling: document.getElementById('ad-disp-edge-scroll')?.checked || false
+                    },
+                    account: {
+                        email: document.getElementById('ad-acc-email')?.value.trim() || '',
+                        licenseType: 'Free Non-Commercial'
                     }
                 };
 
                 await this.settingsModel.saveToAPI(settingsPayload);
-                this.view.showToast('success', 'Settings Saved', 'All AnyDesk settings saved and synchronized successfully.');
+                this.view.showToast('success', 'Settings Synchronized', 'All AnyDesk settings saved and synchronized to database.');
                 this.traceModel.addLog('CONFIG', 'SETTINGS_SAVED', 'AnyDesk Studio settings persisted to database');
             });
         }
@@ -1968,8 +2003,176 @@ class AppController {
                 panel.innerHTML = this.view.renderSystemMonitor(this.traceModel);
                 this.bindSystemMonitorEvents();
             }
+        } else if (viewId === 'location-history') {
+            this.renderSessionHistory();
+        } else if (viewId === 'system-settings') {
+            this.hydrateSettingsStudio();
         }
     }
+
+    async renderSessionHistory(searchQuery = '') {
+        const tbody = document.getElementById('session-history-tbody');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch('/api/sessions');
+            const data = await res.json();
+            let sessions = (data.success && Array.isArray(data.data)) ? data.data : [];
+
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                sessions = sessions.filter(s => 
+                    (s.targetId && s.targetId.toLowerCase().includes(q)) ||
+                    (s.targetName && s.targetName.toLowerCase().includes(q)) ||
+                    (s.status && s.status.toLowerCase().includes(q)) ||
+                    (s.startedAt && s.startedAt.toLowerCase().includes(q))
+                );
+            }
+
+            sessions.sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
+
+            tbody.innerHTML = '';
+            if (sessions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No connection sessions recorded ${searchQuery ? 'matching query' : 'yet'}.</td></tr>`;
+                return;
+            }
+
+            const frag = document.createDocumentFragment();
+            sessions.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.style.cssText = 'border-bottom: 1px solid var(--border-color);';
+
+                const dateStr = s.startedAt ? new Date(s.startedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Unknown';
+                const duration = s.durationSeconds ? `${Math.floor(s.durationSeconds / 60)}m ${s.durationSeconds % 60}s` : (s.status === 'ACTIVE' ? 'Active Now' : '< 1m');
+                const isOnline = s.status === 'ACTIVE';
+                const statusBadge = isOnline 
+                    ? `<span class="badge badge-green" style="animation: pulse 1.5s infinite;"><i class="fa-solid fa-circle"></i> Active</span>`
+                    : `<span class="badge badge-blue">Completed</span>`;
+
+                tr.innerHTML = `
+                    <td style="padding: 0.6rem; font-family: var(--font-mono);">${ValidationUtil.escapeHTML(dateStr)}</td>
+                    <td>
+                        <strong style="color: var(--text-color);">${ValidationUtil.escapeHTML(s.targetName || s.targetId)}</strong>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">${ValidationUtil.escapeHTML(s.targetId || '')}</div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: rgba(30,136,229,0.1); color: var(--accent-blue);">${ValidationUtil.escapeHTML(s.protocol || 'P2P')}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.3rem;">${ValidationUtil.escapeHTML(s.quality || '1080p')}</span>
+                    </td>
+                    <td style="font-family: var(--font-mono);">${ValidationUtil.escapeHTML(duration)}</td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: right; padding-right: 0.5rem;">
+                        <button class="btn btn-secondary btn-sm reconnect-btn" style="padding: 0.25rem 0.6rem; font-size: 0.78rem;">
+                            <i class="fa-solid fa-rotate-right text-primary"></i> Reconnect
+                        </button>
+                    </td>
+                `;
+
+                tr.querySelector('.reconnect-btn').onclick = () => {
+                    const targetInput = document.getElementById('target-id-input');
+                    if (targetInput) targetInput.value = s.targetId;
+                    this.switchView('remote-console');
+                    this.view.showToast('info', 'Target Selected', `Selected ${s.targetId} from history. Click 'Connect' to initiate.`);
+                };
+
+                frag.appendChild(tr);
+            });
+            tbody.appendChild(frag);
+
+            const filterInput = document.getElementById('history-search-input');
+            if (filterInput && !filterInput._historyBound) {
+                filterInput._historyBound = true;
+                filterInput.addEventListener('input', (e) => {
+                    this.renderSessionHistory(e.target.value.trim());
+                });
+            }
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding: 1rem; text-align: center; color: var(--accent-red);">Failed to load history: ${err.message}</td></tr>`;
+        }
+    }
+
+    async hydrateSettingsStudio() {
+        try {
+            await this.settingsModel.fetchFromAPI();
+            const s = this.settingsModel;
+
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+            const setCheck = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.checked = !!val; };
+            const setText = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.textContent = val; };
+
+            setVal('ad-set-theme', s.theme || 'light');
+            setVal('ad-set-lang', s.language || 'autoselect');
+
+            if (s.general) {
+                setCheck('ad-set-hide-taskbar', s.general.hideLocalTaskbar);
+                setCheck('ad-set-req-comment', s.general.requestComment);
+                setCheck('ad-set-open-addrbook', s.general.openAddressBookOnStartup);
+                setCheck('ad-set-accept-chat', s.general.showAcceptWindowOnChat);
+                setCheck('ad-set-popup-invite', s.general.showPopupsForInvites);
+                setCheck('ad-set-sound-conn', s.general.soundOnIncoming);
+                setCheck('ad-set-transmit-hotkeys', s.general.transmitHotkeys);
+                setCheck('ad-set-online-vis', s.general.onlineStatusVisibility);
+                setCheck('ad-set-allow-telemetry', s.general.allowDataCollection);
+                setText('ad-ss-path-display', s.general.screenshotPath || 'C:\\Users\\Default\\Pictures\\AnyDesk');
+                setText('ad-chat-path-display', s.general.chatLogPath || 'C:\\Users\\Default\\AppData\\Roaming\\AnyDesk\\chat');
+            }
+
+            if (s.connection) {
+                setCheck('ad-conn-direct', s.connection.allowDirectConnections);
+                setVal('ad-conn-port', s.connection.localPort || 7070);
+                setVal('ad-proxy-type', s.connection.proxyType || 'HTTP(S)');
+                setVal('ad-proxy-addr', s.connection.proxyAddress || '');
+                setVal('ad-proxy-port', s.connection.proxyPort || '');
+                setVal('colab-relay-url', s.connection.colabRelayUrl || '');
+                setCheck('ad-colab-relay-enabled', s.connection.colabRelayEnabled !== false);
+            }
+
+            if (s.wakeOnLan && Array.isArray(s.wakeOnLan.authorizedClients)) {
+                const wolContainer = document.getElementById('ad-wol-clients-list');
+                if (wolContainer && s.wakeOnLan.authorizedClients.length > 0) {
+                    wolContainer.innerHTML = '';
+                    s.wakeOnLan.authorizedClients.forEach(client => {
+                        const chip = document.createElement('span');
+                        chip.className = 'anydesk-chip';
+                        chip.style.cssText = 'display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.78rem; font-family: var(--font-mono);';
+                        chip.innerHTML = `${ValidationUtil.escapeHTML(client)} <i class="fa-solid fa-xmark chip-del" style="cursor: pointer; color: var(--accent-red);" title="Remove"></i>`;
+                        chip.querySelector('.chip-del').onclick = () => chip.remove();
+                        wolContainer.appendChild(chip);
+                    });
+                }
+            }
+
+            if (s.access && Array.isArray(s.access.aclAddresses)) {
+                const aclContainer = document.getElementById('ad-acl-list');
+                if (aclContainer && s.access.aclAddresses.length > 0) {
+                    aclContainer.innerHTML = '';
+                    s.access.aclAddresses.forEach(rule => {
+                        const item = document.createElement('div');
+                        item.className = 'anydesk-acl-item';
+                        item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0.5rem; background: var(--bg-card); border-bottom: 1px solid var(--border-color); font-size: 0.8rem; font-family: var(--font-mono);';
+                        item.innerHTML = `<span>${ValidationUtil.escapeHTML(rule)}</span><i class="fa-solid fa-trash text-danger acl-del" style="cursor: pointer;" title="Delete"></i>`;
+                        item.querySelector('.acl-del').onclick = () => item.remove();
+                        aclContainer.appendChild(item);
+                    });
+                }
+            }
+
+            if (s.recording) {
+                setCheck('ad-rec-incoming', s.recording.autoRecordIncoming);
+                setCheck('ad-rec-outgoing', s.recording.autoRecordOutgoing);
+                setText('ad-sess-rec-path-display', s.recording.sessionRecordPath || 'C:\\Users\\Default\\Videos\\AnyDesk');
+            }
+
+            if (s.account) {
+                setVal('ad-acc-email', s.account.email || '');
+                const licType = document.getElementById('ad-license-type-badge');
+                if (licType) licType.textContent = s.account.licenseType || 'Free Non-Commercial';
+            }
+        } catch (e) {
+            console.warn('[SETTINGS] Could not hydrate studio:', e);
+        }
+    }
+
     pingDevice(deviceName) {
         const rtt = Math.floor(Math.random() * 12) + 8;
         this.view.showToast('success', 'Ping Result', `${deviceName} responded in ${rtt}ms (0.0% packet loss).`);
@@ -3150,11 +3353,18 @@ class DeviceController {
                         Status: <span class="${d.status === 'Online' ? 'text-emerald' : 'text-warning'}">${ValidationUtil.escapeHTML(d.status)}</span>
                     </div>
                 </div>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn btn-secondary btn-sm edit-btn"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-secondary btn-sm delete-btn"><i class="fa-solid fa-trash text-danger"></i></button>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-primary btn-sm connect-btn" style="padding: 0.35rem 0.75rem; font-weight: 600;"><i class="fa-solid fa-link"></i> Connect</button>
+                    <button class="btn btn-secondary btn-sm edit-btn" title="Edit Device"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-secondary btn-sm delete-btn" title="Delete Device"><i class="fa-solid fa-trash text-danger"></i></button>
                 </div>
             `;
+            li.querySelector('.connect-btn').onclick = () => {
+                const targetInput = document.getElementById('target-id-input');
+                if (targetInput) targetInput.value = d.name.includes('-') ? d.name : (d.id || d.name);
+                window.appController.switchView('remote-console');
+                window.appController.view.showToast('info', 'Target Selected', `Selected ${d.name} from Address Book. Click 'Connect' to begin session.`);
+            };
             li.querySelector('.edit-btn').onclick = () => this.openEditModal(d);
             li.querySelector('.delete-btn').onclick = () => this.deleteDevice(d.id, d.name);
             frag.appendChild(li);

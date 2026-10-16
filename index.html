@@ -422,7 +422,7 @@
                         <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
                             <div>
                                 <h3 style="color: var(--accent-blue);"><i class="fa-solid fa-desktop"></i> Secondary Remote Desktop Screen (Controlled by Primary)</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted);">Target: <span id="active-target-id-label" style="color: #fff; font-family: var(--font-mono);">520-310-884</span> | <span id="stream-hud-specs" class="text-emerald">1080p 60FPS | 14ms | 1.8 Mbps</span></p>
+                                <p style="font-size: 0.8rem; color: var(--text-muted);">Target: <span id="active-target-id-label" style="color: #fff; font-family: var(--font-mono);">Awaiting Connection</span> | <span id="stream-hud-specs" class="text-emerald">1080p 60FPS | 14ms | 1.8 Mbps</span></p>
                             </div>
                             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                 <select id="stream-quality-select" class="search-bar-mini" style="padding: 0.14rem 0.2rem; font-size: 0.75rem;">
@@ -535,35 +535,27 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;" class="margin-bottom-md">
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="text" class="search-bar-mini" placeholder="Filter history by ID or IP..." style="padding: 0.16rem 0.3rem; width: 240px;">
+                            <input type="text" id="history-search-input" class="search-bar-mini" placeholder="Filter history by ID, status, or date..." style="padding: 0.25rem 0.5rem; width: 280px;">
                         </div>
                         <button class="btn btn-primary btn-sm" id="btn-generate-audit-report"><i class="fa-solid fa-file-pdf"></i> Generate Printable Audit Report</button>
                     </div>
-                    <div class="widget-box">
+                    <div class="widget-box" style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                             <thead>
                                 <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                                    <th style="padding: 0.3rem;">Timestamp</th>
+                                    <th style="padding: 0.5rem;">Timestamp</th>
                                     <th>Target Device</th>
-                                    <th>Remote IP</th>
+                                    <th>Protocol & Quality</th>
                                     <th>Duration</th>
                                     <th>Status</th>
+                                    <th style="text-align: right; padding-right: 0.5rem;">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr style="border-bottom: 1px solid var(--bg-tertiary);">
-                                    <td style="padding: 0.3rem; font-family: var(--font-mono);">Today, 10:24 AM</td>
-                                    <td>SYS-B-SECONDARY-520</td>
-                                    <td>10.0.4.145</td>
-                                    <td>18m 42s</td>
-                                    <td><span class="badge badge-green">Completed</span></td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid var(--bg-tertiary);">
-                                    <td style="padding: 0.3rem; font-family: var(--font-mono);">Yesterday, 04:15 PM</td>
-                                    <td>SYS-B-SECONDARY-520</td>
-                                    <td>10.0.4.145</td>
-                                    <td>45m 10s</td>
-                                    <td><span class="badge badge-blue">Completed</span></td>
+                            <tbody id="session-history-tbody">
+                                <tr>
+                                    <td colspan="6" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+                                        <i class="fa-solid fa-spinner fa-spin"></i> Loading session history from database...
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
