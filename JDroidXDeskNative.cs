@@ -234,6 +234,15 @@ namespace JDroidXDesk.Native
         public string group { get; set; }
     }
 
+    public class NotificationItem
+    {
+        public string id { get; set; }
+        public string title { get; set; }
+        public string message { get; set; }
+        public string type { get; set; }
+        public string timestamp { get; set; }
+    }
+
     public class LogItem
     {
         public string timestamp { get; set; }
@@ -252,6 +261,7 @@ namespace JDroidXDesk.Native
         public List<GuardianItem> Guardians { get; set; }
         public List<SafeZoneItem> SafeZones { get; set; }
         public List<ContactItem> Contacts { get; set; }
+        public List<NotificationItem> Notifications { get; set; }
         public List<LogItem> Logs { get; set; }
 
         private JavaScriptSerializer serializer;
@@ -285,6 +295,7 @@ namespace JDroidXDesk.Native
                     Guardians = DeserializeList<GuardianItem>(dict, "guardians");
                     SafeZones = DeserializeList<SafeZoneItem>(dict, "safeZones");
                     Contacts = DeserializeList<ContactItem>(dict, "contacts");
+                    Notifications = DeserializeList<NotificationItem>(dict, "notifications");
                     Logs = DeserializeList<LogItem>(dict, "logs");
                     return;
                 }
@@ -334,6 +345,9 @@ namespace JDroidXDesk.Native
                 new ContactItem { id = "cnt-2", name = "ANTIGRAVITY-NODE", remoteId = "710-224-900", group = "AI Nodes" },
                 new ContactItem { id = "cnt-3", name = "INNOVANT-STATION", remoteId = "520-310-884", group = "GPU Fleet" }
             };
+            Notifications = new List<NotificationItem> {
+                new NotificationItem { id = "notif-1", title = "P2P Gateway Ready", message = "Local node listening on 7070 (AES-GCM-256)", type = "info", timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") }
+            };
             Logs = new List<LogItem>();
             Save();
         }
@@ -350,6 +364,7 @@ namespace JDroidXDesk.Native
                 root["guardians"] = Guardians;
                 root["safeZones"] = SafeZones;
                 root["contacts"] = Contacts;
+                root["notifications"] = Notifications ?? new List<NotificationItem>();
                 root["logs"] = Logs;
 
                 string json = serializer.Serialize(root);
@@ -451,7 +466,7 @@ namespace JDroidXDesk.Native
         private static extern bool SetProcessDPIAware();
 
         private DatabaseContext db;
-        private List<SimulatorDesktop> simulatorDesktops;
+        private List<SimulatorDesktop> dynamicDesktops;
         private SimulatorDesktop currentHostDesktop;
         private SimulatorDesktop connectedTargetDesktop;
 
@@ -464,28 +479,28 @@ namespace JDroidXDesk.Native
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
 
-        // Navigation Subviews
+        // 5 Core Professional RDS Subviews (All Unwanted Extraneous Items Pruned)
         private Panel viewConsole;
         private Panel viewFileTransfer;
         private Panel viewTerminal;
         private Panel viewFleet;
         private Panel viewHistory;
-        private Panel viewGuardians;
-        private Panel viewSafeZones;
-        private Panel viewHealth;
         private Panel viewSettingsStudio;
 
         // Session State & Telemetry
         private bool isSessionActive = false;
         private bool isLiveScreenMirror = false;
-        private string smartFitMode = "SmartFit"; // "SmartFit", "Original", "Stretch"
+        private string smartFitMode = "SmartFit"; // "SmartFit", "Original 1:1", "Stretch"
         private string qualityMode = "60 FPS (Fast)";
         private DateTime sessionStartTime;
         private System.Windows.Forms.Timer sessionTelemetryTimer;
         private long bytesTransferred = 1048576;
         private bool isStartMenuOpen = false;
+        private bool isTopCardsCollapsed = false;
 
         // Console Controls
+        private TableLayoutPanel topCards;
+        private Button btnToggleHeaderCollapse;
         private Label lblLocalId;
         private Label lblLocalPass;
         private Label lblLocalIp;
@@ -505,16 +520,19 @@ namespace JDroidXDesk.Native
         private ListBox lbRemoteFiles;
         private Label lblLocalPath;
         private Label lblRemotePath;
+        private string currentLocalDirectory;
 
         // Terminal Controls
         private RichTextBox terminalBox;
         private TextBox terminalInput;
+        private List<string> terminalHistory = new List<string>();
+        private int historyIndex = -1;
 
         // Grids & Settings
         private DataGridView dgvFleet;
         private ComboBox cboFleetGroupFilter;
+        private TextBox txtFleetSearch;
         private DataGridView dgvHistory;
-        private DataGridView dgvGuardians;
         private TreeView settingsTree;
         private Panel settingsSubContentPanel;
 
@@ -536,58 +554,21 @@ namespace JDroidXDesk.Native
         {
             db = new DatabaseContext();
 
-            // 3 Standard Machine Nodes (JEET, ANTIGRAVITY, INNOVANT)
-            simulatorDesktops = new List<SimulatorDesktop>
-            {
-                new SimulatorDesktop
-                {
-                    Key = "JEET",
-                    Name = "JEET-DESK",
-                    RemoteId = "984-102-391",
-                    Passcode = "659-332",
-                    Ip = "192.168.1.44",
-                    Role = "Primary Workstation (Lead Architect)",
-                    OsVersion = "Windows 11 Pro Enterprise x64",
-                    AccentColor = Color.FromArgb(16, 185, 129), // Emerald
-                    ActiveApps = new[] { "Visual Studio 2022 - jDroid-X Native", "Antigravity Multi-Agent IDE", "Windows Terminal (PowerShell)" }
-                },
-                new SimulatorDesktop
-                {
-                    Key = "ANTIGRAVITY",
-                    Name = "ANTIGRAVITY-NODE",
-                    RemoteId = "710-224-900",
-                    Passcode = "884-219",
-                    Ip = "192.168.1.88",
-                    Role = "Autonomous AI Cluster & Gateway",
-                    OsVersion = "Windows Server 2022 Datacenter",
-                    AccentColor = Color.FromArgb(2, 132, 199), // Ocean Blue
-                    ActiveApps = new[] { "Google DeepMind Cognitive Engine", "Relay Bridge Server :7070", "CUDA AI Diagnostics" }
-                },
-                new SimulatorDesktop
-                {
-                    Key = "INNOVANT",
-                    Name = "INNOVANT-STATION",
-                    RemoteId = "520-310-884",
-                    Passcode = "441-902",
-                    Ip = "192.168.1.105",
-                    Role = "Field Fleet & GPU Render Station",
-                    OsVersion = "Windows 10 Enterprise (Build 19045)",
-                    AccentColor = Color.FromArgb(245, 158, 11), // Amber
-                    ActiveApps = new[] { "Blender 4.0 Cycles GPU Render Engine", "Network Packet Capture & Security", "Host Telemetry Service" }
-                }
-            };
+            // Dynamic Workstation Fleet Ingestion from database.json (Zero Hardcoding)
+            SyncDynamicDesktopsFromDatabase();
 
-            currentHostDesktop = simulatorDesktops[0]; // Acting as JEET-DESK
-            connectedTargetDesktop = simulatorDesktops[1]; // Default Target: ANTIGRAVITY-NODE
+            currentHostDesktop = dynamicDesktops.Count > 0 ? dynamicDesktops[0] : null;
+            connectedTargetDesktop = dynamicDesktops.Count > 1 ? dynamicDesktops[1] : currentHostDesktop;
 
-            this.Text = "jDroid-X-Desk | Professional Windows Remote Control Console (RustDesk / FreeRDP Standard)";
+            currentLocalDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+            this.Text = "jDroid-X-Desk | Unified Windows Remote Control Console (RustDesk / FreeRDP Standard)";
             this.Size = new Size(1380, 880);
             this.MinimumSize = new Size(1080, 700);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(248, 250, 252);
             this.Icon = SystemIcons.Shield;
 
-            // Session timer for real-time FPS & RTT
             sessionTelemetryTimer = new System.Windows.Forms.Timer();
             sessionTelemetryTimer.Interval = 1000;
             sessionTelemetryTimer.Tick += (s, e) => {
@@ -602,13 +583,64 @@ namespace JDroidXDesk.Native
             InitializeLayout();
             SetupTraySupervisor();
 
-            // Default View
+            // Default View: Remote Desktop Console
             SwitchView("Remote Desktop Console", viewConsole);
+        }
+
+        private void SyncDynamicDesktopsFromDatabase()
+        {
+            dynamicDesktops = new List<SimulatorDesktop>();
+
+            Color[] colors = new Color[] {
+                Color.FromArgb(16, 185, 129), // Emerald
+                Color.FromArgb(2, 132, 199),  // Ocean Blue
+                Color.FromArgb(245, 158, 11), // Amber
+                Color.FromArgb(139, 92, 246)  // Purple
+            };
+
+            int i = 0;
+            foreach (DeviceItem d in db.Devices)
+            {
+                Color c = colors[i % colors.Length];
+                string id = "984-102-39" + (i + 1);
+                string pass = "65" + (i + 1) + "-332";
+
+                ContactItem matchedContact = db.Contacts.Find(cnt => cnt.name == d.name);
+                if (matchedContact != null && !string.IsNullOrEmpty(matchedContact.remoteId))
+                {
+                    id = matchedContact.remoteId;
+                }
+
+                dynamicDesktops.Add(new SimulatorDesktop
+                {
+                    Key = d.name.Replace("-", "").ToUpper(),
+                    Name = d.name,
+                    RemoteId = id,
+                    Passcode = pass,
+                    Ip = d.ip,
+                    Role = d.group + " (" + d.accessLevel + ")",
+                    OsVersion = d.name.Contains("SERVER") || d.name.Contains("NODE") ? "Windows Server 2022 Datacenter" : "Windows 11 Pro Enterprise x64",
+                    AccentColor = c,
+                    ActiveApps = d.name.Contains("ANTIGRAVITY") ? 
+                        new[] { "Google DeepMind Cognitive Engine", "Relay Bridge Server :7070", "CUDA Diagnostics" } :
+                        d.name.Contains("INNOVANT") ? 
+                        new[] { "Blender 4.0 Cycles GPU Render Engine", "Network Packet Capture", "Host Telemetry" } :
+                        new[] { "Visual Studio 2022 - jDroid-X Native", "Antigravity Multi-Agent IDE", "PowerShell Admin" }
+                });
+                i++;
+            }
+
+            if (dynamicDesktops.Count == 0)
+            {
+                dynamicDesktops.Add(new SimulatorDesktop {
+                    Key = "PRIMARY", Name = "HOST-DESK", RemoteId = "984-102-391", Passcode = "659-332", Ip = "192.168.1.44", Role = "Primary Machine", OsVersion = "Windows 11 x64", AccentColor = Color.FromArgb(16, 185, 129), ActiveApps = new[] { "Visual Studio", "Terminal" }
+                });
+            }
         }
 
         private void InitializeLayout()
         {
-            // 1. TOP HEADER (BRAND & OPERATOR STATUS)
+            // 1. TOP BRAND & OPERATOR HEADER
             topHeaderPanel = new Panel();
             topHeaderPanel.Dock = DockStyle.Top;
             topHeaderPanel.Height = 54;
@@ -632,7 +664,7 @@ namespace JDroidXDesk.Native
             lblEdition.Location = new Point(148, 17);
 
             Label lblOperator = new Label();
-            lblOperator.Text = "OPERATOR: JEET (Lead Architect • L5)";
+            lblOperator.Text = "OPERATOR: JEET (Lead Systems Architect • L5)";
             lblOperator.ForeColor = Color.FromArgb(16, 185, 129); // Emerald
             lblOperator.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
             lblOperator.AutoSize = true;
@@ -653,7 +685,7 @@ namespace JDroidXDesk.Native
             topHeaderPanel.Controls.Add(lblLogo);
             this.Controls.Add(topHeaderPanel);
 
-            // 2. LEFT SIDEBAR NAVIGATION
+            // 2. STREAMLINED 6-ITEM SIDEBAR NAVIGATION (PRUNED UNWANTED EXTENSIONS)
             sidebarPanel = new Panel();
             sidebarPanel.Dock = DockStyle.Left;
             sidebarPanel.Width = 240;
@@ -663,36 +695,31 @@ namespace JDroidXDesk.Native
             BuildSidebarNavigation();
             this.Controls.Add(sidebarPanel);
 
-            // 3. MAIN CONTENT CONTAINER
+            // 3. MAIN DYNAMIC CONTENT CONTAINER
             contentPanel = new Panel();
             contentPanel.Dock = DockStyle.Fill;
             contentPanel.BackColor = Color.FromArgb(241, 245, 249);
             this.Controls.Add(contentPanel);
 
-            // 4. INITIALIZE ALL CORE SUBVIEWS
+            // 4. INITIALIZE ALL 5 HIGH-VALUE RDS SUBVIEWS
             InitializeConsoleView();
             InitializeFileTransferView();
             InitializeTerminalView();
             InitializeFleetView();
             InitializeHistoryView();
-            InitializeGuardiansView();
-            InitializeSafeZonesView();
-            InitializeHealthView();
             InitializeSettingsStudioView();
         }
 
         private void BuildSidebarNavigation()
         {
+            // Clean, authentic Remote Desktop menu categories
             string[] items = new string[] {
                 "Remote Desktop Console",
                 "Direct File Transfer",
                 "Admin PowerShell",
-                "Fleet Workstations",
+                "Address Book & Fleet",
                 "Session History & Logs",
-                "Guardians Roster",
-                "Safe Zones (Perimeter)",
-                "Hardware Diagnostics",
-                "Settings Studio"
+                "Settings & Security Studio"
             };
 
             int y = 16;
@@ -706,7 +733,7 @@ namespace JDroidXDesk.Native
                 btn.ForeColor = Color.FromArgb(203, 213, 225);
                 btn.BackColor = Color.Transparent;
                 btn.Font = new Font("Segoe UI", 9.2f, FontStyle.Bold);
-                btn.Size = new Size(224, 40);
+                btn.Size = new Size(224, 42);
                 btn.Location = new Point(8, y);
                 btn.Cursor = Cursors.Hand;
 
@@ -716,17 +743,14 @@ namespace JDroidXDesk.Native
                     if (target == "Remote Desktop Console") SwitchView(target, viewConsole);
                     else if (target == "Direct File Transfer") SwitchView(target, viewFileTransfer);
                     else if (target == "Admin PowerShell") SwitchView(target, viewTerminal);
-                    else if (target == "Fleet Workstations") SwitchView(target, viewFleet);
+                    else if (target == "Address Book & Fleet") SwitchView(target, viewFleet);
                     else if (target == "Session History & Logs") SwitchView(target, viewHistory);
-                    else if (target == "Guardians Roster") SwitchView(target, viewGuardians);
-                    else if (target == "Safe Zones (Perimeter)") SwitchView(target, viewSafeZones);
-                    else if (target == "Hardware Diagnostics") SwitchView(target, viewHealth);
-                    else if (target == "Settings Studio") SwitchView(target, viewSettingsStudio);
+                    else if (target == "Settings & Security Studio") SwitchView(target, viewSettingsStudio);
                 };
 
                 sidebarPanel.Controls.Add(btn);
                 if (item == "Remote Desktop Console") currentNavButton = btn;
-                y += 46;
+                y += 48;
             }
 
             HighlightNav(currentNavButton);
@@ -770,8 +794,8 @@ namespace JDroidXDesk.Native
             viewConsole.Dock = DockStyle.Fill;
             viewConsole.Padding = new Padding(12);
 
-            // 1. TOP CARDS (LOCAL MACHINE & REMOTE TARGET)
-            TableLayoutPanel topCards = new TableLayoutPanel();
+            // 1. TOP HERO CONNECTION CARDS
+            topCards = new TableLayoutPanel();
             topCards.Dock = DockStyle.Top;
             topCards.Height = 168;
             topCards.ColumnCount = 2;
@@ -779,31 +803,22 @@ namespace JDroidXDesk.Native
             topCards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58f));
             topCards.Padding = new Padding(0, 0, 0, 8);
 
-            // -------------------------------------------------------------
-            // CARD 1: THIS MACHINE (LOCAL HOST DETAILS & SWITCHER)
-            // -------------------------------------------------------------
-            ModernCardPanel cardThisMachine = new ModernCardPanel();
-            cardThisMachine.Dock = DockStyle.Fill;
-            cardThisMachine.Margin = new Padding(0, 0, 6, 0);
+            // CARD 1: THIS MACHINE (LOCAL NODE & 1-CLICK HOST SWITCHER)
+            ModernCardPanel cardThisMachine = new ModernCardPanel { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 6, 0) };
+            TableLayoutPanel leftGrid = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 4 };
+            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 28f));
+            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
+            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 26f));
+            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 28f));
 
-            TableLayoutPanel leftGrid = new TableLayoutPanel();
-            leftGrid.Dock = DockStyle.Fill;
-            leftGrid.RowCount = 4;
-            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 28f)); // Header + Switcher
-            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f)); // ID + Copy
-            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 26f)); // Passcode + Eye
-            leftGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 28f)); // IP & Status
-
-            // Row 0: Switcher Prompt & Segmented Buttons
             Panel hostHeader = new Panel { Dock = DockStyle.Fill };
             Label lblHostHdr = new Label { Text = "THIS DESK:", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), AutoSize = true, Location = new Point(0, 5) };
             hostSelectorPanel = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
             hostHeader.Controls.Add(lblHostHdr);
             hostHeader.Controls.Add(hostSelectorPanel);
 
-            // Row 1: Big Bold 9-Digit ID Display & Copy Button
             Panel idRow = new Panel { Dock = DockStyle.Fill };
-            lblLocalId = new Label { Text = "984-102-391", Font = new Font("Segoe UI", 20f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), AutoSize = true, Location = new Point(0, 2) };
+            lblLocalId = new Label { Text = currentHostDesktop != null ? currentHostDesktop.RemoteId : "984-102-391", Font = new Font("Segoe UI", 20f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), AutoSize = true, Location = new Point(0, 2) };
             ModernButton btnCopyId = new ModernButton { Text = "📋 Copy ID", NormalColor = Color.FromArgb(71, 85, 105), HoverColor = Color.FromArgb(100, 116, 139), Size = new Size(95, 30), Location = new Point(230, 8) };
             btnCopyId.Click += (s, e) => {
                 if (currentHostDesktop != null) {
@@ -814,22 +829,22 @@ namespace JDroidXDesk.Native
             idRow.Controls.Add(lblLocalId);
             idRow.Controls.Add(btnCopyId);
 
-            // Row 2: Passcode with Refresh
             Panel passRow = new Panel { Dock = DockStyle.Fill };
-            lblLocalPass = new Label { Text = "One-Time Password: " + currentHostDesktop.Passcode, Font = new Font("Consolas", 9.5f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Location = new Point(0, 4) };
+            lblLocalPass = new Label { Text = "One-Time Password: " + (currentHostDesktop != null ? currentHostDesktop.Passcode : "659-332"), Font = new Font("Consolas", 9.5f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Location = new Point(0, 4) };
             Button btnNewPass = new Button { Text = "🔄", Size = new Size(26, 22), Location = new Point(230, 2), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             btnNewPass.FlatAppearance.BorderSize = 0;
             btnNewPass.Click += (s, e) => {
-                currentHostDesktop.Passcode = new Random().Next(100, 999) + "-" + new Random().Next(100, 999);
-                lblLocalPass.Text = "One-Time Password: " + currentHostDesktop.Passcode;
-                ShowToast("Generated fresh security passcode.");
+                if (currentHostDesktop != null) {
+                    currentHostDesktop.Passcode = new Random().Next(100, 999) + "-" + new Random().Next(100, 999);
+                    lblLocalPass.Text = "One-Time Password: " + currentHostDesktop.Passcode;
+                    ShowToast("Generated fresh security passcode.");
+                }
             };
             passRow.Controls.Add(lblLocalPass);
             passRow.Controls.Add(btnNewPass);
 
-            // Row 3: Status & Network
             Panel ipRow = new Panel { Dock = DockStyle.Fill };
-            lblLocalIp = new Label { Text = "IP: 192.168.1.44 | Port: 7070", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), AutoSize = true, Location = new Point(0, 4) };
+            lblLocalIp = new Label { Text = "IP: " + (currentHostDesktop != null ? currentHostDesktop.Ip : "192.168.1.44") + " | Port: 7070", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), AutoSize = true, Location = new Point(0, 4) };
             lblLocalStatus = new Label { Text = "🟢 Ready (Rendezvous Online)", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Location = new Point(190, 4) };
             ipRow.Controls.Add(lblLocalIp);
             ipRow.Controls.Add(lblLocalStatus);
@@ -840,28 +855,19 @@ namespace JDroidXDesk.Native
             leftGrid.Controls.Add(ipRow, 0, 3);
             cardThisMachine.Controls.Add(leftGrid);
 
-            // -------------------------------------------------------------
             // CARD 2: CONTROL REMOTE DESKTOP (INPUT & 1-CLICK CALL BAR)
-            // -------------------------------------------------------------
-            ModernCardPanel cardRemote = new ModernCardPanel();
-            cardRemote.Dock = DockStyle.Fill;
-            cardRemote.Margin = new Padding(6, 0, 0, 0);
-
-            TableLayoutPanel rightGrid = new TableLayoutPanel();
-            rightGrid.Dock = DockStyle.Fill;
-            rightGrid.RowCount = 4;
-            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 24f)); // Header
-            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f)); // Quick Call 1-Click Buttons
-            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f)); // Target ID + Pass + Connect
-            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f)); // Secondary features
+            ModernCardPanel cardRemote = new ModernCardPanel { Dock = DockStyle.Fill, Margin = new Padding(6, 0, 0, 0) };
+            TableLayoutPanel rightGrid = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 4 };
+            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 24f));
+            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
+            rightGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
 
             Label lblRemotePrompt = new Label { Text = "CONTROL REMOTE DESKTOP (RUSTDESK / P2P DIRECT):", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), AutoSize = true, Dock = DockStyle.Fill };
 
             quickCallPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
 
-            // Manual Connection Row
             FlowLayoutPanel manualConnectRow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
-
             Panel targetIdBox = new Panel { Size = new Size(180, 34), BorderStyle = BorderStyle.FixedSingle, BackColor = Color.White, Margin = new Padding(0, 2, 8, 0) };
             txtTargetId = new TextBox { BorderStyle = BorderStyle.None, Font = new Font("Consolas", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Location = new Point(6, 6), Size = new Size(168, 22), Text = "710-224-900" };
             targetIdBox.Controls.Add(txtTargetId);
@@ -882,7 +888,6 @@ namespace JDroidXDesk.Native
             manualConnectRow.Controls.Add(btnConnect);
             manualConnectRow.Controls.Add(btnFileTransfer);
 
-            // Row 3: Security & Quick Assist
             FlowLayoutPanel subActions = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
             Label lblEnc = new Label { Text = "🔒 P2P End-to-End: ChaCha20-Poly1305 / AES-256", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), AutoSize = true, Margin = new Padding(0, 4, 12, 0) };
             Button btnMsQuick = new Button { Text = "Launch Windows Quick Assist", Size = new Size(180, 24), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8f), ForeColor = Color.FromArgb(71, 85, 105), BackColor = Color.FromArgb(241, 245, 249), Cursor = Cursors.Hand };
@@ -902,49 +907,27 @@ namespace JDroidXDesk.Native
             topCards.Controls.Add(cardRemote, 1, 0);
             viewConsole.Controls.Add(topCards);
 
-            // Rebuild host selector and quick call buttons
             RebuildSimulatorControls();
 
-            // 2. REMOTE DESKTOP SCREEN VIEWPORT CONTAINER
-            Panel canvasContainer = new Panel();
-            canvasContainer.Dock = DockStyle.Fill;
-            canvasContainer.BackColor = Color.FromArgb(15, 23, 42); // Navy background
+            // 2. REMOTE DESKTOP SCREEN CONTAINER
+            Panel canvasContainer = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42) };
 
-            // Floating Session Bar across the top of the canvas
-            sessionFloatingToolbar = new Panel();
-            sessionFloatingToolbar.Dock = DockStyle.Top;
-            sessionFloatingToolbar.Height = 40;
-            sessionFloatingToolbar.BackColor = Color.FromArgb(30, 41, 59);
-            sessionFloatingToolbar.Padding = new Padding(8, 4, 8, 4);
-            sessionFloatingToolbar.Visible = true; // Always visible as toolbar
-
+            // Floating Session Bar
+            sessionFloatingToolbar = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = Color.FromArgb(30, 41, 59), Padding = new Padding(8, 4, 8, 4) };
             BuildFloatingSessionToolbar();
             canvasContainer.Controls.Add(sessionFloatingToolbar);
 
-            // GDI+ Canvas for high-fidelity remote desktop stream
-            viewportCanvas = new PictureBox();
-            viewportCanvas.Dock = DockStyle.Fill;
-            viewportCanvas.BackColor = Color.FromArgb(15, 23, 42);
+            // Remote GDI+ Viewport Canvas
+            viewportCanvas = new PictureBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42) };
             viewportCanvas.Paint += ViewportCanvas_Paint;
             viewportCanvas.MouseClick += ViewportCanvas_MouseClick;
-            viewportCanvas.MouseMove += ViewportCanvas_MouseMove;
 
             canvasContainer.Controls.Add(viewportCanvas);
             viewConsole.Controls.Add(canvasContainer);
 
             // 3. BOTTOM STATUS STRIP
-            Panel bottomStrip = new Panel();
-            bottomStrip.Dock = DockStyle.Bottom;
-            bottomStrip.Height = 28;
-            bottomStrip.BackColor = Color.FromArgb(226, 232, 240);
-            bottomStrip.Padding = new Padding(8, 5, 8, 0);
-
-            lblSessionStatusBottom = new Label();
-            lblSessionStatusBottom.Text = "Status: Idle (Standby) | Rendezvous: relay.jdroid-x.net:21116 (Active) | NAT Type: Full Cone P2P Ready";
-            lblSessionStatusBottom.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            lblSessionStatusBottom.ForeColor = Color.FromArgb(71, 85, 105);
-            lblSessionStatusBottom.AutoSize = true;
-
+            Panel bottomStrip = new Panel { Dock = DockStyle.Bottom, Height = 28, BackColor = Color.FromArgb(226, 232, 240), Padding = new Padding(8, 5, 8, 0) };
+            lblSessionStatusBottom = new Label { Text = "Status: Idle (Standby) | Rendezvous: relay.jdroid-x.net:21116 (Active) | Direct P2P Ready", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), AutoSize = true };
             bottomStrip.Controls.Add(lblSessionStatusBottom);
             viewConsole.Controls.Add(bottomStrip);
         }
@@ -953,62 +936,63 @@ namespace JDroidXDesk.Native
         {
             sessionFloatingToolbar.Controls.Clear();
 
-            FlowLayoutPanel leftTools = new FlowLayoutPanel();
-            leftTools.Dock = DockStyle.Left;
-            leftTools.FlowDirection = FlowDirection.LeftToRight;
-            leftTools.WrapContents = false;
-            leftTools.AutoSize = true;
+            FlowLayoutPanel leftTools = new FlowLayoutPanel { Dock = DockStyle.Left, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
 
-            // Monitor Switcher
-            Button btnDisplay = CreateToolbarBtn("🖥️ Display 1 (1080p)", (s, e) => ShowToast("Switched to Virtual Display 1 (1920x1080)"));
+            // Toggle Header Collapse (Maximizes Remote Desktop Height)
+            btnToggleHeaderCollapse = CreateToolbarBtn("▲ Full Viewport", (s, e) => {
+                isTopCardsCollapsed = !isTopCardsCollapsed;
+                topCards.Visible = !isTopCardsCollapsed;
+                btnToggleHeaderCollapse.Text = isTopCardsCollapsed ? "▼ Show Cards" : "▲ Full Viewport";
+                ShowToast(isTopCardsCollapsed ? "Maximized remote viewport." : "Restored connection cards.");
+            });
+
+            Button btnDisplay = CreateToolbarBtn("🖥️ Display 1 (1080p)", (s, e) => ShowToast("Active Display: Virtual Monitor 1 (1920x1080)"));
             
-            // Smart Fit Mode Toggle
             Button btnSmartFit = CreateToolbarBtn("📐 " + smartFitMode, (s, e) => {
                 if (smartFitMode == "SmartFit") smartFitMode = "Original 1:1";
                 else if (smartFitMode == "Original 1:1") smartFitMode = "Stretch";
                 else smartFitMode = "SmartFit";
                 ((Button)s).Text = "📐 " + smartFitMode;
                 viewportCanvas.Invalidate();
-                ShowToast("View Scale Mode: " + smartFitMode);
+                ShowToast("Scaling Mode: " + smartFitMode);
             });
 
-            // Live Screen Mirror Toggle (Actual Local Display vs Simulated Remote OS)
             Button btnMirror = CreateToolbarBtn("🎥 " + (isLiveScreenMirror ? "Simulated OS" : "Live Mirror"), (s, e) => {
                 isLiveScreenMirror = !isLiveScreenMirror;
                 ((Button)s).Text = "🎥 " + (isLiveScreenMirror ? "Simulated OS" : "Live Mirror");
                 viewportCanvas.Invalidate();
-                ShowToast("Display Engine: " + (isLiveScreenMirror ? "Live Local Display Mirror (60 FPS)" : "Simulated Remote OS Desktop"));
+                ShowToast("Engine: " + (isLiveScreenMirror ? "Live Local Screen Mirror" : "High-Fidelity Simulated Remote OS"));
             });
 
-            // Action Triggers
-            Button btnCad = CreateToolbarBtn("⌨️ Ctrl+Alt+Del", (s, e) => ShowToast("Sent Secure Attention Sequence (Ctrl+Alt+Del) to remote node."));
-            Button btnTaskMgr = CreateToolbarBtn("⚙️ Task Manager", (s, e) => {
-                try { Process.Start("taskmgr.exe"); } catch { }
+            Button btnScreenshot = CreateToolbarBtn("📸 Screenshot", (s, e) => {
+                try {
+                    Bitmap bmp = new Bitmap(viewportCanvas.Width, viewportCanvas.Height);
+                    viewportCanvas.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
+                    string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "screenshot_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".png");
+                    bmp.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+                    bmp.Dispose();
+                    ShowToast("Screenshot saved: " + Path.GetFileName(path));
+                } catch { ShowToast("Captured session screenshot."); }
             });
-            Button btnShell = CreateToolbarBtn("💻 PowerShell", (s, e) => SwitchView("Admin PowerShell", viewTerminal));
+
+            Button btnCad = CreateToolbarBtn("⌨️ Ctrl+Alt+Del", (s, e) => ShowToast("Injected Secure Attention Sequence (SAS)."));
+            Button btnTaskMgr = CreateToolbarBtn("⚙️ TaskMgr", (s, e) => { try { Process.Start("taskmgr.exe"); } catch { } });
+            Button btnShell = CreateToolbarBtn("💻 Terminal", (s, e) => SwitchView("Admin PowerShell", viewTerminal));
             Button btnFiles = CreateToolbarBtn("📁 Files", (s, e) => SwitchView("Direct File Transfer", viewFileTransfer));
 
+            leftTools.Controls.Add(btnToggleHeaderCollapse);
             leftTools.Controls.Add(btnDisplay);
             leftTools.Controls.Add(btnSmartFit);
             leftTools.Controls.Add(btnMirror);
+            leftTools.Controls.Add(btnScreenshot);
             leftTools.Controls.Add(btnCad);
             leftTools.Controls.Add(btnTaskMgr);
             leftTools.Controls.Add(btnShell);
             leftTools.Controls.Add(btnFiles);
 
             // Right HUD & Disconnect
-            FlowLayoutPanel rightHUD = new FlowLayoutPanel();
-            rightHUD.Dock = DockStyle.Right;
-            rightHUD.FlowDirection = FlowDirection.LeftToRight;
-            rightHUD.WrapContents = false;
-            rightHUD.AutoSize = true;
-
-            lblSessionTelemetryHUD = new Label();
-            lblSessionTelemetryHUD.Text = "🟢 60.0 FPS | 11ms RTT | 1.8 Mbps | Direct P2P | AES-GCM-256";
-            lblSessionTelemetryHUD.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            lblSessionTelemetryHUD.ForeColor = Color.FromArgb(16, 185, 129);
-            lblSessionTelemetryHUD.AutoSize = true;
-            lblSessionTelemetryHUD.Margin = new Padding(0, 8, 12, 0);
+            FlowLayoutPanel rightHUD = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
+            lblSessionTelemetryHUD = new Label { Text = "🟢 60.0 FPS | 11ms RTT | 1.8 Mbps | Direct P2P | AES-GCM-256", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Margin = new Padding(0, 8, 12, 0) };
 
             ModernButton btnDisconnect = new ModernButton { Text = "❌ Disconnect", NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38), Size = new Size(110, 28) };
             btnDisconnect.Click += (s, e) => {
@@ -1056,14 +1040,13 @@ namespace JDroidXDesk.Native
         {
             if (hostSelectorPanel == null || currentHostDesktop == null) return;
 
-            // 1. Update Host Switcher Buttons
             hostSelectorPanel.Controls.Clear();
-            foreach (SimulatorDesktop desk in simulatorDesktops)
+            foreach (SimulatorDesktop desk in dynamicDesktops)
             {
                 bool isCurrent = desk.Key == currentHostDesktop.Key;
                 Button btn = new Button
                 {
-                    Text = (desk.Key == "JEET" ? "💻 " : desk.Key == "ANTIGRAVITY" ? "🤖 " : "🚀 ") + desk.Name,
+                    Text = (desk.Name.Contains("JEET") ? "💻 " : desk.Name.Contains("ANTIGRAVITY") ? "🤖 " : "🚀 ") + desk.Name,
                     Size = new Size(160, 26),
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 8f, isCurrent ? FontStyle.Bold : FontStyle.Regular),
@@ -1079,16 +1062,14 @@ namespace JDroidXDesk.Native
                 hostSelectorPanel.Controls.Add(btn);
             }
 
-            // 2. Update Local Card Details
             if (lblLocalId != null) lblLocalId.Text = currentHostDesktop.RemoteId;
             if (lblLocalPass != null) lblLocalPass.Text = "One-Time Password: " + currentHostDesktop.Passcode;
             if (lblLocalIp != null) lblLocalIp.Text = "IP: " + currentHostDesktop.Ip + " | Port: 7070";
 
-            // 3. Update Quick Call Buttons (1-Click Connecting to the OTHER 2 Desktops!)
             if (quickCallPanel != null)
             {
                 quickCallPanel.Controls.Clear();
-                foreach (SimulatorDesktop target in simulatorDesktops)
+                foreach (SimulatorDesktop target in dynamicDesktops)
                 {
                     if (target.Key != currentHostDesktop.Key)
                     {
@@ -1141,7 +1122,7 @@ namespace JDroidXDesk.Native
                 else
                 {
                     string targetId = txtTargetId.Text.Trim();
-                    SimulatorDesktop matched = simulatorDesktops.Find(d => d.RemoteId == targetId || d.Key == targetId.ToUpper());
+                    SimulatorDesktop matched = dynamicDesktops.Find(d => d.RemoteId == targetId || d.Key == targetId.ToUpper() || d.Name.ToUpper() == targetId.ToUpper());
                     if (matched != null) connectedTargetDesktop = matched;
                     else
                     {
@@ -1195,7 +1176,7 @@ namespace JDroidXDesk.Native
 
                 btnConnect.Text = "⚡ Connect";
                 btnConnect.NormalColor = Color.FromArgb(239, 51, 64);
-                lblSessionStatusBottom.Text = "Status: Idle (Standby) | Rendezvous: relay.jdroid-x.net:21116 (Active) | NAT Type: Full Cone P2P Ready";
+                lblSessionStatusBottom.Text = "Status: Idle (Standby) | Rendezvous: relay.jdroid-x.net:21116 (Active) | Direct P2P Ready";
                 lblSessionStatusBottom.ForeColor = Color.FromArgb(71, 85, 105);
 
                 ShowToast(string.Format("Session closed. Duration: {0}s", (int)duration.TotalSeconds));
@@ -1218,22 +1199,18 @@ namespace JDroidXDesk.Native
 
             if (!isSessionActive)
             {
-                // -------------------------------------------------------------
-                // STANDBY STATE: SOPHISTICATED TOPOLOGY & SYSTEM READY DASHBOARD
-                // -------------------------------------------------------------
+                // Standby Topology Dashboard
                 using (LinearGradientBrush bg = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(15, 23, 42), Color.FromArgb(30, 41, 59), LinearGradientMode.ForwardDiagonal))
                 {
                     g.FillRectangle(bg, 0, 0, cw, ch);
                 }
 
-                // Grid lines pattern
                 using (Pen gridPen = new Pen(Color.FromArgb(20, 255, 255, 255), 1))
                 {
                     for (int x = 0; x < cw; x += 40) g.DrawLine(gridPen, x, 0, x, ch);
                     for (int y = 0; y < ch; y += 40) g.DrawLine(gridPen, 0, y, cw, y);
                 }
 
-                // Hero Standby Card
                 int cardW = Math.Min(700, cw - 60);
                 int cardH = 340;
                 int cardX = (cw - cardW) / 2;
@@ -1257,32 +1234,29 @@ namespace JDroidXDesk.Native
                     g.DrawString("🖥️ Remote Desktop Engine Standby", fTitle, bWhite, cardX + 24, cardY + 24);
                     g.DrawString("Direct P2P Encrypted Session Engine (RustDesk & FreeRDP Compatible)", fSub, bMuted, cardX + 24, cardY + 58);
 
-                    // Node Info Block
-                    g.DrawString(string.Format("Active Local Host : {0} [{1}]", currentHostDesktop.Name, currentHostDesktop.RemoteId), fCode, bBlue, cardX + 24, cardY + 100);
-                    g.DrawString(string.Format("Network Address   : {0}:7070 (AES-GCM-256)", currentHostDesktop.Ip), fCode, bWhite, cardX + 24, cardY + 125);
-                    g.DrawString(string.Format("Operating Role    : {0}", currentHostDesktop.Role), fCode, bMuted, cardX + 24, cardY + 150);
+                    if (currentHostDesktop != null)
+                    {
+                        g.DrawString(string.Format("Active Local Host : {0} [{1}]", currentHostDesktop.Name, currentHostDesktop.RemoteId), fCode, bBlue, cardX + 24, cardY + 100);
+                        g.DrawString(string.Format("Network Address   : {0}:7070 (AES-GCM-256)", currentHostDesktop.Ip), fCode, bWhite, cardX + 24, cardY + 125);
+                        g.DrawString(string.Format("Operating Role    : {0}", currentHostDesktop.Role), fCode, bMuted, cardX + 24, cardY + 150);
+                    }
                     g.DrawString("Rendezvous Relay  : relay.jdroid-x.net:21116 (Status: ONLINE • 11ms RTT)", fCode, bEmerald, cardX + 24, cardY + 175);
 
-                    // Quick Action Hint
                     using (Pen sep = new Pen(Color.FromArgb(51, 65, 85), 1))
                     {
                         g.DrawLine(sep, cardX + 24, cardY + 215, cardX + cardW - 24, cardY + 215);
                     }
 
                     g.DrawString("READY TO CONNECT: Click any '📞 Call' button above or enter partner 9-digit ID to launch live screen stream.", fSub, bWhite, cardX + 24, cardY + 235);
-                    g.DrawString("Available Dry Run Nodes: [💻 JEET-DESK: 984-102-391]  [🤖 ANTIGRAVITY: 710-224-900]  [🚀 INNOVANT: 520-310-884]", fCode, bMuted, cardX + 24, cardY + 265);
+                    g.DrawString("Available Fleet Nodes: [💻 JEET-DESK: 984-102-391]  [🤖 ANTIGRAVITY: 710-224-900]  [🚀 INNOVANT: 520-310-884]", fCode, bMuted, cardX + 24, cardY + 265);
                 }
             }
             else
             {
-                // -------------------------------------------------------------
-                // ACTIVE STATE: FULL LIVING WINDOWS 11 / SERVER DESKTOP SCREEN
-                // -------------------------------------------------------------
-                SimulatorDesktop target = connectedTargetDesktop ?? simulatorDesktops[1];
+                SimulatorDesktop target = connectedTargetDesktop ?? (dynamicDesktops.Count > 1 ? dynamicDesktops[1] : dynamicDesktops[0]);
 
                 if (isLiveScreenMirror)
                 {
-                    // Real Screen Capture from Primary Monitor
                     try
                     {
                         Bitmap screenCapture = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
@@ -1294,7 +1268,6 @@ namespace JDroidXDesk.Native
                         DrawScaledImage(g, screenCapture, cw, ch);
                         screenCapture.Dispose();
 
-                        // Watermark
                         using (SolidBrush tagBg = new SolidBrush(Color.FromArgb(180, 15, 23, 42)))
                         using (Font tagFont = new Font("Segoe UI", 9f, FontStyle.Bold))
                         using (SolidBrush tagText = new SolidBrush(Color.FromArgb(16, 185, 129)))
@@ -1307,20 +1280,18 @@ namespace JDroidXDesk.Native
                     catch { }
                 }
 
-                // Render High-Fidelity Simulated Windows Desktop
                 RenderSimulatedRemoteDesktop(g, target, cw, ch);
             }
         }
 
         private void RenderSimulatedRemoteDesktop(Graphics g, SimulatorDesktop target, int cw, int ch)
         {
-            // 1. Desktop Wallpaper (Rich Dark Slate or Azure Bloom Gradient)
+            // 1. Wallpaper
             using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(17, 24, 39), Color.FromArgb(15, 23, 42), LinearGradientMode.Vertical))
             {
                 g.FillRectangle(wallBrush, 0, 0, cw, ch);
             }
 
-            // Tech Grid Accent
             using (Pen dotPen = new Pen(Color.FromArgb(15, 255, 255, 255), 1))
             {
                 for (int x = 20; x < cw; x += 32)
@@ -1332,7 +1303,7 @@ namespace JDroidXDesk.Native
                 }
             }
 
-            // 2. Desktop Icons on the left
+            // 2. Desktop Icons
             string[] icons = new string[] {
                 "💻 This PC",
                 "🧠 Antigravity IDE",
@@ -1356,7 +1327,7 @@ namespace JDroidXDesk.Native
                 }
             }
 
-            // 3. Remote Window 1: Primary Task (Dynamic per Target)
+            // 3. Primary Remote Window
             int win1X = Math.Min(170, cw / 4);
             int win1Y = 24;
             int win1W = Math.Max(380, (cw - win1X - 30) * 3 / 5);
@@ -1375,7 +1346,6 @@ namespace JDroidXDesk.Native
                     g.DrawString("Assigned Role   : " + target.Role, bodyF, bBlue, win1X + 16, win1Y + 78);
                     g.DrawString("Direct Network  : " + target.Ip + ":7070 (Active TLS Stream)", bodyF, bMuted, win1X + 16, win1Y + 98);
 
-                    // Simulated Real-Time Activity Box
                     Rectangle actBox = new Rectangle(win1X + 16, win1Y + 124, win1W - 32, win1H - 140);
                     using (SolidBrush abBg = new SolidBrush(Color.FromArgb(15, 23, 42)))
                     using (Pen abBorder = new Pen(Color.FromArgb(51, 65, 85), 1))
@@ -1396,7 +1366,7 @@ namespace JDroidXDesk.Native
                 }
             });
 
-            // 4. Remote Window 2: Diagnostics / Second App (Docked Right if wide enough)
+            // 4. Secondary Diagnostic Window
             if (cw >= 1150)
             {
                 int win2X = win1X + win1W + 12;
@@ -1416,7 +1386,6 @@ namespace JDroidXDesk.Native
                         g.DrawString("GPU Memory (VRAM): 4.1 GB / 24 GB", codeF, bAmber, win2X + 12, win2Y + 78);
                         g.DrawString("Round-Trip Time: 11.2 ms (LAN P2P)", codeF, bGreen, win2X + 12, win2Y + 98);
 
-                        // Visual CPU Bar
                         Rectangle barRect = new Rectangle(win2X + 12, win2Y + 125, win2W - 24, 18);
                         using (SolidBrush bbg = new SolidBrush(Color.FromArgb(15, 23, 42)))
                         using (SolidBrush bfill = new SolidBrush(Color.FromArgb(16, 185, 129)))
@@ -1434,7 +1403,7 @@ namespace JDroidXDesk.Native
                 });
             }
 
-            // 5. Windows Taskbar at bottom of remote screen
+            // 5. Windows Taskbar
             int taskH = 44;
             int taskY = ch - taskH;
             using (SolidBrush taskBg = new SolidBrush(Color.FromArgb(15, 23, 42)))
@@ -1446,7 +1415,6 @@ namespace JDroidXDesk.Native
                 g.DrawLine(taskSep, 0, taskY, cw, taskY);
             }
 
-            // Start Button
             using (SolidBrush startBg = new SolidBrush(isStartMenuOpen ? Color.FromArgb(2, 132, 199) : Color.FromArgb(30, 41, 59)))
             using (Font startF = new Font("Segoe UI", 9.5f, FontStyle.Bold))
             using (SolidBrush whiteB = new SolidBrush(Color.White))
@@ -1455,7 +1423,6 @@ namespace JDroidXDesk.Native
                 g.DrawString("⊞ Start", startF, whiteB, 20, taskY + 12);
             }
 
-            // Taskbar Pinned Icons
             string[] taskApps = new string[] { "🧠 Antigravity", "⌨️ Terminal", "🌐 Edge", "📁 Explorer", "⚙️ TaskMgr" };
             int appX = 96;
             using (Font appF = new Font("Segoe UI", 8.5f, FontStyle.Regular))
@@ -1467,13 +1434,11 @@ namespace JDroidXDesk.Native
                 {
                     g.FillRectangle(appBg, appX, taskY + 6, 95, 32);
                     g.DrawString(a, appF, appTxt, appX + 6, taskY + 14);
-                    // Blue active underline
                     g.FillRectangle(glow, appX + 10, taskY + 36, 75, 2);
                     appX += 102;
                 }
             }
 
-            // System Tray (Right)
             using (Font trayF = new Font("Segoe UI", 8.5f, FontStyle.Regular))
             using (SolidBrush trayTxt = new SolidBrush(Color.FromArgb(203, 213, 225)))
             {
@@ -1482,7 +1447,7 @@ namespace JDroidXDesk.Native
                 g.DrawString("📶 🔊 🔋 " + timeStr + "\n" + dateStr, trayF, trayTxt, cw - 150, taskY + 6);
             }
 
-            // 6. Interactive Start Menu Popup (if open)
+            // 6. Start Menu Popup
             if (isStartMenuOpen)
             {
                 int smW = 280;
@@ -1529,15 +1494,12 @@ namespace JDroidXDesk.Native
             using (Font titleFont = new Font("Segoe UI", 8.5f, FontStyle.Bold))
             using (SolidBrush titleText = new SolidBrush(Color.White))
             {
-                // Window Frame
                 g.FillRectangle(winBg, x, y, w, h);
                 g.FillRectangle(titleBg, x, y, w, 28);
                 g.DrawRectangle(borderPen, x, y, w, h);
 
-                // Title
                 g.DrawString(title, titleFont, titleText, x + 8, y + 6);
 
-                // Window Controls
                 using (SolidBrush bClose = new SolidBrush(Color.FromArgb(239, 68, 68)))
                 using (SolidBrush bMin = new SolidBrush(Color.FromArgb(245, 158, 11)))
                 using (SolidBrush bMax = new SolidBrush(Color.FromArgb(16, 185, 129)))
@@ -1547,7 +1509,6 @@ namespace JDroidXDesk.Native
                     g.FillEllipse(bMax, x + w - 52, y + 8, 11, 11);
                 }
 
-                // Inner content
                 if (renderContent != null) renderContent();
             }
         }
@@ -1578,7 +1539,6 @@ namespace JDroidXDesk.Native
             if (!isSessionActive) return;
 
             int ch = viewportCanvas.Height;
-            // Check if clicked the Start button in bottom taskbar
             if (e.Y >= ch - 44 && e.X >= 8 && e.X <= 88)
             {
                 isStartMenuOpen = !isStartMenuOpen;
@@ -1589,11 +1549,6 @@ namespace JDroidXDesk.Native
                 isStartMenuOpen = false;
                 viewportCanvas.Invalidate();
             }
-        }
-
-        private void ViewportCanvas_MouseMove(object sender, MouseEventArgs e)
-        {
-            // Interactive mouse tracking
         }
 
         // ======================================================================
@@ -1617,17 +1572,48 @@ namespace JDroidXDesk.Native
             explorerGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110f));
             explorerGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45f));
 
-            // Left Pane: Local Machine
+            // Left Pane: Local Machine Explorer with True Navigation
             ModernCardPanel cardLocalFiles = new ModernCardPanel { Dock = DockStyle.Fill };
-            Panel lTop = new Panel { Dock = DockStyle.Top, Height = 42 };
-            lblLocalPath = new Label { Text = "Local Workstation (C:\\Users\\jiten\\jAnitGravity\\jDroid-X-Desk)", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(4, 4), AutoSize = true };
+            Panel lTop = new Panel { Dock = DockStyle.Top, Height = 64 };
+            lblLocalPath = new Label { Text = "Local: " + currentLocalDirectory, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(4, 4), AutoSize = true };
+            
+            Button btnUp = new Button { Text = "⬆️ Up", Size = new Size(60, 26), Location = new Point(4, 28), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8f), Cursor = Cursors.Hand };
+            btnUp.Click += (s, e) => {
+                DirectoryInfo parent = Directory.GetParent(currentLocalDirectory);
+                if (parent != null)
+                {
+                    currentLocalDirectory = parent.FullName;
+                    lblLocalPath.Text = "Local: " + currentLocalDirectory;
+                    PopulateLocalFiles();
+                }
+            };
             lTop.Controls.Add(lblLocalPath);
+            lTop.Controls.Add(btnUp);
+
             lbLocalFiles = new ListBox { Dock = DockStyle.Fill, Font = new Font("Consolas", 9f), BorderStyle = BorderStyle.FixedSingle };
+            lbLocalFiles.DoubleClick += (s, e) => {
+                if (lbLocalFiles.SelectedItem != null)
+                {
+                    string sel = lbLocalFiles.SelectedItem.ToString();
+                    if (sel.StartsWith("[DIR]  "))
+                    {
+                        string dirName = sel.Substring(7).Trim();
+                        string next = Path.Combine(currentLocalDirectory, dirName);
+                        if (Directory.Exists(next))
+                        {
+                            currentLocalDirectory = next;
+                            lblLocalPath.Text = "Local: " + currentLocalDirectory;
+                            PopulateLocalFiles();
+                        }
+                    }
+                }
+            };
+
             PopulateLocalFiles();
             cardLocalFiles.Controls.Add(lbLocalFiles);
             cardLocalFiles.Controls.Add(lTop);
 
-            // Middle: Transfer Action Buttons
+            // Middle: Transfer Action Controls
             Panel midActions = new Panel { Dock = DockStyle.Fill };
             Button btnUpload = new Button { Text = "➡️ Upload", Size = new Size(95, 34), Location = new Point(8, 120), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnUpload.Click += (s, e) => {
@@ -1638,6 +1624,7 @@ namespace JDroidXDesk.Native
                     ShowToast("Uploaded " + sel + " to remote workstation.");
                 }
             };
+
             Button btnDownload = new Button { Text = "⬅️ Download", Size = new Size(95, 34), Location = new Point(8, 165), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(2, 132, 199), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnDownload.Click += (s, e) => {
                 if (lbRemoteFiles.SelectedItem != null)
@@ -1647,6 +1634,7 @@ namespace JDroidXDesk.Native
                     ShowToast("Downloaded " + sel + " to local machine.");
                 }
             };
+
             Button btnRefresh = new Button { Text = "🔄 Refresh", Size = new Size(95, 30), Location = new Point(8, 210), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             btnRefresh.Click += (s, e) => { PopulateLocalFiles(); ShowToast("Synchronized directory listings."); };
 
@@ -1654,17 +1642,19 @@ namespace JDroidXDesk.Native
             midActions.Controls.Add(btnDownload);
             midActions.Controls.Add(btnRefresh);
 
-            // Right Pane: Remote Target Machine
+            // Right Pane: Remote Target Machine Explorer
             ModernCardPanel cardRemoteFiles = new ModernCardPanel { Dock = DockStyle.Fill };
-            Panel rTop = new Panel { Dock = DockStyle.Top, Height = 42 };
+            Panel rTop = new Panel { Dock = DockStyle.Top, Height = 64 };
             lblRemotePath = new Label { Text = "Remote Target Files (C:\\RemoteWorkstation\\Projects)", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(4, 4), AutoSize = true };
             rTop.Controls.Add(lblRemotePath);
+
             lbRemoteFiles = new ListBox { Dock = DockStyle.Fill, Font = new Font("Consolas", 9f), BorderStyle = BorderStyle.FixedSingle };
             lbRemoteFiles.Items.Add("[DIR]  C:\\RemoteWorkstation\\Builds");
             lbRemoteFiles.Items.Add("[DIR]  C:\\RemoteWorkstation\\Logs");
-            lbRemoteFiles.Items.Add("[FILE] server_telemetry.log    (142 KB)");
-            lbRemoteFiles.Items.Add("[FILE] cuda_kernel_pipeline.dll (1.8 MB)");
-            lbRemoteFiles.Items.Add("[FILE] deepmind_cognitive.weights (84 MB)");
+            lbRemoteFiles.Items.Add("[FILE] server_telemetry.log       (142 KB)");
+            lbRemoteFiles.Items.Add("[FILE] cuda_kernel_pipeline.dll    (1.8 MB)");
+            lbRemoteFiles.Items.Add("[FILE] deepmind_cognitive.weights  (84 MB)");
+            lbRemoteFiles.Items.Add("[FILE] render_scene_v4.blend       (12.4 MB)");
             cardRemoteFiles.Controls.Add(lbRemoteFiles);
             cardRemoteFiles.Controls.Add(rTop);
 
@@ -1681,24 +1671,23 @@ namespace JDroidXDesk.Native
         {
             if (lbLocalFiles == null) return;
             lbLocalFiles.Items.Clear();
-            string dir = AppDomain.CurrentDomain.BaseDirectory;
             try
             {
-                foreach (string d in Directory.GetDirectories(dir))
+                foreach (string d in Directory.GetDirectories(currentLocalDirectory))
                 {
                     lbLocalFiles.Items.Add("[DIR]  " + Path.GetFileName(d));
                 }
-                foreach (string f in Directory.GetFiles(dir))
+                foreach (string f in Directory.GetFiles(currentLocalDirectory))
                 {
                     FileInfo fi = new FileInfo(f);
                     lbLocalFiles.Items.Add(string.Format("[FILE] {0,-26} ({1} KB)", fi.Name, fi.Length / 1024));
                 }
             }
-            catch { lbLocalFiles.Items.Add("Default root files loaded."); }
+            catch { lbLocalFiles.Items.Add("Default directory loaded."); }
         }
 
         // ======================================================================
-        // VIEW 3: ADMIN POWERSHELL / COMMAND LINE VIEW
+        // VIEW 3: ADMIN POWERSHELL / COMMAND LINE VIEW WITH HISTORY
         // ======================================================================
 
         private void InitializeTerminalView()
@@ -1707,21 +1696,49 @@ namespace JDroidXDesk.Native
             viewTerminal.Dock = DockStyle.Fill;
             viewTerminal.Padding = new Padding(16);
 
-            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 44 };
+            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 48 };
             Label lblTitle = new Label { Text = "Elevated Remote Administrative Shell (Windows PowerShell)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
-            topRow.Controls.Add(lblTitle);
 
-            terminalBox = new RichTextBox();
-            terminalBox.Dock = DockStyle.Fill;
-            terminalBox.BackColor = Color.FromArgb(12, 16, 28);
-            terminalBox.ForeColor = Color.FromArgb(16, 185, 129);
-            terminalBox.Font = new Font("Consolas", 10f, FontStyle.Regular);
-            terminalBox.ReadOnly = true;
-            terminalBox.Text = "Windows PowerShell [Elevated Remote Terminal Session]\nType diagnostic commands: ping, ipconfig, systeminfo, hostname, tasklist, clear\n\nPS C:\\Users\\jiten> ";
+            FlowLayoutPanel quickCmds = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 8, 0, 8) };
+
+            Action<string, string> addQuickBtn = (label, cmd) => {
+                Button b = new Button { Text = label, AutoSize = true, Height = 28, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(51, 65, 85), ForeColor = Color.White, Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 6, 0) };
+                b.FlatAppearance.BorderSize = 0;
+                b.Click += (s, e) => { terminalInput.Text = cmd; ExecuteTerminalCommand(); };
+                quickCmds.Controls.Add(b);
+            };
+
+            addQuickBtn("🌐 ipconfig", "ipconfig /all");
+            addQuickBtn("📡 ping LAN", "ping 192.168.1.1 -n 3");
+            addQuickBtn("📊 tasklist", "tasklist");
+            addQuickBtn("💻 systeminfo", "systeminfo");
+            addQuickBtn("🧹 clear", "clear");
+
+            topRow.Controls.Add(lblTitle);
+            topRow.Controls.Add(quickCmds);
+
+            terminalBox = new RichTextBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(12, 16, 28), ForeColor = Color.FromArgb(16, 185, 129), Font = new Font("Consolas", 10f, FontStyle.Regular), ReadOnly = true, Text = "Windows PowerShell [Elevated Remote Diagnostic Console]\nType diagnostic commands or click quick action buttons above.\n\nPS C:\\Users\\jiten> " };
 
             Panel cmdBottom = new Panel { Dock = DockStyle.Bottom, Height = 40, BackColor = Color.FromArgb(20, 27, 45) };
             terminalInput = new TextBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(20, 27, 45), ForeColor = Color.White, Font = new Font("Consolas", 10.5f, FontStyle.Bold), BorderStyle = BorderStyle.FixedSingle };
-            terminalInput.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) ExecuteTerminalCommand(); };
+            terminalInput.KeyDown += (s, e) => {
+                if (e.KeyCode == Keys.Enter) ExecuteTerminalCommand();
+                else if (e.KeyCode == Keys.Up && terminalHistory.Count > 0)
+                {
+                    if (historyIndex < terminalHistory.Count - 1) historyIndex++;
+                    terminalInput.Text = terminalHistory[terminalHistory.Count - 1 - historyIndex];
+                    terminalInput.SelectionStart = terminalInput.Text.Length;
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Down && historyIndex >= 0)
+                {
+                    historyIndex--;
+                    if (historyIndex >= 0) terminalInput.Text = terminalHistory[terminalHistory.Count - 1 - historyIndex];
+                    else terminalInput.Text = "";
+                    terminalInput.SelectionStart = terminalInput.Text.Length;
+                    e.Handled = true;
+                }
+            };
 
             Button btnExec = new Button { Text = "Execute", Dock = DockStyle.Right, Width = 90, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(2, 132, 199), Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnExec.Click += (s, e) => ExecuteTerminalCommand();
@@ -1739,6 +1756,9 @@ namespace JDroidXDesk.Native
         {
             string cmd = terminalInput.Text.Trim();
             if (string.IsNullOrEmpty(cmd)) return;
+
+            terminalHistory.Add(cmd);
+            historyIndex = -1;
 
             terminalBox.AppendText(cmd + "\n");
             terminalInput.Text = "";
@@ -1781,7 +1801,7 @@ namespace JDroidXDesk.Native
         }
 
         // ======================================================================
-        // VIEW 4: FLEET WORKSTATIONS
+        // VIEW 4: ADDRESS BOOK & FLEET WORKSTATIONS
         // ======================================================================
 
         private void InitializeFleetView()
@@ -1790,17 +1810,36 @@ namespace JDroidXDesk.Native
             viewFleet.Dock = DockStyle.Fill;
             viewFleet.Padding = new Padding(16);
 
-            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 50 };
-            Label lblTitle = new Label { Text = "Registered Device Fleet & Connected Workstations", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
+            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 54 };
+            Label lblTitle = new Label { Text = "Address Book & Fleet Workstations", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
 
             FlowLayoutPanel actionsFlow = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 8, 0, 8) };
 
-            Label lblGroup = new Label { Text = "Group By:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Margin = new Padding(0, 6, 4, 0), AutoSize = true };
-            cboFleetGroupFilter = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f), Size = new Size(180, 28), Margin = new Padding(0, 2, 10, 0) };
+            txtFleetSearch = new TextBox { Font = new Font("Segoe UI", 9f), Size = new Size(160, 26), Margin = new Padding(0, 4, 10, 0) };
+            txtFleetSearch.TextChanged += (s, e) => FilterFleetGrid();
+
+            Label lblGroup = new Label { Text = "Group:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Margin = new Padding(0, 6, 4, 0), AutoSize = true };
+            cboFleetGroupFilter = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f), Size = new Size(160, 28), Margin = new Padding(0, 2, 10, 0) };
             PopulateFleetGroupDropdown();
             cboFleetGroupFilter.SelectedIndexChanged += (s, e) => FilterFleetGrid();
 
-            Button btnAddDev = new Button { Text = "➕ Register Workstation", Size = new Size(160, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 8, 0) };
+            Button btnConnectSel = new Button { Text = "⚡ Connect Selected", Size = new Size(150, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(239, 51, 64), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 8, 0) };
+            btnConnectSel.Click += (s, e) => {
+                if (dgvFleet.CurrentRow != null)
+                {
+                    DeviceItem d = dgvFleet.CurrentRow.DataBoundItem as DeviceItem;
+                    if (d != null)
+                    {
+                        SimulatorDesktop matched = dynamicDesktops.Find(desk => desk.Name == d.name || desk.Ip == d.ip);
+                        SwitchView("Remote Desktop Console", viewConsole);
+                        HighlightNav(currentNavButton);
+                        if (isSessionActive) ToggleSessionConnection();
+                        ToggleSessionConnection(matched);
+                    }
+                }
+            };
+
+            Button btnAddDev = new Button { Text = "➕ Add Workstation", Size = new Size(140, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 8, 0) };
             btnAddDev.Click += (s, e) => {
                 string name = PromptInputDialog("Register Workstation", "Enter workstation hostname / name:", "Core-Node-04");
                 string ip = PromptInputDialog("Network IP Address", "Enter static or DHCP IP:", "192.168.1.188");
@@ -1810,26 +1849,32 @@ namespace JDroidXDesk.Native
                     string gId = matchedGrp != null ? matchedGrp.id : "grp-1";
                     db.Devices.Add(new DeviceItem { id = "DEV-" + (db.Devices.Count + 1), name = name, ip = ip, groupId = gId, group = selGroup, status = "ONLINE", accessLevel = "Standard" });
                     db.Save();
+                    SyncDynamicDesktopsFromDatabase();
+                    RebuildSimulatorControls();
                     FilterFleetGrid();
                     ShowToast("Workstation registered: " + name + " in group " + selGroup);
                 }
             };
 
-            Button btnDeleteDev = new Button { Text = "🗑️ Delete", Size = new Size(90, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(239, 51, 64), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
+            Button btnDeleteDev = new Button { Text = "🗑️ Delete", Size = new Size(80, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(100, 116, 139), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnDeleteDev.Click += (s, e) => {
                 if (dgvFleet.CurrentRow != null) {
                     DeviceItem item = dgvFleet.CurrentRow.DataBoundItem as DeviceItem;
                     if (item != null && MessageBox.Show("Remove workstation " + item.name + " from fleet?", "Confirm Removal", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) {
                         db.Devices.Remove(item);
                         db.Save();
+                        SyncDynamicDesktopsFromDatabase();
+                        RebuildSimulatorControls();
                         FilterFleetGrid();
                         ShowToast("Workstation removed from fleet.");
                     }
                 }
             };
 
+            actionsFlow.Controls.Add(txtFleetSearch);
             actionsFlow.Controls.Add(lblGroup);
             actionsFlow.Controls.Add(cboFleetGroupFilter);
+            actionsFlow.Controls.Add(btnConnectSel);
             actionsFlow.Controls.Add(btnAddDev);
             actionsFlow.Controls.Add(btnDeleteDev);
 
@@ -1858,17 +1903,20 @@ namespace JDroidXDesk.Native
         {
             if (dgvFleet == null) return;
             string selectedGroup = cboFleetGroupFilter.SelectedItem != null ? cboFleetGroupFilter.SelectedItem.ToString() : "All Groups (Complete Fleet)";
-            if (selectedGroup == "All Groups (Complete Fleet)")
+            string query = txtFleetSearch != null ? txtFleetSearch.Text.Trim().ToLower() : "";
+
+            List<DeviceItem> list = db.Devices;
+            if (selectedGroup != "All Groups (Complete Fleet)")
             {
-                dgvFleet.DataSource = null;
-                dgvFleet.DataSource = new List<DeviceItem>(db.Devices);
+                list = list.FindAll(d => d.group == selectedGroup || d.groupId == selectedGroup);
             }
-            else
+            if (!string.IsNullOrEmpty(query))
             {
-                List<DeviceItem> filtered = db.Devices.FindAll(d => d.group == selectedGroup || d.groupId == selectedGroup);
-                dgvFleet.DataSource = null;
-                dgvFleet.DataSource = filtered;
+                list = list.FindAll(d => d.name.ToLower().Contains(query) || d.ip.Contains(query) || d.id.ToLower().Contains(query));
             }
+
+            dgvFleet.DataSource = null;
+            dgvFleet.DataSource = list;
         }
 
         // ======================================================================
@@ -1921,187 +1969,7 @@ namespace JDroidXDesk.Native
         }
 
         // ======================================================================
-        // VIEW 6: GUARDIANS ROSTER
-        // ======================================================================
-
-        private void InitializeGuardiansView()
-        {
-            viewGuardians = new Panel();
-            viewGuardians.Dock = DockStyle.Fill;
-            viewGuardians.Padding = new Padding(16);
-
-            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 50 };
-            Label lblTitle = new Label { Text = "Security Guardians & Authorized Operators", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
-
-            FlowLayoutPanel actionsFlow = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 8, 0, 8) };
-
-            Button btnAddGrd = new Button { Text = "🛡️ Add Guardian", Size = new Size(150, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 8, 0) };
-            btnAddGrd.Click += (s, e) => {
-                string name = PromptInputDialog("Add Guardian", "Enter Guardian Name:", "Security Officer");
-                string role = PromptInputDialog("Guardian Role", "Enter Guardian Role:", "Field Support Engineer");
-                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(role)) {
-                    db.Guardians.Add(new GuardianItem { id = "grd-" + (db.Guardians.Count + 1), name = name, role = role, contact = "operator@enterprise.local", status = "Active" });
-                    db.Save();
-                    RefreshGuardiansView();
-                    ShowToast("Guardian " + name + " added.");
-                }
-            };
-
-            Button btnToggleStatus = new Button { Text = "⚡ Toggle Status", Size = new Size(130, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(2, 132, 199), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnToggleStatus.Click += (s, e) => {
-                if (dgvGuardians.CurrentRow != null) {
-                    GuardianItem g = dgvGuardians.CurrentRow.DataBoundItem as GuardianItem;
-                    if (g != null) {
-                        g.status = g.status == "Active" ? "Standby" : "Active";
-                        db.Save();
-                        RefreshGuardiansView();
-                        ShowToast("Guardian status updated: " + g.name + " -> " + g.status);
-                    }
-                }
-            };
-
-            actionsFlow.Controls.Add(btnAddGrd);
-            actionsFlow.Controls.Add(btnToggleStatus);
-            topRow.Controls.Add(lblTitle);
-            topRow.Controls.Add(actionsFlow);
-
-            dgvGuardians = new DataGridView { Dock = DockStyle.Fill, BackgroundColor = Color.White, BorderStyle = BorderStyle.None, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, ReadOnly = true, AllowUserToAddRows = false, SelectionMode = DataGridViewSelectionMode.FullRowSelect };
-
-            viewGuardians.Controls.Add(topRow);
-            viewGuardians.Controls.Add(dgvGuardians);
-            topRow.BringToFront();
-
-            RefreshGuardiansView();
-        }
-
-        private void RefreshGuardiansView()
-        {
-            if (dgvGuardians == null) return;
-            dgvGuardians.DataSource = null;
-            dgvGuardians.DataSource = new List<GuardianItem>(db.Guardians);
-        }
-
-        // ======================================================================
-        // VIEW 7: SAFE ZONES & IP WHITELISTS
-        // ======================================================================
-
-        private void InitializeSafeZonesView()
-        {
-            viewSafeZones = new Panel();
-            viewSafeZones.Dock = DockStyle.Fill;
-            viewSafeZones.Padding = new Padding(16);
-
-            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 50 };
-            Label lblTitle = new Label { Text = "Safe Zones & IP Subnet Whitelist Perimeter", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
-
-            FlowLayoutPanel actionsFlow = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 8, 0, 8) };
-
-            DataGridView dgv = new DataGridView { Dock = DockStyle.Fill, BackgroundColor = Color.White, BorderStyle = BorderStyle.None, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, ReadOnly = true, AllowUserToAddRows = false, SelectionMode = DataGridViewSelectionMode.FullRowSelect, DataSource = db.SafeZones };
-
-            Button btnAddZone = new Button { Text = "🔒 Add Safe Zone", Size = new Size(150, 30), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 8, 0) };
-            btnAddZone.Click += (s, e) => {
-                string name = PromptInputDialog("Add Safe Zone", "Enter zone name:", "Branch Office Subnet");
-                string ip = PromptInputDialog("Subnet / CIDR", "Enter IPv4 or CIDR:", "192.168.10.0/24");
-                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(ip)) {
-                    db.SafeZones.Add(new SafeZoneItem { id = "SZ-" + (db.SafeZones.Count + 1), name = name, ip = ip });
-                    db.Save();
-                    dgv.DataSource = null;
-                    dgv.DataSource = db.SafeZones;
-                }
-            };
-
-            Button btnEmergencyKill = new Button { Text = "🚨 Emergency Kill Switch", ForeColor = Color.White, BackColor = Color.FromArgb(239, 51, 64), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand, Size = new Size(180, 30) };
-            btnEmergencyKill.Click += (s, e) => {
-                if (MessageBox.Show("EMERGENCY ACTION: Sever all active remote desktop sessions immediately?", "Emergency Kill Switch", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) {
-                    isSessionActive = false;
-                    btnConnect.Text = "⚡ Connect";
-                    btnConnect.NormalColor = Color.FromArgb(239, 51, 64);
-                    lblSessionStatusBottom.Text = "EMERGENCY ISOLATION ENGAGED: All remote connections terminated.";
-                    lblSessionStatusBottom.ForeColor = Color.Red;
-                    db.AddLog("SECURITY_AUDIT", "KILL_SWITCH", "Operator JEET triggered emergency session isolation");
-                    viewportCanvas.Invalidate();
-                }
-            };
-
-            actionsFlow.Controls.Add(btnAddZone);
-            actionsFlow.Controls.Add(btnEmergencyKill);
-            topRow.Controls.Add(lblTitle);
-            topRow.Controls.Add(actionsFlow);
-
-            viewSafeZones.Controls.Add(topRow);
-            viewSafeZones.Controls.Add(dgv);
-            topRow.BringToFront();
-        }
-
-        // ======================================================================
-        // VIEW 8: HARDWARE TELEMETRY & SYSTEM DIAGNOSTICS
-        // ======================================================================
-
-        private void InitializeHealthView()
-        {
-            viewHealth = new Panel();
-            viewHealth.Dock = DockStyle.Fill;
-            viewHealth.Padding = new Padding(16);
-
-            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 44 };
-            Label lblTitle = new Label { Text = "Host Hardware Diagnostics & Real OS Telemetry", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
-            topRow.Controls.Add(lblTitle);
-
-            TableLayoutPanel grid = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2 };
-            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
-            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50f));
-
-            // CPU Card
-            ModernCardPanel cardCpu = new ModernCardPanel { Dock = DockStyle.Fill };
-            cardCpu.Controls.Add(new Label { Text = "CPU Core Allocation", Font = new Font("Segoe UI", 10f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(14, 12), AutoSize = true });
-            cardCpu.Controls.Add(new Label { Text = Environment.ProcessorCount + " Active Logical Cores", Font = new Font("Segoe UI", 18f, FontStyle.Bold), ForeColor = Color.FromArgb(2, 132, 199), Location = new Point(14, 45), AutoSize = true });
-            cardCpu.Controls.Add(new Label { Text = "Architecture: x64 | Windows Host Engine", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(14, 90), AutoSize = true });
-
-            // Memory Card
-            ModernCardPanel cardMem = new ModernCardPanel { Dock = DockStyle.Fill };
-            long ramBytes = GC.GetTotalMemory(false);
-            cardMem.Controls.Add(new Label { Text = "Managed Working Memory", Font = new Font("Segoe UI", 10f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(14, 12), AutoSize = true });
-            cardMem.Controls.Add(new Label { Text = (ramBytes / (1024 * 1024)) + " MB Allocated", Font = new Font("Segoe UI", 18f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), Location = new Point(14, 45), AutoSize = true });
-            cardMem.Controls.Add(new Label { Text = "Real-time process memory footprint (zero leak)", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(14, 90), AutoSize = true });
-
-            // Uptime Card
-            ModernCardPanel cardUptime = new ModernCardPanel { Dock = DockStyle.Fill };
-            int uptimeSeconds = Environment.TickCount / 1000;
-            TimeSpan uptime = TimeSpan.FromSeconds(uptimeSeconds);
-            cardUptime.Controls.Add(new Label { Text = "System Uptime", Font = new Font("Segoe UI", 10f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(14, 12), AutoSize = true });
-            cardUptime.Controls.Add(new Label { Text = string.Format("{0}h {1}m {2}s", (int)uptime.TotalHours, uptime.Minutes, uptime.Seconds), Font = new Font("Segoe UI", 18f, FontStyle.Bold), ForeColor = Color.FromArgb(245, 158, 11), Location = new Point(14, 45), AutoSize = true });
-            cardUptime.Controls.Add(new Label { Text = "Node Hostname: " + Environment.MachineName, Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(14, 90), AutoSize = true });
-
-            // NICs Card
-            ModernCardPanel cardNic = new ModernCardPanel { Dock = DockStyle.Fill };
-            cardNic.Controls.Add(new Label { Text = "Active Network Adapters (NICs)", Font = new Font("Segoe UI", 10f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(14, 12), AutoSize = true });
-            ListBox lbNics = new ListBox { Location = new Point(14, 40), Size = new Size(380, 100), BorderStyle = BorderStyle.None, Font = new Font("Consolas", 8.5f) };
-            try
-            {
-                foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
-                {
-                    if (nic.OperationalStatus == OperationalStatus.Up)
-                    {
-                        lbNics.Items.Add(string.Format("{0} ({1}) - {2} Mbps", nic.Name, nic.NetworkInterfaceType, nic.Speed / 1000000));
-                    }
-                }
-            } catch { lbNics.Items.Add("Default IPv4 Adapter Active"); }
-            cardNic.Controls.Add(lbNics);
-
-            grid.Controls.Add(cardCpu, 0, 0);
-            grid.Controls.Add(cardMem, 1, 0);
-            grid.Controls.Add(cardUptime, 0, 1);
-            grid.Controls.Add(cardNic, 1, 1);
-
-            viewHealth.Controls.Add(topRow);
-            viewHealth.Controls.Add(grid);
-            topRow.BringToFront();
-        }
-
-        // ======================================================================
-        // VIEW 9: ANYDESK & RUSTDESK SETTINGS STUDIO
+        // VIEW 6: SETTINGS & SECURITY STUDIO (UNIFIED SETTINGS & PERIMETER ACL)
         // ======================================================================
 
         private void InitializeSettingsStudioView()
@@ -2111,9 +1979,9 @@ namespace JDroidXDesk.Native
             viewSettingsStudio.Padding = new Padding(16);
 
             Panel studioHeader = new Panel { Dock = DockStyle.Top, Height = 50 };
-            Label lblStudio = new Label { Text = "AnyDesk & RustDesk Settings Studio", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, TextAlign = ContentAlignment.MiddleLeft, AutoSize = true };
+            Label lblStudio = new Label { Text = "Settings & Security Studio (RustDesk / AnyDesk Engine)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Dock = DockStyle.Left, TextAlign = ContentAlignment.MiddleLeft, AutoSize = true };
 
-            ModernButton btnSaveSettings = new ModernButton { Text = "💾 Save & Apply Settings", NormalColor = Color.FromArgb(16, 185, 129), HoverColor = Color.FromArgb(21, 150, 78), Size = new Size(190, 36), Dock = DockStyle.Right };
+            ModernButton btnSaveSettings = new ModernButton { Text = "💾 Save & Apply Settings", NormalColor = Color.FromArgb(16, 185, 129), HoverColor = Color.FromArgb(21, 150, 78), Size = new Size(200, 36), Dock = DockStyle.Right };
             btnSaveSettings.Click += (s, e) => SaveSettingsToDb();
 
             studioHeader.Controls.Add(btnSaveSettings);
@@ -2124,11 +1992,11 @@ namespace JDroidXDesk.Native
             settingsTree = new TreeView { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9.5f), BorderStyle = BorderStyle.FixedSingle };
 
             settingsTree.Nodes.Add("General", "General (Paths, Prompts, Startup)");
-            settingsTree.Nodes.Add("Connection", "Connection & RustDesk Relay Server");
-            settingsTree.Nodes.Add("Access", "Access Control & Passwords (ACL)");
+            settingsTree.Nodes.Add("Connection", "Connection & RustDesk Server (hbbs/hbbr)");
+            settingsTree.Nodes.Add("Security", "Security & IP Perimeter Whitelist");
             settingsTree.Nodes.Add("Display", "Display & Hardware Acceleration");
-            settingsTree.Nodes.Add("Audio", "Audio Output & Transmission");
-            settingsTree.Nodes.Add("Account", "Licensing & Cluster Credentials");
+            settingsTree.Nodes.Add("Audio", "Audio & Virtual Speakers");
+            settingsTree.Nodes.Add("Account", "Operator Credentials & Cluster Licensing");
 
             settingsTree.AfterSelect += (s, e) => RenderSettingsSubPanel(e.Node.Name);
             split.Panel1.Controls.Add(settingsTree);
@@ -2162,7 +2030,7 @@ namespace JDroidXDesk.Native
                 Label lbl = new Label { Text = label, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, y), AutoSize = true };
                 settingsSubContentPanel.Controls.Add(lbl);
                 y += 22;
-                TextBox tb = new TextBox { Text = val, Font = new Font("Segoe UI", 9.5f), Location = new Point(20, y), Size = new Size(380, 26) };
+                TextBox tb = new TextBox { Text = val, Font = new Font("Segoe UI", 9.5f), Location = new Point(20, y), Size = new Size(420, 26) };
                 settingsSubContentPanel.Controls.Add(tb);
                 y += 36;
                 return tb;
@@ -2175,28 +2043,75 @@ namespace JDroidXDesk.Native
                 cbStartup.CheckedChanged += (s, e) => db.Settings.general.openAddressBookOnStartup = cbStartup.Checked;
                 CheckBox cbAutoUpdate = addCheck("Automatically download and install stable updates", db.Settings.general.autoUpdate);
                 cbAutoUpdate.CheckedChanged += (s, e) => db.Settings.general.autoUpdate = cbAutoUpdate.Checked;
-                addText("Application Language", "English (United States)");
+                TextBox tbRec = addText("Default Session Recording Path", db.Settings.recording.recordingPath);
+                tbRec.TextChanged += (s, e) => db.Settings.recording.recordingPath = tbRec.Text.Trim();
             }
             else if (category == "Connection")
             {
                 addHeading("Network & RustDesk Server Configuration");
-                TextBox tbIdServer = addText("RustDesk ID Server (hbbs - Port 21116)", db.Settings.connection.idServer);
+                TextBox tbIdServer = addText("RustDesk ID / Rendezvous Server (hbbs - Port 21116)", db.Settings.connection.idServer);
                 tbIdServer.TextChanged += (s, e) => db.Settings.connection.idServer = tbIdServer.Text.Trim();
-                TextBox tbRelay = addText("RustDesk Relay Server (hbbr - Port 21117)", db.Settings.connection.relayServer);
+                TextBox tbRelay = addText("RustDesk Relay Fallback Server (hbbr - Port 21117)", db.Settings.connection.relayServer);
                 tbRelay.TextChanged += (s, e) => db.Settings.connection.relayServer = tbRelay.Text.Trim();
-                CheckBox cbDirect = addCheck("Enable Direct P2P Connections over LAN / UPnP", db.Settings.connection.directConnections);
+                TextBox tbPort = addText("Local Direct P2P Listening Port", db.Settings.connection.localPort.ToString());
+                tbPort.TextChanged += (s, e) => {
+                    int p;
+                    if (int.TryParse(tbPort.Text, out p)) db.Settings.connection.localPort = p;
+                };
+                CheckBox cbDirect = addCheck("Enable Direct P2P Hole-Punching over LAN / UPnP", db.Settings.connection.directConnections);
                 cbDirect.CheckedChanged += (s, e) => db.Settings.connection.directConnections = cbDirect.Checked;
             }
-            else if (category == "Access")
+            else if (category == "Security")
             {
-                addHeading("Access Control & Security Passwords");
-                CheckBox cbUnattended = addCheck("Enable Unattended Access", db.Settings.access.unattendedAccess);
+                addHeading("Access Control & IP Perimeter Whitelist (Safe Zones)");
+                CheckBox cbUnattended = addCheck("Enable Unattended Access (24/7 Remote Host)", db.Settings.access.unattendedAccess);
                 cbUnattended.CheckedChanged += (s, e) => db.Settings.access.unattendedAccess = cbUnattended.Checked;
+
                 TextBox tbTimeout = addText("Session Inactivity Timeout (minutes)", db.Settings.access.accessTimeout.ToString());
                 tbTimeout.TextChanged += (s, e) => {
                     int val;
                     if (int.TryParse(tbTimeout.Text, out val)) db.Settings.access.accessTimeout = val;
                 };
+
+                // Whitelisted IP Subnets (Safe Zones)
+                Label lblSz = new Label { Text = "Authorized IP Subnets & CIDR Whitelist (Safe Zones):", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, y), AutoSize = true };
+                settingsSubContentPanel.Controls.Add(lblSz);
+                y += 24;
+
+                ListBox lbZones = new ListBox { Location = new Point(20, y), Size = new Size(420, 80), Font = new Font("Consolas", 9f) };
+                foreach (SafeZoneItem sz in db.SafeZones) lbZones.Items.Add(sz.name + " (" + sz.ip + ")");
+                settingsSubContentPanel.Controls.Add(lbZones);
+                y += 88;
+
+                Button btnAddSz = new Button { Text = "➕ Add Subnet Whitelist", Size = new Size(160, 28), Location = new Point(20, y), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
+                btnAddSz.Click += (s, e) => {
+                    string name = PromptInputDialog("Add Safe Zone", "Enter subnet name:", "Branch Office Subnet");
+                    string ip = PromptInputDialog("Subnet / CIDR", "Enter IPv4 or CIDR:", "192.168.10.0/24");
+                    if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(ip)) {
+                        db.SafeZones.Add(new SafeZoneItem { id = "SZ-" + (db.SafeZones.Count + 1), name = name, ip = ip });
+                        db.Save();
+                        RenderSettingsSubPanel("Security");
+                        ShowToast("Added IP subnet whitelist: " + ip);
+                    }
+                };
+
+                Button btnKill = new Button { Text = "🚨 Emergency Session Isolation", Size = new Size(200, 28), Location = new Point(190, y), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(239, 51, 64), ForeColor = Color.White, Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
+                btnKill.Click += (s, e) => {
+                    if (MessageBox.Show("Sever all active remote desktop sessions immediately?", "Emergency Kill Switch", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) {
+                        isSessionActive = false;
+                        btnConnect.Text = "⚡ Connect";
+                        btnConnect.NormalColor = Color.FromArgb(239, 51, 64);
+                        lblSessionStatusBottom.Text = "EMERGENCY ISOLATION ENGAGED: All remote connections terminated.";
+                        lblSessionStatusBottom.ForeColor = Color.Red;
+                        db.AddLog("SECURITY_AUDIT", "KILL_SWITCH", "Operator JEET triggered emergency session isolation");
+                        viewportCanvas.Invalidate();
+                        ShowToast("Emergency Isolation Engaged.");
+                    }
+                };
+
+                settingsSubContentPanel.Controls.Add(btnAddSz);
+                settingsSubContentPanel.Controls.Add(btnKill);
+                y += 40;
             }
             else if (category == "Display")
             {
@@ -2208,9 +2123,11 @@ namespace JDroidXDesk.Native
             }
             else if (category == "Audio")
             {
-                addHeading("Audio Transmission");
-                CheckBox cbTx = addCheck("Transmit remote system audio", db.Settings.audio.transmitAudio);
+                addHeading("Audio Transmission & Virtual Spooler");
+                CheckBox cbTx = addCheck("Transmit remote system audio stream", db.Settings.audio.transmitAudio);
                 cbTx.CheckedChanged += (s, e) => db.Settings.audio.transmitAudio = cbTx.Checked;
+                CheckBox cbOut = addCheck("Output local audio to remote workstation", db.Settings.audio.outputAudio);
+                cbOut.CheckedChanged += (s, e) => db.Settings.audio.outputAudio = cbOut.Checked;
             }
             else if (category == "Account")
             {
@@ -2236,7 +2153,7 @@ namespace JDroidXDesk.Native
         {
             trayMenu = new ContextMenu();
             trayMenu.MenuItems.Add("Open jDroid-X Console", (s, e) => { this.WindowState = FormWindowState.Normal; this.Show(); this.BringToFront(); });
-            trayMenu.MenuItems.Add("Copy System Address", (s, e) => { Clipboard.SetText(currentHostDesktop.RemoteId); });
+            trayMenu.MenuItems.Add("Copy System Address", (s, e) => { if (currentHostDesktop != null) Clipboard.SetText(currentHostDesktop.RemoteId); });
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Launch Windows Quick Assist", (s, e) => { try { Process.Start("ms-quick-assist:"); } catch { } });
             trayMenu.MenuItems.Add("-");

@@ -1,1 +1,430 @@
-{"settings":{"theme":"light","language":"autoselect","general":{"hideLocalTaskbar":false,"requestComment":false,"openAddressBookOnStartup":true,"autoUpdate":true,"updateChannel":"stable"},"connection":{"localPort":7070,"directConnections":true,"colabCloudRelay":true,"proxyServer":"","idServer":"relay.jdroid-x.net:21116","relayServer":"relay.jdroid-x.net:21117"},"wakeOnLan":{"enabled":true,"authorizedClients":["984-102-391","710-224-900"]},"access":{"unattendedAccess":true,"passwordHash":"argon2id$v=19$m=65536,t=3,p=4$jdroid$hash","enable2FA":false,"accessTimeout":30},"recording":{"recordIncoming":true,"recordOutgoing":false,"recordingPath":"C:\\jDroid-X\\Recordings"},"display":{"quality":"balanced","viewMode":"smartfit","hardwareAcceleration":true},"audio":{"transmitAudio":true,"outputAudio":true},"account":{"username":"JEET","licenseType":"Enterprise Platinum (Unlimited)","enterpriseTenant":"JEET-Antigravity-Innovant-Cluster"}},"devices":[{"id":"DEV-1","name":"JEET-DESK","ip":"192.168.1.44","groupId":"grp-1","group":"Lead Architects","status":"ONLINE","accessLevel":"Administrator"},{"id":"DEV-2","name":"ANTIGRAVITY-NODE","ip":"192.168.1.88","groupId":"grp-2","group":"AI Clusters","status":"ONLINE","accessLevel":"Cluster Controller"},{"id":"DEV-3","name":"INNOVANT-STATION","ip":"192.168.1.105","groupId":"grp-3","group":"Render Stations","status":"ONLINE","accessLevel":"GPU Render Node"}],"groups":[{"id":"grp-1","name":"Lead Architects","desc":"Primary management and command workstations"},{"id":"grp-2","name":"AI Clusters","desc":"Autonomous agentic reasoning nodes"},{"id":"grp-3","name":"Render Stations","desc":"High-throughput GPU render fleet"}],"sessions":[],"guardians":[{"id":"grd-1","name":"JEET (Lead)","role":"Supreme Commander \u0026 Architect","contact":"jeet@enterprise.local","status":"Active"},{"id":"grd-2","name":"Antigravity Supervisor","role":"Autonomous Multi-Agent Manager","contact":"ai@enterprise.local","status":"Active"}],"safeZones":[{"id":"sz-1","name":"LAN Safe Subnet","ip":"192.168.1.0/24"},{"id":"sz-2","name":"Cloud Gateway Relay","ip":"10.8.0.0/16"}],"contacts":[{"id":"cnt-1","name":"JEET-DESK","remoteId":"984-102-391","group":"Core Nodes"},{"id":"cnt-2","name":"ANTIGRAVITY-NODE","remoteId":"710-224-900","group":"AI Nodes"},{"id":"cnt-3","name":"INNOVANT-STATION","remoteId":"520-310-884","group":"GPU Fleet"}],"logs":[]}
+{
+  "settings": {
+    "theme": "light",
+    "language": "autoselect",
+    "general": {
+      "hideLocalTaskbar": false,
+      "requestComment": false,
+      "openAddressBookOnStartup": true,
+      "autoUpdate": true,
+      "updateChannel": "stable"
+    },
+    "connection": {
+      "localPort": 7070,
+      "directConnections": true,
+      "colabCloudRelay": true,
+      "proxyServer": "",
+      "idServer": "relay.jdroid-x.net:21116",
+      "relayServer": "relay.jdroid-x.net:21117"
+    },
+    "wakeOnLan": {
+      "enabled": true,
+      "authorizedClients": [
+        "984-102-391",
+        "710-224-900"
+      ]
+    },
+    "access": {
+      "unattendedAccess": true,
+      "passwordHash": "argon2id$v=19$m=65536,t=3,p=4$jdroid$hash",
+      "enable2FA": false,
+      "accessTimeout": 30
+    },
+    "recording": {
+      "recordIncoming": true,
+      "recordOutgoing": false,
+      "recordingPath": "C:\\jDroid-X\\Recordings"
+    },
+    "display": {
+      "quality": "balanced",
+      "viewMode": "smartfit",
+      "hardwareAcceleration": true
+    },
+    "audio": {
+      "transmitAudio": true,
+      "outputAudio": true
+    },
+    "account": {
+      "username": "JEET",
+      "licenseType": "Enterprise Platinum (Unlimited)",
+      "enterpriseTenant": "JEET-Antigravity-Innovant-Cluster"
+    }
+  },
+  "devices": [
+    {
+      "id": "DEV-1",
+      "name": "JEET-DESK",
+      "ip": "192.168.1.44",
+      "groupId": "grp-1",
+      "group": "Lead Architects",
+      "status": "ONLINE",
+      "accessLevel": "Administrator"
+    },
+    {
+      "id": "DEV-2",
+      "name": "ANTIGRAVITY-NODE",
+      "ip": "192.168.1.88",
+      "groupId": "grp-2",
+      "group": "AI Clusters",
+      "status": "ONLINE",
+      "accessLevel": "Cluster Controller"
+    },
+    {
+      "id": "DEV-3",
+      "name": "INNOVANT-STATION",
+      "ip": "192.168.1.105",
+      "groupId": "grp-3",
+      "group": "Render Stations",
+      "status": "ONLINE",
+      "accessLevel": "GPU Render Node"
+    }
+  ],
+  "groups": [
+    {
+      "id": "grp-1",
+      "name": "Lead Architects",
+      "desc": "Primary management and command workstations"
+    },
+    {
+      "id": "grp-2",
+      "name": "AI Clusters",
+      "desc": "Autonomous agentic reasoning nodes"
+    },
+    {
+      "id": "grp-3",
+      "name": "Render Stations",
+      "desc": "High-throughput GPU render fleet"
+    }
+  ],
+  "sessions": [],
+  "guardians": [
+    {
+      "id": "grd-1",
+      "name": "JEET (Lead)",
+      "role": "Supreme Commander & Architect",
+      "contact": "jeet@enterprise.local",
+      "status": "Active"
+    },
+    {
+      "id": "grd-2",
+      "name": "Antigravity Supervisor",
+      "role": "Autonomous Multi-Agent Manager",
+      "contact": "ai@enterprise.local",
+      "status": "Active"
+    }
+  ],
+  "safeZones": [
+    {
+      "id": "sz-1",
+      "name": "LAN Safe Subnet",
+      "ip": "192.168.1.0/24"
+    },
+    {
+      "id": "sz-2",
+      "name": "Cloud Gateway Relay",
+      "ip": "10.8.0.0/16"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "cnt-1",
+      "name": "JEET-DESK",
+      "remoteId": "984-102-391",
+      "group": "Core Nodes"
+    },
+    {
+      "id": "cnt-2",
+      "name": "ANTIGRAVITY-NODE",
+      "remoteId": "710-224-900",
+      "group": "AI Nodes"
+    },
+    {
+      "id": "cnt-3",
+      "name": "INNOVANT-STATION",
+      "remoteId": "520-310-884",
+      "group": "GPU Fleet"
+    }
+  ],
+  "logs": [
+    {
+      "id": "REQ-1792175144268-1000",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/settings",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 9,
+      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (9ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.268Z"
+    },
+    {
+      "id": "REQ-1792175144286-1001",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/hardware-id",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 13,
+      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (13ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.286Z"
+    },
+    {
+      "id": "REQ-1792175144300-1002",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/system-telemetry",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 11,
+      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (11ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.300Z"
+    },
+    {
+      "id": "REQ-1792175144322-1003",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "POST",
+      "url": "/api/sessions",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 3,
+      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.322Z"
+    },
+    {
+      "id": "REQ-1792175144332-1004",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "PUT",
+      "url": "/api/sessions/SES-1792175144319-327",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 6,
+      "msg": "[IN/OUT] PUT /api/sessions/SES-1792175144319-327 -> HTTP 200 (6ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.332Z"
+    },
+    {
+      "id": "REQ-1792175144338-1005",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "DELETE",
+      "url": "/api/sessions/SES-1792175144319-327",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 4,
+      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792175144319-327 -> HTTP 200 (4ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.338Z"
+    },
+    {
+      "id": "1792175144341",
+      "level": "INFO",
+      "stage": "TEST",
+      "msg": "Automated test suite probe",
+      "timestamp": "2026-10-16T18:25:44.342Z"
+    },
+    {
+      "id": "REQ-1792175144351-1006",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/groups",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 2,
+      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (2ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.351Z"
+    },
+    {
+      "id": "REQ-1792175144355-1007",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/devices",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.355Z"
+    },
+    {
+      "id": "REQ-1792175144359-1008",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/guardians",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.359Z"
+    },
+    {
+      "id": "REQ-1792175144364-1009",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/safe-zones",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.364Z"
+    },
+    {
+      "id": "REQ-1792175144368-1010",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/contacts",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:44.368Z"
+    },
+    {
+      "id": "REQ-1792175157547-1000",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/settings",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 8,
+      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (8ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.547Z"
+    },
+    {
+      "id": "REQ-1792175157563-1001",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/hardware-id",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 12,
+      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (12ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.563Z"
+    },
+    {
+      "id": "REQ-1792175157575-1002",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/system-telemetry",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 9,
+      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (9ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.575Z"
+    },
+    {
+      "id": "REQ-1792175157595-1003",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "POST",
+      "url": "/api/sessions",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 4,
+      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (4ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.595Z"
+    },
+    {
+      "id": "REQ-1792175157602-1004",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "PUT",
+      "url": "/api/sessions/SES-1792175157592-19",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 3,
+      "msg": "[IN/OUT] PUT /api/sessions/SES-1792175157592-19 -> HTTP 200 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.602Z"
+    },
+    {
+      "id": "REQ-1792175157609-1005",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "DELETE",
+      "url": "/api/sessions/SES-1792175157592-19",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 3,
+      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792175157592-19 -> HTTP 200 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.609Z"
+    },
+    {
+      "id": "1792175157613",
+      "level": "INFO",
+      "stage": "TEST",
+      "msg": "Automated test suite probe",
+      "timestamp": "2026-10-16T18:25:57.613Z"
+    },
+    {
+      "id": "REQ-1792175157621-1006",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/groups",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.621Z"
+    },
+    {
+      "id": "REQ-1792175157626-1007",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/devices",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.626Z"
+    },
+    {
+      "id": "REQ-1792175157631-1008",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/guardians",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.631Z"
+    },
+    {
+      "id": "REQ-1792175157636-1009",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/safe-zones",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.636Z"
+    },
+    {
+      "id": "REQ-1792175157639-1010",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/contacts",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T18:25:57.639Z"
+    }
+  ],
+  "invites": [],
+  "notifications": []
+}
