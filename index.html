@@ -383,7 +383,10 @@
 
                                 <div class="margin-top-md">
                                     <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.25rem; font-weight: 600;">Partner Desk ID:</label>
-                                    <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.45rem 0.65rem; font-family: var(--font-mono); font-size: 1rem; letter-spacing: 0.5px;" placeholder="e.g. 582-109-431 or JDX-ABCD-1234">
+                                    <div style="position: relative; display: flex; align-items: center;">
+                                        <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.45rem 2.2rem 0.45rem 0.65rem; font-family: var(--font-mono); font-size: 1rem; letter-spacing: 0.5px;" placeholder="e.g. 582-109-431 or JDX-ABCD-1234">
+                                        <button type="button" id="btn-clear-target-id" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; display: none; font-size: 0.9rem;" title="Clear Input"><i class="fa-solid fa-circle-xmark"></i></button>
+                                    </div>
                                     
                                     <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.55rem; margin-bottom: 0.25rem; font-weight: 600;">Security Password:</label>
                                     <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.45rem 0.65rem; font-family: var(--font-mono); font-size: 0.95rem;" placeholder="Enter one-time password">
@@ -433,33 +436,62 @@
                                 <button class="btn btn-secondary btn-sm" id="btn-toggle-clipboard"><i class="fa-solid fa-paste"></i> Clipboard Sync</button>
                                 <button class="btn btn-secondary btn-sm" id="btn-toggle-audio"><i class="fa-solid fa-volume-high"></i> Remote Audio</button>
                                 <button class="btn btn-secondary btn-sm" id="btn-webrtc-share-screen" style="background: rgba(0, 230, 118, 0.15); border-color: var(--accent-emerald); color: var(--accent-emerald);"><i class="fa-solid fa-desktop"></i> Live Screen Share (WebRTC)</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-flip-viewport" title="Flip to Administrative PowerShell Terminal"><i class="fa-solid fa-arrows-rotate"></i> Flip View (Terminal)</button>
                                 <button class="btn btn-secondary btn-sm" id="ctrl-alt-del-btn"><i class="fa-solid fa-keyboard"></i> Ctrl+Alt+Del</button>
                                 <button class="btn btn-secondary btn-sm" id="toggle-file-btn"><i class="fa-solid fa-folder-open"></i> Files</button>
                                 <button class="btn btn-danger btn-sm" id="disconnect-session-btn"><i class="fa-solid fa-power-off"></i> Disconnect</button>
                             </div>
                         </div>
 
-                        <!-- Interactive Virtual Remote Screen Area -->
-                        <div id="virtual-remote-screen" class="margin-top-md" style="min-height: 360px; background: #0d1322; border-radius: 8px; border: 1px solid var(--border-bright); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 0.4rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 6px;">
-                                <span style="font-size: 0.8rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> Live Encrypted Remote Session Active</span>
-                                <span style="font-size: 0.75rem; color: var(--text-muted);" id="virtual-screen-clock">11:42:00 AM</span>
-                            </div>
+                        <!-- 3D Card Flipper Container: Screen on Front, PowerShell Terminal on Back -->
+                        <div class="ui-flipper-container">
+                            <div class="ui-flipper-card" id="viewport-flipper-card">
+                                <!-- FRONT FACE: Live Graphical Desktop Viewport -->
+                                <div class="ui-flipper-front">
+                                    <div id="virtual-remote-screen" style="min-height: 360px; background: #0d1322; border-radius: 8px; border: 1px solid var(--border-bright); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 0.4rem;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 6px;">
+                                            <span style="font-size: 0.8rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> Live Encrypted Remote Session Active</span>
+                                            <span style="font-size: 0.75rem; color: var(--text-muted);" id="virtual-screen-clock">11:42:00 AM</span>
+                                        </div>
 
-                            <video id="live-screen-video" autoplay playsinline muted style="display: none; width: 100%; max-height: 380px; object-fit: contain; border-radius: 6px; background: #000; margin: auto;"></video>
+                                        <video id="live-screen-video" autoplay playsinline muted style="display: none; width: 100%; max-height: 380px; object-fit: contain; border-radius: 6px; background: #000; margin: auto;"></video>
 
-                            <div id="virtual-screen-placeholder" style="text-align: center; margin: auto;">
-                                <div style="font-size: 3rem; color: var(--accent-blue); margin-bottom: 0.2rem;"><i class="fa-solid fa-display"></i></div>
-                                <h4>Secondary User System Screen</h4>
-                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.1rem;">Primary user is controlling mouse cursor and keyboard inputs on secondary machine.</p>
-                                <div style="display: flex; justify-content: center; gap: 0.75rem; margin-top: 0.4rem;">
-                                    <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Mouse Click at X:450 Y:220')"><i class="fa-solid fa-arrow-pointer"></i> Simulate Mouse Click</button>
-                                    <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Keystrokes: Hello Secondary System')"><i class="fa-solid fa-font"></i> Inject Text Input</button>
+                                        <div id="virtual-screen-placeholder" style="text-align: center; margin: auto;">
+                                            <div style="font-size: 3rem; color: var(--accent-blue); margin-bottom: 0.2rem;"><i class="fa-solid fa-display"></i></div>
+                                            <h4>Secondary User System Screen</h4>
+                                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.1rem;">Primary user is controlling mouse cursor and keyboard inputs on secondary machine.</p>
+                                            <div style="display: flex; justify-content: center; gap: 0.75rem; margin-top: 0.4rem;">
+                                                <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Mouse Click at X:450 Y:220')"><i class="fa-solid fa-arrow-pointer"></i> Simulate Mouse Click</button>
+                                                <button class="btn btn-secondary btn-sm" onclick="window.appController.injectVirtualInput('Keystrokes: Hello Secondary System')"><i class="fa-solid fa-font"></i> Inject Text Input</button>
+                                            </div>
+                                        </div>
+
+                                        <div style="background: rgba(0,0,0,0.6); padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.78rem; font-family: var(--font-mono); color: var(--accent-emerald);" id="virtual-screen-log">
+                                            [CONTROL SIGNAL] Primary mouse position synced (X: 520, Y: 310)
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div style="background: rgba(0,0,0,0.6); padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.78rem; font-family: var(--font-mono); color: var(--accent-emerald);" id="virtual-screen-log">
-                                [CONTROL SIGNAL] Primary mouse position synced (X: 520, Y: 310)
+                                <!-- BACK FACE: Interactive Administrative Remote Terminal -->
+                                <div class="ui-flipper-back">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem; margin-bottom: 0.4rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="color: var(--accent-emerald); font-size: 0.85rem;"><i class="fa-solid fa-terminal"></i> Elevated PowerShell Direct Bridge</span>
+                                            <span class="badge badge-blue" style="font-size: 0.7rem;">Admin Rights: Active</span>
+                                        </div>
+                                        <button class="btn btn-secondary btn-xs" id="btn-flip-back-screen"><i class="fa-solid fa-desktop"></i> Return to Screen</button>
+                                    </div>
+                                    <div id="remote-terminal-output" style="flex: 1; min-height: 280px; max-height: 320px; overflow-y: auto; background: #070b14; color: #10b981; font-family: var(--font-mono); font-size: 0.82rem; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); line-height: 1.5;">
+                                        <div>Windows PowerShell v5.1.26100 (jDroid-X-Desk Remote Session Bridge)</div>
+                                        <div>Copyright (C) Microsoft Corporation. All rights reserved.</div>
+                                        <div style="color: #64748b; margin-top: 0.3rem;">Type a diagnostic command: 'ping', 'ipconfig', 'systeminfo', 'get-process', or 'clear'</div>
+                                        <div id="terminal-log-content" style="margin-top: 0.5rem;"></div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <input type="text" id="terminal-cmd-input" class="search-bar-mini" style="flex: 1; font-family: var(--font-mono); font-size: 0.85rem;" placeholder="PS C:\Windows\System32> Enter remote command...">
+                                        <button class="btn btn-primary btn-sm" id="terminal-send-btn"><i class="fa-solid fa-paper-plane"></i> Execute</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -840,27 +872,41 @@
 
                                 <div class="anydesk-section">
                                     <div class="anydesk-section-title">Miscellaneous</div>
-                                    <div class="anydesk-check-group">
-                                        <label class="anydesk-check-item">
-                                            <input type="checkbox" id="ad-set-hide-taskbar"> Hide local taskbar if AnyDesk window is maximized
+                                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.4rem;">
+                                        <label class="ui-switch switch-danger">
+                                            <input type="checkbox" id="ad-set-hide-taskbar">
+                                            <span class="switch-slider"></span>
+                                            <span>Hide local taskbar if AnyDesk window is maximized</span>
                                         </label>
-                                        <label class="anydesk-check-item">
-                                            <input type="checkbox" id="ad-set-req-comment"> Request a comment on session end <span class="badge badge-red" style="font-size:0.6rem;">PRO</span>
+                                        <label class="ui-switch switch-danger">
+                                            <input type="checkbox" id="ad-set-req-comment">
+                                            <span class="switch-slider"></span>
+                                            <span>Request a comment on session end <span class="badge badge-red" style="font-size:0.6rem;">PRO</span></span>
                                         </label>
-                                        <label class="anydesk-check-item">
-                                            <input type="checkbox" id="ad-set-open-addrbook"> Open Address Book on startup <span class="badge badge-red" style="font-size:0.6rem;">PRO</span>
+                                        <label class="ui-switch switch-danger">
+                                            <input type="checkbox" id="ad-set-open-addrbook">
+                                            <span class="switch-slider"></span>
+                                            <span>Open Address Book on startup <span class="badge badge-red" style="font-size:0.6rem;">PRO</span></span>
                                         </label>
-                                        <label class="anydesk-check-item">
-                                            <input type="checkbox" id="ad-set-accept-chat"> Show Accept window when receiving a chat message
+                                        <label class="ui-switch switch-danger">
+                                            <input type="checkbox" id="ad-set-accept-chat">
+                                            <span class="switch-slider"></span>
+                                            <span>Show Accept window when receiving a chat message</span>
                                         </label>
-                                        <label class="anydesk-check-item">
-                                            <input type="checkbox" id="ad-set-popup-invite" checked> Show pop-up notifications for incoming session invitations
+                                        <label class="ui-switch switch-danger">
+                                            <input type="checkbox" id="ad-set-popup-invite" checked>
+                                            <span class="switch-slider"></span>
+                                            <span>Show pop-up notifications for incoming session invitations</span>
                                         </label>
-                                        <label class="anydesk-check-item">
-                                            <input type="checkbox" id="ad-set-sound-conn"> Sound on incoming connection request
+                                        <label class="ui-switch switch-danger">
+                                            <input type="checkbox" id="ad-set-sound-conn">
+                                            <span class="switch-slider"></span>
+                                            <span>Sound on incoming connection request</span>
                                         </label>
-                                        <label class="anydesk-check-item">
-                                            <input type="checkbox" id="ad-set-transmit-hotkeys" checked> Transmit hotkeys
+                                        <label class="ui-switch switch-danger">
+                                            <input type="checkbox" id="ad-set-transmit-hotkeys" checked>
+                                            <span class="switch-slider"></span>
+                                            <span>Transmit hotkeys</span>
                                         </label>
                                     </div>
                                 </div>
@@ -916,8 +962,10 @@
                             <div id="ad-tab-connection" class="anydesk-content-panel">
                                 <div class="anydesk-section">
                                     <div class="anydesk-section-title">General</div>
-                                    <label class="anydesk-check-item" style="margin-bottom: 0.8rem;">
-                                        <input type="checkbox" id="ad-conn-direct" checked> Allow direct connections
+                                    <label class="ui-switch switch-danger" style="margin-bottom: 0.8rem; display: flex;">
+                                        <input type="checkbox" id="ad-conn-direct" checked>
+                                        <span class="switch-slider"></span>
+                                        <span>Allow direct connections</span>
                                     </label>
                                     <div style="display: flex; align-items: center; gap: 0.8rem;">
                                         <label style="font-size: 0.88rem;">Local port:</label>
@@ -955,8 +1003,10 @@
                                 <div class="anydesk-section">
                                     <div class="anydesk-section-title"><i class="fa-solid fa-cloud text-primary"></i> Google Colab High-RAM Cloud Relay Unit</div>
                                     <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.6rem;">Route high-speed screen frames and control packets through Google Colab's cloud RAM and bandwidth (NAT traversal without port forwarding).</p>
-                                    <label class="anydesk-check-item" style="margin-bottom: 0.6rem;">
-                                        <input type="checkbox" id="ad-colab-relay-enabled" checked> Enable Google Colab Cloud Relay
+                                    <label class="ui-switch switch-danger" style="margin-bottom: 0.6rem; display: flex;">
+                                        <input type="checkbox" id="ad-colab-relay-enabled" checked>
+                                        <span class="switch-slider"></span>
+                                        <span>Enable Google Colab Cloud Relay</span>
                                     </label>
                                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
                                         <input type="text" id="colab-relay-url" placeholder="Enter Colab Tunnel URL (e.g. https://xxx.trycloudflare.com)" style="flex: 1; min-width: 280px; padding: 0.35rem; border: 1px solid #ccc; border-radius: 4px;">

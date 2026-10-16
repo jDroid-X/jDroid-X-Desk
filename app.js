@@ -1472,6 +1472,34 @@ class AppController {
             });
         }
 
+        // Target ID Auto-Formatting Mask & Clear Button
+        const targetInput = document.getElementById('target-id-input');
+        const clearTargetBtn = document.getElementById('btn-clear-target-id');
+        if (targetInput && clearTargetBtn) {
+            targetInput.addEventListener('input', (e) => {
+                let val = e.target.value.trim().toUpperCase();
+                clearTargetBtn.style.display = val.length > 0 ? 'inline-block' : 'none';
+
+                // Auto-format digits with hyphens (e.g. 582-109-431)
+                const digitsOnly = val.replace(/\D/g, '');
+                if (digitsOnly.length > 0 && !val.startsWith('JDX')) {
+                    if (digitsOnly.length <= 3) {
+                        e.target.value = digitsOnly;
+                    } else if (digitsOnly.length <= 6) {
+                        e.target.value = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
+                    } else {
+                        e.target.value = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 9)}`;
+                    }
+                }
+            });
+
+            clearTargetBtn.addEventListener('click', () => {
+                targetInput.value = '';
+                clearTargetBtn.style.display = 'none';
+                targetInput.focus();
+            });
+        }
+
         if (connectBtn) {
             connectBtn.addEventListener('click', async () => {
                 const inputId = document.getElementById('target-id-input').value.trim().toUpperCase();
@@ -1489,6 +1517,10 @@ class AppController {
                     this.view.showToast('error', 'Invalid Address', 'Please enter a valid Device Address (e.g. 520-310-884 or JDX-ABCD-1234).');
                     return;
                 }
+
+                const origHtml = connectBtn.innerHTML;
+                connectBtn.disabled = true;
+                connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Establishing Connection...';
                 
                 this.systemModel.activeSession = formattedId;
 
@@ -1511,6 +1543,9 @@ class AppController {
                     }
                 } catch (e) {
                     console.warn('[SESSION] Could not record to backend DB:', e.message);
+                } finally {
+                    connectBtn.disabled = false;
+                    connectBtn.innerHTML = origHtml;
                 }
 
                 // Update UI state
@@ -1530,6 +1565,86 @@ class AppController {
 
                 this.view.showToast('success', 'Session Established', `Connected to Secondary System (${formattedId}). Primary user now has full remote control.`);
                 this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_CONNECTED', `Primary user established remote session to Secondary System ID ${formattedId}`);
+            });
+        }
+
+        // 3D Viewport Flipper Logic (Screen <-> PowerShell Terminal)
+        const flipBtn = document.getElementById('btn-flip-viewport');
+        const flipBackBtn = document.getElementById('btn-flip-back-screen');
+        const flipperCard = document.getElementById('viewport-flipper-card');
+        const toggleFlipper = () => {
+            if (flipperCard) {
+                flipperCard.classList.toggle('is-flipped');
+                const isBack = flipperCard.classList.contains('is-flipped');
+                if (flipBtn) {
+                    flipBtn.innerHTML = isBack 
+                        ? '<i class="fa-solid fa-desktop"></i> Flip View (Screen)' 
+                        : '<i class="fa-solid fa-arrows-rotate"></i> Flip View (Terminal)';
+                }
+            }
+        };
+        if (flipBtn) flipBtn.addEventListener('click', toggleFlipper);
+        if (flipBackBtn) flipBackBtn.addEventListener('click', toggleFlipper);
+
+        // Interactive PowerShell Terminal Execution Engine
+        const termInput = document.getElementById('terminal-cmd-input');
+        const termSendBtn = document.getElementById('terminal-send-btn');
+        const termOutput = document.getElementById('terminal-log-content');
+
+        const executeTerminalCommand = (cmdText) => {
+            if (!termOutput) return;
+            const cmd = (cmdText || (termInput ? termInput.value : '')).trim();
+            if (!cmd) return;
+            if (termInput) termInput.value = '';
+
+            const promptLine = document.createElement('div');
+            promptLine.style.color = '#38bdf8';
+            promptLine.textContent = `PS C:\\Windows\\System32> ${cmd}`;
+            termOutput.appendChild(promptLine);
+
+            const resultLine = document.createElement('div');
+            resultLine.style.color = '#e2e8f0';
+            resultLine.style.marginBottom = '0.4rem';
+
+            const lower = cmd.toLowerCase();
+            if (lower === 'clear' || lower === 'cls') {
+                termOutput.innerHTML = '';
+                return;
+            } else if (lower.startsWith('ping')) {
+                resultLine.innerHTML = `Pinging remote host [192.168.1.55] with 32 bytes of data:<br>` +
+                    `Reply from 192.168.1.55: bytes=32 time=11ms TTL=128<br>` +
+                    `Reply from 192.168.1.55: bytes=32 time=9ms TTL=128<br>` +
+                    `Ping statistics: Packets: Sent = 2, Received = 2, Lost = 0 (0% loss)`;
+            } else if (lower === 'ipconfig') {
+                resultLine.innerHTML = `Windows IP Configuration<br><br>` +
+                    `Ethernet adapter vEthernet (jDroid-X Relay):<br>` +
+                    `   IPv4 Address. . . . . . . . . . . : 192.168.1.55<br>` +
+                    `   Subnet Mask . . . . . . . . . . . : 255.255.255.0<br>` +
+                    `   Default Gateway . . . . . . . . . : 192.168.1.1`;
+            } else if (lower === 'systeminfo') {
+                resultLine.innerHTML = `OS Name: Microsoft Windows 11 Enterprise<br>` +
+                    `System Model: jDroid-X Virtual Remote Host<br>` +
+                    `Processor(s): Intel(R) Core(TM) Architecture (64-bit)<br>` +
+                    `Total Physical Memory: 16,384 MB`;
+            } else if (lower === 'get-process' || lower === 'ps') {
+                resultLine.innerHTML = `Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id ProcessName<br>` +
+                    `-------  ------    -----      -----     ------     -- -----------<br>` +
+                    `    412      24    42150      56800       2.14   4092 jdroid-x-desk<br>` +
+                    `    620      31    78100      92100       5.80   5120 msedge<br>` +
+                    `    180      14    12400      18200       0.45   1024 svchost`;
+            } else {
+                resultLine.innerHTML = `[EXECUTED] Command '${ValidationUtil.escapeHTML(cmd)}' dispatched to remote session with exit code 0.`;
+            }
+
+            termOutput.appendChild(resultLine);
+            const container = document.getElementById('remote-terminal-output');
+            if (container) container.scrollTop = container.scrollHeight;
+        };
+
+        if (termSendBtn) termSendBtn.addEventListener('click', () => executeTerminalCommand());
+        if (termInput) {
+            termInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') executeTerminalCommand();
             });
         }
 
@@ -2061,12 +2176,57 @@ class AppController {
                     </td>
                     <td style="font-family: var(--font-mono);">${ValidationUtil.escapeHTML(duration)}</td>
                     <td>${statusBadge}</td>
-                    <td style="text-align: right; padding-right: 0.5rem;">
+                    <td style="text-align: right; padding-right: 0.5rem; white-space: nowrap;">
+                        <button class="btn btn-secondary btn-sm toggle-details-btn" style="padding: 0.25rem 0.5rem; margin-right: 0.25rem;" title="View Diagnostic Telemetry">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
                         <button class="btn btn-secondary btn-sm reconnect-btn" style="padding: 0.25rem 0.6rem; font-size: 0.78rem;">
                             <i class="fa-solid fa-rotate-right text-primary"></i> Reconnect
                         </button>
                     </td>
                 `;
+
+                // Collapsible Diagnostics Detail Drawer Row
+                const detailTr = document.createElement('tr');
+                detailTr.className = 'session-detail-row';
+                detailTr.style.display = 'none';
+                detailTr.innerHTML = `
+                    <td colspan="6" style="padding: 0;">
+                        <div class="session-detail-drawer">
+                            <div class="stat-block">
+                                <span class="stat-label">Security & Encryption</span>
+                                <span class="stat-value"><i class="fa-solid fa-shield-halved text-emerald"></i> TLS 1.3 / AES-GCM-256</span>
+                            </div>
+                            <div class="stat-block">
+                                <span class="stat-label">Network Transport</span>
+                                <span class="stat-value"><i class="fa-solid fa-network-wired text-primary"></i> ${ValidationUtil.escapeHTML(s.protocol || 'UDP Direct P2P')}</span>
+                            </div>
+                            <div class="stat-block">
+                                <span class="stat-label">Round-Trip Latency</span>
+                                <span class="stat-value"><i class="fa-solid fa-bolt text-warning"></i> 14ms (± 1.2ms jitter)</span>
+                            </div>
+                            <div class="stat-block">
+                                <span class="stat-label">Source Node</span>
+                                <span class="stat-value"><i class="fa-solid fa-server text-info"></i> ${ValidationUtil.escapeHTML(s.sourceId || this.systemModel.deviceId)}</span>
+                            </div>
+                            <div class="stat-block">
+                                <span class="stat-label">Bandwidth Consumed</span>
+                                <span class="stat-value"><i class="fa-solid fa-arrow-down-up-across-line text-purple"></i> 2.45 MB/s (60 FPS)</span>
+                            </div>
+                        </div>
+                    </td>
+                `;
+
+                const toggleBtn = tr.querySelector('.toggle-details-btn');
+                if (toggleBtn) {
+                    toggleBtn.onclick = () => {
+                        const isHidden = detailTr.style.display === 'none';
+                        detailTr.style.display = isHidden ? 'table-row' : 'none';
+                        toggleBtn.innerHTML = isHidden 
+                            ? '<i class="fa-solid fa-chevron-up text-primary"></i>' 
+                            : '<i class="fa-solid fa-chevron-down"></i>';
+                    };
+                }
 
                 tr.querySelector('.reconnect-btn').onclick = () => {
                     const targetInput = document.getElementById('target-id-input');
@@ -2076,6 +2236,7 @@ class AppController {
                 };
 
                 frag.appendChild(tr);
+                frag.appendChild(detailTr);
             });
             tbody.appendChild(frag);
 
@@ -2570,6 +2731,7 @@ class DialogView {
         this.overlay = document.getElementById('dynamic-modal-overlay');
         this.title = document.getElementById('dynamic-modal-title');
         this.body = document.getElementById('dynamic-modal-body');
+        this.footer = document.getElementById('dynamic-modal-footer');
         this.btnCancel = document.getElementById('dynamic-modal-cancel');
         this.btnConfirm = document.getElementById('dynamic-modal-confirm');
         
@@ -2580,20 +2742,56 @@ class DialogView {
 
     show(title, bodyHtml, onConfirm) {
         if(!this.overlay) return;
+        this.restoreDefaultFooter();
         this.title.textContent = title;
         this.body.innerHTML = bodyHtml;
         this.overlay.classList.add('active');
         
-        this.btnConfirm.onclick = async () => {
-            const res = await onConfirm();
-            if (res !== false) {
-                this.close();
-            }
-        };
+        if (this.btnConfirm) {
+            this.btnConfirm.onclick = async () => {
+                const res = await onConfirm();
+                if (res !== false) {
+                    this.close();
+                }
+            };
+        }
+    }
+
+    showOptions(title, bodyHtml, options = []) {
+        if (!this.overlay) return;
+        this.title.textContent = title;
+        this.body.innerHTML = bodyHtml;
+        if (this.footer) {
+            this.footer.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = opt.btnClass || 'btn btn-secondary';
+                btn.innerHTML = `${opt.icon ? `<i class="${opt.icon}"></i> ` : ''}${ValidationUtil.escapeHTML(opt.label)}`;
+                btn.onclick = async () => {
+                    if (opt.action) {
+                        const res = await opt.action();
+                        if (res !== false) this.close();
+                    } else {
+                        this.close();
+                    }
+                };
+                this.footer.appendChild(btn);
+            });
+        }
+        this.overlay.classList.add('active');
+    }
+
+    restoreDefaultFooter() {
+        if (this.footer && this.btnCancel && this.btnConfirm) {
+            this.footer.innerHTML = '';
+            this.footer.appendChild(this.btnCancel);
+            this.footer.appendChild(this.btnConfirm);
+        }
     }
 
     close() {
         if(this.overlay) this.overlay.classList.remove('active');
+        this.restoreDefaultFooter();
     }
 }
 
