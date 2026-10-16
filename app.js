@@ -1660,6 +1660,16 @@ class AppController {
                 this.systemModel.currentSessionDbId = null;
             }
 
+            // HITL: Check if Request Comment on Session Disconnect is enabled
+            const shouldPromptComment = this.settingsModel?.general?.requestComment || document.getElementById('ad-set-req-comment')?.checked;
+            if (shouldPromptComment) {
+                const comment = prompt('Session Feedback / Log Summary (Optional):', '');
+                if (comment && comment.trim()) {
+                    await this.traceModel.addLog('FEEDBACK', 'SESSION_COMMENT', `Operator session comment: ${comment.trim()}`);
+                    this.view.showToast('info', 'Feedback Recorded', 'Session conclusion comment recorded in audit logs.');
+                }
+            }
+
             this.systemModel.activeSession = null;
             const statusText = document.getElementById('session-status-text');
             if (statusText) {
@@ -2628,36 +2638,32 @@ class AppController {
             };
         }
 
-        // Add Contact
+        // Add Contact (Delegates to RemoteContactsController MVC)
         const addContactBtn = document.getElementById('btn-open-add-contact');
         if (addContactBtn) {
             addContactBtn.onclick = () => {
-                const id = prompt('Enter Partner System Address (e.g. 710-224-900 or JDX-ABCD-1234):', '');
-                if (id) {
-                    this.view.showToast('success', 'Contact Saved', `Partner ID ${id} added to MeetMyFriend group.`);
+                if (window.remoteContactsController) {
+                    window.remoteContactsController.showAddDialog();
                 }
             };
         }
 
-        // Add Subnet
+        // Add Subnet / Safe Zone (Delegates to SafeZoneController MVC)
         const addSubnetBtn = document.getElementById('btn-open-add-subnet');
         if (addSubnetBtn) {
             addSubnetBtn.onclick = () => {
-                const ip = prompt('Enter Subnet (CIDR format):', '192.168.1.0/24');
-                if (ip) {
-                    this.view.showToast('success', 'Subnet Allowed', `Subnet ${ip} added to Safe Zones whitelist.`);
+                if (window.safeZoneController) {
+                    window.safeZoneController.showAddDialog();
                 }
             };
         }
 
-        // Emergency Kill Switch
+        // Emergency Kill Switch (Delegates to GuardiansController MVC)
         const killBtn = document.getElementById('btn-emergency-kill');
         if (killBtn) {
             killBtn.onclick = () => {
-                if (confirm('EMERGENCY ACTION: Sever all active remote connections and isolate host system immediately?')) {
-                    this.view.showToast('error', 'SYSTEM ISOLATED', 'All remote channels closed. Firewall rules applied.');
-                    const viewport = document.getElementById('remote-desktop-viewport-box');
-                    if (viewport) viewport.style.display = 'none';
+                if (window.guardiansController) {
+                    window.guardiansController.triggerEmergencyKill();
                 }
             };
         }
@@ -3837,6 +3843,7 @@ class DeviceController {
 // Initialize New MVC Modules
 document.addEventListener('DOMContentLoaded', () => {
     const dialogView = new DialogView();
+    window.dialogView = dialogView;
     window.safeZoneController = new SafeZoneController(new SafeZoneModel(), dialogView);
     window.groupController = new GroupController(new GroupModel(), dialogView);
     window.deviceController = new DeviceController(new DeviceModel());
