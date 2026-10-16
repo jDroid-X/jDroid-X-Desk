@@ -941,6 +941,264 @@ class AppController {
                 this.traceModel.addLog('CONFIG', 'SETTINGS_SAVED', 'AnyDesk Studio settings persisted to database');
             });
         }
+
+        // =========================================================================
+        // ANYDESK SETTINGS STUDIO BUTTONS & DIALOG CONTROLLERS
+        // =========================================================================
+        const bindPathBrowse = (btnId, displayId, radioCustomId, defaultPrompt) => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const current = document.getElementById(displayId)?.textContent || defaultPrompt;
+                    const newPath = prompt('Enter or browse directory path:', current);
+                    if (newPath) {
+                        const display = document.getElementById(displayId);
+                        if (display) display.textContent = newPath;
+                        const radio = document.getElementById(radioCustomId);
+                        if (radio) radio.checked = true;
+                        this.view.showToast('info', 'Path Updated', `Directory path set to: ${newPath}`);
+                    }
+                });
+            }
+        };
+
+        bindPathBrowse('btn-browse-ss-path', 'ad-ss-path-display', 'ad-ss-custom', 'C:\\Users\\jiten\\Pictures\\AnyDesk');
+        bindPathBrowse('btn-browse-chat-path', 'ad-chat-path-display', 'ad-chat-custom', 'C:\\Users\\jiten\\AppData\\Roaming\\AnyDesk\\chat');
+        bindPathBrowse('btn-rec-path-browse', 'ad-sess-rec-path-display', 'ad-sess-rec-path', 'C:\\Users\\jiten\\Videos\\AnyDesk');
+        bindPathBrowse('btn-rec-browse', 'ad-sess-rec-path-display', 'ad-rec-path-mode', 'C:\\Users\\jiten\\Videos\\AnyDesk\\screen recordings');
+
+        // Wake-on-LAN Client Whitelist List Box
+        const wolAddBtn = document.getElementById('btn-wol-add');
+        const wolRemBtn = document.getElementById('btn-wol-rem');
+        const wolList = document.getElementById('ad-wol-clients-list');
+
+        if (wolAddBtn && wolList) {
+            wolAddBtn.addEventListener('click', () => {
+                const id = prompt('Enter AnyDesk ID to allow Wake-on-LAN wakeups (e.g. 1 465 486 144):', '');
+                if (id) {
+                    if (wolList.querySelector('div')?.textContent.includes('No custom client')) {
+                        wolList.innerHTML = '';
+                    }
+                    const item = document.createElement('div');
+                    item.className = 'ui-list-item';
+                    item.style.padding = '0.3rem 0.5rem';
+                    item.style.fontSize = '0.85rem';
+                    item.textContent = id;
+                    item.onclick = () => {
+                        wolList.querySelectorAll('.ui-list-item').forEach(el => el.style.background = 'transparent');
+                        item.style.background = '#ffebee';
+                        item.classList.add('selected');
+                    };
+                    wolList.appendChild(item);
+                    this.view.showToast('success', 'Client Added', `AnyDesk ID ${id} authorized for Wake-on-LAN.`);
+                }
+            });
+        }
+
+        if (wolRemBtn && wolList) {
+            wolRemBtn.addEventListener('click', () => {
+                const selected = wolList.querySelector('.ui-list-item.selected') || wolList.lastElementChild;
+                if (selected && !selected.textContent.includes('No custom client')) {
+                    const txt = selected.textContent;
+                    selected.remove();
+                    if (wolList.children.length === 0) {
+                        wolList.innerHTML = '<div style="font-size: 0.8rem; color: #888;">(No custom client restrictions active)</div>';
+                    }
+                    this.view.showToast('info', 'Client Removed', `Removed ${txt} from Wake-on-LAN whitelist.`);
+                }
+            });
+        }
+
+        // Access Control List (ACL) Whitelist Box
+        const aclAddBtn = document.getElementById('btn-acl-add');
+        const aclRemBtn = document.getElementById('btn-acl-rem');
+        const aclList = document.getElementById('ad-acl-list');
+
+        if (aclAddBtn && aclList) {
+            aclAddBtn.addEventListener('click', () => {
+                const addr = prompt('Enter AnyDesk Address or Alias wildcard (e.g. user-?@ad or *@demo):', '');
+                if (addr) {
+                    if (aclList.querySelector('div')?.textContent.includes('No addresses restricted')) {
+                        aclList.innerHTML = '';
+                    }
+                    const item = document.createElement('div');
+                    item.className = 'ui-list-item';
+                    item.style.padding = '0.3rem 0.5rem';
+                    item.style.fontSize = '0.85rem';
+                    item.textContent = addr;
+                    item.onclick = () => {
+                        aclList.querySelectorAll('.ui-list-item').forEach(el => el.style.background = 'transparent');
+                        item.style.background = '#ffebee';
+                        item.classList.add('selected');
+                    };
+                    aclList.appendChild(item);
+                    const aclCheck = document.getElementById('ad-acl-enabled');
+                    if (aclCheck) aclCheck.checked = true;
+                    this.view.showToast('success', 'ACL Entry Added', `Address pattern "${addr}" added to Access Control List.`);
+                }
+            });
+        }
+
+        if (aclRemBtn && aclList) {
+            aclRemBtn.addEventListener('click', () => {
+                const selected = aclList.querySelector('.ui-list-item.selected') || aclList.lastElementChild;
+                if (selected && !selected.textContent.includes('No addresses restricted')) {
+                    const txt = selected.textContent;
+                    selected.remove();
+                    if (aclList.children.length === 0) {
+                        aclList.innerHTML = '<div style="font-size: 0.8rem; color: #888;">(No addresses restricted. Everyone can connect if authenticated)</div>';
+                    }
+                    this.view.showToast('info', 'ACL Entry Removed', `Removed ${txt} from Access Control List.`);
+                }
+            });
+        }
+
+        // Set Password for Unattended Access
+        const setPassBtns = [document.getElementById('btn-ad-set-password'), document.getElementById('btn-ad-prof-set-password')];
+        setPassBtns.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const newPass = prompt('Enter new Unattended Access Password:', '');
+                    if (newPass) {
+                        this.view.showToast('success', 'Password Updated', 'Unattended access password saved securely with PBKDF2 hash.');
+                    }
+                });
+            }
+        });
+
+        // Clear Tokens
+        const clearTokensBtn = document.getElementById('btn-ad-clear-tokens');
+        if (clearTokensBtn) {
+            clearTokensBtn.addEventListener('click', () => {
+                this.view.showToast('warning', 'Tokens Cleared', 'All saved authentication tokens for remote clients have been revoked.');
+            });
+        }
+
+        // Apply Timeout
+        const applyTimeoutBtn = document.getElementById('btn-apply-timeout');
+        if (applyTimeoutBtn) {
+            applyTimeoutBtn.addEventListener('click', () => {
+                const mins = document.getElementById('ad-auto-disconnect-mins')?.value || '10';
+                this.view.showToast('success', 'Timeout Applied', `Sessions will automatically terminate after ${mins} minutes of inactivity.`);
+            });
+        }
+
+        // Add Profile
+        const addProfileBtn = document.getElementById('btn-add-profile');
+        if (addProfileBtn) {
+            addProfileBtn.addEventListener('click', () => {
+                const profName = prompt('Enter custom profile name:', 'Custom Profile');
+                if (profName) {
+                    this.view.showToast('success', 'Profile Created', `Permission profile "${profName}" created.`);
+                }
+            });
+        }
+
+        // Install Printer Driver Simulation
+        const installPrinterBtn = document.getElementById('btn-install-printer');
+        if (installPrinterBtn) {
+            installPrinterBtn.addEventListener('click', () => {
+                this.view.showToast('success', 'Printer Driver Initialized', 'AnyDesk Virtual Printer Spooler active. Incoming remote print jobs enabled.');
+            });
+        }
+
+        // Account Panel Buttons
+        const accLoginBtn = document.getElementById('btn-ad-account-login');
+        if (accLoginBtn) {
+            accLoginBtn.addEventListener('click', () => {
+                const email = document.getElementById('ad-acc-email')?.value.trim();
+                const pass = document.getElementById('ad-acc-pass')?.value;
+                if (!email || !pass) {
+                    this.view.showToast('error', 'Login Required', 'Please enter your account email and password.');
+                    return;
+                }
+                this.view.showToast('success', 'Authenticated', `Connected to AnyDesk account network as ${email}.`);
+            });
+        }
+
+        const accRegisterBtn = document.getElementById('btn-ad-account-register');
+        if (accRegisterBtn) {
+            accRegisterBtn.addEventListener('click', () => {
+                const email = prompt('Enter email address for new AnyDesk account:', '');
+                if (email) {
+                    this.view.showToast('success', 'Registration Sent', `Verification email sent to ${email}.`);
+                }
+            });
+        }
+
+        const accSsoBtn = document.getElementById('btn-ad-account-sso');
+        if (accSsoBtn) {
+            accSsoBtn.addEventListener('click', () => {
+                const domain = prompt('Enter corporate identity domain (e.g. enterprise.com):', '');
+                if (domain) {
+                    this.view.showToast('info', 'SSO Handshake', `Initiating SAML 2.0 / OpenID Connect redirect for ${domain}...`);
+                }
+            });
+        }
+
+        const accRemoveLicenseBtn = document.getElementById('btn-ad-account-remove-license');
+        if (accRemoveLicenseBtn) {
+            accRemoveLicenseBtn.addEventListener('click', () => {
+                this.view.showToast('warning', 'License Deactivated', 'Switched to free non-commercial license tier.');
+            });
+        }
+
+        const accForgotBtn = document.getElementById('btn-ad-account-forgot');
+        if (accForgotBtn) {
+            accForgotBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const email = prompt('Enter your registered account email to receive password reset link:');
+                if (email) {
+                    this.view.showToast('info', 'Password Reset Dispatched', `Password recovery link sent to ${email}.`);
+                }
+            });
+        }
+
+        // Fleet and Notification Filter Buttons
+        const fleetFilterAllBtn = document.getElementById('fleet-filter-all');
+        if (fleetFilterAllBtn) {
+            fleetFilterAllBtn.addEventListener('click', () => {
+                const select = document.getElementById('fleet-group-filter');
+                if (select) select.value = 'ALL';
+                this.fleetController?.renderGrid();
+                this.view.showToast('info', 'Filter Reset', 'Showing all workstations in fleet.');
+            });
+        }
+
+        const notifFilterAllBtn = document.getElementById('notif-filter-all');
+        if (notifFilterAllBtn) {
+            notifFilterAllBtn.addEventListener('click', () => {
+                this.notificationsModel?.fetchFromAPI();
+                this.view.showToast('info', 'Notifications Refreshed', 'Showing all alert feeds.');
+            });
+        }
+
+        // Invite Modal Quick Icon Buttons Toggles
+        const quickIconMap = [
+            { id: 'btn-inv-icon-keyboard', checkId: 'perm-control', name: 'Keyboard / Mouse Control' },
+            { id: 'btn-inv-icon-mouse', checkId: 'perm-cursor', name: 'Cursor Indicator' },
+            { id: 'btn-inv-icon-clipboard', checkId: 'perm-clipboard', name: 'Clipboard Sharing' },
+            { id: 'btn-inv-icon-audio', checkId: 'perm-audio', name: 'Audio Output' },
+            { id: 'btn-inv-icon-recording', checkId: 'perm-record', name: 'Session Recording' },
+            { id: 'btn-inv-icon-whiteboard', checkId: 'perm-draw', name: 'Whiteboard Drawing' },
+            { id: 'btn-inv-icon-blockinput', checkId: 'perm-blockinput', name: 'Block Input' },
+            { id: 'btn-inv-icon-display', checkId: 'perm-cursor', name: 'Display Sync' }
+        ];
+
+        quickIconMap.forEach(item => {
+            const btn = document.getElementById(item.id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const chk = document.getElementById(item.checkId);
+                    if (chk) {
+                        chk.checked = !chk.checked;
+                        btn.style.background = chk.checked ? 'var(--accent-red-glow)' : 'transparent';
+                        btn.style.borderColor = chk.checked ? '#ef3340' : 'var(--border-color)';
+                        this.view.showToast('info', item.name, `${item.name} is now ${chk.checked ? 'ENABLED' : 'DISABLED'}`);
+                    }
+                });
+            }
+        });
     }
 
     initFirebasePresence(retryCount = 0) {
@@ -1110,20 +1368,29 @@ class AppController {
         document.querySelectorAll('.close-modal-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const modal = btn.closest('.modal-overlay');
-                if (modal) modal.classList.remove('active');
+                if (modal) {
+                    modal.classList.remove('active');
+                    modal.style.display = 'none';
+                }
             });
         });
 
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.classList.remove('active');
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                    overlay.style.display = 'none';
+                }
             });
         });
     }
 
     openModal(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) modal.classList.add('active');
+        if (modal) {
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+        }
     }
 
     bindThemeToggle() {
@@ -1152,6 +1419,9 @@ class AppController {
     }
 
     bindRemoteConnectLogic() {
+        if (this._remoteConnectLogicBound) return;
+        this._remoteConnectLogicBound = true;
+
         const copyBtn = document.getElementById('copy-id-btn');
         const connectBtn = document.getElementById('connect-session-btn');
         const disconnectBtn = document.getElementById('disconnect-session-btn');
@@ -1347,13 +1617,17 @@ class AppController {
         if (openInviteBtn && inviteModal) {
             openInviteBtn.addEventListener('click', () => {
                 inviteModal.style.display = 'flex';
+                inviteModal.classList.add('active');
                 const targetInput = document.getElementById('invite-target-id');
                 if (targetInput) targetInput.focus();
             });
         }
 
         const hideInviteModal = () => {
-            if (inviteModal) inviteModal.style.display = 'none';
+            if (inviteModal) {
+                inviteModal.style.display = 'none';
+                inviteModal.classList.remove('active');
+            }
         };
 
         if (closeInviteBtn) closeInviteBtn.addEventListener('click', hideInviteModal);
@@ -2907,20 +3181,18 @@ class DeviceController {
 
 // Initialize New MVC Modules
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        const dialogView = new DialogView();
-        window.safeZoneController = new SafeZoneController(new SafeZoneModel(), dialogView);
-        window.groupController = new GroupController(new GroupModel(), dialogView);
-        window.deviceController = new DeviceController(new DeviceModel());
-        window.guardiansController = new GuardiansController(new GuardiansModel(), dialogView);
-        window.remoteContactsController = new RemoteContactsController(new RemoteContactsModel(), dialogView);
-        window.notificationsController = new NotificationsController(new NotificationsModel());
-        
-        window.safeZoneController.init();
-        window.groupController.init();
-        window.deviceController.init();
-        window.guardiansController.init();
-        window.remoteContactsController.init();
-        window.notificationsController.init();
-    }, 500);
+    const dialogView = new DialogView();
+    window.safeZoneController = new SafeZoneController(new SafeZoneModel(), dialogView);
+    window.groupController = new GroupController(new GroupModel(), dialogView);
+    window.deviceController = new DeviceController(new DeviceModel());
+    window.guardiansController = new GuardiansController(new GuardiansModel(), dialogView);
+    window.remoteContactsController = new RemoteContactsController(new RemoteContactsModel(), dialogView);
+    window.notificationsController = new NotificationsController(new NotificationsModel());
+    
+    window.safeZoneController.init();
+    window.groupController.init();
+    window.deviceController.init();
+    window.guardiansController.init();
+    window.remoteContactsController.init();
+    window.notificationsController.init();
 });

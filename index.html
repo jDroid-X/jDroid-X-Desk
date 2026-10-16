@@ -1132,7 +1132,7 @@
                                     </div>
 
                                     <div class="anydesk-section-title" style="margin-top: 1rem;">Default Profile Settings</div>
-                                    <button class="anydesk-btn-red" style="margin-bottom: 0.8rem;">Set password</button>
+                                    <button class="anydesk-btn-red" id="btn-ad-prof-set-password" style="margin-bottom: 0.8rem;">Set password</button>
                                     <label class="anydesk-check-item" style="margin-bottom: 0.8rem;">
                                         <input type="checkbox" id="ad-prof-enabled" checked> Enable permission profile
                                     </label>
@@ -1299,8 +1299,8 @@
                                         <label class="anydesk-radio-item"><input type="radio" name="ad-sess-rec-path" value="custom"> Custom</label>
                                     </div>
                                     <div class="anydesk-path-row">
-                                        <button class="anydesk-btn-secondary">Browse</button>
-                                        <span class="anydesk-path-label">C:\Users\jiten\Videos\AnyDesk</span>
+                                        <button class="anydesk-btn-secondary" id="btn-rec-path-browse">Browse</button>
+                                        <span class="anydesk-path-label" id="ad-sess-rec-path-display">C:\Users\jiten\Videos\AnyDesk</span>
                                     </div>
                                 </div>
                             </div>
@@ -1346,8 +1346,8 @@
                                             <input type="password" id="ad-acc-pass" style="width: 100%; padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
                                         </div>
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                                            <a href="#" style="font-size: 0.8rem; color: #ef3340;">Forgot password?</a>
-                                            <button class="anydesk-btn-red" style="opacity: 0.6;">Log In</button>
+                                            <a href="#" id="btn-ad-account-forgot" style="font-size: 0.8rem; color: #ef3340;">Forgot password?</a>
+                                            <button class="anydesk-btn-red" id="btn-ad-account-login">Log In</button>
                                         </div>
                                     </div>
                                 </div>
@@ -1356,8 +1356,8 @@
                                     <div class="anydesk-section-title">Register</div>
                                     <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Don't have an account yet?</p>
                                     <div style="display: flex; flex-direction: column; gap: 0.5rem; max-width: 400px;">
-                                        <button class="anydesk-btn-red" style="width: 100%;">Register Account</button>
-                                        <button class="anydesk-btn-secondary" style="width: 100%;">Single Sign-On</button>
+                                        <button class="anydesk-btn-red" id="btn-ad-account-register" style="width: 100%;">Register Account</button>
+                                        <button class="anydesk-btn-secondary" id="btn-ad-account-sso" style="width: 100%;">Single Sign-On</button>
                                     </div>
                                 </div>
 
@@ -1365,7 +1365,7 @@
                                     <div class="anydesk-section-title">Current License</div>
                                     <div style="display: flex; align-items: center; justify-content: space-between; max-width: 400px;">
                                         <span style="font-size: 0.95rem; font-weight: 600;">free-1</span>
-                                        <button class="anydesk-btn-secondary" style="font-size: 0.8rem;">Remove license key</button>
+                                        <button class="anydesk-btn-secondary" id="btn-ad-account-remove-license" style="font-size: 0.8rem;">Remove license key</button>
                                     </div>
                                 </div>
                             </div>
@@ -1865,14 +1865,14 @@
 
                 <!-- Icon Strip Quick Toggles -->
                 <div style="display: flex; gap: 0.35rem; margin-top: 0.85rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 8px; justify-content: space-around;">
-                    <button class="btn btn-secondary btn-sm" title="Keyboard Control" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-keyboard text-primary"></i></button>
-                    <button class="btn btn-secondary btn-sm" title="Mouse / Screen Control" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-arrow-pointer text-primary"></i></button>
-                    <button class="btn btn-secondary btn-sm" title="Clipboard Access" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-paste text-primary"></i></button>
-                    <button class="btn btn-secondary btn-sm" title="Audio Sound" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-volume-high text-primary"></i></button>
-                    <button class="btn btn-secondary btn-sm" title="Session Recording" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-video text-primary"></i></button>
-                    <button class="btn btn-secondary btn-sm" title="Whiteboard Annotation" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-pen-ruler text-primary"></i></button>
-                    <button class="btn btn-secondary btn-sm" title="Block Input" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-ban text-primary"></i></button>
-                    <button class="btn btn-secondary btn-sm" title="Display Switching" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-desktop text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-keyboard" title="Keyboard Control" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-keyboard text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-mouse" title="Mouse / Screen Control" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-arrow-pointer text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-clipboard" title="Clipboard Access" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-paste text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-audio" title="Audio Sound" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-volume-high text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-recording" title="Session Recording" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-video text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-whiteboard" title="Whiteboard Annotation" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-pen-ruler text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-blockinput" title="Block Input" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-ban text-primary"></i></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-inv-icon-display" title="Display Switching" style="padding: 0.35rem 0.55rem;"><i class="fa-solid fa-desktop text-primary"></i></button>
                 </div>
 
                 <!-- Granular Permissions Checklist (From AnyDesk Screenshot) -->
