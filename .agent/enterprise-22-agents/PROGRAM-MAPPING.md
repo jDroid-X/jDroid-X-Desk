@@ -167,3 +167,15 @@ Before ANY code change, refactor, or new file creation, the responsible agent MU
    - Master Orchestrator routes the ticket to the responsible agent (Backend, Frontend, Database, or Dependency).
    - Hotfix is applied and re-verified through Stage 5 before proceeding to Stage 6 (Deployment).
 3. **Zero Orphan Rule**: The **Audit Agent** validates that no class, variable, service, or asset is generated without an active entry in this Program Mapping matrix.
+
+---
+
+## 5. AnyDesk Parity & Remote Desktop Domain Mapping
+
+| Component | Layer | File Reference | Upstream Integration | Downstream Consumers |
+| :--- | :--- | :--- | :--- | :--- |
+| **Session Invites Engine** | Model / API | [server.js](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/server.js), [database.json](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/database.json) | `/api/invites` CRUD | `#anydesk-invite-modal`, `#anydesk-incoming-modal` |
+| **AnyDesk Settings Studio** | View / Controller | [index.html](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/index.html), [app.js](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/app.js) | `/api/settings` PUT/GET | 12 Sub-panel DOM elements (`#ad-tab-*`) |
+| **Portable Admin Client** | Executable Tool | [jDroid-Client.bat](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-Client.bat) | `/api/download-client` | Remote Technician / Host machine |
+| **Colab Cloud Relay Bridge** | Network Relay | Google Colab Notebook | WebSocket `/relay` | WebRTC P2P ICE Traversal across NAT |
+
