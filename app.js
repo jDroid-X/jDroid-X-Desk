@@ -1206,6 +1206,169 @@ class AppController {
             });
         }
 
+        // ==========================================
+        // ANYDESK-STYLE SESSION INVITATION ENGINE
+        // ==========================================
+        const inviteModal = document.getElementById('anydesk-invite-modal');
+        const openInviteBtn = document.getElementById('btn-open-invite-modal');
+        const closeInviteBtn = document.getElementById('btn-close-invite-modal');
+        const cancelInviteBtn = document.getElementById('btn-cancel-invite');
+        const submitInviteBtn = document.getElementById('btn-submit-invite');
+        const profileSelect = document.getElementById('invite-profile-select');
+
+        if (openInviteBtn && inviteModal) {
+            openInviteBtn.addEventListener('click', () => {
+                inviteModal.style.display = 'flex';
+                const targetInput = document.getElementById('invite-target-id');
+                if (targetInput) targetInput.focus();
+            });
+        }
+
+        const hideInviteModal = () => {
+            if (inviteModal) inviteModal.style.display = 'none';
+        };
+
+        if (closeInviteBtn) closeInviteBtn.addEventListener('click', hideInviteModal);
+        if (cancelInviteBtn) cancelInviteBtn.addEventListener('click', hideInviteModal);
+
+        if (profileSelect) {
+            profileSelect.addEventListener('change', (e) => {
+                const p = e.target.value;
+                const setCheck = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+                if (p === 'ScreenSharing') {
+                    setCheck('perm-control', false);
+                    setCheck('perm-restart', false);
+                    setCheck('perm-ctrlaltdel', false);
+                    setCheck('perm-blockinput', false);
+                    setCheck('perm-filetransfer', false);
+                    setCheck('perm-filemanager', false);
+                } else if (p === 'FullControl') {
+                    ['perm-audio', 'perm-control', 'perm-restart', 'perm-ctrlaltdel', 'perm-blockinput', 'perm-lock', 'perm-cursor', 'perm-clipboard', 'perm-filetransfer', 'perm-filemanager', 'perm-sysinfo', 'perm-whiteboard', 'perm-recording', 'perm-uacelevation'].forEach(id => setCheck(id, true));
+                }
+            });
+        }
+
+        if (submitInviteBtn) {
+            submitInviteBtn.addEventListener('click', async () => {
+                const targetInput = document.getElementById('invite-target-id');
+                const targetId = targetInput ? targetInput.value.trim() : '';
+                if (!targetId) {
+                    this.view.showToast('error', 'Missing Target', 'Please enter a target AnyDesk or jDroid-X Desk ID.');
+                    return;
+                }
+
+                const getVal = (id) => { const el = document.getElementById(id); return el ? el.checked : false; };
+                const payload = {
+                    sourceId: this.systemModel.hardwareId || 'PRIMARY-LOCAL',
+                    targetId: targetId,
+                    profile: profileSelect ? profileSelect.value : 'Default',
+                    permissions: {
+                        audio: getVal('perm-audio'),
+                        control: getVal('perm-control'),
+                        restart: getVal('perm-restart'),
+                        privacyMode: getVal('perm-privacy'),
+                        ctrlAltDel: getVal('perm-ctrlaltdel'),
+                        blockInput: getVal('perm-blockinput'),
+                        lockDevice: getVal('perm-lock'),
+                        cursor: getVal('perm-cursor'),
+                        clipboard: getVal('perm-clipboard'),
+                        fileTransfer: getVal('perm-filetransfer'),
+                        fileManager: getVal('perm-filemanager'),
+                        sysInfo: getVal('perm-sysinfo'),
+                        whiteboard: getVal('perm-whiteboard'),
+                        tcpTunnel: getVal('perm-tcptunnel'),
+                        recording: getVal('perm-recording'),
+                        uacElevation: getVal('perm-uacelevation')
+                    }
+                };
+
+                try {
+                    const res = await fetch('/api/invites', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.view.showToast('success', 'Invitation Dispatched', `Session invitation sent to ${targetId} (Valid for 2 minutes).`);
+                        this.traceModel.addLog('INFO', 'SESSION_INVITE_SENT', `Session invitation dispatched to target ${targetId}.`);
+                        hideInviteModal();
+                    } else {
+                        this.view.showToast('error', 'Invite Failed', data.error || 'Failed to dispatch invitation.');
+                    }
+                } catch (e) {
+                    this.view.showToast('error', 'Network Error', 'Failed to reach invitation relay.');
+                }
+            });
+        }
+
+        // ==========================================
+        // INCOMING SESSION INVITATION POLLER (Accept / Reject)
+        // ==========================================
+        const incomingModal = document.getElementById('anydesk-incoming-modal');
+        const acceptInviteBtn = document.getElementById('btn-accept-invite');
+        const rejectInviteBtn = document.getElementById('btn-reject-invite');
+        let currentActiveInvite = null;
+
+        setInterval(async () => {
+            const myId = this.systemModel.hardwareId;
+            if (!myId || this.systemModel.activeSession || (incomingModal && incomingModal.style.display === 'flex')) return;
+
+            try {
+                const res = await fetch(`/api/invites/pending/${encodeURIComponent(myId)}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+                    currentActiveInvite = data.data[0];
+                    const srcLabel = document.getElementById('incoming-source-id');
+                    if (srcLabel) srcLabel.textContent = currentActiveInvite.sourceId;
+                    if (incomingModal) incomingModal.style.display = 'flex';
+                }
+            } catch (_) {}
+        }, 3000);
+
+        if (acceptInviteBtn && incomingModal) {
+            acceptInviteBtn.addEventListener('click', async () => {
+                if (!currentActiveInvite) return;
+                try {
+                    const res = await fetch(`/api/invites/${currentActiveInvite.id}/respond`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'ACCEPTED' })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        incomingModal.style.display = 'none';
+                        this.view.showToast('success', 'Connection Established', `Accepted remote control from ${currentActiveInvite.sourceId}.`);
+                        this.traceModel.addLog('INFO', 'SESSION_INVITE_ACCEPTED', `Accepted incoming connection from ${currentActiveInvite.sourceId}.`);
+                        
+                        // Switch status
+                        const statusText = document.getElementById('session-status-text');
+                        if (statusText) {
+                            statusText.textContent = `Connected to ${currentActiveInvite.sourceId}`;
+                            statusText.style.color = 'var(--accent-emerald)';
+                        }
+                    }
+                } catch (_) {}
+            });
+        }
+
+        if (rejectInviteBtn && incomingModal) {
+            rejectInviteBtn.addEventListener('click', async () => {
+                if (!currentActiveInvite) return;
+                try {
+                    await fetch(`/api/invites/${currentActiveInvite.id}/respond`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'REJECTED' })
+                    });
+                } catch (_) {}
+                incomingModal.style.display = 'none';
+                currentActiveInvite = null;
+                this.view.showToast('warning', 'Invitation Dismissed', 'Declined remote session invitation.');
+            });
+        }
+
+
 
         // Launch Control Window Button
         if (launchCanvasBtn) {

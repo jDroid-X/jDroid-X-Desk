@@ -2,6 +2,7 @@
   "safeZones": [],
   "groups": [],
   "sessions": [],
+  "invites": [],
   "devices": [],
   "guardians": [],
   "contacts": [],
@@ -1028,6 +1029,271 @@
       "stage": "TEST",
       "msg": "Automated test suite probe",
       "timestamp": "2026-10-16T13:34:35.495Z"
+    },
+    {
+      "id": "REQ-1792157716085-1012",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/settings",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:35:16.085Z"
+    },
+    {
+      "id": "REQ-1792157721912-1013",
+      "level": "WARN",
+      "stage": "HTTP_TRAFFIC",
+      "method": "HEAD",
+      "url": "/api/download-client",
+      "ip": "127.0.0.1",
+      "statusCode": 404,
+      "rttMs": 3,
+      "msg": "[IN/OUT] HEAD /api/download-client -> HTTP 404 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:35:21.912Z"
+    },
+    {
+      "id": "REQ-1792157739064-1000",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "HEAD",
+      "url": "/api/download-client",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 6,
+      "msg": "[IN/OUT] HEAD /api/download-client -> HTTP 200 (6ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:35:39.064Z"
+    },
+    {
+      "id": "1792158144054",
+      "level": "INFO",
+      "stage": "STUN_HANDSHAKE",
+      "msg": "Primary System A initiated UDP connection request to Secondary System B (Port 21116)",
+      "timestamp": "2026-10-16T13:42:24.054Z"
+    },
+    {
+      "id": "1792158144064",
+      "level": "SECURITY_AUDIT",
+      "stage": "KEY_EXCHANGE",
+      "msg": "Ed25519 Elliptic Curve Key Exchange completed. Tunnel Encrypted.",
+      "timestamp": "2026-10-16T13:42:24.064Z"
+    },
+    {
+      "id": "1792158144073",
+      "level": "INFO",
+      "stage": "SESSION_ACCEPT",
+      "msg": "Secondary System B user accepted connection. Screen sharing & input control granted.",
+      "timestamp": "2026-10-16T13:42:24.073Z"
+    },
+    {
+      "id": "1792158144080",
+      "level": "TRACE",
+      "stage": "FRAME_STREAM",
+      "msg": "Remote Desktop stream active (1080p 60FPS, H.265 Codec, 1.8 Mbps)",
+      "timestamp": "2026-10-16T13:42:24.080Z"
+    },
+    {
+      "id": "REQ-1792158144106-1001",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/hardware-id",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 16,
+      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 304 (16ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.107Z"
+    },
+    {
+      "id": "REQ-1792158144569-1002",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/safe-zones",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 5,
+      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 304 (5ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.570Z"
+    },
+    {
+      "id": "REQ-1792158144581-1003",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/groups",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 3,
+      "msg": "[IN/OUT] GET /api/groups -> HTTP 304 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.582Z"
+    },
+    {
+      "id": "REQ-1792158144590-1004",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/guardians",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 2,
+      "msg": "[IN/OUT] GET /api/guardians -> HTTP 304 (2ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.590Z"
+    },
+    {
+      "id": "REQ-1792158144600-1005",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/contacts",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 2,
+      "msg": "[IN/OUT] GET /api/contacts -> HTTP 304 (2ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.600Z"
+    },
+    {
+      "id": "REQ-1792158144610-1006",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/notifications",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 2,
+      "msg": "[IN/OUT] GET /api/notifications -> HTTP 304 (2ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.610Z"
+    },
+    {
+      "id": "REQ-1792158144620-1007",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/groups",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 2,
+      "msg": "[IN/OUT] GET /api/groups -> HTTP 304 (2ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.620Z"
+    },
+    {
+      "id": "REQ-1792158144630-1008",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/devices",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/devices -> HTTP 304 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.630Z"
+    },
+    {
+      "id": "REQ-1792158144642-1009",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/groups",
+      "ip": "127.0.0.1",
+      "statusCode": 304,
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/groups -> HTTP 304 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T13:42:24.642Z"
+    },
+    {
+      "id": "1792158144948",
+      "level": "SECURITY_AUDIT",
+      "stage": "AUTH_SUCCESS",
+      "msg": "User authenticated: jdx-3c16-2b17@jdroid-x-desk.com. Console unlocked.",
+      "timestamp": "2026-10-16T13:42:24.948Z"
+    },
+    {
+      "id": "1792158146088",
+      "level": "SECURITY_AUDIT",
+      "stage": "FIREBASE_PRESENCE_ACTIVE",
+      "msg": "System registered online at /devices/JDX-3C16-2B17",
+      "timestamp": "2026-10-16T13:42:26.088Z"
+    },
+    {
+      "id": "REQ-1792159202793-1000",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/settings",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 6,
+      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (6ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T14:00:02.793Z"
+    },
+    {
+      "id": "REQ-1792159202810-1001",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/hardware-id",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 12,
+      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (12ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T14:00:02.810Z"
+    },
+    {
+      "id": "REQ-1792159202824-1002",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "GET",
+      "url": "/api/system-telemetry",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 10,
+      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (10ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T14:00:02.824Z"
+    },
+    {
+      "id": "REQ-1792159202844-1003",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "POST",
+      "url": "/api/sessions",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 4,
+      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (4ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T14:00:02.844Z"
+    },
+    {
+      "id": "REQ-1792159202852-1004",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "PUT",
+      "url": "/api/sessions/SES-1792159202841-496",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 4,
+      "msg": "[IN/OUT] PUT /api/sessions/SES-1792159202841-496 -> HTTP 200 (4ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T14:00:02.852Z"
+    },
+    {
+      "id": "REQ-1792159202859-1005",
+      "level": "INFO",
+      "stage": "HTTP_TRAFFIC",
+      "method": "DELETE",
+      "url": "/api/sessions/SES-1792159202841-496",
+      "ip": "127.0.0.1",
+      "statusCode": 200,
+      "rttMs": 3,
+      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792159202841-496 -> HTTP 200 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-16T14:00:02.859Z"
+    },
+    {
+      "id": "1792159202862",
+      "level": "INFO",
+      "stage": "TEST",
+      "msg": "Automated test suite probe",
+      "timestamp": "2026-10-16T14:00:02.862Z"
     }
   ]
 }

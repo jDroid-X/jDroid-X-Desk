@@ -30,7 +30,7 @@ Each agent has a dedicated folder and specification document (`AGENT-SPEC.md`) c
 
 | # | Screen-First Agent | Folder & Spec Link | Primary Mission | MVC Layer |
 |---|---|---|---|---|
-| **01** | **Master Orchestrator** | [01_Master_Orchestrator](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/01_Master_Orchestrator/AGENT-SPEC.md) | Central command, stage gating, multi-agent dispatch | Governance / Meta |
+| **01** | **Master Orchestrator** | [01_Master_Orchestrator](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/01_Master_Orchestrator/AGENT-SPEC.md) | Central command, stage gating, multi-agent dispatch, REA recon intent routing | Governance / Meta |
 | **02** | **UI/UX Pro Max** | [18_UI_UX](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/18_UI_UX/AGENT-SPEC.md) | Screen layouts, Sunrise Orange design tokens, Affordance Matrix | View (Design System) |
 | **03** | **Frontend Specialist** | [06_Frontend](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/06_Frontend/AGENT-SPEC.md) | View presentation, component trees, DOM event listeners | View (Presentation) |
 | **04** | **Business Analyst** | [02_Business_Analyst](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/02_Business_Analyst/AGENT-SPEC.md) | Screen functional requirements & acceptance criteria in `requirement/{screen}.txt` | Model (Domain / Specs) |
@@ -38,9 +38,9 @@ Each agent has a dedicated folder and specification document (`AGENT-SPEC.md`) c
 | **06** | **Backend Specialist** | [05_Backend](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/05_Backend/AGENT-SPEC.md) | API controllers, business services serving Screen Actions | Controller (Logic) |
 | **07** | **Database Architect** | [04_Database_Architect](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/04_Database_Architect/AGENT-SPEC.md) | Schemas, relations & storage derived from Screen State | Model (Persistence) |
 | **08** | **Dependency Agent** | [16_Dependency](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/16_Dependency/AGENT-SPEC.md) | Dependency map verification, unresolved reference check | Model (Dependencies) |
-| **09** | **Integration Agent** | [19_Integration](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/19_Integration/AGENT-SPEC.md) | External APIs, webhooks, third-party connectors | Controller (Adapters) |
+| **09** | **Integration Agent** | [19_Integration](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/19_Integration/AGENT-SPEC.md) | External APIs, webhooks, third-party connectors, REA MCP bridges | Controller (Adapters) |
 | **10** | **Workflow Agent** | [07_Workflow](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/07_Workflow/AGENT-SPEC.md) | Guardian of process integrity, 20 operating rules | Controller (State Engine) |
-| **11** | **Security Auditor** | [11_Security](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/11_Security/AGENT-SPEC.md) | Threat modeling, zero trust, token security, AES-256 | Governance (SecOps) |
+| **11** | **Security Auditor** | [11_Security](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/11_Security/AGENT-SPEC.md) | Threat modeling, zero trust, token security, AES-256, REA reverse engineering & decompilation | Governance (SecOps) |
 | **12** | **QA Specialist** | [10_QA](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/10_QA/AGENT-SPEC.md) | Screen user journey acceptance, quality gates | Governance (Quality) |
 | **13** | **Test Engineer** | [20_Testing](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/20_Testing/AGENT-SPEC.md) | Unit, integration, and E2E automated test suites | Governance (Validation) |
 | **14** | **Audit & Inspector** | [17_Audit](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/17_Audit/AGENT-SPEC.md) | 5-pillar checklist verification, HITL gates, zero-orphan sign-off | Governance (Audit & Inspection) |
@@ -64,13 +64,4 @@ Each agent has a dedicated folder and specification document (`AGENT-SPEC.md`) c
 2. **Pre-Flight Check**: Prior to any code change, the **Dependency Agent** and **Integration Agent** verify variables, constants, dependencies, and integration points against [PROGRAM-MAPPING.md](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/PROGRAM-MAPPING.md).
 3. **Closed-Loop Feedback**: If any verification or testing gate fails, an error package is dispatched back to the responsible agent. Work resumes only after defect remediation.
 4. **Zero Orphan Rule**: The **Audit Agent** must verify that every generated class, file, or service has a declared purpose, valid import links, and usage references before final sign-off.
-
----
-
-## 3. Governance Protocol & Closed-Loop Execution Rules
-
-1. **Governance Sequence**: Execution must strictly transition through the sequential waterfall gates:
-   `Architect → Frontend → Backend → Database → Dependency → Integration → Workflow → Security → UI/UX → Testing → Optimization → Deployment → Audit`.
-2. **Pre-Flight Check**: Prior to any code change, the **Dependency Agent** and **Integration Agent** verify variables, constants, dependencies, and integration points against [PROGRAM-MAPPING.md](file:///c:/Users/jiten/jAnitGravity/.kit/.agent/enterprise-22-agents/PROGRAM-MAPPING.md).
-3. **Closed-Loop Feedback**: If any verification or testing gate fails, an error package is dispatched back to the responsible agent. Work resumes only after defect remediation.
-4. **Zero Orphan Rule**: The **Audit Agent** must verify that every generated class, file, or service has a declared purpose, valid import links, and usage references before final sign-off.
+5. **Reconnaissance & Evidence Rule**: For tasks involving reverse engineering, decompilation, or cloning existing features, **Security Auditor (Agent 11)** executes REA MCP tools to establish ground-truth evidence before architecture or code begins.

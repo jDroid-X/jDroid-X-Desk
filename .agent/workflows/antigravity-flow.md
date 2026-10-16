@@ -13,7 +13,8 @@ When the user invokes `/antigravity-flow`, execute the comprehensive **7-Stage S
 
 1. **Stage 1: INITIATE & PLAN**
    - Execute: Identify Problem → Market/User Research → Define Goals → Feasibility Analysis → Define Scope → Create Project Plan → Budget & Timeline → Approval & Kickoff.
-   - Deliverables: **Project Plan, Feasibility Report**.
+   - Reconnaissance Hook (REA MCP): For tasks requiring reverse engineering, decompilation, or cloning existing app/binary/APK features, Security Auditor (11) invokes REA MCP to extract ground-truth bytecode and API contracts before finalizing requirements.
+   - Deliverables: **Project Plan, Feasibility Report, REA Evidence Package (Optional)**.
 2. **Stage 2: REQUIREMENTS ANALYSIS**
    - Execute: Stakeholder Interviews → Requirement Gathering → Analyze & Document → Requirements Validation → Prioritize Requirements → SRS Sign-off.
    - Deliverables: **SRS Document, Use Case Document**.

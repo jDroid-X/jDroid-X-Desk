@@ -30,6 +30,7 @@ const DEFAULT_SCHEMA = {
     safeZones: [],
     groups: [],
     sessions: [],
+    invites: [],
     devices: [],
     guardians: [],
     contacts: [],
@@ -384,6 +385,92 @@ app.delete('/api/sessions/:id', (req, res) => {
     writeDB(db);
     res.json({ success: true, message: 'Session record deleted.' });
 });
+
+// ==========================================
+// 8B. ANYDESK SESSION INVITATION API
+// ==========================================
+app.get('/api/invites', (req, res) => {
+    const db = readDB();
+    res.json({ success: true, data: db.invites || [] });
+});
+
+app.post('/api/invites', validateBody(['targetId']), (req, res) => {
+    const db = readDB();
+    if (!Array.isArray(db.invites)) db.invites = [];
+    const now = Date.now();
+    const invite = {
+        id: `INV-${now}-${Math.floor(Math.random() * 1000)}`,
+        sourceId: (req.body.sourceId || 'PRIMARY-LOCAL').trim(),
+        targetId: req.body.targetId.trim(),
+        profile: req.body.profile || 'Default',
+        permissions: req.body.permissions || {
+            audio: true,
+            control: true,
+            restart: false,
+            privacyMode: false,
+            ctrlAltDel: true,
+            blockInput: true,
+            lockDevice: true,
+            clipboard: true,
+            fileTransfer: true,
+            fileManager: true,
+            systemInfo: true,
+            whiteboard: true,
+            recordSession: true,
+            uacElevation: false
+        },
+        status: 'PENDING',
+        createdAt: new Date(now).toISOString(),
+        expiresAt: new Date(now + 2 * 60 * 1000).toISOString()
+    };
+    db.invites.push(invite);
+    writeDB(db);
+    res.json({ success: true, data: invite, message: 'Session invitation dispatched (Valid for 2 minutes).' });
+});
+
+app.get('/api/invites/pending/:targetId', (req, res) => {
+    const db = readDB();
+    const target = req.params.targetId.trim().toUpperCase();
+    const now = new Date();
+    const pending = (db.invites || []).filter(inv => {
+        return inv.status === 'PENDING' &&
+            inv.targetId.toUpperCase() === target &&
+            new Date(inv.expiresAt) > now;
+    });
+    res.json({ success: true, data: pending });
+});
+
+app.put('/api/invites/:id/respond', (req, res) => {
+    const db = readDB();
+    if (!Array.isArray(db.invites)) db.invites = [];
+    const idx = db.invites.findIndex(inv => inv.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ success: false, error: 'Invitation not found.' });
+
+    const status = req.body.status === 'ACCEPTED' ? 'ACCEPTED' : 'REJECTED';
+    db.invites[idx].status = status;
+    db.invites[idx].respondedAt = new Date().toISOString();
+
+    let session = null;
+    if (status === 'ACCEPTED') {
+        if (!Array.isArray(db.sessions)) db.sessions = [];
+        session = {
+            id: `SES-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            targetId: db.invites[idx].targetId,
+            sourceId: db.invites[idx].sourceId,
+            status: 'ACTIVE',
+            protocol: 'P2P AnyDesk Relay / Colab Cloud',
+            permissions: db.invites[idx].permissions,
+            startedAt: new Date().toISOString(),
+            endedAt: null,
+            durationSeconds: 0
+        };
+        db.sessions.push(session);
+    }
+
+    writeDB(db);
+    res.json({ success: true, data: db.invites[idx], session });
+});
+
 
 // ==========================================
 // 10. REAL SYSTEM TELEMETRY & OS METRICS

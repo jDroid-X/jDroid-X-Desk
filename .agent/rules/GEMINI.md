@@ -32,6 +32,7 @@ trigger: always_on
   - *Bug / Error Report* ➔ Context (`[[C]]`) -> Diagnose (`[[D]]`) -> Minimal Fix (`[[F]]`) -> Test (`[[T]]`) -> Review (`[[R]]`) -> Evidence (`[[PROOF]]`).
   - *Feature / New Module* ➔ Context (`[[C]]`) -> Plan (`[[P]]`) -> Minimal Diff (`[[M]]`) -> Build (`[[B]]`) -> Test (`[[T]]`) -> Verify (`[[PROOF]]`).
   - *Full-Stack Convergence (`[[CONVERGE]]`)* ➔ Reverse-Engineer Baseline -> Delta Gate (Identify Real Broken Links / Gaps / Hardcodes) -> If Delta > 0: Surgical OOPS MVC Patch -> If Delta == 0: Zero Speculative Edits -> Dynamic Verification -> Empirical RAG Report.
+  - *Reverse Engineering / App Extraction (`[[RE]]`)* ➔ Route Target via REA MCP (`reverse-engineer-anything`) -> Extract Bytecode/Network/IPC Evidence -> Map Domain Contract -> Clean OOPS MVC Build.
   - *Question / Audit* ➔ Direct Concise Answer (`[[Q]]`) -> Separate Fact vs Assumption -> Zero Fluff (`[[N]]`).
   - *Optional Operator Speed-Dial*: Operator JEET may use bracket macros (`[[F]]`, `[[P]]`, `[[T]]`, `[[CONVERGE]]`, `[[PROOF]]`); expand internally without narrating macro definitions.
   - *Macro Catalog SSOT*: Comprehensive vocabulary lazy-loaded from [`JG-Antigravity-Prompt-Codes-Catalog.md`](file:///c:/Users/jiten/jAnitGravity/.kit/JG-Antigravity-Prompt-Codes-Catalog.md).
