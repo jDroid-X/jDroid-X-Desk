@@ -1,26 +1,61 @@
 @echo off
-TITLE jDroid-X-Desk Smart Launcher
-ECHO ========================================================
-ECHO       jDroid-X-Desk Smart Launcher
-ECHO ========================================================
-ECHO.
+setlocal
+TITLE jDroid-X-Desk Launcher
+cd /d "%~dp0"
 
-:: Bypassed installation checks as requested
-ECHO Launching Remote Desktop Console...
+echo ========================================================
+echo          jDroid-X-Desk Remote Desktop Console
+echo ========================================================
+echo.
 
-:: Launch System Tray Icon securely in the visible user session
-powershell -Command "$p = Get-CimInstance Win32_Process; if (($p | Where-Object CommandLine -Match 'tray_icon.ps1').Count -gt 0) { exit 0 } else { exit 1 }"
-IF %ERRORLEVEL% EQU 0 (
-    ECHO [INFO] jDroid-X-Desk is already active in the system tray.
-    ECHO Opening the app interface...
-    start msedge --app=http://localhost:12345
-    EXIT /B 0
-) ELSE (
-    start "" powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0tray_icon.ps1"
+:: 1. Verify Node.js
+where node >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Node.js is not found in your PATH!
+    echo Please install Node.js from https://nodejs.org
+    echo.
+    pause
+    exit /b 1
 )
 
-:: Launch the background VBScript
-wscript.exe "%~dp0start_jdroid_app.vbs"
+:: 2. Check if server is already running on port 12345
+netstat -ano | findstr /R /C:":12345 *LISTENING" >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo [INFO] Server is already active on http://localhost:12345
+    goto OPEN_BROWSER
+)
 
-:: Exit immediately so the command prompt doesn't stay open
-EXIT /B 0
+:: 3. Start server in a background/minimized process
+echo [INFO] Starting background server...
+start "jDroid-X Server" /min cmd /c "node server.js"
+
+:: 4. Wait for server to become active (up to 5 seconds)
+echo [INFO] Waiting for server on port 12345...
+set /a COUNT=0
+:WAIT_PORT
+ping 127.0.0.1 -n 2 >nul
+netstat -ano | findstr /R /C:":12345 *LISTENING" >nul 2>&1
+if %ERRORLEVEL% EQU 0 goto SERVER_READY
+set /a COUNT+=1
+if %COUNT% LSS 5 goto WAIT_PORT
+
+:SERVER_READY
+echo [PASS] Server is listening on http://localhost:12345!
+
+:OPEN_BROWSER
+echo [INFO] Launching user interface in browser...
+start msedge --app=http://localhost:12345 2>nul
+if %ERRORLEVEL% NEQ 0 (
+    start http://localhost:12345
+)
+
+echo.
+echo ========================================================
+echo   jDroid-X-Desk is running at http://localhost:12345
+echo   To stop the server, run: stop_jdroid_app.bat
+echo ========================================================
+echo.
+ping 127.0.0.1 -n 3 >nul
+exit /b 0
+
+

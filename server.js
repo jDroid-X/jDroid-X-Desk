@@ -483,6 +483,6 @@ app.get('/api/hardware-id', (req, res) => {
     } catch (err) { res.json({ success: true, deviceId: 'JDX-RAND-0000' }); }
 });
 
-const server = app.listen(PORT, () => { console.log('[SUCCESS] jDroid-X-Desk Server running on http://localhost:' + PORT); });
+const server = app.listen(PORT, '0.0.0.0', () => { console.log('[SUCCESS] jDroid-X-Desk Server running on http://localhost:' + PORT); });
 server.on('error', (err) => { if (err.code === 'EADDRINUSE') { console.log('[INFO] Port ' + PORT + ' already in use.'); } else { console.error('[SERVER ERROR]', err.message); } });
 
