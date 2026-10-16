@@ -118,14 +118,33 @@ const DEFAULT_SETTINGS = {
 };
 
 const DEFAULT_SCHEMA = {
-    safeZones: [],
-    groups: [],
+    safeZones: [
+        { id: "SZ-01", name: "Corporate HQ Subnet", ip: "192.168.1.0/24" },
+        { id: "SZ-02", name: "Secure VPN Perimeter", ip: "10.0.0.0/16" }
+    ],
+    groups: [
+        { id: "grp-1", name: "Core Workstations", description: "Primary enterprise production nodes", members: 2 },
+        { id: "grp-2", name: "Field Fleet", description: "Mobile client workstations and support endpoints", members: 1 }
+    ],
     sessions: [],
     invites: [],
-    devices: [],
-    guardians: [],
-    contacts: [],
-    notifications: [],
+    devices: [
+        { id: "dev-1", name: "HQ Primary Workstation", ip: "192.168.1.44", groupId: "grp-1", group: "Core Workstations", status: "ONLINE", accessLevel: "Admin" },
+        { id: "dev-2", name: "Lab Render Station", ip: "192.168.1.105", groupId: "grp-1", group: "Core Workstations", status: "ONLINE", accessLevel: "Full Control" },
+        { id: "dev-3", name: "Field Mobile Node", ip: "10.0.4.120", groupId: "grp-2", group: "Field Fleet", status: "STANDBY", accessLevel: "Standard" }
+    ],
+    guardians: [
+        { id: "grd-1", name: "Antigravity AI Systems Architect", role: "Senior Systems Architect (Level 5)", contact: "jeet@jdroid-x.enterprise", status: "Active" },
+        { id: "grd-2", name: "Enterprise Security Auditor", role: "Security & Compliance Officer", contact: "sec-ops@jdroid-x.enterprise", status: "Active" }
+    ],
+    contacts: [
+        { id: "cnt-1", name: "Lead Architect JEET", remoteId: "984-102-391", groupId: "grp-1", group: "Core Workstations" },
+        { id: "cnt-2", name: "Support Specialist Alpha", remoteId: "520-310-884", groupId: "grp-2", group: "Field Fleet" }
+    ],
+    notifications: [
+        { id: "notif-1", title: "System Security Baseline Verified", message: "All workstations running AES-GCM-256 encrypted peer-to-peer tunnels.", type: "success", read: false, timestamp: "2026-10-16T15:20:00.000Z" },
+        { id: "notif-2", title: "Google Colab Relay Standby", message: "Cloud relay bridge available for high-bandwidth remote screen acceleration.", type: "info", read: true, timestamp: "2026-10-16T14:45:00.000Z" }
+    ],
     settings: DEFAULT_SETTINGS,
     logs: []
 };

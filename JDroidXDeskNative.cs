@@ -196,9 +196,51 @@ namespace JDroidXDesk.Native
         public string id { get; set; }
         public string name { get; set; }
         public string ip { get; set; }
+        public string groupId { get; set; }
         public string group { get; set; }
         public string status { get; set; }
         public string accessLevel { get; set; }
+    }
+
+    public class GroupItem
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string description { get; set; }
+        public int members { get; set; }
+    }
+
+    public class GuardianItem
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string role { get; set; }
+        public string contact { get; set; }
+        public string status { get; set; }
+    }
+
+    public class NotificationItem
+    {
+        public string id { get; set; }
+        public string title { get; set; }
+        public string message { get; set; }
+        public string type { get; set; }
+        public bool read { get; set; }
+        public string timestamp { get; set; }
+    }
+
+    public class SessionItem
+    {
+        public string id { get; set; }
+        public string targetId { get; set; }
+        public string targetName { get; set; }
+        public string sourceId { get; set; }
+        public string status { get; set; }
+        public string protocol { get; set; }
+        public string quality { get; set; }
+        public string startedAt { get; set; }
+        public string endedAt { get; set; }
+        public int durationSeconds { get; set; }
     }
 
     public class ContactItem
@@ -206,6 +248,7 @@ namespace JDroidXDesk.Native
         public string id { get; set; }
         public string name { get; set; }
         public string remoteId { get; set; }
+        public string groupId { get; set; }
         public string group { get; set; }
     }
 
@@ -222,15 +265,23 @@ namespace JDroidXDesk.Native
         private static JavaScriptSerializer serializer = new JavaScriptSerializer();
 
         public AppSettings Settings { get; set; }
+        public List<GroupItem> Groups { get; set; }
         public List<DeviceItem> Devices { get; set; }
         public List<ContactItem> Contacts { get; set; }
         public List<SafeZoneItem> SafeZones { get; set; }
+        public List<GuardianItem> Guardians { get; set; }
+        public List<NotificationItem> Notifications { get; set; }
+        public List<SessionItem> Sessions { get; set; }
 
         public DatabaseContext()
         {
+            Groups = new List<GroupItem>();
             Devices = new List<DeviceItem>();
             Contacts = new List<ContactItem>();
             SafeZones = new List<SafeZoneItem>();
+            Guardians = new List<GuardianItem>();
+            Notifications = new List<NotificationItem>();
+            Sessions = new List<SessionItem>();
             Settings = new AppSettings();
             Load();
         }
@@ -251,6 +302,11 @@ namespace JDroidXDesk.Native
                             string sJson = serializer.Serialize(dict["settings"]);
                             Settings = serializer.Deserialize<AppSettings>(sJson) ?? new AppSettings();
                         }
+                        if (dict.ContainsKey("groups") && dict["groups"] is System.Collections.ArrayList)
+                        {
+                            string gJson = serializer.Serialize(dict["groups"]);
+                            Groups = serializer.Deserialize<List<GroupItem>>(gJson) ?? new List<GroupItem>();
+                        }
                         if (dict.ContainsKey("devices") && dict["devices"] is System.Collections.ArrayList)
                         {
                             string dJson = serializer.Serialize(dict["devices"]);
@@ -266,6 +322,21 @@ namespace JDroidXDesk.Native
                             string zJson = serializer.Serialize(dict["safeZones"]);
                             SafeZones = serializer.Deserialize<List<SafeZoneItem>>(zJson) ?? new List<SafeZoneItem>();
                         }
+                        if (dict.ContainsKey("guardians") && dict["guardians"] is System.Collections.ArrayList)
+                        {
+                            string grdJson = serializer.Serialize(dict["guardians"]);
+                            Guardians = serializer.Deserialize<List<GuardianItem>>(grdJson) ?? new List<GuardianItem>();
+                        }
+                        if (dict.ContainsKey("notifications") && dict["notifications"] is System.Collections.ArrayList)
+                        {
+                            string nJson = serializer.Serialize(dict["notifications"]);
+                            Notifications = serializer.Deserialize<List<NotificationItem>>(nJson) ?? new List<NotificationItem>();
+                        }
+                        if (dict.ContainsKey("sessions") && dict["sessions"] is System.Collections.ArrayList)
+                        {
+                            string sesJson = serializer.Serialize(dict["sessions"]);
+                            Sessions = serializer.Deserialize<List<SessionItem>>(sesJson) ?? new List<SessionItem>();
+                        }
                     }
                 }
             }
@@ -275,17 +346,27 @@ namespace JDroidXDesk.Native
             }
 
             // Fallback Seed Data if empty
+            if (Groups.Count == 0)
+            {
+                Groups.Add(new GroupItem { id = "grp-1", name = "Core Workstations", description = "Primary enterprise production nodes", members = 2 });
+                Groups.Add(new GroupItem { id = "grp-2", name = "Field Fleet", description = "Mobile client workstations and support endpoints", members = 1 });
+            }
+            if (Guardians.Count == 0)
+            {
+                Guardians.Add(new GuardianItem { id = "grd-1", name = "Antigravity AI Systems Architect", role = "Primary Technical Supervisor", contact = "jeet@antigravity.ai", status = "Active" });
+                Guardians.Add(new GuardianItem { id = "grd-2", name = "Field Operations Guardian", role = "Remote Support Officer", contact = "support@antigravity.ai", status = "Standby" });
+            }
             if (Devices.Count == 0)
             {
-                Devices.Add(new DeviceItem { id = "DEV-01", name = "Headquarters Primary Workstation", ip = "192.168.1.44", group = "Core Systems", status = "ONLINE", accessLevel = "Admin" });
-                Devices.Add(new DeviceItem { id = "DEV-02", name = "Lab Remote Render Node", ip = "192.168.1.105", group = "Lab Fleet", status = "ONLINE", accessLevel = "Full Control" });
-                Devices.Add(new DeviceItem { id = "DEV-03", name = "Cloud Relay Edge Bridge", ip = "10.0.4.120", group = "Cloud Bridges", status = "STANDBY", accessLevel = "Standard" });
+                Devices.Add(new DeviceItem { id = "DEV-01", name = "Headquarters Primary Workstation", ip = "192.168.1.44", groupId = "grp-1", group = "Core Workstations", status = "ONLINE", accessLevel = "Admin" });
+                Devices.Add(new DeviceItem { id = "DEV-02", name = "Lab Remote Render Node", ip = "192.168.1.105", groupId = "grp-1", group = "Core Workstations", status = "ONLINE", accessLevel = "Full Control" });
+                Devices.Add(new DeviceItem { id = "DEV-03", name = "Cloud Relay Edge Bridge", ip = "10.0.4.120", groupId = "grp-2", group = "Field Fleet", status = "STANDBY", accessLevel = "Standard" });
             }
             if (Contacts.Count == 0)
             {
-                Contacts.Add(new ContactItem { id = "CNT-01", name = "Lead Architect JEET", remoteId = "984-102-391", group = "Core Operations" });
-                Contacts.Add(new ContactItem { id = "CNT-02", name = "Field Support Specialist", remoteId = "520-310-884", group = "Support Fleet" });
-                Contacts.Add(new ContactItem { id = "CNT-03", name = "Autonomous Relay Node", remoteId = "710-224-900", group = "Edge Relays" });
+                Contacts.Add(new ContactItem { id = "CNT-01", name = "Lead Architect JEET", remoteId = "984-102-391", groupId = "grp-1", group = "Core Workstations" });
+                Contacts.Add(new ContactItem { id = "CNT-02", name = "Field Support Specialist", remoteId = "520-310-884", groupId = "grp-2", group = "Field Fleet" });
+                Contacts.Add(new ContactItem { id = "CNT-03", name = "Autonomous Relay Node", remoteId = "710-224-900", groupId = "grp-2", group = "Field Fleet" });
             }
             if (SafeZones.Count == 0)
             {
@@ -306,9 +387,13 @@ namespace JDroidXDesk.Native
                 }
 
                 root["settings"] = Settings;
+                root["groups"] = Groups;
                 root["devices"] = Devices;
                 root["contacts"] = Contacts;
                 root["safeZones"] = SafeZones;
+                root["guardians"] = Guardians;
+                root["notifications"] = Notifications;
+                root["sessions"] = Sessions;
 
                 string outJson = serializer.Serialize(root);
                 File.WriteAllText(dbPath, outJson);
@@ -471,6 +556,17 @@ namespace JDroidXDesk.Native
         private Panel viewContacts;
         private Panel viewSafeZones;
         private Panel viewHealth;
+        private Panel viewGuardians;
+
+        // Session Tracking & UI Controls
+        private DateTime sessionStartTime;
+        private ComboBox cboFleetGroupFilter;
+        private DataGridView dgvFleet;
+        private DataGridView dgvHistory;
+        private DataGridView dgvGuardians;
+        private Panel notificationToast;
+        private Label lblToastMessage;
+        private System.Windows.Forms.Timer toastTimer;
 
         // Console Controls
         private TextBox txtTargetId;
@@ -578,6 +674,7 @@ namespace JDroidXDesk.Native
             InitializeFleetView();
             InitializeHistoryView();
             InitializeContactsView();
+            InitializeGuardiansView();
             InitializeSafeZonesView();
             InitializeHealthView();
         }
@@ -589,6 +686,7 @@ namespace JDroidXDesk.Native
                 "Fleet Devices",
                 "Session History",
                 "Saved Contacts",
+                "Guardians Roster",
                 "Safe Zones",
                 "Device Health",
                 "AnyDesk Settings Studio"
@@ -616,6 +714,7 @@ namespace JDroidXDesk.Native
                     else if (target == "Fleet Devices") SwitchView(target, viewFleet);
                     else if (target == "Session History") SwitchView(target, viewHistory);
                     else if (target == "Saved Contacts") SwitchView(target, viewContacts);
+                    else if (target == "Guardians Roster") SwitchView(target, viewGuardians);
                     else if (target == "Safe Zones") SwitchView(target, viewSafeZones);
                     else if (target == "Device Health") SwitchView(target, viewHealth);
                     else if (target == "AnyDesk Settings Studio") SwitchView(target, viewSettingsStudio);
@@ -739,6 +838,25 @@ namespace JDroidXDesk.Native
             txtTargetId.Location = new Point(8, 7);
             txtTargetId.Size = new Size(195, 22);
             txtTargetId.Text = "520-310-884";
+
+            bool isFormattingTargetId = false;
+            txtTargetId.TextChanged += (s, e) => {
+                if (isFormattingTargetId) return;
+                string raw = txtTargetId.Text.Replace("-", "").Trim();
+                if (raw.Length > 0 && raw.Length <= 9)
+                {
+                    isFormattingTargetId = true;
+                    string formatted = "";
+                    for (int i = 0; i < raw.Length; i++)
+                    {
+                        if (i == 3 || i == 6) formatted += "-";
+                        formatted += raw[i];
+                    }
+                    txtTargetId.Text = formatted;
+                    txtTargetId.SelectionStart = formatted.Length;
+                    isFormattingTargetId = false;
+                }
+            };
 
             // 1-Click Clear Target Button
             btnClearTarget = new Button();
@@ -952,15 +1070,22 @@ namespace JDroidXDesk.Native
                 }
 
                 isSessionActive = true;
+                sessionStartTime = DateTime.Now;
                 btnConnect.Text = "Disconnect";
                 btnConnect.NormalColor = Color.FromArgb(71, 85, 105);
                 lblSessionStatus.Text = string.Format("Session: ACTIVE -> Connected to {0} | 1080p 60 FPS | Encrypted (AES-256)", target);
                 lblSessionStatus.ForeColor = Color.FromArgb(16, 124, 65);
                 db.AddLog("INFO", "SESSION_START", "Native connection established to " + target);
                 viewportCanvas.Invalidate();
+                ShowToast("Connected to " + target + " (P2P Direct Encrypted)");
             }
             else
             {
+                string target = txtTargetId.Text.Trim();
+                TimeSpan elapsed = DateTime.Now - sessionStartTime;
+                int durSec = Math.Max(1, (int)elapsed.TotalSeconds);
+                string durFormatted = string.Format("{0:D2}m {1:D2}s", (int)elapsed.TotalMinutes, elapsed.Seconds);
+
                 // HITL: Check Request Comment setting on disconnect
                 if (db.Settings.general.requestComment)
                 {
@@ -976,8 +1101,26 @@ namespace JDroidXDesk.Native
                 btnConnect.NormalColor = Color.FromArgb(239, 51, 64);
                 lblSessionStatus.Text = "Session: Idle (Awaiting Connection) | Security: AES-GCM-256 P2P Ready";
                 lblSessionStatus.ForeColor = Color.FromArgb(71, 85, 105);
-                db.AddLog("INFO", "SESSION_END", "Remote session closed by operator.");
+                db.AddLog("INFO", "SESSION_END", "Remote session closed by operator. Duration: " + durFormatted);
                 viewportCanvas.Invalidate();
+
+                // Dynamic Session Recording into Database
+                SessionItem newSes = new SessionItem {
+                    id = "SES-" + DateTime.Now.Ticks,
+                    targetId = target,
+                    targetName = "Remote Workstation " + target,
+                    sourceId = "984-102-391",
+                    status = "TERMINATED",
+                    protocol = "Windows Remote Assistance / P2P",
+                    quality = "1080p",
+                    startedAt = sessionStartTime.ToString("o"),
+                    endedAt = DateTime.Now.ToString("o"),
+                    durationSeconds = durSec
+                };
+                db.Sessions.Insert(0, newSes);
+                db.Save();
+                RefreshHistoryView();
+                ShowToast("Session Terminated: Duration " + durFormatted + " recorded in DB.");
             }
         }
 
@@ -1346,99 +1489,313 @@ namespace JDroidXDesk.Native
         }
 
         // ======================================================================
-        // VIEW 3: FLEET DEVICES & WORKSTATIONS
+        // VIEW 3: FLEET DEVICES & WORKSTATIONS (RELATIONAL GROUP BY FILTER)
         // ======================================================================
         private void InitializeFleetView()
         {
             viewFleet = new Panel();
             viewFleet.Padding = new Padding(16);
 
+            Panel topRow = new Panel();
+            topRow.Dock = DockStyle.Top;
+            topRow.Height = 54;
+
             Label lblTitle = new Label();
             lblTitle.Text = "Registered Device Fleet & Connected Workstations";
             lblTitle.Font = new Font("Segoe UI", 12f, FontStyle.Bold);
-            lblTitle.Location = new Point(16, 12);
+            lblTitle.Location = new Point(14, 14);
             lblTitle.AutoSize = true;
-            viewFleet.Controls.Add(lblTitle);
 
-            DataGridView dgv = new DataGridView();
-            dgv.Dock = DockStyle.Fill;
-            dgv.BackgroundColor = Color.White;
-            dgv.BorderStyle = BorderStyle.None;
-            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgv.DataSource = db.Devices;
+            Label lblGroupFilter = new Label();
+            lblGroupFilter.Text = "Group By:";
+            lblGroupFilter.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+            lblGroupFilter.ForeColor = Color.FromArgb(71, 85, 105);
+            lblGroupFilter.Location = new Point(480, 16);
+            lblGroupFilter.AutoSize = true;
 
-            Panel topRow = new Panel();
-            topRow.Dock = DockStyle.Top;
-            topRow.Height = 50;
+            cboFleetGroupFilter = new ComboBox();
+            cboFleetGroupFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboFleetGroupFilter.Font = new Font("Segoe UI", 9.5f);
+            cboFleetGroupFilter.Location = new Point(555, 12);
+            cboFleetGroupFilter.Size = new Size(180, 28);
+            PopulateFleetGroupDropdown();
+            cboFleetGroupFilter.SelectedIndexChanged += (s, e) => FilterFleetGrid();
 
             Button btnAddDev = new Button();
-            btnAddDev.Text = "+ Register New Workstation";
-            btnAddDev.Location = new Point(16, 10);
-            btnAddDev.Size = new Size(180, 30);
+            btnAddDev.Text = "+ Register Workstation";
+            btnAddDev.Location = new Point(748, 11);
+            btnAddDev.Size = new Size(160, 30);
             btnAddDev.Click += (s, e) => {
-                string name = PromptInputDialog("Register Device", "Enter workstation name:", "New-Device-04");
-                if (!string.IsNullOrEmpty(name)) {
-                    db.Devices.Add(new DeviceItem { id = "DEV-" + (db.Devices.Count + 1), name = name, ip = "192.168.1.150", group = "Core Systems", status = "ONLINE", accessLevel = "Standard" });
+                string name = PromptInputDialog("Register Workstation", "Enter workstation hostname / name:", "Core-Node-04");
+                string ip = PromptInputDialog("Network IP Address", "Enter static or DHCP IP:", "192.168.1.188");
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(ip)) {
+                    string selGroup = cboFleetGroupFilter.SelectedIndex > 0 ? cboFleetGroupFilter.SelectedItem.ToString() : "Core Workstations";
+                    GroupItem matchedGrp = db.Groups.Find(g => g.name == selGroup);
+                    string gId = matchedGrp != null ? matchedGrp.id : "grp-1";
+                    db.Devices.Add(new DeviceItem {
+                        id = "DEV-" + (db.Devices.Count + 1),
+                        name = name,
+                        ip = ip,
+                        groupId = gId,
+                        group = selGroup,
+                        status = "ONLINE",
+                        accessLevel = "Standard"
+                    });
                     db.Save();
-                    dgv.DataSource = null;
-                    dgv.DataSource = db.Devices;
+                    FilterFleetGrid();
+                    ShowToast("Workstation registered: " + name + " in group " + selGroup);
                 }
             };
-            topRow.Controls.Add(btnAddDev);
-            topRow.Controls.Add(lblTitle);
 
-            viewFleet.Controls.Add(dgv);
+            Button btnDeleteDev = new Button();
+            btnDeleteDev.Text = "Delete Selected";
+            btnDeleteDev.Location = new Point(916, 11);
+            btnDeleteDev.Size = new Size(110, 30);
+            btnDeleteDev.Click += (s, e) => {
+                if (dgvFleet.CurrentRow != null) {
+                    DeviceItem item = dgvFleet.CurrentRow.DataBoundItem as DeviceItem;
+                    if (item != null && MessageBox.Show("Remove workstation " + item.name + " from fleet?", "Confirm Removal", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) {
+                        db.Devices.Remove(item);
+                        db.Save();
+                        FilterFleetGrid();
+                        ShowToast("Workstation removed from fleet.");
+                    }
+                }
+            };
+
+            topRow.Controls.Add(lblTitle);
+            topRow.Controls.Add(lblGroupFilter);
+            topRow.Controls.Add(cboFleetGroupFilter);
+            topRow.Controls.Add(btnAddDev);
+            topRow.Controls.Add(btnDeleteDev);
+
+            dgvFleet = new DataGridView();
+            dgvFleet.Dock = DockStyle.Fill;
+            dgvFleet.BackgroundColor = Color.White;
+            dgvFleet.BorderStyle = BorderStyle.None;
+            dgvFleet.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvFleet.ReadOnly = true;
+            dgvFleet.AllowUserToAddRows = false;
+            dgvFleet.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+
+            viewFleet.Controls.Add(dgvFleet);
             viewFleet.Controls.Add(topRow);
+
+            FilterFleetGrid();
+        }
+
+        private void PopulateFleetGroupDropdown()
+        {
+            if (cboFleetGroupFilter == null) return;
+            cboFleetGroupFilter.Items.Clear();
+            cboFleetGroupFilter.Items.Add("All Groups (Complete Fleet)");
+            foreach (GroupItem g in db.Groups)
+            {
+                cboFleetGroupFilter.Items.Add(g.name);
+            }
+            cboFleetGroupFilter.SelectedIndex = 0;
+        }
+
+        private void FilterFleetGrid()
+        {
+            if (dgvFleet == null) return;
+            string selectedGroup = cboFleetGroupFilter.SelectedItem != null ? cboFleetGroupFilter.SelectedItem.ToString() : "All Groups (Complete Fleet)";
+            if (selectedGroup == "All Groups (Complete Fleet)")
+            {
+                dgvFleet.DataSource = null;
+                dgvFleet.DataSource = new List<DeviceItem>(db.Devices);
+            }
+            else
+            {
+                List<DeviceItem> filtered = db.Devices.FindAll(d => d.group == selectedGroup || d.groupId == selectedGroup);
+                dgvFleet.DataSource = null;
+                dgvFleet.DataSource = filtered;
+            }
         }
 
         // ======================================================================
-        // VIEW: SESSION HISTORY & AUDIT LOG
+        // VIEW: SESSION HISTORY & AUDIT LOG (DIRECT DB BINDING)
         // ======================================================================
         private void InitializeHistoryView()
         {
             viewHistory = new Panel();
             viewHistory.Padding = new Padding(16);
 
+            Panel topRow = new Panel();
+            topRow.Dock = DockStyle.Top;
+            topRow.Height = 50;
+
             Label lblTitle = new Label();
             lblTitle.Text = "Connection History & Auditable Session Logs";
             lblTitle.Font = new Font("Segoe UI", 12f, FontStyle.Bold);
-            lblTitle.Location = new Point(16, 12);
+            lblTitle.Location = new Point(14, 12);
             lblTitle.AutoSize = true;
 
-            DataGridView dgv = new DataGridView();
-            dgv.Dock = DockStyle.Fill;
-            dgv.BackgroundColor = Color.White;
-            dgv.BorderStyle = BorderStyle.None;
-            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            Button btnRefresh = new Button();
+            btnRefresh.Text = "Refresh History";
+            btnRefresh.Location = new Point(460, 10);
+            btnRefresh.Size = new Size(130, 30);
+            btnRefresh.Click += (s, e) => {
+                RefreshHistoryView();
+                ShowToast("Session history synchronized with database.json");
+            };
 
-            dgv.Columns.Add("Timestamp", "Timestamp");
-            dgv.Columns.Add("Target", "Target Desk ID");
-            dgv.Columns.Add("Duration", "Duration");
-            dgv.Columns.Add("Protocol", "Protocol / Cipher");
-            dgv.Columns.Add("Status", "Session Status");
+            Button btnClearHist = new Button();
+            btnClearHist.Text = "Clear History";
+            btnClearHist.Location = new Point(600, 10);
+            btnClearHist.Size = new Size(120, 30);
+            btnClearHist.Click += (s, e) => {
+                if (MessageBox.Show("Are you sure you want to clear session logs?", "Clear History", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) {
+                    db.Sessions.Clear();
+                    db.Save();
+                    RefreshHistoryView();
+                    ShowToast("Session history cleared.");
+                }
+            };
 
-            // Seed recent historical sessions
-            dgv.Rows.Add(DateTime.Now.AddMinutes(-45).ToString("yyyy-MM-dd HH:mm:ss"), "520-310-884", "18m 42s", "TLS 1.3 / Direct P2P", "TERMINATED_CLEAN");
-            dgv.Rows.Add(DateTime.Now.AddHours(-3).ToString("yyyy-MM-dd HH:mm:ss"), "710-224-900", "05m 12s", "AES-256 / Relay Bridge", "TERMINATED_CLEAN");
-            dgv.Rows.Add(DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd HH:mm:ss"), "146-548-614", "42m 10s", "TLS 1.3 / Direct P2P", "TERMINATED_CLEAN");
+            topRow.Controls.Add(lblTitle);
+            topRow.Controls.Add(btnRefresh);
+            topRow.Controls.Add(btnClearHist);
+
+            dgvHistory = new DataGridView();
+            dgvHistory.Dock = DockStyle.Fill;
+            dgvHistory.BackgroundColor = Color.White;
+            dgvHistory.BorderStyle = BorderStyle.None;
+            dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvHistory.ReadOnly = true;
+            dgvHistory.AllowUserToAddRows = false;
+            dgvHistory.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+
+            viewHistory.Controls.Add(dgvHistory);
+            viewHistory.Controls.Add(topRow);
+
+            RefreshHistoryView();
+        }
+
+        private void RefreshHistoryView()
+        {
+            if (dgvHistory == null) return;
+            dgvHistory.DataSource = null;
+            dgvHistory.DataSource = new List<SessionItem>(db.Sessions);
+        }
+
+        // ======================================================================
+        // VIEW: GUARDIANS ROSTER & SECURITY SUPERVISORS
+        // ======================================================================
+        private void InitializeGuardiansView()
+        {
+            viewGuardians = new Panel();
+            viewGuardians.Padding = new Padding(16);
 
             Panel topRow = new Panel();
             topRow.Dock = DockStyle.Top;
             topRow.Height = 50;
 
-            Button btnRefresh = new Button();
-            btnRefresh.Text = "Refresh History";
-            btnRefresh.Location = new Point(16, 10);
-            btnRefresh.Size = new Size(130, 30);
-            btnRefresh.Click += (s, e) => {
-                MessageBox.Show("Session history synchronized with local audit database.", "Audit Synchronized");
+            Label lblTitle = new Label();
+            lblTitle.Text = "Security Guardians & Authorized Operators";
+            lblTitle.Font = new Font("Segoe UI", 12f, FontStyle.Bold);
+            lblTitle.Location = new Point(14, 12);
+            lblTitle.AutoSize = true;
+
+            Button btnAddGrd = new Button();
+            btnAddGrd.Text = "+ Add Security Guardian";
+            btnAddGrd.Location = new Point(460, 10);
+            btnAddGrd.Size = new Size(170, 30);
+            btnAddGrd.Click += (s, e) => {
+                string name = PromptInputDialog("Add Guardian", "Enter Guardian Name:", "Security Officer");
+                string role = PromptInputDialog("Guardian Role", "Enter Guardian Role:", "Field Support Engineer");
+                string contact = PromptInputDialog("Contact Email/Phone", "Enter Contact Info:", "operator@enterprise.local");
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(role)) {
+                    db.Guardians.Add(new GuardianItem {
+                        id = "grd-" + (db.Guardians.Count + 1),
+                        name = name,
+                        role = role,
+                        contact = contact,
+                        status = "Active"
+                    });
+                    db.Save();
+                    RefreshGuardiansView();
+                    ShowToast("Guardian " + name + " added to security roster.");
+                }
             };
 
-            topRow.Controls.Add(btnRefresh);
-            topRow.Controls.Add(lblTitle);
+            Button btnToggleStatus = new Button();
+            btnToggleStatus.Text = "Toggle Status (Active/Standby)";
+            btnToggleStatus.Location = new Point(640, 10);
+            btnToggleStatus.Size = new Size(190, 30);
+            btnToggleStatus.Click += (s, e) => {
+                if (dgvGuardians.CurrentRow != null) {
+                    GuardianItem g = dgvGuardians.CurrentRow.DataBoundItem as GuardianItem;
+                    if (g != null) {
+                        g.status = g.status == "Active" ? "Standby" : "Active";
+                        db.Save();
+                        RefreshGuardiansView();
+                        ShowToast("Guardian status updated: " + g.name + " -> " + g.status);
+                    }
+                }
+            };
 
-            viewHistory.Controls.Add(dgv);
-            viewHistory.Controls.Add(topRow);
+            topRow.Controls.Add(lblTitle);
+            topRow.Controls.Add(btnAddGrd);
+            topRow.Controls.Add(btnToggleStatus);
+
+            dgvGuardians = new DataGridView();
+            dgvGuardians.Dock = DockStyle.Fill;
+            dgvGuardians.BackgroundColor = Color.White;
+            dgvGuardians.BorderStyle = BorderStyle.None;
+            dgvGuardians.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvGuardians.ReadOnly = true;
+            dgvGuardians.AllowUserToAddRows = false;
+            dgvGuardians.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+
+            viewGuardians.Controls.Add(dgvGuardians);
+            viewGuardians.Controls.Add(topRow);
+
+            RefreshGuardiansView();
+        }
+
+        private void RefreshGuardiansView()
+        {
+            if (dgvGuardians == null) return;
+            dgvGuardians.DataSource = null;
+            dgvGuardians.DataSource = new List<GuardianItem>(db.Guardians);
+        }
+
+        private void ShowToast(string message, Color? bg = null)
+        {
+            if (notificationToast == null)
+            {
+                notificationToast = new Panel();
+                notificationToast.Size = new Size(420, 46);
+                notificationToast.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+                notificationToast.BackColor = bg ?? Color.FromArgb(15, 23, 42);
+                notificationToast.BorderStyle = BorderStyle.FixedSingle;
+
+                lblToastMessage = new Label();
+                lblToastMessage.Dock = DockStyle.Fill;
+                lblToastMessage.ForeColor = Color.White;
+                lblToastMessage.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+                lblToastMessage.TextAlign = ContentAlignment.MiddleCenter;
+                notificationToast.Controls.Add(lblToastMessage);
+
+                toastTimer = new System.Windows.Forms.Timer();
+                toastTimer.Interval = 3200;
+                toastTimer.Tick += (s, e) => {
+                    toastTimer.Stop();
+                    notificationToast.Visible = false;
+                };
+
+                this.Controls.Add(notificationToast);
+                notificationToast.BringToFront();
+            }
+
+            notificationToast.BackColor = bg ?? Color.FromArgb(15, 23, 42);
+            lblToastMessage.Text = message;
+            notificationToast.Location = new Point(this.ClientSize.Width - notificationToast.Width - 24, this.ClientSize.Height - notificationToast.Height - 36);
+            notificationToast.Visible = true;
+            notificationToast.BringToFront();
+            toastTimer.Stop();
+            toastTimer.Start();
         }
 
         // ======================================================================

@@ -152,6 +152,28 @@ async function runTests() {
         const getLogs = await makeRequest('GET', '/api/logs');
         assert(getLogs.statusCode === 200 && Array.isArray(getLogs.body.data), 'GET /api/logs returns audit log array');
 
+        // Test Relational Groups & Devices
+        const getGroups = await makeRequest('GET', '/api/groups');
+        assert(getGroups.statusCode === 200 && Array.isArray(getGroups.body.data), 'GET /api/groups returns device groups with member counts');
+
+        const getDevices = await makeRequest('GET', '/api/devices');
+        assert(getDevices.statusCode === 200 && Array.isArray(getDevices.body.data), 'GET /api/devices returns device fleet with relational groupId');
+
+        // Test Guardians Roster
+        const getGuardians = await makeRequest('GET', '/api/guardians');
+        assert(getGuardians.statusCode === 200 && Array.isArray(getGuardians.body.data), 'GET /api/guardians returns security personnel roster');
+
+        // Test Safe Zones
+        const getSafeZones = await makeRequest('GET', '/api/safe-zones');
+        assert(getSafeZones.statusCode === 200 && Array.isArray(getSafeZones.body.data), 'GET /api/safe-zones returns CIDR IP perimeter list');
+
+        // Test Contacts & Notifications
+        const getContacts = await makeRequest('GET', '/api/contacts');
+        assert(getContacts.statusCode === 200 && Array.isArray(getContacts.body.data), 'GET /api/contacts returns partner address book');
+
+        const getNotifs = await makeRequest('GET', '/api/notifications');
+        assert(getNotifs.statusCode === 200 && Array.isArray(getNotifs.body.data), 'GET /api/notifications returns notification center events');
+
     } catch (err) {
         assert(false, `API integration error: ${err.message}`);
     } finally {
