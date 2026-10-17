@@ -23,6 +23,20 @@ Whether you need 1-click remote assistance for non-technical users or a central 
 
 ---
 
+## 📥 Direct Download Paths
+
+Get the latest updated client and tools directly:
+
+| Artifact | Type | Size | Direct Download Link | Description |
+|---|---|---|---|---|
+| **jDroid-X-Desk.exe** | **Standalone Windows Native Executable** | **93 KB** | [📥 **Download jDroid-X-Desk.exe**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-X-Desk.exe) | **Single-file portable client**. Zero installer, zero dependencies. Runs on Windows 10, 11 & Server with dynamic hardware key. |
+| **jDroid-Share.bat** | **Portable Client Share Script** | **3.3 KB** | [📥 **Download jDroid-Share.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-Share.bat) | Lightweight 1-click batch launcher to start instant screen sharing for remote users. |
+| **jDroid-Client.bat** | **Technician Client Script** | **6.1 KB** | [📥 **Download jDroid-Client.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-Client.bat) | Portable admin remote access client launcher. |
+| **Local Web Gateway** | **HTTP Server Endpoint** | — | `http://localhost:7070/download` | Direct browser download endpoint served by the local gateway. |
+| **Official Repository** | **GitHub Repository** | — | [github.com/jDroid-X/jDroid-X-Desk](https://github.com/jDroid-X/jDroid-X-Desk) | Full source code, test suites, and documentation. |
+
+---
+
 ## 📸 Visual Showcase & Presentation
 
 ### 1. Main Remote Desktop Workspace & Google Remote Desktop 3-Card Experience
