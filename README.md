@@ -37,69 +37,6 @@ Get the latest updated client and tools directly:
 
 ---
 
-## 📸 Visual Showcase & Presentation
-
-### 1. Main Remote Desktop Workspace & Google Remote Desktop 3-Card Experience
-The primary interface provides a clean, Google Remote Desktop-inspired workflow:
-- **Share this screen (Get Support)**: Instant unique 9-digit Desk ID with 1-click clipboard copy and invite generation.
-- **Connect to another computer (Give Support)**: Clean, non-overlapping target ID input for direct P2P sessions.
-- **Recent Connections**: Saved partner workstations with 1-click instant reconnect.
-
-<div align="center">
-  <img src="screenshot/Screenshot 2026-10-16 191644.png" alt="Main Remote Desktop Workspace" width="900" />
-</div>
-
----
-
-### 2. Live High-Fidelity Remote Desktop Viewport & SAS Diagnostics
-Ultra-low latency screen mirroring (60 FPS, direct UDP peer-to-peer or encrypted cloud relay) with real-time HUD telemetry, SAS (Ctrl+Alt+Del) injection, and smart display fitting.
-
-<div align="center">
-  <img src="screenshot/Screenshot 2026-10-16 191912.png" alt="Remote Desktop Viewport" width="440" />
-  <img src="screenshot/Screenshot 2026-10-16 192022.png" alt="Remote Desktop Session In Progress" width="440" />
-</div>
-
----
-
-### 3. Enterprise Connection Relays & Multi-Cloud Infrastructure
-Configure custom relay domains (`https://www.jdroid-x.com`), direct RustDesk `hbbs`/`hbbr` ID servers, Google Colab cloud brokers, or public secure tunnels.
-
-<div align="center">
-  <img src="screenshot/connection.png" alt="Connection & Relays Configuration" width="900" />
-</div>
-
----
-
-### 4. Comprehensive Settings & Security Studio
-Fine-grained permission controls, unattended 24/7 access toggles, optional passcode verification, and session timeouts.
-
-<div align="center">
-  <img src="screenshot/access1.png" alt="Access Control & Security Settings" width="440" />
-  <img src="screenshot/permission1.png" alt="Access Permissions & Guardian Whitelist" width="440" />
-</div>
-
----
-
-### 5. Display Scaling, Wake-On-LAN & Session Recording
-Hardware acceleration, multi-monitor topology, Wake-On-LAN (WOL) magic packet broadcasting, and auditable session screen recording.
-
-<div align="center">
-  <img src="screenshot/display2.png" alt="Display & Scaling Preferences" width="290" />
-  <img src="screenshot/wake-on-lan.png" alt="Wake On LAN Configuration" width="290" />
-  <img src="screenshot/screen recording.png" alt="Session Screen Recording" width="290" />
-</div>
-
----
-
-### 6. Architecture & System Diagnostics
-Pure standalone native compilation details, zero-overhead memory footprint (<65 MB RAM), and auditable cryptographic verification.
-
-<div align="center">
-  <img src="screenshot/About.png" alt="About jDroid-X-Desk & Architecture" width="900" />
-</div>
-
----
-
 ## 🚀 Key Features
 
 ### 🔑 1. Dynamic SHA-256 System Hardware Key
@@ -157,11 +94,6 @@ jDroid-X-Desk/
 ├── test.js                     # Automated Stage 5 verification test suite (55 tests)
 ├── assets/
 │   └── jdroidxlogo_trans.png   # Transparent jDroid-X branding logo
-├── screenshot/                 # Complete gallery of 21 verified screenshots
-│   ├── Screenshot 2026-10-16 191644.png
-│   ├── connection.png
-│   ├── access1.png
-│   └── ...
 └── docs/                       # Specifications, reverse engineering docs & analysis
     └── REA_CHROME_REMOTE_DESKTOP_ANALYSIS.md
 ```
