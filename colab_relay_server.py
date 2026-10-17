@@ -176,10 +176,18 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
         if self.path.startswith('/api/relay/pull/') or self.path.startswith('/api/relay/pull_frame/'):
             target_id = self.path.split('/')[-1]
             entry = FRAME_BUFFERS.get(target_id, None)
+            if not entry:
+                import re
+                clean_target = re.sub(r'[^\d]', '', target_id)
+                if len(clean_target) >= 6:
+                    for k, v in list(FRAME_BUFFERS.items()):
+                        if re.sub(r'[^\d]', '', k) == clean_target:
+                            entry = v
+                            break
             frame_data = None
             if entry:
                 if isinstance(entry, dict):
-                    if time.time() - entry.get('ts', 0) <= 15:
+                    if time.time() - entry.get('ts', 0) <= 25:
                         frame_data = entry.get('frame')
                     else:
                         FRAME_BUFFERS.pop(target_id, None)
@@ -199,7 +207,17 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
         # Poll queued input events for a host machine
         if self.path.startswith('/api/relay/pull_input/'):
             target_id = self.path.split('/')[-1]
-            inputs = INPUT_BUFFERS.pop(target_id, [])
+            inputs = INPUT_BUFFERS.pop(target_id, None)
+            if inputs is None:
+                import re
+                clean_target = re.sub(r'[^\d]', '', target_id)
+                if len(clean_target) >= 6:
+                    for k in list(INPUT_BUFFERS.keys()):
+                        if re.sub(r'[^\d]', '', k) == clean_target:
+                            inputs = INPUT_BUFFERS.pop(k, [])
+                            break
+            if inputs is None:
+                inputs = []
             self.send_response(200)
             self._set_cors()
             self.send_header('Content-Type', 'application/json')

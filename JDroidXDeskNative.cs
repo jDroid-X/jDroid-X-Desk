@@ -3012,6 +3012,15 @@ namespace JDroidXDesk.Native
                         return;
                     }
 
+                    // Auto-normalize Desk ID (e.g. "729 928 576" or "729928576" -> "729-928-576")
+                    string digitsOnly = System.Text.RegularExpressions.Regex.Replace(targetId, @"[^\d]", "");
+                    if (digitsOnly.Length == 9)
+                    {
+                        targetId = string.Format("{0}-{1}-{2}", digitsOnly.Substring(0, 3), digitsOnly.Substring(3, 3), digitsOnly.Substring(6, 3));
+                        txtTargetId.Text = targetId;
+                        if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
+                    }
+
                     SimulatorDesktop matched = dynamicDesktops.Find(d => d.RemoteId == targetId || d.Name.ToUpper() == targetId.ToUpper());
                     if (matched != null) connectedTargetDesktop = matched;
                     else
