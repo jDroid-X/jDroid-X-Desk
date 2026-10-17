@@ -94,7 +94,9 @@ jDroid-X-Desk/
 ├── jDroid-X-Desk-Universal.zip # Complete standalone portable distribution package
 ├── JDroidXDeskNative.cs        # Senior Dynamic OOPS MVC C# source code (Safe cooperative threads & authenticated streaming)
 ├── app.manifest                # Windows Universal Application Manifest (AnyCPU, DPI Aware, Win 7/8/10/11)
-├── Install-Or-Run.bat          # 1-Click safe runner (unblocks Windows SmartScreen Mark-of-the-Web)
+├── jDroid-X-Enterprise.cer     # Authenticode Root Certificate for zero-warning Windows installation
+├── Install-Or-Run.bat          # 1-Click safe runner (unblocks Windows SmartScreen Mark-of-the-Web & installs cert)
+├── install_windows_app.bat     # Automated Windows installer & Defender whitelisting script
 ├── Launch-Desk.bat             # 1-Click launcher for full-stack Node.js server & browser UI
 ├── Launch-Native.bat           # 1-Click launcher for native Windows executable
 ├── jDroid-X-Client.bat         # Canonical technician remote desktop client (UAC elevated)

