@@ -708,7 +708,6 @@ namespace JDroidXDesk.Native
             BuildAntigravityLayout();
             SetupTraySupervisor();
             RegisterWithColabRelay();
-            StartScreenStreamer();
             StartColabTelemetryMonitor();
             SyncFromGitHubBackend();
 
@@ -2151,6 +2150,7 @@ namespace JDroidXDesk.Native
 
                 // Start pulling live remote screen frames via Colab Relay
                 StartFrameReceiver(connectedTargetDesktop.RemoteId);
+                StartScreenStreamer();
 
                 db.AddLog("SESSION_START", "P2P_CONNECT", "Connected to " + connectedTargetDesktop.Name);
                 ShowToast("P2P Session Established with " + connectedTargetDesktop.Name);
@@ -2161,6 +2161,7 @@ namespace JDroidXDesk.Native
                 isSessionActive = false;
                 sessionTelemetryTimer.Stop();
                 StopFrameReceiver();
+                StopScreenStreamer();
                 lock (frameLock)
                 {
                     if (latestRemoteFrame != null)
@@ -2860,7 +2861,7 @@ namespace JDroidXDesk.Native
             isScreenStreamingActive = false;
             if (screenStreamerThread != null && screenStreamerThread.IsAlive)
             {
-                try { screenStreamerThread.Abort(); } catch { }
+                try { screenStreamerThread.Join(300); } catch { }
             }
             screenStreamerThread = null;
         }
@@ -2964,7 +2965,7 @@ namespace JDroidXDesk.Native
             isFrameReceiverActive = false;
             if (frameReceiverThread != null && frameReceiverThread.IsAlive)
             {
-                try { frameReceiverThread.Abort(); } catch { }
+                try { frameReceiverThread.Join(300); } catch { }
             }
             frameReceiverThread = null;
         }
