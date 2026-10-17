@@ -665,6 +665,669 @@ namespace JDroidXDesk.Native
         }
     }
 
+    public class ModernTextBox : UserControl
+    {
+        private TextBox innerBox;
+        private Label lblClear;
+        private Label lblPlaceholder;
+        public Color BorderColor { get; set; }
+        public Color FocusBorderColor { get; set; }
+        public bool AutoFormatDeskId { get; set; }
+
+        public event EventHandler TextChangedCustom;
+
+        public override string Text
+        {
+            get { return innerBox != null ? innerBox.Text : ""; }
+            set { if (innerBox != null) innerBox.Text = value; }
+        }
+
+        public string PlaceholderText
+        {
+            get { return lblPlaceholder != null ? lblPlaceholder.Text : ""; }
+            set { if (lblPlaceholder != null) { lblPlaceholder.Text = value; UpdatePlaceholder(); } }
+        }
+
+        public Font InputFont
+        {
+            get { return innerBox != null ? innerBox.Font : this.Font; }
+            set { if (innerBox != null) innerBox.Font = value; }
+        }
+
+        public ModernTextBox()
+        {
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            this.Size = new Size(260, 42);
+            this.BackColor = Color.FromArgb(10, 16, 26);
+            this.BorderColor = Color.FromArgb(40, 53, 76);
+            this.FocusBorderColor = Color.FromArgb(56, 189, 248);
+            this.AutoFormatDeskId = true;
+
+            innerBox = new TextBox
+            {
+                BorderStyle = BorderStyle.None,
+                BackColor = Color.FromArgb(10, 16, 26),
+                ForeColor = Color.White,
+                Font = new Font("Consolas", 14f, FontStyle.Bold),
+                Location = new Point(12, 10),
+                Width = this.Width - 44
+            };
+
+            lblPlaceholder = new Label
+            {
+                Text = "XXX-XXX-XXX",
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Font = new Font("Consolas", 13f),
+                BackColor = Color.Transparent,
+                Location = new Point(12, 10),
+                AutoSize = true,
+                Cursor = Cursors.IBeam
+            };
+            lblPlaceholder.Click += (s, e) => innerBox.Focus();
+
+            lblClear = new Label
+            {
+                Text = "✕",
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(148, 163, 184),
+                BackColor = Color.Transparent,
+                Size = new Size(20, 20),
+                Location = new Point(this.Width - 28, 11),
+                Cursor = Cursors.Hand,
+                Visible = false
+            };
+            lblClear.MouseEnter += (s, e) => lblClear.ForeColor = Color.FromArgb(239, 68, 68);
+            lblClear.MouseLeave += (s, e) => lblClear.ForeColor = Color.FromArgb(148, 163, 184);
+            lblClear.Click += (s, e) => { innerBox.Text = ""; innerBox.Focus(); };
+
+            innerBox.GotFocus += (s, e) => { this.Invalidate(); UpdatePlaceholder(); };
+            innerBox.LostFocus += (s, e) => { this.Invalidate(); UpdatePlaceholder(); };
+
+            bool isFormatting = false;
+            innerBox.TextChanged += (s, e) => {
+                UpdatePlaceholder();
+                lblClear.Visible = !string.IsNullOrEmpty(innerBox.Text);
+                if (AutoFormatDeskId && !isFormatting)
+                {
+                    isFormatting = true;
+                    string digits = Regex.Replace(innerBox.Text, @"[^\d]", "");
+                    if (digits.Length > 9) digits = digits.Substring(0, 9);
+                    string formatted = digits;
+                    if (digits.Length > 6)
+                        formatted = string.Format("{0}-{1}-{2}", digits.Substring(0, 3), digits.Substring(3, 3), digits.Substring(6));
+                    else if (digits.Length > 3)
+                        formatted = string.Format("{0}-{1}", digits.Substring(0, 3), digits.Substring(3));
+                    if (formatted != innerBox.Text)
+                    {
+                        innerBox.Text = formatted;
+                        innerBox.SelectionStart = innerBox.Text.Length;
+                    }
+                    isFormatting = false;
+                }
+                this.Invalidate();
+                if (TextChangedCustom != null) TextChangedCustom(this, EventArgs.Empty);
+            };
+
+            this.Controls.Add(lblClear);
+            this.Controls.Add(lblPlaceholder);
+            this.Controls.Add(innerBox);
+
+            this.Resize += (s, e) => {
+                innerBox.Width = this.Width - 44;
+                lblClear.Location = new Point(this.Width - 28, 11);
+            };
+        }
+
+        private void UpdatePlaceholder()
+        {
+            if (lblPlaceholder != null)
+                lblPlaceholder.Visible = string.IsNullOrEmpty(innerBox.Text) && !innerBox.Focused;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            Color curBorder = innerBox.Focused ? FocusBorderColor : BorderColor;
+            string digits = Regex.Replace(innerBox.Text, @"[^\d]", "");
+            if (digits.Length == 9) curBorder = Color.FromArgb(16, 185, 129);
+            using (Pen pen = new Pen(curBorder, 1.5f))
+            {
+                g.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
+            }
+        }
+    }
+
+    public class ModernSwitch : Control
+    {
+        private bool isChecked = false;
+        public bool Checked
+        {
+            get { return isChecked; }
+            set { if (isChecked != value) { isChecked = value; this.Invalidate(); if (CheckedChanged != null) CheckedChanged(this, EventArgs.Empty); } }
+        }
+
+        public string LabelText { get; set; }
+        public Color OnColor { get; set; }
+        public Color OffColor { get; set; }
+
+        public event EventHandler CheckedChanged;
+
+        public ModernSwitch()
+        {
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            this.Size = new Size(240, 28);
+            this.Cursor = Cursors.Hand;
+            this.OnColor = Color.FromArgb(16, 185, 129);
+            this.OffColor = Color.FromArgb(51, 65, 85);
+            this.LabelText = "Switch Option";
+            this.Font = new Font("Segoe UI", 8.8f);
+            this.ForeColor = Color.FromArgb(203, 213, 225);
+        }
+
+        protected override void OnClick(EventArgs e)
+        {
+            base.OnClick(e);
+            this.Checked = !this.Checked;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            int pillW = 44;
+            int pillH = 22;
+            int pillY = (this.Height - pillH) / 2;
+
+            Color trackColor = isChecked ? OnColor : OffColor;
+            using (SolidBrush trackBrush = new SolidBrush(trackColor))
+            {
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    path.AddArc(0, pillY, pillH, pillH, 90, 180);
+                    path.AddArc(pillW - pillH, pillY, pillH, pillH, 270, 180);
+                    path.CloseFigure();
+                    g.FillPath(trackBrush, path);
+                }
+            }
+
+            int knobDiameter = pillH - 4;
+            int knobX = isChecked ? (pillW - knobDiameter - 2) : 2;
+            int knobY = pillY + 2;
+
+            using (SolidBrush knobBrush = new SolidBrush(Color.White))
+            {
+                g.FillEllipse(knobBrush, knobX, knobY, knobDiameter, knobDiameter);
+            }
+
+            if (!string.IsNullOrEmpty(LabelText))
+            {
+                using (SolidBrush textBrush = new SolidBrush(this.ForeColor))
+                {
+                    g.DrawString(LabelText, this.Font, textBrush, pillW + 10, (this.Height - this.Font.Height) / 2);
+                }
+            }
+        }
+    }
+
+    public class ModernSegmentedToggle : Control
+    {
+        private string[] options = new string[] { "Option A", "Option B" };
+        private int selectedIndex = 0;
+
+        public string[] Options
+        {
+            get { return options; }
+            set { options = value ?? new string[0]; this.Invalidate(); }
+        }
+
+        public int SelectedIndex
+        {
+            get { return selectedIndex; }
+            set
+            {
+                if (selectedIndex != value && value >= 0 && value < options.Length)
+                {
+                    selectedIndex = value;
+                    this.Invalidate();
+                    if (SelectedIndexChanged != null) SelectedIndexChanged(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public event EventHandler SelectedIndexChanged;
+
+        public ModernSegmentedToggle()
+        {
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            this.Size = new Size(240, 32);
+            this.Cursor = Cursors.Hand;
+            this.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (options.Length == 0) return;
+            int segmentW = this.Width / options.Length;
+            int clicked = e.X / segmentW;
+            if (clicked >= 0 && clicked < options.Length)
+            {
+                this.SelectedIndex = clicked;
+            }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            using (SolidBrush bg = new SolidBrush(Color.FromArgb(10, 16, 26)))
+            using (Pen borderPen = new Pen(Color.FromArgb(40, 53, 76), 1))
+            {
+                g.FillRectangle(bg, 0, 0, this.Width - 1, this.Height - 1);
+                g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+            }
+
+            if (options.Length == 0) return;
+            int segmentW = this.Width / options.Length;
+
+            int activeX = selectedIndex * segmentW;
+            Rectangle activeRect = new Rectangle(activeX + 2, 2, segmentW - 4, this.Height - 4);
+            using (SolidBrush activeBrush = new SolidBrush(Color.FromArgb(2, 132, 199)))
+            {
+                g.FillRectangle(activeBrush, activeRect);
+            }
+
+            for (int i = 0; i < options.Length; i++)
+            {
+                Color textCol = (i == selectedIndex) ? Color.White : Color.FromArgb(148, 163, 184);
+                using (SolidBrush textBrush = new SolidBrush(textCol))
+                {
+                    SizeF sz = g.MeasureString(options[i], this.Font);
+                    float tx = (i * segmentW) + (segmentW - sz.Width) / 2f;
+                    float ty = (this.Height - sz.Height) / 2f;
+                    g.DrawString(options[i], this.Font, textBrush, tx, ty);
+                }
+            }
+        }
+    }
+
+    public class ModernCardFlipper : Panel
+    {
+        private Panel frontPanel;
+        private Panel backPanel;
+        private ModernButton btnFlip;
+        private bool isFlipped = false;
+
+        public Panel FrontView { get { return frontPanel; } }
+        public Panel BackView { get { return backPanel; } }
+        public bool IsFlipped { get { return isFlipped; } }
+
+        public event EventHandler Flipped;
+
+        public ModernCardFlipper()
+        {
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            this.Size = new Size(820, 165);
+            this.BackColor = Color.FromArgb(20, 28, 45);
+
+            frontPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            backPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Visible = false };
+
+            btnFlip = new ModernButton
+            {
+                Text = "⮌ Telemetry / Keys",
+                Size = new Size(140, 26),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                NormalColor = Color.FromArgb(30, 41, 59),
+                HoverColor = Color.FromArgb(51, 65, 85),
+                TextColor = Color.FromArgb(56, 189, 248),
+                Font = new Font("Segoe UI", 8f, FontStyle.Bold)
+            };
+            btnFlip.Location = new Point(this.Width - 156, 12);
+            btnFlip.Click += (s, e) => Flip();
+
+            this.Controls.Add(btnFlip);
+            this.Controls.Add(frontPanel);
+            this.Controls.Add(backPanel);
+            btnFlip.BringToFront();
+
+            this.Paint += (s, e) => {
+                Color borderC = isFlipped ? Color.FromArgb(56, 189, 248) : Color.FromArgb(40, 53, 76);
+                using (Pen p = new Pen(borderC, 1.2f))
+                {
+                    e.Graphics.DrawRectangle(p, 0, 0, this.Width - 1, this.Height - 1);
+                }
+            };
+
+            this.Resize += (s, e) => {
+                btnFlip.Location = new Point(this.Width - 156, 12);
+            };
+        }
+
+        public void Flip()
+        {
+            isFlipped = !isFlipped;
+            frontPanel.Visible = !isFlipped;
+            backPanel.Visible = isFlipped;
+            btnFlip.Text = isFlipped ? "⮌ Return to Connect" : "⮌ Telemetry / Keys";
+            this.Invalidate();
+            if (Flipped != null) Flipped(this, EventArgs.Empty);
+        }
+    }
+
+    public class ModernListBoxItem
+    {
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public string Subtitle { get; set; }
+        public string Status { get; set; }
+        public Color StatusColor { get; set; }
+        public object Tag { get; set; }
+    }
+
+    public class ModernListBox : UserControl
+    {
+        private ListBox innerList;
+        private List<ModernListBoxItem> items = new List<ModernListBoxItem>();
+
+        public List<ModernListBoxItem> CustomItems { get { return items; } }
+        public ModernListBoxItem SelectedItem { get { return innerList.SelectedIndex >= 0 && innerList.SelectedIndex < items.Count ? items[innerList.SelectedIndex] : null; } }
+
+        public event EventHandler SelectedIndexChanged;
+
+        public ModernListBox()
+        {
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            this.BackColor = Color.FromArgb(10, 16, 26);
+
+            innerList = new ListBox
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(10, 16, 26),
+                ForeColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                DrawMode = DrawMode.OwnerDrawVariable,
+                ItemHeight = 44
+            };
+
+            innerList.MeasureItem += (s, e) => e.ItemHeight = 44;
+            innerList.DrawItem += InnerList_DrawItem;
+            innerList.SelectedIndexChanged += (s, e) => {
+                if (SelectedIndexChanged != null) SelectedIndexChanged(this, EventArgs.Empty);
+            };
+
+            this.Controls.Add(innerList);
+        }
+
+        public void RefreshList()
+        {
+            innerList.Items.Clear();
+            foreach (var it in items) innerList.Items.Add(it);
+        }
+
+        private void InnerList_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0 || e.Index >= items.Count) return;
+            ModernListBoxItem it = items[e.Index];
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+            Color bg = isSelected ? Color.FromArgb(30, 41, 59) : (e.Index % 2 == 0 ? Color.FromArgb(10, 16, 26) : Color.FromArgb(15, 23, 42));
+
+            using (SolidBrush b = new SolidBrush(bg))
+            {
+                g.FillRectangle(b, e.Bounds);
+            }
+
+            g.DrawString("🖥️", new Font("Segoe UI Emoji", 11f), Brushes.White, e.Bounds.X + 8, e.Bounds.Y + 12);
+
+            using (SolidBrush tb = new SolidBrush(isSelected ? Color.FromArgb(56, 189, 248) : Color.White))
+            {
+                g.DrawString(it.Title ?? "", new Font("Segoe UI", 9f, FontStyle.Bold), tb, e.Bounds.X + 36, e.Bounds.Y + 6);
+            }
+
+            using (SolidBrush sb = new SolidBrush(Color.FromArgb(148, 163, 184)))
+            {
+                g.DrawString(it.Subtitle ?? "", new Font("Segoe UI", 7.8f), sb, e.Bounds.X + 36, e.Bounds.Y + 24);
+            }
+
+            if (!string.IsNullOrEmpty(it.Status))
+            {
+                Color pillC = it.StatusColor != Color.Empty ? it.StatusColor : (it.Status == "Online" ? Color.FromArgb(16, 185, 129) : Color.FromArgb(100, 116, 139));
+                int pillW = 60;
+                int pillH = 18;
+                int pillX = e.Bounds.Right - pillW - 10;
+                int pillY = e.Bounds.Y + 13;
+
+                using (SolidBrush pb = new SolidBrush(Color.FromArgb(40, pillC.R, pillC.G, pillC.B)))
+                using (Pen pp = new Pen(pillC, 1f))
+                {
+                    g.FillRectangle(pb, pillX, pillY, pillW, pillH);
+                    g.DrawRectangle(pp, pillX, pillY, pillW, pillH);
+                }
+                using (SolidBrush pt = new SolidBrush(pillC))
+                {
+                    SizeF sz = g.MeasureString(it.Status, new Font("Segoe UI", 7.2f, FontStyle.Bold));
+                    g.DrawString(it.Status, new Font("Segoe UI", 7.2f, FontStyle.Bold), pt, pillX + (pillW - sz.Width) / 2f, pillY + (pillH - sz.Height) / 2f);
+                }
+            }
+        }
+    }
+
+    public class ModernMultiOptionDialog : Form
+    {
+        public int SelectedOptionIndex { get; private set; }
+        public string SelectedOptionText { get; private set; }
+
+        public ModernMultiOptionDialog(string title, string message, string[] options)
+        {
+            this.SelectedOptionIndex = -1;
+            this.SelectedOptionText = "";
+
+            this.Text = title;
+            this.Size = new Size(540, 240);
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.BackColor = Color.FromArgb(15, 23, 42);
+            this.ForeColor = Color.White;
+            this.Font = new Font("Segoe UI", 9f);
+            this.ShowInTaskbar = false;
+
+            Panel pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(24) };
+
+            Label lblHead = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI", 12f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(56, 189, 248),
+                Location = new Point(24, 18),
+                AutoSize = true
+            };
+
+            Label lblMsg = new Label
+            {
+                Text = message,
+                Font = new Font("Segoe UI", 9.2f),
+                ForeColor = Color.FromArgb(203, 213, 225),
+                Location = new Point(24, 52),
+                Size = new Size(476, 75)
+            };
+
+            FlowLayoutPanel btnFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 60,
+                FlowDirection = FlowDirection.RightToLeft,
+                Padding = new Padding(0, 10, 16, 10)
+            };
+
+            for (int i = 0; i < options.Length; i++)
+            {
+                int idx = i;
+                string opt = options[i];
+                ModernButton btn = new ModernButton
+                {
+                    Text = opt,
+                    Size = new Size(Math.Max(120, opt.Length * 9 + 24), 36),
+                    Margin = new Padding(8, 0, 0, 0),
+                    NormalColor = (idx == 0) ? Color.FromArgb(16, 185, 129) : Color.FromArgb(30, 41, 59),
+                    HoverColor = (idx == 0) ? Color.FromArgb(5, 150, 105) : Color.FromArgb(51, 65, 85),
+                    TextColor = Color.White
+                };
+                btn.Click += (s, e) => {
+                    SelectedOptionIndex = idx;
+                    SelectedOptionText = opt;
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                };
+                btnFlow.Controls.Add(btn);
+            }
+
+            pnl.Controls.Add(lblHead);
+            pnl.Controls.Add(lblMsg);
+            this.Controls.Add(pnl);
+            this.Controls.Add(btnFlow);
+        }
+
+        public static int Show(IWin32Window owner, string title, string message, string[] options)
+        {
+            using (ModernMultiOptionDialog dlg = new ModernMultiOptionDialog(title, message, options))
+            {
+                dlg.ShowDialog(owner);
+                return dlg.SelectedOptionIndex;
+            }
+        }
+    }
+
+    public class ModernNotificationToast : Form
+    {
+        private static ModernNotificationToast currentToast = null;
+        private System.Windows.Forms.Timer animTimer;
+        private System.Windows.Forms.Timer closeTimer;
+        private int targetY;
+        private int currentY;
+        private bool isSlidingOut = false;
+        private string toastTitle;
+        private string toastMessage;
+        private Color accentColor;
+
+        protected override bool ShowWithoutActivation { get { return true; } }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x08000000; // WS_EX_NOACTIVATE
+                cp.ExStyle |= 0x00000080; // WS_EX_TOOLWINDOW
+                cp.ExStyle |= 0x00000008; // WS_EX_TOPMOST
+                return cp;
+            }
+        }
+
+        public ModernNotificationToast(string title, string message, string type = "info")
+        {
+            this.toastTitle = title;
+            this.toastMessage = message;
+            this.accentColor = (type == "success") ? Color.FromArgb(16, 185, 129) :
+                               (type == "error") ? Color.FromArgb(239, 68, 68) :
+                               (type == "warning") ? Color.FromArgb(245, 158, 11) : Color.FromArgb(56, 189, 248);
+
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.ShowInTaskbar = false;
+            this.StartPosition = FormStartPosition.Manual;
+            this.Size = new Size(360, 68);
+            this.BackColor = Color.FromArgb(15, 23, 42);
+
+            Rectangle workArea = Screen.PrimaryScreen.WorkingArea;
+            int x = workArea.Right - this.Width - 16;
+            targetY = workArea.Bottom - this.Height - 16;
+            currentY = workArea.Bottom + 10;
+            this.Location = new Point(x, currentY);
+
+            this.Paint += (s, e) => {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (SolidBrush bg = new SolidBrush(Color.FromArgb(15, 23, 42)))
+                using (Pen borderPen = new Pen(Color.FromArgb(40, 53, 76), 1))
+                {
+                    g.FillRectangle(bg, 0, 0, this.Width - 1, this.Height - 1);
+                    g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                }
+
+                using (SolidBrush ab = new SolidBrush(accentColor))
+                {
+                    g.FillRectangle(ab, 0, 0, 4, this.Height);
+                }
+
+                using (SolidBrush tb = new SolidBrush(Color.White))
+                {
+                    g.DrawString(toastTitle, new Font("Segoe UI", 9.5f, FontStyle.Bold), tb, 14, 10);
+                }
+
+                using (SolidBrush mb = new SolidBrush(Color.FromArgb(148, 163, 184)))
+                {
+                    g.DrawString(toastMessage, new Font("Segoe UI", 8.2f), mb, 14, 34);
+                }
+            };
+
+            animTimer = new System.Windows.Forms.Timer { Interval = 15 };
+            animTimer.Tick += (s, e) => {
+                if (!isSlidingOut)
+                {
+                    currentY -= Math.Max(4, (currentY - targetY) / 4);
+                    if (currentY <= targetY)
+                    {
+                        currentY = targetY;
+                        animTimer.Stop();
+                        closeTimer.Start();
+                    }
+                }
+                else
+                {
+                    currentY += Math.Max(4, (workArea.Bottom + 10 - currentY) / 4);
+                    if (currentY >= workArea.Bottom)
+                    {
+                        animTimer.Stop();
+                        this.Close();
+                    }
+                }
+                this.Location = new Point(x, currentY);
+            };
+
+            closeTimer = new System.Windows.Forms.Timer { Interval = 3500 };
+            closeTimer.Tick += (s, e) => {
+                closeTimer.Stop();
+                isSlidingOut = true;
+                animTimer.Start();
+            };
+        }
+
+        public static void ShowToast(string title, string message, string type = "info")
+        {
+            try
+            {
+                if (currentToast != null && !currentToast.IsDisposed)
+                {
+                    currentToast.Close();
+                    currentToast.Dispose();
+                }
+                currentToast = new ModernNotificationToast(title, message, type);
+                currentToast.Show();
+                currentToast.animTimer.Start();
+            }
+            catch { }
+        }
+    }
+
     // ==========================================================================
     // 3. MAIN FORM & ANTIGRAVITY WORKSPACE LAYOUT (OOPS CONTROLLER LAYER)
     // ==========================================================================
@@ -746,6 +1409,7 @@ namespace JDroidXDesk.Native
         private PictureBox viewportCanvas;
         private Panel panelWelcomeCards;
         private TextBox txtCardTargetId;
+        private ModernTextBox modernCardTargetBox;
         private ModernButton btnCardConnect;
         private Label lblCardLocalId;
         private Panel sessionFloatingToolbar;
@@ -840,12 +1504,9 @@ namespace JDroidXDesk.Native
         private TreeView settingsTree;
         private Panel settingsSubContentPanel;
 
-        // System Tray & Toast
+        // System Tray
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
-        private Panel notificationToast;
-        private Label lblToastMessage;
-        private System.Windows.Forms.Timer toastTimer;
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -2047,6 +2708,7 @@ namespace JDroidXDesk.Native
             addActivityIcon("Terminal", "💻", "Admin PowerShell");
             addActivityIcon("Fleet", "🗄️", "Address Book & Fleet");
             addActivityIcon("History", "📜", "Session History");
+            addActivityIcon("MindMap", "🕸️", "Graphify AST Mind Map & Architecture Hub");
             addActivityIcon("Settings", "⚙️", "Settings Studio");
 
             // Gear Settings at bottom
@@ -2087,6 +2749,20 @@ namespace JDroidXDesk.Native
 
         private void SelectActivityTab(string key, Button btn)
         {
+            if (key == "MindMap")
+            {
+                try
+                {
+                    Process.Start("http://localhost:8080/graphify");
+                    ShowToast("Launched Graphify AST Station on Port 8080");
+                }
+                catch (Exception ex)
+                {
+                    ShowToast("Could not open browser: " + ex.Message);
+                }
+                return;
+            }
+
             activeActivityButton = btn;
             HighlightActivityBtn(btn);
 
@@ -2785,28 +3461,30 @@ namespace JDroidXDesk.Native
             cardContainer.Controls.Add(cardShare);
             y += 168;
 
-            // CARD 2: CONNECT TO ANOTHER COMPUTER
-            Panel cardConnect = new Panel { Size = new Size(820, 150), Location = new Point(0, y), BackColor = Color.FromArgb(20, 28, 45) };
-            cardConnect.Paint += (s, e) => {
-                e.Graphics.DrawRectangle(new Pen(Color.FromArgb(40, 53, 76), 1), 0, 0, cardConnect.Width - 1, cardConnect.Height - 1);
+            // CARD 2: REVERSIBLE 3D FLIPPER (CONNECT TO ANOTHER COMPUTER + LIVE TELEMETRY)
+            ModernCardFlipper flipperConnect = new ModernCardFlipper { Size = new Size(820, 165), Location = new Point(0, y) };
+
+            // FRONT VIEW: Connection Actions
+            Label lConnTitle = new Label { Text = "📤  Step 3: Connect to another computer (Give Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 14), AutoSize = true };
+            Label lConnDesc = new Label { Text = "Enter the 9-digit Desk ID of the remote computer you want to access:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 42), AutoSize = true };
+
+            ModernSegmentedToggle segMode = new ModernSegmentedToggle { Options = new string[] { "⚡ Remote Desktop", "📁 File Transfer" }, Location = new Point(480, 12), Size = new Size(180, 26) };
+
+            modernCardTargetBox = new ModernTextBox { Location = new Point(20, 70), Size = new Size(240, 42), AutoFormatDeskId = true };
+            if (txtCardTargetId == null) txtCardTargetId = new TextBox();
+            modernCardTargetBox.TextChangedCustom += (s, e) => {
+                txtCardTargetId.Text = modernCardTargetBox.Text;
+                if (txtTargetId != null && txtTargetId.Text != modernCardTargetBox.Text)
+                    txtTargetId.Text = modernCardTargetBox.Text;
             };
 
-            Label lConnTitle = new Label { Text = "📤  Step 3: Connect to another computer (Give Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 16), AutoSize = true };
-            Label lConnDesc = new Label { Text = "Enter the 9-digit Desk ID of the remote computer you want to access:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 44), AutoSize = true };
-
-            txtCardTargetId = new TextBox { Size = new Size(240, 44), Location = new Point(20, 78), Font = new Font("Consolas", 15f), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Text = "" };
-            txtCardTargetId.TextChanged += (s, e) => {
-                if (txtTargetId != null && txtTargetId.Text != txtCardTargetId.Text)
-                    txtTargetId.Text = txtCardTargetId.Text;
-            };
-
-            btnCardConnect = new ModernButton { Text = "⚡ Connect", Size = new Size(130, 36), Location = new Point(272, 78), NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38) };
+            btnCardConnect = new ModernButton { Text = "⚡ Connect", Size = new Size(130, 42), Location = new Point(272, 70), NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38) };
             btnCardConnect.Click += (s, e) => {
-                if (txtTargetId != null) txtTargetId.Text = txtCardTargetId.Text.Trim();
+                if (txtTargetId != null) txtTargetId.Text = modernCardTargetBox.Text.Trim();
                 ToggleSessionConnection();
             };
 
-            ComboBox cboSavedFleet = new ComboBox { Location = new Point(415, 84), Size = new Size(260, 26), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8.5f) };
+            ComboBox cboSavedFleet = new ComboBox { Location = new Point(415, 78), Size = new Size(260, 26), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8.5f) };
             cboSavedFleet.Items.Add("-- Quick Select Fleet Workstation --");
             if (db != null && db.Devices != null)
             {
@@ -2822,21 +3500,56 @@ namespace JDroidXDesk.Native
                     int devIdx = cboSavedFleet.SelectedIndex - 1;
                     if (devIdx >= 0 && devIdx < db.Devices.Count)
                     {
-                        txtCardTargetId.Text = db.Devices[devIdx].id;
+                        modernCardTargetBox.Text = db.Devices[devIdx].id;
                     }
                 }
             };
 
-            Label lConnSub = new Label { Text = "Encrypted direct peer-to-peer session over jDroid-X Relay Network.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), Location = new Point(20, 124), AutoSize = true };
+            Label lConnSub = new Label { Text = "Encrypted direct peer-to-peer session over jDroid-X Relay Network.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), Location = new Point(20, 128), AutoSize = true };
 
-            cardConnect.Controls.Add(lConnTitle);
-            cardConnect.Controls.Add(lConnDesc);
-            cardConnect.Controls.Add(txtCardTargetId);
-            cardConnect.Controls.Add(btnCardConnect);
-            cardConnect.Controls.Add(cboSavedFleet);
-            cardConnect.Controls.Add(lConnSub);
-            cardContainer.Controls.Add(cardConnect);
-            y += 168;
+            flipperConnect.FrontView.Controls.Add(lConnTitle);
+            flipperConnect.FrontView.Controls.Add(lConnDesc);
+            flipperConnect.FrontView.Controls.Add(segMode);
+            flipperConnect.FrontView.Controls.Add(modernCardTargetBox);
+            flipperConnect.FrontView.Controls.Add(btnCardConnect);
+            flipperConnect.FrontView.Controls.Add(cboSavedFleet);
+            flipperConnect.FrontView.Controls.Add(lConnSub);
+
+            // BACK VIEW: Diagnostic Telemetry & Dynamic Switches
+            Label lBackTitle = new Label { Text = "🛡️  Connection Telemetry, Security Cipher & Hardware Profile", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(20, 14), AutoSize = true };
+            Label lBackDesc = new Label { Text = "Real-time encryption state and low-level hardware acceleration toggles:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 42), AutoSize = true };
+
+            ModernSwitch swHwAccel = new ModernSwitch { LabelText = "GDI+ Hardware Blitting", Checked = true, Location = new Point(20, 72), Size = new Size(220, 28) };
+            ModernSwitch swDirectLan = new ModernSwitch { LabelText = "P2P Direct LAN Fallback", Checked = db.Settings.connection.directConnections, Location = new Point(20, 108), Size = new Size(220, 28) };
+            swDirectLan.CheckedChanged += (s, e) => {
+                db.Settings.connection.directConnections = swDirectLan.Checked;
+                db.Save();
+                ShowToast("Direct LAN fallback set to " + (swDirectLan.Checked ? "ENABLED" : "DISABLED"));
+            };
+
+            FlowLayoutPanel flowCipher = new FlowLayoutPanel { Location = new Point(260, 72), Size = new Size(540, 68), FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+            Action<string, string> addTelemTag = (k, v) => {
+                Panel tp = new Panel { Size = new Size(125, 54), Margin = new Padding(0, 0, 8, 0), BackColor = Color.FromArgb(13, 21, 34), BorderStyle = BorderStyle.FixedSingle };
+                Label tk = new Label { Text = k, Font = new Font("Segoe UI", 7.2f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(6, 4), AutoSize = true };
+                Label tv = new Label { Text = v, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(6, 24), AutoSize = true };
+                tp.Controls.Add(tk);
+                tp.Controls.Add(tv);
+                flowCipher.Controls.Add(tp);
+            };
+
+            addTelemTag("Cipher", "AES-256-GCM");
+            addTelemTag("Relay Port", db.Settings.connection.relayPort > 0 ? db.Settings.connection.relayPort.ToString() : "8088");
+            addTelemTag("LAN IP", GetLocalLanIp());
+            addTelemTag("Framerate", "Adaptive 60 FPS");
+
+            flipperConnect.BackView.Controls.Add(lBackTitle);
+            flipperConnect.BackView.Controls.Add(lBackDesc);
+            flipperConnect.BackView.Controls.Add(swHwAccel);
+            flipperConnect.BackView.Controls.Add(swDirectLan);
+            flipperConnect.BackView.Controls.Add(flowCipher);
+
+            cardContainer.Controls.Add(flipperConnect);
+            y += 182;
 
             // CARD 3: RECENT CONNECTIONS
             Panel cardRecent = new Panel { Size = new Size(820, 140), Location = new Point(0, y), BackColor = Color.FromArgb(20, 28, 45) };
@@ -2983,6 +3696,57 @@ namespace JDroidXDesk.Native
             ShowToast("Local Host switched to " + newHost.Name);
         }
 
+        private string FindFuzzyMatch(string enteredDigits)
+        {
+            if (string.IsNullOrEmpty(enteredDigits) || enteredDigits.Length < 6) return null;
+
+            List<string> candidateIds = new List<string>();
+            if (dynamicDesktops != null)
+            {
+                foreach (var d in dynamicDesktops)
+                {
+                    if (!string.IsNullOrEmpty(d.RemoteId))
+                        candidateIds.Add(Regex.Replace(d.RemoteId, @"[^\d]", ""));
+                }
+            }
+            if (db != null && db.Contacts != null)
+            {
+                foreach (var c in db.Contacts)
+                {
+                    if (!string.IsNullOrEmpty(c.id))
+                        candidateIds.Add(Regex.Replace(c.id, @"[^\d]", ""));
+                }
+            }
+            if (db != null && db.Devices != null)
+            {
+                foreach (var dev in db.Devices)
+                {
+                    if (!string.IsNullOrEmpty(dev.id))
+                        candidateIds.Add(Regex.Replace(dev.id, @"[^\d]", ""));
+                }
+            }
+
+            foreach (var cand in candidateIds)
+            {
+                if (cand == enteredDigits) continue;
+                if (cand.Length == enteredDigits.Length)
+                {
+                    int diff = 0;
+                    for (int i = 0; i < cand.Length; i++)
+                    {
+                        if (cand[i] != enteredDigits[i]) diff++;
+                    }
+                    if (diff <= 3)
+                    {
+                        if (cand.Length == 9)
+                            return string.Format("{0}-{1}-{2}", cand.Substring(0, 3), cand.Substring(3, 3), cand.Substring(6, 3));
+                        return cand;
+                    }
+                }
+            }
+            return null;
+        }
+
         private void ToggleSessionConnection(SimulatorDesktop directTarget = null)
         {
             if (currentConnectionState == SessionConnectionState.Disconnected || currentConnectionState == SessionConnectionState.Failed)
@@ -2994,6 +3758,7 @@ namespace JDroidXDesk.Native
                     targetId = directTarget.RemoteId;
                     txtTargetId.Text = directTarget.RemoteId;
                     if (txtCardTargetId != null) txtCardTargetId.Text = directTarget.RemoteId;
+                    if (modernCardTargetBox != null) modernCardTargetBox.Text = directTarget.RemoteId;
                 }
                 else
                 {
@@ -3007,7 +3772,8 @@ namespace JDroidXDesk.Native
                     if (string.IsNullOrEmpty(targetId))
                     {
                         MessageBox.Show("Please enter a valid 9-digit Remote Desk ID to connect.", "Enter Remote Desk ID", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        if (txtCardTargetId != null) txtCardTargetId.Focus();
+                        if (modernCardTargetBox != null) modernCardTargetBox.Focus();
+                        else if (txtCardTargetId != null) txtCardTargetId.Focus();
                         else if (txtTargetId != null) txtTargetId.Focus();
                         return;
                     }
@@ -3019,6 +3785,28 @@ namespace JDroidXDesk.Native
                         targetId = string.Format("{0}-{1}-{2}", digitsOnly.Substring(0, 3), digitsOnly.Substring(3, 3), digitsOnly.Substring(6, 3));
                         txtTargetId.Text = targetId;
                         if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
+                        if (modernCardTargetBox != null) modernCardTargetBox.Text = targetId;
+                    }
+
+                    // Intelligent Fuzzy Typo & Candidate Detection
+                    string fuzzyCandidate = FindFuzzyMatch(digitsOnly);
+                    if (!string.IsNullOrEmpty(fuzzyCandidate) && fuzzyCandidate != targetId)
+                    {
+                        int opt = ModernMultiOptionDialog.Show(this, "Target Device Typo Detected",
+                            string.Format("Target device '{0}' appears to be a typo.\n\nActive registered workstation '{1}' was found.\nWould you like to auto-correct?", targetId, fuzzyCandidate),
+                            new string[] { "⚡ Auto-Correct & Connect", "Connect As-Is", "Cancel" });
+
+                        if (opt == 0)
+                        {
+                            targetId = fuzzyCandidate;
+                            txtTargetId.Text = targetId;
+                            if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
+                            if (modernCardTargetBox != null) modernCardTargetBox.Text = targetId;
+                        }
+                        else if (opt == 2 || opt == -1)
+                        {
+                            return; // User canceled
+                        }
                     }
 
                     SimulatorDesktop matched = dynamicDesktops.Find(d => d.RemoteId == targetId || d.Name.ToUpper() == targetId.ToUpper());
@@ -3834,11 +4622,11 @@ namespace JDroidXDesk.Native
                 y += 30;
             };
 
-            Func<string, bool, CheckBox> addCb = (text, isChecked) => {
-                CheckBox cb = new CheckBox { Text = text, Checked = isChecked, Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(14, y), AutoSize = true, Cursor = Cursors.Hand };
-                settingsSubContentPanel.Controls.Add(cb);
-                y += 26;
-                return cb;
+            Func<string, bool, ModernSwitch> addSw = (text, isChecked) => {
+                ModernSwitch sw = new ModernSwitch { LabelText = text, Checked = isChecked, Location = new Point(14, y), Size = new Size(380, 28) };
+                settingsSubContentPanel.Controls.Add(sw);
+                y += 32;
+                return sw;
             };
 
             Func<string, string, TextBox> addTb = (label, val) => {
@@ -3854,10 +4642,10 @@ namespace JDroidXDesk.Native
             if (category == "General")
             {
                 addH("General Preferences");
-                CheckBox cbStart = addCb("Open address book on startup", db.Settings.general.openAddressBookOnStartup);
-                cbStart.CheckedChanged += (s, e) => db.Settings.general.openAddressBookOnStartup = cbStart.Checked;
-                CheckBox cbUpd = addCb("Automatically download stable updates", db.Settings.general.autoUpdate);
-                cbUpd.CheckedChanged += (s, e) => db.Settings.general.autoUpdate = cbUpd.Checked;
+                ModernSwitch swStart = addSw("Open address book on startup", db.Settings.general.openAddressBookOnStartup);
+                swStart.CheckedChanged += (s, e) => db.Settings.general.openAddressBookOnStartup = swStart.Checked;
+                ModernSwitch swUpd = addSw("Automatically download stable updates", db.Settings.general.autoUpdate);
+                swUpd.CheckedChanged += (s, e) => db.Settings.general.autoUpdate = swUpd.Checked;
             }
             else if (category == "Connection")
             {
@@ -3868,9 +4656,9 @@ namespace JDroidXDesk.Native
                 tbWeb.TextChanged += (s, e) => db.Settings.connection.webRepoUrl = tbWeb.Text.Trim();
 
                 addH("Google Colab & Cloud Relay Configuration");
-                CheckBox cbColab = addCb("Enable Google Colab Central Cloud Relay", db.Settings.connection.colabCloudRelay);
-                cbColab.CheckedChanged += (s, e) => {
-                    db.Settings.connection.colabCloudRelay = cbColab.Checked;
+                ModernSwitch swColab = addSw("Enable Google Colab Central Cloud Relay", db.Settings.connection.colabCloudRelay);
+                swColab.CheckedChanged += (s, e) => {
+                    db.Settings.connection.colabCloudRelay = swColab.Checked;
                     RegisterWithColabRelay();
                 };
                 TextBox tbRelay = addTb("Cloud Relay Server URL (Default: https://www.jdroid-x.com)", db.Settings.connection.relayServer);
@@ -3919,18 +4707,18 @@ namespace JDroidXDesk.Native
             else if (category == "Security")
             {
                 addH("Access Control & Passcode Security");
-                CheckBox cbPasscode = addCb("Require One-Time Passcode for incoming connections (Default: Off / Direct Connect)", db.Settings.access.requirePasscode);
-                cbPasscode.CheckedChanged += (s, e) => db.Settings.access.requirePasscode = cbPasscode.Checked;
-                CheckBox cbUnat = addCb("Enable Unattended 24/7 Access", db.Settings.access.unattendedAccess);
-                cbUnat.CheckedChanged += (s, e) => db.Settings.access.unattendedAccess = cbUnat.Checked;
+                ModernSwitch swPasscode = addSw("Require One-Time Passcode for incoming connections (Default: Off / Direct Connect)", db.Settings.access.requirePasscode);
+                swPasscode.CheckedChanged += (s, e) => db.Settings.access.requirePasscode = swPasscode.Checked;
+                ModernSwitch swUnat = addSw("Enable Unattended 24/7 Access", db.Settings.access.unattendedAccess);
+                swUnat.CheckedChanged += (s, e) => db.Settings.access.unattendedAccess = swUnat.Checked;
                 addTb("Session Inactivity Timeout (minutes)", db.Settings.access.accessTimeout.ToString());
             }
             else if (category == "Display")
             {
                 addH("Display & Smart Fit Scaling");
                 addTb("Active Scaling Mode", smartFitMode);
-                CheckBox cbHw = addCb("Enable Hardware Acceleration (DirectX/GPU)", db.Settings.display.hardwareAcceleration);
-                cbHw.CheckedChanged += (s, e) => db.Settings.display.hardwareAcceleration = cbHw.Checked;
+                ModernSwitch swHw = addSw("Enable Hardware Acceleration (DirectX/GPU)", db.Settings.display.hardwareAcceleration);
+                swHw.CheckedChanged += (s, e) => db.Settings.display.hardwareAcceleration = swHw.Checked;
             }
             else if (category == "Account")
             {
@@ -4651,24 +5439,12 @@ namespace JDroidXDesk.Native
 
         private void ShowToast(string message)
         {
-            if (notificationToast == null)
-            {
-                notificationToast = new Panel { Size = new Size(380, 42), Anchor = AnchorStyles.Bottom | AnchorStyles.Right, BackColor = Color.FromArgb(9, 13, 22), BorderStyle = BorderStyle.FixedSingle };
-                lblToastMessage = new Label { Dock = DockStyle.Fill, ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold), TextAlign = ContentAlignment.MiddleCenter };
-                notificationToast.Controls.Add(lblToastMessage);
+            ShowToast("jDroid-X-Desk", message, "info");
+        }
 
-                toastTimer = new System.Windows.Forms.Timer { Interval = 3000 };
-                toastTimer.Tick += (s, e) => { toastTimer.Stop(); notificationToast.Visible = false; };
-                this.Controls.Add(notificationToast);
-                notificationToast.BringToFront();
-            }
-
-            lblToastMessage.Text = message;
-            notificationToast.Location = new Point(this.ClientSize.Width - notificationToast.Width - 16, this.ClientSize.Height - notificationToast.Height - 16);
-            notificationToast.Visible = true;
-            notificationToast.BringToFront();
-            toastTimer.Stop();
-            toastTimer.Start();
+        private void ShowToast(string title, string message, string type = "info")
+        {
+            ModernNotificationToast.ShowToast(title, message, type);
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
