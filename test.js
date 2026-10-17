@@ -75,7 +75,9 @@ async function runTests() {
         'remote-desktop-viewport-box',
         'settings-fb-status-banner',
         'settings-fb-app',
-        'settings-fb-api'
+        'settings-fb-api',
+        'custom-domain-url',
+        'colab-relay-url'
     ];
     for (const id of criticalDomIds) {
         assert(html.includes(`id="${id}"`), `DOM element exists: #${id}`);

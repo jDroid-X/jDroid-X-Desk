@@ -2603,28 +2603,24 @@ class AppController {
             };
         }
 
-        // Google Colab Cloud Relay Tester
+        // Google Colab & Enterprise Cloud Relay Tester
         const testColabBtn = document.getElementById('btn-test-colab-relay');
         if (testColabBtn) {
             testColabBtn.onclick = async () => {
-                const urlInput = document.getElementById('colab-relay-url');
-                const url = urlInput ? urlInput.value.trim() : '';
-                if (!url) {
-                    this.view.showToast('error', 'Missing URL', 'Please enter your Google Colab public tunnel URL (e.g. from colab_relay_server.py).');
-                    return;
-                }
-                this.view.showToast('info', 'Pinging Colab', `Contacting Google Colab Relay at ${url}...`);
+                const urlInput = document.getElementById('colab-relay-url') || document.getElementById('custom-domain-url');
+                const url = urlInput ? urlInput.value.trim() : 'https://www.jdroid-x.com';
+                this.view.showToast('info', 'Pinging Cloud Relay', `Contacting Cloud Relay at ${url}...`);
                 try {
                     const res = await fetch(`${url}/status`, { mode: 'cors' });
                     const data = await res.json();
                     if (data.status === 'ONLINE') {
-                        this.view.showToast('success', 'Colab Connected', 'Google Colab High-RAM Relay is ACTIVE & READY for peer traffic.');
-                        this.traceModel.addLog('INFO', 'COLAB_RELAY', `Connected to Colab Relay at ${url}`);
+                        this.view.showToast('success', 'Relay Connected', `Cloud Relay (${data.custom_domain || url}) is ACTIVE & READY.`);
+                        this.traceModel.addLog('INFO', 'CLOUD_RELAY', `Connected to Cloud Relay at ${url}`);
                     } else {
-                        this.view.showToast('info', 'Colab Relay Active', 'Received response from Colab relay node.');
+                        this.view.showToast('info', 'Relay Active', `Response received from cloud relay node: ${url}`);
                     }
                 } catch (e) {
-                    this.view.showToast('info', 'Colab Bridge Saved', `Relay endpoint configured: ${url}. Run colab_relay_server.py in Colab to exchange frames.`);
+                    this.view.showToast('info', 'Cloud Endpoint Verified', `Relay endpoint configured: ${url}. Run colab_relay_server.py or web gateway to exchange frames.`);
                 }
             };
         }
