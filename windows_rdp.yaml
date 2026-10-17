@@ -12,7 +12,7 @@ colab:
   runtime: "Python 3.10+ / Linux Ubuntu 22.04 LTS High-RAM"
   relay_port: 8088
   tunnel_provider: "cloudflared"
-  custom_domain: "https://www.jdroid-x.com"
+  custom_domain: "https://prefix-dean-theft-bytes.trycloudflare.com"
   tunnel_token: ""
   web_repo_url: "https://github.com/jDroid-X/jDroid-X-Web"
   github_backend_url: "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main"

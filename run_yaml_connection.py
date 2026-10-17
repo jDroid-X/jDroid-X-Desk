@@ -134,7 +134,49 @@ def main():
                 if not tunnel_url:
                     match = url_pattern.search(line)
                     if match:
-                        tunnel_url = match.group(0)
+                        tunnel_url = match.group(0).strip()
+                        # 1. Update colab_tunnel.txt for instant local discovery
+                        try:
+                            with open('colab_tunnel.txt', 'w', encoding='utf-8') as f:
+                                f.write(tunnel_url)
+                        except Exception:
+                            pass
+
+                        # 2. Broadcast to local relay server
+                        try:
+                            import urllib.request
+                            req = urllib.request.Request(
+                                f"http://127.0.0.1:{relay_port}/api/relay/set_tunnel",
+                                data=json.dumps({"tunnel_url": tunnel_url}).encode('utf-8'),
+                                headers={'Content-Type': 'application/json'}
+                            )
+                            urllib.request.urlopen(req, timeout=2)
+                        except Exception:
+                            pass
+
+                        # 3. Synchronize windows_rdp.yaml
+                        try:
+                            if os.path.exists('windows_rdp.yaml'):
+                                with open('windows_rdp.yaml', 'r', encoding='utf-8') as yf:
+                                    ycontent = yf.read()
+                                ycontent = re.sub(r'custom_domain:\s*["\']?[^"\'\n]+["\']?', f'custom_domain: "{tunnel_url}"', ycontent)
+                                with open('windows_rdp.yaml', 'w', encoding='utf-8') as yf:
+                                    yf.write(ycontent)
+                        except Exception:
+                            pass
+
+                        # 4. Synchronize database.json
+                        try:
+                            if os.path.exists('database.json'):
+                                with open('database.json', 'r', encoding='utf-8') as df:
+                                    db_data = json.load(df)
+                                if 'settings' in db_data and 'connection' in db_data['settings']:
+                                    db_data['settings']['connection']['relayServer'] = tunnel_url
+                                    with open('database.json', 'w', encoding='utf-8') as df:
+                                        json.dump(db_data, df, indent=2)
+                        except Exception:
+                            pass
+
                         print("\n" + "=" * 70)
                         print("🎉 jDroid-X CLOUD RELAY SERVER IS ONLINE & READY!")
                         print("=" * 70)

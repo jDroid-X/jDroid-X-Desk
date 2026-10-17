@@ -2606,9 +2606,17 @@ class AppController {
                 try {
                     const res = await fetch(`${url}/status`, { mode: 'cors' });
                     const data = await res.json();
-                    if (data.status === 'ONLINE') {
-                        this.view.showToast('success', 'Relay Connected', `Cloud Relay (${data.custom_domain || url}) is ACTIVE & READY.`);
-                        this.traceModel.addLog('INFO', 'CLOUD_RELAY', `Connected to Cloud Relay at ${url}`);
+                    if (data.status === 'ONLINE' || data.success) {
+                        const activeUrl = data.public_url || data.relay_server || url;
+                        this.view.showToast('success', 'Relay Connected', `Cloud Relay (${activeUrl}) is ACTIVE & READY.`);
+                        this.traceModel.addLog('INFO', 'CLOUD_RELAY', `Connected to Cloud Relay at ${activeUrl}`);
+                        try {
+                            await fetch('/api/settings', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ connection: { relayServer: activeUrl, colabRelayUrl: activeUrl } })
+                            });
+                        } catch (_) {}
                     } else {
                         this.view.showToast('info', 'Relay Active', `Response received from cloud relay node: ${url}`);
                     }

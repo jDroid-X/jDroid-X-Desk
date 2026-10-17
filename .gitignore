@@ -11,4 +11,5 @@ Thumbs.db
 
 # Windows Shortcut & Temp
 *.tmp
+*.old
 scratch/

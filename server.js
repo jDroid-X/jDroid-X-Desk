@@ -399,10 +399,32 @@ app.delete('/api/contacts/:id', (req, res) => { const db = readDB(); db.contacts
 // ==========================================
 // 6. DYNAMIC SYSTEM SETTINGS API (No hardcoding)
 // ==========================================
-app.get('/api/settings', (req, res) => { const db = readDB(); res.json({ success: true, data: db.settings }); });
+app.get('/api/settings', (req, res) => {
+    const db = readDB();
+    try {
+        if (fs.existsSync('colab_tunnel.txt')) {
+            const tunnelUrl = fs.readFileSync('colab_tunnel.txt', 'utf-8').trim();
+            if (tunnelUrl && tunnelUrl.includes('.trycloudflare.com')) {
+                db.settings = db.settings || {};
+                db.settings.connection = db.settings.connection || {};
+                db.settings.connection.relayServer = tunnelUrl;
+                db.settings.connection.colabRelayUrl = tunnelUrl;
+            }
+        }
+    } catch (_) {}
+    res.json({ success: true, data: db.settings });
+});
 app.put('/api/settings', (req, res) => {
     const db = readDB();
     db.settings = { ...db.settings, ...req.body, updatedAt: new Date().toISOString() };
+    if (req.body && req.body.connection && req.body.connection.relayServer) {
+        try {
+            const rUrl = req.body.connection.relayServer.trim();
+            if (rUrl.includes('.trycloudflare.com')) {
+                fs.writeFileSync('colab_tunnel.txt', rUrl, 'utf-8');
+            }
+        } catch (_) {}
+    }
     writeDB(db);
     res.json({ success: true, data: db.settings, message: 'System Settings Saved Successfully' });
 });

@@ -22,6 +22,17 @@ DEVICES = {}
 FRAME_BUFFERS = {}
 INPUT_BUFFERS = {}
 ACTIVE_SESSIONS = {}
+PUBLIC_TUNNEL_URL = ""
+
+# Auto-load tunnel URL if saved in colab_tunnel.txt
+try:
+    if os.path.exists("colab_tunnel.txt"):
+        with open("colab_tunnel.txt", "r", encoding="utf-8") as f:
+            t = f.read().strip()
+            if t and ".trycloudflare.com" in t:
+                PUBLIC_TUNNEL_URL = t
+except Exception:
+    pass
 
 def get_system_telemetry():
     ram_str = "--- / ---"
@@ -105,6 +116,9 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
                 'status': 'AWAKE',
                 'service': 'jDroid-X Colab Cloud Relay Server',
                 'organization': 'jDroid-X Studio',
+                'public_url': PUBLIC_TUNNEL_URL,
+                'relay_server': PUBLIC_TUNNEL_URL if PUBLIC_TUNNEL_URL else 'http://127.0.0.1:8088',
+                'tunnel_url': PUBLIC_TUNNEL_URL,
                 'active_devices': len(DEVICES),
                 'system_ram': telem['system_ram'],
                 'gpu_ram': telem['gpu_ram'],
@@ -114,7 +128,7 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
             }).encode('utf-8'))
             return
 
-        if self.path in ['/', '/status']:
+        if self.path in ['/', '/status', '/api/settings', '/api/relay/settings']:
             self.send_response(200)
             self._set_cors()
             self.send_header('Content-Type', 'application/json')
@@ -123,7 +137,10 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
             status = {
                 'status': 'ONLINE',
                 'service': 'jDroid-X Colab Cloud Relay Server',
-                'custom_domain': 'https://www.jdroid-x.com',
+                'public_url': PUBLIC_TUNNEL_URL,
+                'relay_server': PUBLIC_TUNNEL_URL if PUBLIC_TUNNEL_URL else 'http://127.0.0.1:8088',
+                'tunnel_url': PUBLIC_TUNNEL_URL,
+                'custom_domain': PUBLIC_TUNNEL_URL if PUBLIC_TUNNEL_URL else 'https://www.jdroid-x.com',
                 'web_repo': 'https://github.com/jDroid-X/jDroid-X-Web',
                 'active_devices': len(DEVICES),
                 'devices': list(DEVICES.values()),
@@ -214,6 +231,24 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
                 'timestamp': time.time(),
                 'message': 'Colab Relay awakened by POST ping.'
             }).encode('utf-8'))
+            return
+
+        # Cloudflare Tunnel URL Registration & Update
+        if self.path in ['/api/relay/set_tunnel', '/api/relay/tunnel', '/api/relay/update_url']:
+            global PUBLIC_TUNNEL_URL
+            t_url = payload.get('tunnel_url') or payload.get('url') or payload.get('public_url') or ''
+            if t_url:
+                PUBLIC_TUNNEL_URL = t_url.strip()
+                try:
+                    with open('colab_tunnel.txt', 'w', encoding='utf-8') as f:
+                        f.write(PUBLIC_TUNNEL_URL)
+                except Exception:
+                    pass
+            self.send_response(200)
+            self._set_cors()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'public_url': PUBLIC_TUNNEL_URL}).encode('utf-8'))
             return
 
         # Register machine ID (Desk 1, Desk 2, etc.)

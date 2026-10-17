@@ -126,8 +126,8 @@ namespace JDroidXDesk.Native
             colabCloudRelay = true;
             proxyServer = "";
             idServer = "relay.jdroid-x.net:21116";
-            relayServer = "https://www.jdroid-x.com";
-            customDomain = "https://www.jdroid-x.com";
+            relayServer = "https://prefix-dean-theft-bytes.trycloudflare.com";
+            customDomain = "https://prefix-dean-theft-bytes.trycloudflare.com";
             webRepoUrl = "https://github.com/jDroid-X/jDroid-X-Web";
             colabNotebookUrl = "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
             githubBackendUrl = "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main";
@@ -674,6 +674,23 @@ namespace JDroidXDesk.Native
         [DllImport("user32.dll")]
         private static extern bool SetProcessDPIAware();
 
+        [DllImport("user32.dll")]
+        private static extern bool SetCursorPos(int X, int Y);
+
+        [DllImport("user32.dll")]
+        private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
+
+        [DllImport("user32.dll")]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
+        private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+        private const uint MOUSEEVENTF_LEFTUP = 0x0004;
+        private const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
+        private const uint MOUSEEVENTF_RIGHTUP = 0x0010;
+        private const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
+        private const uint MOUSEEVENTF_MIDDLEUP = 0x0040;
+        private const uint KEYEVENTF_KEYUP = 0x0002;
+
         private DatabaseContext db;
         private List<SimulatorDesktop> dynamicDesktops;
         private SimulatorDesktop currentHostDesktop;
@@ -796,6 +813,12 @@ namespace JDroidXDesk.Native
         private Label lblMetaHeartbeatVal;
         private int headerHeartbeatPulseFrame = 0;
         private volatile bool isProbingCandidates = false;
+
+        // Host Daemon (Continuous Screen Capture & Remote Admin Input Execution)
+        private Thread hostDaemonThread;
+        private volatile bool isHostDaemonRunning = false;
+        private string cachedWinningRelayUrl = null;
+        private DateTime lastWinningCheckTime = DateTime.MinValue;
 
         // Active State
         private string activeViewKey = "Console";
@@ -920,6 +943,7 @@ namespace JDroidXDesk.Native
             BuildAntigravityLayout();
             SetupTraySupervisor();
             RegisterWithColabRelay();
+            StartHostDaemon();
             StartColabTelemetryMonitor();
             SyncFromGitHubBackend();
 
@@ -1463,6 +1487,37 @@ namespace JDroidXDesk.Native
                 Label lblSub = new Label { Text = "Configure your relay server endpoint, port, custom domain, and Cloudflare tunnel.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Location = new Point(20, 42) };
 
                 int curY = 70;
+
+                // Prominent Colab Connection Steps Box
+                Panel pnlSteps = new Panel { Size = new Size(440, 84), Location = new Point(20, curY), BackColor = Color.FromArgb(10, 16, 26), BorderStyle = BorderStyle.FixedSingle };
+                Label lSteps = new Label {
+                    Text = "STEPS TO CONNECT IN jDroid-X-Desk:\n1. Open jDroid-X-Desk on Desk 1 and Desk 2\n2. Run your Google Colab Relay notebook\n3. Paste the generated public URL (👉 https://....trycloudflare.com 👈)\n4. Click 'Save & Apply' -> Header turns GREEN with live meters!",
+                    Font = new Font("Segoe UI", 8.2f),
+                    ForeColor = Color.FromArgb(56, 189, 248),
+                    Dock = DockStyle.Fill,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Padding = new Padding(6)
+                };
+                pnlSteps.Controls.Add(lSteps);
+                pnl.Controls.Add(pnlSteps);
+                curY += 92;
+
+                string initialUrl = db.Settings.connection.relayServer ?? "https://www.jdroid-x.com";
+                try {
+                    if (Clipboard.ContainsText()) {
+                        string c = Clipboard.GetText().Trim();
+                        if (c.Contains(".trycloudflare.com")) {
+                            int s = c.IndexOf("https://");
+                            if (s < 0) s = c.IndexOf("http://");
+                            if (s >= 0) {
+                                int e = c.IndexOfAny(new char[] { ' ', '\r', '\n', '\t' }, s);
+                                c = e > s ? c.Substring(s, e - s) : c.Substring(s);
+                            }
+                            initialUrl = c.TrimEnd('/');
+                        }
+                    }
+                } catch { }
+
                 Action<string> addLbl = (txt) => {
                     Label l = new Label { Text = txt, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(20, curY), AutoSize = true };
                     pnl.Controls.Add(l);
@@ -1470,7 +1525,7 @@ namespace JDroidXDesk.Native
                 };
 
                 addLbl("Relay Server URL (Google Colab / Local / Custom)");
-                TextBox tbRelay = new TextBox { Text = db.Settings.connection.relayServer ?? "https://www.jdroid-x.com", Location = new Point(20, curY), Size = new Size(440, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                TextBox tbRelay = new TextBox { Text = initialUrl, Location = new Point(20, curY), Size = new Size(440, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
                 pnl.Controls.Add(tbRelay);
                 curY += 32;
 
@@ -1655,14 +1710,32 @@ namespace JDroidXDesk.Native
                 Button btnSave = new Button { Text = "💾 Save & Apply", Size = new Size(130, 32), Location = new Point(140, curY), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold), Cursor = Cursors.Hand };
                 btnSave.FlatAppearance.BorderSize = 0;
                 btnSave.Click += (s, e) => {
-                    db.Settings.connection.relayServer = tbRelay.Text.Trim();
+                    string entered = tbRelay.Text.Trim();
+                    if (!entered.StartsWith("http://") && !entered.StartsWith("https://")) entered = "https://" + entered;
+                    entered = entered.TrimEnd('/');
+
+                    db.Settings.connection.relayServer = entered;
                     int p;
                     if (int.TryParse(tbPort.Text.Trim(), out p) && p > 0) db.Settings.connection.relayPort = p;
-                    db.Settings.connection.customDomain = tbDom.Text.Trim();
+                    db.Settings.connection.customDomain = entered;
                     db.Settings.connection.tunnelToken = tbToken.Text.Trim();
                     db.Save();
-                    ShowToast("Relay settings saved to database.json and synced with windows_rdp.yaml");
-                    ThreadPool.QueueUserWorkItem(delegate { PingColabServer(); });
+                    db.SyncYaml();
+
+                    cachedWinningRelayUrl = entered;
+                    lastWinningCheckTime = DateTime.MinValue;
+
+                    try {
+                        File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_tunnel.txt"), entered);
+                    } catch { }
+
+                    ShowToast("Relay updated: " + entered + " | Saved to database.json & windows_rdp.yaml");
+                    ThreadPool.QueueUserWorkItem(delegate { 
+                        PingColabServer(); 
+                        RegisterWithColabRelay();
+                        PushLocalHostFrame();
+                    });
+                    BuildWelcomeCardsContent();
                     dlg.Close();
                 };
 
@@ -1684,35 +1757,63 @@ namespace JDroidXDesk.Native
         {
             List<string> candidateUrls = new List<string>();
 
-            // 1. Configured relay server
-            if (db != null && db.Settings != null && db.Settings.connection != null)
+            // 1. Prioritize verified winning cache for 0ms discovery overhead
+            if (!string.IsNullOrEmpty(cachedWinningRelayUrl) && (DateTime.Now - lastWinningCheckTime).TotalSeconds < 25)
             {
-                string configuredRelay = db.Settings.connection.relayServer;
-                if (!string.IsNullOrEmpty(configuredRelay))
-                {
-                    configuredRelay = configuredRelay.TrimEnd('/');
-                    if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
-                    candidateUrls.Add(configuredRelay);
-                }
-
-                // 2. Custom Domain
-                string customDomain = db.Settings.connection.customDomain;
-                if (!string.IsNullOrEmpty(customDomain))
-                {
-                    customDomain = customDomain.TrimEnd('/');
-                    if (!customDomain.StartsWith("http://") && !customDomain.StartsWith("https://")) customDomain = "https://" + customDomain;
-                    if (!candidateUrls.Contains(customDomain)) candidateUrls.Add(customDomain);
-                }
+                candidateUrls.Add(cachedWinningRelayUrl);
             }
 
-            // 3. Active Local Cloudflare Tunnel
+            // 2. Active Local Cloudflare Tunnel
             if (CloudflareTunnelEngine.IsRunning && !string.IsNullOrEmpty(CloudflareTunnelEngine.ActiveTunnelUrl))
             {
                 if (!candidateUrls.Contains(CloudflareTunnelEngine.ActiveTunnelUrl))
-                    candidateUrls.Insert(0, CloudflareTunnelEngine.ActiveTunnelUrl);
+                    candidateUrls.Add(CloudflareTunnelEngine.ActiveTunnelUrl);
             }
 
-            // 4. YAML fallbacks
+            // 3. Local tunnel text files (written by Colab or launch scripts)
+            try
+            {
+                string[] tunnelFiles = new string[] { "colab_tunnel.txt", "colab_url.txt", "tunnel.txt" };
+                foreach (string tf in tunnelFiles)
+                {
+                    string p = tf;
+                    if (!File.Exists(p)) p = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, tf);
+                    if (File.Exists(p))
+                    {
+                        string line = File.ReadAllText(p).Trim();
+                        if (!string.IsNullOrEmpty(line) && line.Contains(".trycloudflare.com"))
+                        {
+                            if (!line.StartsWith("http")) line = "https://" + line;
+                            line = line.TrimEnd('/');
+                            if (!candidateUrls.Contains(line)) candidateUrls.Add(line);
+                            break;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // 4. Configured relay server if it contains a cloudflare tunnel
+            if (db != null && db.Settings != null && db.Settings.connection != null)
+            {
+                string configuredRelay = db.Settings.connection.relayServer;
+                if (!string.IsNullOrEmpty(configuredRelay) && configuredRelay.Contains(".trycloudflare.com"))
+                {
+                    configuredRelay = configuredRelay.TrimEnd('/');
+                    if (!configuredRelay.StartsWith("http")) configuredRelay = "https://" + configuredRelay;
+                    if (!candidateUrls.Contains(configuredRelay)) candidateUrls.Add(configuredRelay);
+                }
+            }
+
+            // 4b. Active Colab Public Cloudflare Relay
+            string activeColabTunnel = "https://prefix-dean-theft-bytes.trycloudflare.com";
+            if (!candidateUrls.Contains(activeColabTunnel)) candidateUrls.Add(activeColabTunnel);
+
+            // 5. Local ports (8088 is official Colab relay port) - Instant loopback
+            if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
+            if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
+
+            // 6. YAML fallbacks
             try
             {
                 string yamlPath = "windows_rdp.yaml";
@@ -1740,33 +1841,17 @@ namespace JDroidXDesk.Native
             }
             catch { }
 
-            // 4b. Local tunnel text files (if written by scripts)
-            try
+            // 7. General configured relay fallback (e.g. https://www.jdroid-x.com)
+            if (db != null && db.Settings != null && db.Settings.connection != null)
             {
-                string[] tunnelFiles = new string[] { "colab_tunnel.txt", "colab_url.txt", "tunnel.txt" };
-                foreach (string tf in tunnelFiles)
+                string configuredRelay = db.Settings.connection.relayServer;
+                if (!string.IsNullOrEmpty(configuredRelay))
                 {
-                    string p = tf;
-                    if (!File.Exists(p)) p = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, tf);
-                    if (File.Exists(p))
-                    {
-                        string line = File.ReadAllText(p).Trim();
-                        if (!string.IsNullOrEmpty(line) && line.Contains(".trycloudflare.com"))
-                        {
-                            if (!line.StartsWith("http")) line = "https://" + line;
-                            line = line.TrimEnd('/');
-                            if (!candidateUrls.Contains(line)) candidateUrls.Insert(0, line);
-                            break;
-                        }
-                    }
+                    configuredRelay = configuredRelay.TrimEnd('/');
+                    if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
+                    if (!candidateUrls.Contains(configuredRelay)) candidateUrls.Add(configuredRelay);
                 }
             }
-            catch { }
-
-            // 5. Local ports
-            if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
-            if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
-            if (!candidateUrls.Contains("http://127.0.0.1:7070")) candidateUrls.Add("http://127.0.0.1:7070");
 
             return candidateUrls;
         }
@@ -1804,7 +1889,7 @@ namespace JDroidXDesk.Native
                         Stopwatch sw = Stopwatch.StartNew();
                         HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/ping");
                         req.Method = "GET";
-                        req.Timeout = 1200;
+                        req.Timeout = 1000;
                         using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                         using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                         {
@@ -1817,6 +1902,17 @@ namespace JDroidXDesk.Native
                                 connected = true;
                                 winningUrl = rUrl;
                                 rtt = (int)sw.ElapsedMilliseconds;
+                                cachedWinningRelayUrl = rUrl;
+                                lastWinningCheckTime = DateTime.Now;
+                                if (dict.ContainsKey("public_url") && dict["public_url"] != null)
+                                {
+                                    string pub = dict["public_url"].ToString().Trim();
+                                    if (!string.IsNullOrEmpty(pub) && pub.StartsWith("http") && pub.Contains(".trycloudflare.com"))
+                                    {
+                                        winningUrl = pub;
+                                        cachedWinningRelayUrl = pub;
+                                    }
+                                }
                                 if (dict.ContainsKey("system_ram")) ram = dict["system_ram"].ToString();
                                 if (dict.ContainsKey("gpu_ram")) gpu = dict["gpu_ram"].ToString();
                                 if (dict.ContainsKey("disk")) disk = dict["disk"].ToString();
@@ -1826,13 +1922,17 @@ namespace JDroidXDesk.Native
                     } catch { }
                 }
 
-                if (connected && !string.IsNullOrEmpty(winningUrl) && winningUrl.Contains(".trycloudflare.com"))
+                if (connected && !string.IsNullOrEmpty(winningUrl))
                 {
                     if (db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.relayServer != winningUrl)
                     {
                         db.Settings.connection.relayServer = winningUrl;
+                        db.Settings.connection.customDomain = winningUrl;
                         db.Save();
                         db.SyncYaml();
+                        try {
+                            File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_tunnel.txt"), winningUrl);
+                        } catch { }
                     }
                 }
             } catch { }
@@ -1844,12 +1944,21 @@ namespace JDroidXDesk.Native
                 if (this.IsHandleCreated && !this.IsDisposed)
                 {
                     this.BeginInvoke(new Action(() => {
+                        bool stateChanged = (isColabConnected != connected);
                         isColabConnected = connected;
                         colabRamText = connected ? ram : "--- / ---";
                         colabGpuText = connected ? gpu : "-- / --";
                         colabDiskText = connected ? disk : "-- / --";
                         if (connected && rtt > 0) lastMeasuredRttMs = rtt;
+                        if (connected)
+                        {
+                            RegisterWithColabRelay();
+                        }
                         UpdateColabTelemetryUI();
+                        if (stateChanged && activeViewKey == "Console" && panelWelcomeCards != null && panelWelcomeCards.Visible)
+                        {
+                            BuildWelcomeCardsContent();
+                        }
                     }));
                 }
             } catch { }
@@ -2476,6 +2585,10 @@ namespace JDroidXDesk.Native
             viewportCanvas = new PictureBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(10, 16, 26), Visible = false };
             viewportCanvas.Paint += ViewportCanvas_Paint;
             viewportCanvas.MouseClick += ViewportCanvas_MouseClick;
+            viewportCanvas.MouseDown += ViewportCanvas_MouseDown;
+            viewportCanvas.MouseUp += ViewportCanvas_MouseUp;
+            viewportCanvas.MouseMove += ViewportCanvas_MouseMove;
+            viewportCanvas.MouseDoubleClick += ViewportCanvas_MouseDoubleClick;
 
             viewConsole.Controls.Add(sessionFloatingToolbar);
             viewConsole.Controls.Add(localBar);
@@ -2506,13 +2619,136 @@ namespace JDroidXDesk.Native
             Label lblMainSub = new Label { Text = "Share this screen for remote support or connect to another workstation over the internet.", Font = new Font("Segoe UI", 9.5f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(0, y), AutoSize = true };
             y += 38;
 
+            // CARD 0: CONNECT TO GOOGLE COLAB CLOUD RELAY
+            Panel cardColab = new Panel { Size = new Size(820, 138), Location = new Point(0, y), BackColor = Color.FromArgb(20, 28, 45) };
+            cardColab.Paint += (s, e) => {
+                Color borderC = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
+                e.Graphics.DrawRectangle(new Pen(borderC, 1.2f), 0, 0, cardColab.Width - 1, cardColab.Height - 1);
+            };
+
+            string colabStatusText = isColabConnected ? "● ONLINE (Live Stream Ready)" : "○ NOT CONNECTED (Paste Colab URL)";
+            Color colabStatusColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
+
+            Label lColabTitle = new Label { Text = "⚡  Step 1: Connect to Google Colab Cloud Relay", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(20, 14), AutoSize = true };
+            Label lColabBadge = new Label { Text = colabStatusText, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = colabStatusColor, Location = new Point(480, 16), AutoSize = true };
+            Label lColabDesc = new Label { Text = "Colab relay connects Desk 1 & Desk 2 over the internet without port forwarding. Enter your Public Relay URL:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 42), AutoSize = true };
+
+            TextBox txtColabInput = new TextBox {
+                Size = new Size(410, 36),
+                Location = new Point(20, 72),
+                Font = new Font("Consolas", 10.5f),
+                BackColor = Color.FromArgb(10, 16, 26),
+                ForeColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Text = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.relayServer)) 
+                    ? db.Settings.connection.relayServer 
+                    : "https://....trycloudflare.com"
+            };
+
+            Button btnPasteColab = new Button {
+                Text = "📋 Paste URL",
+                Size = new Size(115, 36),
+                Location = new Point(440, 72),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(40, 53, 76),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnPasteColab.FlatAppearance.BorderSize = 0;
+            btnPasteColab.Click += (s, e) => {
+                try {
+                    if (Clipboard.ContainsText()) {
+                        string clip = Clipboard.GetText().Trim();
+                        int startIdx = clip.IndexOf("https://");
+                        if (startIdx < 0) startIdx = clip.IndexOf("http://");
+                        if (startIdx >= 0) {
+                            int endIdx = clip.IndexOfAny(new char[] { ' ', '\r', '\n', '\t' }, startIdx);
+                            clip = endIdx > startIdx ? clip.Substring(startIdx, endIdx - startIdx) : clip.Substring(startIdx);
+                        }
+                        if (clip.Contains(".trycloudflare.com") || clip.StartsWith("http")) {
+                            txtColabInput.Text = clip.TrimEnd('/');
+                            ShowToast("Pasted active Colab tunnel URL from clipboard");
+                        } else {
+                            MessageBox.Show("Clipboard does not contain a valid URL. Copy the 'https://...trycloudflare.com' URL from your Colab notebook first.", "Paste Colab URL", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                } catch { }
+            };
+
+            Button btnApplyColab = new Button {
+                Text = "💾 Save & Connect",
+                Size = new Size(130, 36),
+                Location = new Point(565, 72),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(16, 185, 129),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnApplyColab.FlatAppearance.BorderSize = 0;
+            btnApplyColab.Click += (s, e) => {
+                string entered = txtColabInput.Text.Trim();
+                if (!entered.StartsWith("http://") && !entered.StartsWith("https://")) entered = "https://" + entered;
+                entered = entered.TrimEnd('/');
+
+                if (db != null && db.Settings != null && db.Settings.connection != null) {
+                    db.Settings.connection.relayServer = entered;
+                    db.Settings.connection.customDomain = entered;
+                    db.Save();
+                    db.SyncYaml();
+                }
+
+                cachedWinningRelayUrl = entered;
+                lastWinningCheckTime = DateTime.MinValue;
+
+                try {
+                    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_tunnel.txt"), entered);
+                } catch { }
+
+                ShowToast("Colab Relay set to: " + entered + ". Probing server...");
+                ThreadPool.QueueUserWorkItem(delegate { 
+                    PingColabServer(); 
+                    RegisterWithColabRelay();
+                    PushLocalHostFrame();
+                });
+            };
+
+            Button btnColabNotebook = new Button {
+                Text = "🌐 Colab",
+                Size = new Size(95, 36),
+                Location = new Point(705, 72),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(30, 41, 59),
+                ForeColor = Color.FromArgb(203, 213, 225),
+                Font = new Font("Segoe UI", 9f),
+                Cursor = Cursors.Hand
+            };
+            btnColabNotebook.FlatAppearance.BorderSize = 0;
+            btnColabNotebook.Click += (s, e) => {
+                try {
+                    string nb = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.colabNotebookUrl)) ? db.Settings.connection.colabNotebookUrl : "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
+                    Process.Start(new ProcessStartInfo(nb) { UseShellExecute = true });
+                } catch { }
+            };
+
+            cardColab.Controls.Add(lColabTitle);
+            cardColab.Controls.Add(lColabBadge);
+            cardColab.Controls.Add(lColabDesc);
+            cardColab.Controls.Add(txtColabInput);
+            cardColab.Controls.Add(btnPasteColab);
+            cardColab.Controls.Add(btnApplyColab);
+            cardColab.Controls.Add(btnColabNotebook);
+            cardContainer.Controls.Add(cardColab);
+            y += 156;
+
             // CARD 1: SHARE THIS SCREEN
             Panel cardShare = new Panel { Size = new Size(820, 150), Location = new Point(0, y), BackColor = Color.FromArgb(20, 28, 45) };
             cardShare.Paint += (s, e) => {
                 e.Graphics.DrawRectangle(new Pen(Color.FromArgb(40, 53, 76), 1), 0, 0, cardShare.Width - 1, cardShare.Height - 1);
             };
 
-            Label lShareTitle = new Label { Text = "📥  Share this screen (Get Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 16), AutoSize = true };
+            Label lShareTitle = new Label { Text = "📥  Step 2: Share this screen (Get Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 16), AutoSize = true };
             Label lShareDesc = new Label { Text = "To let another person view and control this computer, give them this 9-digit Desk ID:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 44), AutoSize = true };
 
             Panel codeBox = new Panel { Size = new Size(240, 44), Location = new Point(20, 78), BackColor = Color.FromArgb(10, 16, 26) };
@@ -2555,7 +2791,7 @@ namespace JDroidXDesk.Native
                 e.Graphics.DrawRectangle(new Pen(Color.FromArgb(40, 53, 76), 1), 0, 0, cardConnect.Width - 1, cardConnect.Height - 1);
             };
 
-            Label lConnTitle = new Label { Text = "📤  Connect to another computer (Give Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 16), AutoSize = true };
+            Label lConnTitle = new Label { Text = "📤  Step 3: Connect to another computer (Give Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 16), AutoSize = true };
             Label lConnDesc = new Label { Text = "Enter the 9-digit Desk ID of the remote computer you want to access:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 44), AutoSize = true };
 
             txtCardTargetId = new TextBox { Size = new Size(240, 44), Location = new Point(20, 78), Font = new Font("Consolas", 15f), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Text = "" };
@@ -2665,14 +2901,35 @@ namespace JDroidXDesk.Native
                 ShowToast("Engine: " + (isLiveScreenMirror ? "Live Local Screen Mirror (Active)" : "Remote Desktop Stream"));
             });
 
-            Button btnCad = CreateToolbarBtn("⌨️ SAS", (s, e) => ShowToast("Injected Ctrl+Alt+Del."));
-            Button btnTaskMgr = CreateToolbarBtn("⚙️ TaskMgr", (s, e) => { try { Process.Start("taskmgr.exe"); } catch { } });
+            Button btnCad = CreateToolbarBtn("⌨️ SAS", (s, e) => {
+                SendRemoteAdminCommand("cad");
+                ShowToast("Injected Remote SAS (Ctrl+Alt+Del).");
+            });
+            Button btnTaskMgr = CreateToolbarBtn("⚙️ TaskMgr", (s, e) => {
+                SendRemoteAdminCommand("taskmgr");
+                ShowToast("Launched Remote Task Manager (Admin).");
+            });
+            Button btnCmd = CreateToolbarBtn("💻 Cmd", (s, e) => {
+                SendRemoteAdminCommand("cmd");
+                ShowToast("Launched Remote Admin Command Prompt.");
+            });
+            Button btnExplorer = CreateToolbarBtn("📁 Explorer", (s, e) => {
+                SendRemoteAdminCommand("explorer");
+                ShowToast("Opened Remote Windows Explorer.");
+            });
+            Button btnLock = CreateToolbarBtn("🔒 Lock", (s, e) => {
+                SendRemoteAdminCommand("lock");
+                ShowToast("Locked Remote Workstation.");
+            });
 
             leftTools.Controls.Add(btnDisplay);
             leftTools.Controls.Add(btnSmartFit);
             leftTools.Controls.Add(btnMirror);
             leftTools.Controls.Add(btnCad);
             leftTools.Controls.Add(btnTaskMgr);
+            leftTools.Controls.Add(btnCmd);
+            leftTools.Controls.Add(btnExplorer);
+            leftTools.Controls.Add(btnLock);
 
             FlowLayoutPanel rightHUD = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
             lblSessionTelemetryHUD = new Label { Text = "⏳ Awaiting Stream...", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Margin = new Padding(0, 6, 8, 0) };
@@ -3269,6 +3526,78 @@ namespace JDroidXDesk.Native
             }
         }
 
+        private void ViewportCanvas_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int rx, ry;
+                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "down";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = e.Button == MouseButtons.Right ? "Right" : (e.Button == MouseButtons.Middle ? "Middle" : "Left");
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        private void ViewportCanvas_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int rx, ry;
+                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "up";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = e.Button == MouseButtons.Right ? "Right" : (e.Button == MouseButtons.Middle ? "Middle" : "Left");
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        private DateTime lastMouseMoveSent = DateTime.MinValue;
+        private void ViewportCanvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                if ((DateTime.Now - lastMouseMoveSent).TotalMilliseconds < 33) return;
+                lastMouseMoveSent = DateTime.Now;
+
+                int rx, ry;
+                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "move";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = "None";
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        private void ViewportCanvas_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int rx, ry;
+                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "dblclick";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = e.Button == MouseButtons.Right ? "Right" : "Left";
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
         // ======================================================================
         // SUBVIEW 2: DUAL-PANE FILE TRANSFER
         // ======================================================================
@@ -3612,15 +3941,32 @@ namespace JDroidXDesk.Native
                 try {
                     if (db == null || db.Settings == null || db.Settings.connection == null || !db.Settings.connection.colabCloudRelay) return;
                     if (currentHostDesktop == null) return;
-                    string relayUrl = db.Settings.connection.relayServer.TrimEnd('/');
-                    if (string.IsNullOrEmpty(relayUrl)) return;
-                    if (!relayUrl.StartsWith("http://") && !relayUrl.StartsWith("https://")) relayUrl = "http://" + relayUrl;
-                    string endpoint = relayUrl + "/api/relay/register";
-                    using (WebClient client = new WebClient()) {
-                        client.Headers[HttpRequestHeader.ContentType] = "application/json";
-                        string json = string.Format("{{\"id\":\"{0}\",\"name\":\"{1}\",\"role\":\"{2}\",\"passcode\":\"{3}\"}}",
-                            currentHostDesktop.RemoteId, currentHostDesktop.Name, currentHostDesktop.Role, currentHostDesktop.Passcode);
-                        client.UploadString(endpoint, "POST", json);
+                    List<string> candidateUrls = GetRelayCandidateUrls();
+                    string json = string.Format("{{\"id\":\"{0}\",\"name\":\"{1}\",\"role\":\"{2}\",\"passcode\":\"{3}\"}}",
+                        currentHostDesktop.RemoteId, currentHostDesktop.Name, currentHostDesktop.Role, currentHostDesktop.Passcode);
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+                    foreach (string rUrl in candidateUrls)
+                    {
+                        try {
+                            string endpoint = rUrl.TrimEnd('/') + "/api/relay/register";
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(endpoint);
+                            req.Method = "POST";
+                            req.ContentType = "application/json";
+                            req.Timeout = 1500;
+                            req.ContentLength = bytes.Length;
+                            using (Stream os = req.GetRequestStream())
+                            {
+                                os.Write(bytes, 0, bytes.Length);
+                            }
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                            {
+                                if ((int)resp.StatusCode == 200)
+                                {
+                                    break;
+                                }
+                            }
+                        } catch { }
                     }
                 } catch { }
             });
@@ -3745,6 +4091,349 @@ namespace JDroidXDesk.Native
                 } catch { }
                 Thread.Sleep(pushSuccess ? 300 : 1500);
             }
+        }
+
+        // ======================================================================
+        // HOST DAEMON & BIDIRECTIONAL REMOTE ADMIN INPUT ENGINE
+        // ======================================================================
+
+        private void StartHostDaemon()
+        {
+            if (isHostDaemonRunning) return;
+            isHostDaemonRunning = true;
+            hostDaemonThread = new Thread(new ThreadStart(HostDaemonWorker)) { IsBackground = true };
+            hostDaemonThread.Start();
+        }
+
+        private void StopHostDaemon()
+        {
+            isHostDaemonRunning = false;
+            if (hostDaemonThread != null && hostDaemonThread.IsAlive)
+            {
+                try { hostDaemonThread.Join(400); } catch { }
+            }
+            hostDaemonThread = null;
+        }
+
+        private void HostDaemonWorker()
+        {
+            while (isHostDaemonRunning)
+            {
+                try
+                {
+                    // 1. Continuous screen frame push (Keyframe kept warm on Colab)
+                    PushLocalHostFrame();
+
+                    // 2. Poll remote admin input events (mouse, key, system commands)
+                    if (db != null && currentHostDesktop != null)
+                    {
+                        List<string> candidateUrls = GetRelayCandidateUrls();
+                        foreach (string rUrl in candidateUrls)
+                        {
+                            try
+                            {
+                                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/pull_input/" + currentHostDesktop.RemoteId);
+                                req.Method = "GET";
+                                req.Timeout = 800;
+                                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                                using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+                                {
+                                    string jsonStr = reader.ReadToEnd();
+                                    JavaScriptSerializer ser = new JavaScriptSerializer();
+                                    Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
+                                    if (dict != null && dict.ContainsKey("success") && Convert.ToBoolean(dict["success"]) && dict.ContainsKey("inputs"))
+                                    {
+                                        System.Collections.IEnumerable list = dict["inputs"] as System.Collections.IEnumerable;
+                                        if (list != null)
+                                        {
+                                            foreach (object item in list)
+                                            {
+                                                Dictionary<string, object> evDict = item as Dictionary<string, object>;
+                                                if (evDict != null)
+                                                {
+                                                    ExecuteRemoteInputEvent(evDict);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+
+                // Dynamic throttle: 80ms when actively serving, 600ms when idling
+                Thread.Sleep(isSessionActive ? 80 : 600);
+            }
+        }
+
+        private void PushLocalHostFrame()
+        {
+            try
+            {
+                if (db == null || db.Settings == null || db.Settings.connection == null || currentHostDesktop == null)
+                    return;
+
+                List<string> candidateUrls = GetRelayCandidateUrls();
+                int sw = Screen.PrimaryScreen.Bounds.Width;
+                int sh = Screen.PrimaryScreen.Bounds.Height;
+                int tw = Math.Min(1280, sw);
+                int th = (int)(sh * ((float)tw / sw));
+
+                string b64 = null;
+                using (Bitmap fullBmp = new Bitmap(sw, sh))
+                {
+                    using (Graphics g = Graphics.FromImage(fullBmp))
+                    {
+                        g.CopyFromScreen(0, 0, 0, 0, fullBmp.Size);
+                    }
+
+                    using (Bitmap scaledBmp = new Bitmap(tw, th))
+                    {
+                        using (Graphics sg = Graphics.FromImage(scaledBmp))
+                        {
+                            sg.InterpolationMode = InterpolationMode.Low;
+                            sg.DrawImage(fullBmp, 0, 0, tw, th);
+                        }
+
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            ImageCodecInfo jpgEncoder = GetCachedJpegEncoder();
+                            using (EncoderParameters ep = new EncoderParameters(1))
+                            using (EncoderParameter epParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 45L))
+                            {
+                                ep.Param[0] = epParam;
+                                if (jpgEncoder != null) scaledBmp.Save(ms, jpgEncoder, ep);
+                                else scaledBmp.Save(ms, ImageFormat.Jpeg);
+                            }
+                            b64 = Convert.ToBase64String(ms.ToArray());
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(b64))
+                {
+                    string postJson = string.Format("{{\"targetId\":\"{0}\",\"frame\":\"data:image/jpeg;base64,{1}\"}}",
+                        currentHostDesktop.RemoteId, b64);
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(postJson);
+
+                    foreach (string rUrl in candidateUrls)
+                    {
+                        try
+                        {
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_frame");
+                            req.Method = "POST";
+                            req.ContentType = "application/json";
+                            req.Timeout = 1200;
+                            req.ContentLength = bytes.Length;
+                            using (Stream os = req.GetRequestStream())
+                            {
+                                os.Write(bytes, 0, bytes.Length);
+                            }
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                            {
+                                cachedWinningRelayUrl = rUrl;
+                                lastWinningCheckTime = DateTime.Now;
+                                bytesTransferred += bytes.Length;
+                                break;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void ExecuteRemoteInputEvent(Dictionary<string, object> ev)
+        {
+            try
+            {
+                if (!ev.ContainsKey("type")) return;
+                string type = ev["type"] as string;
+
+                if (type == "mouse")
+                {
+                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : "move";
+                    int rx = ev.ContainsKey("x") ? Convert.ToInt32(ev["x"]) : 0;
+                    int ry = ev.ContainsKey("y") ? Convert.ToInt32(ev["y"]) : 0;
+                    string btn = ev.ContainsKey("btn") ? (ev["btn"] as string) : "Left";
+
+                    int hostSw = Screen.PrimaryScreen.Bounds.Width;
+                    int hostSh = Screen.PrimaryScreen.Bounds.Height;
+                    int tw = Math.Min(1280, hostSw);
+                    int th = (int)(hostSh * ((float)tw / hostSw));
+                    int realX = tw > 0 ? (int)((float)rx / tw * hostSw) : rx;
+                    int realY = th > 0 ? (int)((float)ry / th * hostSh) : ry;
+
+                    realX = Math.Max(0, Math.Min(hostSw - 1, realX));
+                    realY = Math.Max(0, Math.Min(hostSh - 1, realY));
+
+                    SetCursorPos(realX, realY);
+
+                    if (action == "down")
+                    {
+                        if (btn == "Right") mouse_event(MOUSEEVENTF_RIGHTDOWN, (uint)realX, (uint)realY, 0, 0);
+                        else if (btn == "Middle") mouse_event(MOUSEEVENTF_MIDDLEDOWN, (uint)realX, (uint)realY, 0, 0);
+                        else mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
+                    }
+                    else if (action == "up")
+                    {
+                        if (btn == "Right") mouse_event(MOUSEEVENTF_RIGHTUP, (uint)realX, (uint)realY, 0, 0);
+                        else if (btn == "Middle") mouse_event(MOUSEEVENTF_MIDDLEUP, (uint)realX, (uint)realY, 0, 0);
+                        else mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                    }
+                    else if (action == "dblclick")
+                    {
+                        mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
+                        mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                        Thread.Sleep(30);
+                        mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
+                        mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                    }
+                }
+                else if (type == "key")
+                {
+                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : "down";
+                    int keyCode = ev.ContainsKey("keyCode") ? Convert.ToInt32(ev["keyCode"]) : 0;
+                    if (keyCode > 0 && keyCode < 256)
+                    {
+                        byte vk = (byte)keyCode;
+                        if (action == "down") keybd_event(vk, 0, 0, 0);
+                        else if (action == "up") keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
+                    }
+                }
+                else if (type == "admin_cmd")
+                {
+                    string cmd = ev.ContainsKey("cmd") ? (ev["cmd"] as string) : "";
+                    ExecuteAdminCommand(cmd);
+                }
+            }
+            catch { }
+        }
+
+        private void ExecuteAdminCommand(string cmd)
+        {
+            if (string.IsNullOrEmpty(cmd)) return;
+            try
+            {
+                switch (cmd.ToLowerInvariant())
+                {
+                    case "taskmgr":
+                        Process.Start(new ProcessStartInfo("taskmgr.exe") { UseShellExecute = true });
+                        break;
+                    case "cmd":
+                        Process.Start(new ProcessStartInfo("cmd.exe") { UseShellExecute = true });
+                        break;
+                    case "powershell":
+                        Process.Start(new ProcessStartInfo("powershell.exe") { UseShellExecute = true });
+                        break;
+                    case "explorer":
+                        Process.Start(new ProcessStartInfo("explorer.exe") { UseShellExecute = true });
+                        break;
+                    case "lock":
+                        try { Process.Start("rundll32.exe", "user32.dll,LockWorkStation"); } catch { }
+                        break;
+                    case "cad":
+                        try { Process.Start("taskmgr.exe"); } catch { }
+                        break;
+                }
+            }
+            catch { }
+        }
+
+        private bool MapCanvasToRemote(int clientX, int clientY, out int remoteX, out int remoteY)
+        {
+            remoteX = 0;
+            remoteY = 0;
+            if (viewportCanvas == null || viewportCanvas.Width <= 0 || viewportCanvas.Height <= 0) return false;
+            int cw = viewportCanvas.Width;
+            int ch = viewportCanvas.Height;
+            int imgW = 1280;
+            int imgH = 720;
+            lock (frameLock)
+            {
+                if (latestRemoteFrame != null)
+                {
+                    imgW = latestRemoteFrame.Width;
+                    imgH = latestRemoteFrame.Height;
+                }
+            }
+
+            if (smartFitMode == "SmartFit")
+            {
+                float ratio = Math.Min((float)cw / imgW, (float)ch / imgH);
+                int targetW = (int)(imgW * ratio);
+                int targetH = (int)(imgH * ratio);
+                int targetX = (cw - targetW) / 2;
+                int targetY = (ch - targetH) / 2;
+                if (clientX < targetX || clientX > targetX + targetW || clientY < targetY || clientY > targetY + targetH)
+                    return false;
+                remoteX = (int)((clientX - targetX) / ratio);
+                remoteY = (int)((clientY - targetY) / ratio);
+            }
+            else if (smartFitMode == "Original 1:1")
+            {
+                remoteX = clientX;
+                remoteY = clientY;
+            }
+            else
+            {
+                remoteX = (int)((float)clientX / cw * imgW);
+                remoteY = (int)((float)clientY / ch * imgH);
+            }
+            return true;
+        }
+
+        private void SendRemoteInput(string eventType, Dictionary<string, object> details)
+        {
+            if (!isSessionActive || string.IsNullOrEmpty(activeReceiverTargetId)) return;
+            ThreadPool.QueueUserWorkItem(delegate {
+                try
+                {
+                    List<string> candidateUrls = GetRelayCandidateUrls();
+                    details["type"] = eventType;
+                    Dictionary<string, object> payload = new Dictionary<string, object>();
+                    payload["targetId"] = activeReceiverTargetId;
+                    payload["event"] = details;
+
+                    JavaScriptSerializer ser = new JavaScriptSerializer();
+                    string json = ser.Serialize(payload);
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+                    foreach (string rUrl in candidateUrls)
+                    {
+                        try
+                        {
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_input");
+                            req.Method = "POST";
+                            req.ContentType = "application/json";
+                            req.Timeout = 800;
+                            req.ContentLength = bytes.Length;
+                            using (Stream os = req.GetRequestStream())
+                            {
+                                os.Write(bytes, 0, bytes.Length);
+                            }
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                            {
+                                break;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            });
+        }
+
+        private void SendRemoteAdminCommand(string cmd)
+        {
+            Dictionary<string, object> ev = new Dictionary<string, object>();
+            ev["cmd"] = cmd;
+            SendRemoteInput("admin_cmd", ev);
         }
 
         private void StartFrameReceiver(string targetRemoteId)
@@ -3934,7 +4623,13 @@ namespace JDroidXDesk.Native
             trayMenu.MenuItems.Add("Open Antigravity RDS Workspace", (s, e) => { this.WindowState = FormWindowState.Normal; this.Show(); this.BringToFront(); });
             trayMenu.MenuItems.Add("Copy Address", (s, e) => { if (currentHostDesktop != null) Clipboard.SetText(currentHostDesktop.RemoteId); });
             trayMenu.MenuItems.Add("-");
-            trayMenu.MenuItems.Add("Exit", (s, e) => { trayIcon.Visible = false; Application.Exit(); });
+            trayMenu.MenuItems.Add("Exit", (s, e) => {
+                StopHostDaemon();
+                StopScreenStreamer();
+                StopFrameReceiver();
+                trayIcon.Visible = false;
+                Application.Exit();
+            });
 
             trayIcon = new NotifyIcon {
                 Text = "jDroid-X-Desk Console",
@@ -3977,8 +4672,81 @@ namespace JDroidXDesk.Native
             }
             else
             {
+                StopHostDaemon();
+                StopScreenStreamer();
+                StopFrameReceiver();
                 base.OnFormClosing(e);
             }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected && activeViewKey == "Console" && viewportCanvas != null && viewportCanvas.Visible && (txtTargetId == null || !txtTargetId.Focused))
+            {
+                Keys pureKey = keyData & Keys.KeyCode;
+                Dictionary<string, object> ev = new Dictionary<string, object>();
+                ev["action"] = "down";
+                ev["keyCode"] = (int)pureKey;
+                SendRemoteInput("key", ev);
+
+                ThreadPool.QueueUserWorkItem(delegate {
+                    Thread.Sleep(60);
+                    Dictionary<string, object> upEv = new Dictionary<string, object>();
+                    upEv["action"] = "up";
+                    upEv["keyCode"] = (int)pureKey;
+                    SendRemoteInput("key", upEv);
+                });
+
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            CheckClipboardForColabUrl();
+        }
+
+        private void CheckClipboardForColabUrl()
+        {
+            try
+            {
+                if (!isColabConnected && Clipboard.ContainsText())
+                {
+                    string clip = Clipboard.GetText().Trim();
+                    if (clip.Contains(".trycloudflare.com"))
+                    {
+                        int startIdx = clip.IndexOf("https://");
+                        if (startIdx < 0) startIdx = clip.IndexOf("http://");
+                        if (startIdx >= 0)
+                        {
+                            int endIdx = clip.IndexOfAny(new char[] { ' ', '\r', '\n', '\t' }, startIdx);
+                            clip = endIdx > startIdx ? clip.Substring(startIdx, endIdx - startIdx) : clip.Substring(startIdx);
+                        }
+                        clip = clip.TrimEnd('/');
+                        if (db != null && db.Settings != null && db.Settings.connection != null)
+                        {
+                            if (db.Settings.connection.relayServer != clip)
+                            {
+                                db.Settings.connection.relayServer = clip;
+                                db.Settings.connection.customDomain = clip;
+                                db.Save();
+                                db.SyncYaml();
+                                try {
+                                    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_tunnel.txt"), clip);
+                                } catch { }
+                                cachedWinningRelayUrl = clip;
+                                lastWinningCheckTime = DateTime.MinValue;
+                                ShowToast("Auto-detected active Colab Tunnel from clipboard: " + clip);
+                                ThreadPool.QueueUserWorkItem(delegate { PingColabServer(); });
+                                if (activeViewKey == "Console") BuildWelcomeCardsContent();
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
         }
     }
 }

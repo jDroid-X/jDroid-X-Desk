@@ -50,3 +50,13 @@ Viewport Screen:
 - SystemModel: deviceId, hardwareId, activeSession, telemetry
 - SessionModel: POST /api/sessions, PUT /api/sessions/:id
 - InvitesModel: POST /api/invites, GET /api/invites, PUT /api/invites/:id
+
+[CHANGE LOG: 2026-10-17 - Colab Cloudflare Relay Auto-Exchange & Persistent DB Sync]
+- Root Cause Identified: Colab server outputs a dynamic trycloudflare.com URL upon startup, but jDroid-X-Desk previously required manually navigating to the top status pill to enter it, and Colab's runner never wrote the discovered URL to colab_tunnel.txt or database.json. Neither Desk 1 nor Desk 2 had an automated channel to sync the dynamic URL without re-typing.
+- Fix 1 (Colab Relay & Tunnel Discovery Endpoint): Added PUBLIC_TUNNEL_URL in colab_relay_server.py / jDroid-X-Colab-Relay-Server.py with /api/relay/set_tunnel POST endpoint and colab_tunnel.txt persistence. /ping, /status, /api/settings now return public_url, relay_server, and tunnel_url.
+- Fix 2 (Colab Connection Runner Auto-Sync): run_yaml_connection.py automatically extracts the trycloudflare.com URL from cloudflared stdout, persists it to colab_tunnel.txt, notifies the local relay via /api/relay/set_tunnel, and updates windows_rdp.yaml and database.json.
+- Fix 3 (Full-Stack MVC Sync in Web App): server.js dynamically reads and merges colab_tunnel.txt into GET /api/settings and persists updates to database.json and colab_tunnel.txt. app.js test relay button tests the endpoint and immediately commits changes via PUT /api/settings.
+- Fix 4 (Screen-First Card 0 in Native C# Client): Added Card 0 ("⚡ Step 1: Connect to Google Colab Cloud Relay") directly to Welcome Cards screen above Share/Connect cards. Displays live status badge, editable URL input, 'Paste URL' button, 'Save & Connect' button, and 'Colab' launcher button.
+- Fix 5 (Smart Clipboard Ingestion & Auto-Connect): JDroidXDeskNative.cs OnActivated window focus event automatically checks clipboard for *.trycloudflare.com URLs and offers instant connection, saving to database.json, windows_rdp.yaml, and colab_tunnel.txt.
+- Fix 6 (Relay Dialog 4-Step Instructions): Updated ShowRelayConfigDialog() with the exact 4-step instructions from Colab output, pre-detecting clipboard URLs and turning the header and meter pills GREEN upon successful connection.
+
