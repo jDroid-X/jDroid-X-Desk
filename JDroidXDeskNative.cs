@@ -94,6 +94,8 @@ namespace JDroidXDesk.Native
         public string proxyServer { get; set; }
         public string idServer { get; set; }
         public string relayServer { get; set; }
+        public string colabNotebookUrl { get; set; }
+        public string githubBackendUrl { get; set; }
         public ConnectionSettings()
         {
             localPort = 7070;
@@ -101,7 +103,9 @@ namespace JDroidXDesk.Native
             colabCloudRelay = true;
             proxyServer = "";
             idServer = "relay.jdroid-x.net:21116";
-            relayServer = "relay.jdroid-x.net:21117";
+            relayServer = "http://127.0.0.1:8088";
+            colabNotebookUrl = "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
+            githubBackendUrl = "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main";
         }
     }
 
@@ -639,6 +643,8 @@ namespace JDroidXDesk.Native
 
             BuildAntigravityLayout();
             SetupTraySupervisor();
+            RegisterWithColabRelay();
+            SyncFromGitHubBackend();
 
             // Default State
             SwitchWorkspaceView("Console");
@@ -1470,6 +1476,7 @@ namespace JDroidXDesk.Native
             if (lblLocalId != null) lblLocalId.Text = "THIS DESK: " + currentHostDesktop.RemoteId;
             if (lblLocalPass != null) lblLocalPass.Text = "Pass: " + currentHostDesktop.Passcode;
             UpdateDrawerForCurrentView("Console");
+            RegisterWithColabRelay();
             ShowToast("Local Host switched to " + newHost.Name);
         }
 
@@ -1595,7 +1602,8 @@ namespace JDroidXDesk.Native
                         g.DrawString("IP Address : " + currentHostDesktop.Ip + ":7070 (AES-256)", fCode, bWhite, cardX + 20, cardY + 110);
                         g.DrawString("Role       : " + currentHostDesktop.Role, fCode, bMuted, cardX + 20, cardY + 135);
                     }
-                    g.DrawString("Relay Node : relay.jdroid-x.net:21116 (ONLINE)", fCode, bGreen, cardX + 20, cardY + 160);
+                    string relayStatus = (db.Settings.connection.colabCloudRelay ? "Colab Cloud Relay (" + db.Settings.connection.relayServer + ") [READY]" : "Direct P2P LAN Mode [READY]");
+                    g.DrawString("Relay Node : " + relayStatus, fCode, bGreen, cardX + 20, cardY + 160);
 
                     g.DrawString("Click any desktop node in the left drawer to connect.", fSub, bWhite, cardX + 20, cardY + 205);
                 }
@@ -2018,11 +2026,28 @@ namespace JDroidXDesk.Native
             }
             else if (category == "Connection")
             {
-                addH("RustDesk Network Configuration");
+                addH("Google Colab & Cloud Relay Configuration");
+                CheckBox cbColab = addCb("Enable Google Colab Central Cloud Relay", db.Settings.connection.colabCloudRelay);
+                cbColab.CheckedChanged += (s, e) => {
+                    db.Settings.connection.colabCloudRelay = cbColab.Checked;
+                    RegisterWithColabRelay();
+                };
+                TextBox tbRelay = addTb("Cloud Relay Server URL (e.g. http://127.0.0.1:8088 or https://*.trycloudflare.com)", db.Settings.connection.relayServer);
+                tbRelay.TextChanged += (s, e) => {
+                    db.Settings.connection.relayServer = tbRelay.Text.Trim();
+                    RegisterWithColabRelay();
+                };
+                TextBox tbColab = addTb("Google Colab Central Relay Notebook URL", db.Settings.connection.colabNotebookUrl);
+                tbColab.TextChanged += (s, e) => db.Settings.connection.colabNotebookUrl = tbColab.Text.Trim();
+                TextBox tbGh = addTb("GitHub Central Backend SSOT URL", db.Settings.connection.githubBackendUrl);
+                tbGh.TextChanged += (s, e) => {
+                    db.Settings.connection.githubBackendUrl = tbGh.Text.Trim();
+                    SyncFromGitHubBackend();
+                };
+
+                addH("Direct P2P & RustDesk Compatibility");
                 TextBox tbId = addTb("RustDesk ID Server (hbbs :21116)", db.Settings.connection.idServer);
                 tbId.TextChanged += (s, e) => db.Settings.connection.idServer = tbId.Text.Trim();
-                TextBox tbRelay = addTb("RustDesk Relay Server (hbbr :21117)", db.Settings.connection.relayServer);
-                tbRelay.TextChanged += (s, e) => db.Settings.connection.relayServer = tbRelay.Text.Trim();
             }
             else if (category == "Security")
             {
@@ -2044,6 +2069,53 @@ namespace JDroidXDesk.Native
                 addTb("Licensed Operator", db.Settings.account.username);
                 addTb("Cluster Tenant", db.Settings.account.enterpriseTenant);
             }
+        }
+
+        // ======================================================================
+        // GOOGLE COLAB CENTRAL CLOUD RELAY BROKER
+        // ======================================================================
+
+        private void RegisterWithColabRelay()
+        {
+            ThreadPool.QueueUserWorkItem(delegate {
+                try {
+                    if (db == null || db.Settings == null || db.Settings.connection == null || !db.Settings.connection.colabCloudRelay) return;
+                    if (currentHostDesktop == null) return;
+                    string relayUrl = db.Settings.connection.relayServer.TrimEnd('/');
+                    if (string.IsNullOrEmpty(relayUrl)) return;
+                    if (!relayUrl.StartsWith("http://") && !relayUrl.StartsWith("https://")) relayUrl = "http://" + relayUrl;
+                    string endpoint = relayUrl + "/api/relay/register";
+                    using (WebClient client = new WebClient()) {
+                        client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                        string json = string.Format("{{\"id\":\"{0}\",\"name\":\"{1}\",\"role\":\"{2}\",\"passcode\":\"{3}\"}}",
+                            currentHostDesktop.RemoteId, currentHostDesktop.Name, currentHostDesktop.Role, currentHostDesktop.Passcode);
+                        client.UploadString(endpoint, "POST", json);
+                    }
+                } catch { }
+            });
+        }
+
+        private void SyncFromGitHubBackend()
+        {
+            ThreadPool.QueueUserWorkItem(delegate {
+                try {
+                    if (db == null || db.Settings == null || db.Settings.connection == null) return;
+                    string ghUrl = db.Settings.connection.githubBackendUrl.TrimEnd('/');
+                    if (string.IsNullOrEmpty(ghUrl)) return;
+                    string manifestUrl = ghUrl + "/database.json";
+                    using (WebClient client = new WebClient()) {
+                        string cloudJson = client.DownloadString(manifestUrl);
+                        if (!string.IsNullOrEmpty(cloudJson)) {
+                            if (!File.Exists(db.DbPath)) {
+                                File.WriteAllText(db.DbPath, cloudJson);
+                                db.Load();
+                                SyncDynamicDesktopsFromDatabase();
+                            }
+                            db.AddLog("CLOUD_SYNC", "GITHUB_OK", "Connected to GitHub SSOT: " + ghUrl);
+                        }
+                    }
+                } catch { }
+            });
         }
 
         // ======================================================================

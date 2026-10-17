@@ -1,0 +1,22 @@
+# ==============================================================================
+# jDroid-X-Desk | Google Colab Centralized Cloud Relay & Remote Access Setup
+# Reference: https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai
+# ==============================================================================
+
+# Step 1: Clone or load jDroid-X Colab Cloud Relay Server & Config from GitHub Backend
+!wget -q -O colab_relay_server.py https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/colab_relay_server.py || echo "Local relay script used"
+!wget -q -O windows_rdp.yaml https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/windows_rdp.yaml || echo "Local yaml used"
+
+# Step 2: Download & Install Cloudflare Tunnel for secure public URL
+!wget -q -nc https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+!chmod +x cloudflared-linux-amd64
+
+# Step 3: Launch Central Relay Server on Port 8088
+import subprocess, time
+server_proc = subprocess.Popen(["python3", "colab_relay_server.py"])
+time.sleep(2)
+
+# Step 4: Expose Tunnel to the Internet
+print("\n>>> jDroid-X Colab Cloud Relay is now running!")
+print(">>> Copy the *.trycloudflare.com URL below into Desk 1 and Desk 2:\n")
+!./cloudflared-linux-amd64 tunnel --url http://127.0.0.1:8088

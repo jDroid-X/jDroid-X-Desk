@@ -1,0 +1,41 @@
+# ==============================================================================
+# jDroid-X-Desk | Windows RDP & Google Colab Central Relay Configuration
+# File: windows_rdp.yaml
+# ==============================================================================
+
+version: "2.0"
+service: "jDroid-X-Desk Remote Access Architecture"
+
+colab:
+  notebook_url: "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai#scrollTo=zWve46xh2msm"
+  drive_folder: "https://drive.google.com/drive/folders/1kXtyww13c5RssZosaG6yANZgyx7ojS7R"
+  runtime: "Python 3.10+ / Linux Ubuntu 22.04 LTS High-RAM"
+  relay_port: 8088
+  tunnel_provider: "cloudflared"
+
+connection_pipeline:
+  desk1:
+    role: "Client / Viewer (or Host)"
+    default_id: "984-102-391"
+    passcode: "892015"
+    protocol: "P2P WebRTC / HTTP Colab Relay Stream"
+  desk2:
+    role: "Host / Target (or Viewer)"
+    default_id: "710-224-900"
+    passcode: "441920"
+    protocol: "P2P WebRTC / HTTP Colab Relay Stream"
+  desk3:
+    role: "Cloud Workstation / RDP Peer"
+    default_id: "552-881-304"
+    passcode: "123456"
+
+security:
+  encryption: "AES-256-GCM"
+  auth_mode: "9-digit Machine ID + 6-digit Ephemeral Dynamic Passcode"
+  unattended_access: true
+  nat_traversal: "STUN / TURN / Colab Central In-Memory Frame Buffer"
+
+headless_crd:
+  auth_url: "https://remotedesktop.google.com/headless"
+  redirect_url: "https://remotedesktop.google.com/_/oauthredirect"
+  default_pin: "123456"

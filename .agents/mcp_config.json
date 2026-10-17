@@ -1,0 +1,38 @@
+{
+    "mcpServers": {
+        "ollama": {
+            "command": "cmd",
+            "args": [
+                "/c",
+                "python",
+                "E:\\jDroid-X-Ollama-USB\\ollama_mcp_local.py"
+            ]
+        },
+        "context7": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@upstash/context7-mcp",
+                "--api-key",
+                "UPSTASH_API_KEY_REQUIRED"
+            ]
+        },
+        "shadcn": {
+            "command": "npx",
+            "args": [
+                "shadcn@latest",
+                "mcp"
+            ]
+        },
+        "rea": {
+            "command": "cmd",
+            "args": [
+                "/c",
+                "npx",
+                "-y",
+                "rea-agents@latest",
+                "mcp"
+            ]
+        }
+    }
+}

@@ -6,8 +6,12 @@ ECHO ========================================================
 ECHO Target: https://github.com/jDroid-X/jDroid-X-Desk.git
 ECHO Branch: main
 ECHO.
+ECHO Staging files...
+git add -A
+git commit -m "jDroid-X 3-Tier Cloud Sync: GitHub Backend, Colab Relay & Remote Desks"
+ECHO.
 ECHO Pushing commits...
-git push -u origin main --force
+git push -u origin main
 ECHO.
 IF %ERRORLEVEL% EQU 0 (
     ECHO ========================================================
@@ -17,10 +21,9 @@ IF %ERRORLEVEL% EQU 0 (
 ) ELSE (
     ECHO.
     ECHO ========================================================
-    ECHO [NOTE] If prompted for GitHub login, please complete the login in your browser.
-    ECHO Retrying push with master branch...
+    ECHO [NOTE] Retrying push with force option...
     ECHO ========================================================
-    git push -u origin main:master --force
+    git push -u origin main --force
     start https://github.com/jDroid-X/jDroid-X-Desk
 )
 PAUSE
