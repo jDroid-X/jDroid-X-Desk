@@ -788,10 +788,14 @@ namespace JDroidXDesk.Native
         private Panel panelMetaGpu;
         private Panel panelMetaDisk;
         private Panel panelMetaStatus;
+        private Panel panelMetaHeartbeat;
         private Label lblMetaRamVal;
         private Label lblMetaGpuVal;
         private Label lblMetaDiskVal;
         private Label lblMetaStatusVal;
+        private Label lblMetaHeartbeatVal;
+        private int headerHeartbeatPulseFrame = 0;
+        private volatile bool isProbingCandidates = false;
 
         // Active State
         private string activeViewKey = "Console";
@@ -897,6 +901,10 @@ namespace JDroidXDesk.Native
             connectingAnimationTimer = new System.Windows.Forms.Timer();
             connectingAnimationTimer.Interval = 40; // 25 FPS smooth heartbeat animation
             connectingAnimationTimer.Tick += (s, e) => {
+                headerHeartbeatPulseFrame++;
+                if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
+                if (panelMetaStatus != null && !panelMetaStatus.IsDisposed) panelMetaStatus.Invalidate();
+
                 if (currentConnectionState == SessionConnectionState.Connecting)
                 {
                     connectingPulseFrame++;
@@ -907,6 +915,7 @@ namespace JDroidXDesk.Native
                     if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
                 }
             };
+            connectingAnimationTimer.Start();
 
             BuildAntigravityLayout();
             SetupTraySupervisor();
@@ -1229,8 +1238,8 @@ namespace JDroidXDesk.Native
             // Center: Colab Cloud Server Telemetry Indicators (Image 1 & 2 Specification)
             FlowLayoutPanel centerColabTelemetry = new FlowLayoutPanel
             {
-                Size = new Size(475, 36),
-                Location = new Point((topHeaderBar.Width - 475) / 2, 4),
+                Size = new Size(570, 36),
+                Location = new Point((topHeaderBar.Width - 570) / 2, 4),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 BackColor = Color.Transparent,
@@ -1244,11 +1253,13 @@ namespace JDroidXDesk.Native
             panelMetaGpu = CreateTelemetryBox("GPU RAM", colabGpuText, out lblMetaGpuVal, 0.00f);
             panelMetaDisk = CreateTelemetryBox("Disk", colabDiskText, out lblMetaDiskVal, 0.39f);
             panelMetaStatus = CreateStatusBox("Colab Relay", out lblMetaStatusVal);
+            panelMetaHeartbeat = CreateHeartbeatBox();
 
             centerColabTelemetry.Controls.Add(panelMetaRam);
             centerColabTelemetry.Controls.Add(panelMetaGpu);
             centerColabTelemetry.Controls.Add(panelMetaDisk);
             centerColabTelemetry.Controls.Add(panelMetaStatus);
+            centerColabTelemetry.Controls.Add(panelMetaHeartbeat);
 
             // Right: Antigravity IDE Layout View Toggles
             FlowLayoutPanel rightLayoutControls = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 6, 0, 0) };
@@ -1311,7 +1322,7 @@ namespace JDroidXDesk.Native
         {
             Panel box = new Panel { Size = new Size(115, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42), Cursor = Cursors.Hand };
             Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 7f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 2), AutoSize = true, Cursor = Cursors.Hand };
-            Label lVal = new Label { Text = isColabConnected ? "● ONLINE" : "○ OFFLINE", Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68), Location = new Point(4, 15), AutoSize = true, Cursor = Cursors.Hand };
+            Label lVal = new Label { Text = isColabConnected ? "● ONLINE" : (isProbingCandidates ? "◌ PINGING..." : "○ OFFLINE"), Font = new Font("Segoe UI", 7.6f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68)), Location = new Point(4, 15), AutoSize = true, Cursor = Cursors.Hand };
             valLabel = lVal;
             box.Controls.Add(lTitle);
             box.Controls.Add(lVal);
@@ -1325,10 +1336,108 @@ namespace JDroidXDesk.Native
             lVal.Click += (s, e) => ShowRelayConfigDialog();
 
             box.Paint += (s, e) => {
-                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(100, 116, 139);
-                using (Pen borderPen = new Pen(themeCol, 1.5f))
+                Graphics g = e.Graphics;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(100, 116, 139));
+                using (Pen borderPen = new Pen(themeCol, 1.2f))
                 {
-                    e.Graphics.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
+                    g.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
+                }
+                // 2cm (76px) indicator line at bottom of Colab Relay box
+                int barX = 4;
+                int barY = box.Height - 3;
+                int barW = 76; // Exact 2.0 cm on standard 96 DPI screen
+                Color barCol = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
+                using (SolidBrush b = new SolidBrush(barCol))
+                {
+                    g.FillRectangle(b, barX, barY, barW, 2);
+                }
+            };
+            return box;
+        }
+
+        private Panel CreateHeartbeatBox()
+        {
+            // Physical standard: 2.0 cm on 96 DPI screen = (2 / 2.54) * 96 = 75.6 pixels (~76px)
+            Panel box = new Panel { Size = new Size(86, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42), Cursor = Cursors.Hand };
+            Label lTitle = new Label { Text = "Heartbeat", Font = new Font("Segoe UI", 6.8f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 1), AutoSize = true, Cursor = Cursors.Hand };
+            Label lVal = new Label { Text = isColabConnected ? "ALIVE" : (isProbingCandidates ? "PROBING" : "OFFLINE"), Font = new Font("Segoe UI", 7.2f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68)), Location = new Point(4, 12), AutoSize = true, Cursor = Cursors.Hand };
+            lblMetaHeartbeatVal = lVal;
+            box.Controls.Add(lTitle);
+            box.Controls.Add(lVal);
+
+            ToolTip tt = new ToolTip();
+            tt.SetToolTip(box, "Google Colab Heartbeat Progress Bar (2cm: Red = Disconnected, Green = Connected)\nClick to configure Google Colab Relay Server");
+            tt.SetToolTip(lTitle, "Google Colab Heartbeat Progress Bar (2cm: Red = Disconnected, Green = Connected)\nClick to configure Google Colab Relay Server");
+            tt.SetToolTip(lVal, "Google Colab Heartbeat Progress Bar (2cm: Red = Disconnected, Green = Connected)\nClick to configure Google Colab Relay Server");
+
+            box.Click += (s, e) => ShowRelayConfigDialog();
+            lTitle.Click += (s, e) => ShowRelayConfigDialog();
+            lVal.Click += (s, e) => ShowRelayConfigDialog();
+
+            box.Paint += (s, e) => {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                Color borderColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(40, 53, 76));
+                using (Pen borderPen = new Pen(borderColor, 1f))
+                {
+                    g.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
+                }
+
+                // 2cm Physical Progress Bar (76px width at 96 DPI)
+                int barX = 4;
+                int barY = box.Height - 8;
+                int barW = 76; // Exactly 2.0 cm on standard display
+                int barH = 5;
+
+                // Trough background
+                using (SolidBrush troughBrush = new SolidBrush(Color.FromArgb(11, 17, 32)))
+                {
+                    g.FillRectangle(troughBrush, barX, barY, barW, barH);
+                }
+                using (Pen troughPen = new Pen(Color.FromArgb(51, 65, 85), 0.8f))
+                {
+                    g.DrawRectangle(troughPen, barX, barY, barW, barH);
+                }
+
+                if (isColabConnected)
+                {
+                    // Full Vibrant Emerald Green Bar with animated cardiac pulse pip
+                    using (SolidBrush greenBar = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                    {
+                        g.FillRectangle(greenBar, barX + 1, barY + 1, barW - 2, barH - 2);
+                    }
+                    // Animated Green Heartbeat Pip traversing the 76px bar
+                    int pipX = barX + 1 + (headerHeartbeatPulseFrame * 3) % Math.Max(1, barW - 8);
+                    using (SolidBrush pipBrush = new SolidBrush(Color.FromArgb(220, 252, 231)))
+                    {
+                        g.FillRectangle(pipBrush, pipX, barY, 4, barH);
+                    }
+                }
+                else if (isProbingCandidates)
+                {
+                    // Amber scanning progress sweep
+                    int sweepX = barX + 1 + (headerHeartbeatPulseFrame * 2) % Math.Max(1, barW - 14);
+                    using (SolidBrush amberSweep = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                    {
+                        g.FillRectangle(amberSweep, sweepX, barY + 1, 14, barH - 2);
+                    }
+                }
+                else
+                {
+                    // Disconnected: Red Bar with animated pulsing alpha and rhythmic blip
+                    int redAlpha = 140 + (int)(110 * Math.Abs(Math.Sin(headerHeartbeatPulseFrame * 0.15)));
+                    using (SolidBrush redBar = new SolidBrush(Color.FromArgb(redAlpha, 239, 68, 68)))
+                    {
+                        g.FillRectangle(redBar, barX + 1, barY + 1, barW - 2, barH - 2);
+                    }
+                    // Red Flatline / Blip tick
+                    int pipX = barX + 1 + (headerHeartbeatPulseFrame * 2) % Math.Max(1, barW - 8);
+                    using (SolidBrush blip = new SolidBrush(Color.FromArgb(254, 202, 202)))
+                    {
+                        g.FillRectangle(blip, pipX, barY + 1, 3, barH - 2);
+                    }
                 }
             };
             return box;
@@ -1442,6 +1551,60 @@ namespace JDroidXDesk.Native
 
                 pnl.Controls.Add(gbTunnel);
                 curY += 105;
+
+                // Quick Action Bar for Cloudflare URL & Colab Notebook
+                Button btnPasteClip = new Button { Text = "📋 Paste Tunnel URL", Size = new Size(140, 28), Location = new Point(20, curY), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(56, 189, 248), Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
+                btnPasteClip.FlatAppearance.BorderSize = 0;
+                btnPasteClip.Click += (s, e) => {
+                    try {
+                        if (Clipboard.ContainsText()) {
+                            string clip = Clipboard.GetText().Trim();
+                            if (clip.Contains(".trycloudflare.com") || clip.StartsWith("http")) {
+                                int startIdx = clip.IndexOf("https://");
+                                if (startIdx < 0) startIdx = clip.IndexOf("http://");
+                                if (startIdx >= 0) {
+                                    int endIdx = clip.IndexOfAny(new char[] { ' ', '\r', '\n', '\t' }, startIdx);
+                                    if (endIdx > startIdx) clip = clip.Substring(startIdx, endIdx - startIdx);
+                                    else clip = clip.Substring(startIdx);
+                                }
+                                tbRelay.Text = clip.TrimEnd('/');
+                                ShowToast("Pasted active tunnel URL from clipboard");
+                            } else {
+                                MessageBox.Show("Clipboard does not contain a valid URL. Copy the 'https://...trycloudflare.com' URL from your Colab notebook first.", "Paste Colab URL", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                        }
+                    } catch { }
+                };
+                pnl.Controls.Add(btnPasteClip);
+
+                Button btnOpenColab = new Button { Text = "🌐 Open Colab Notebook", Size = new Size(150, 28), Location = new Point(168, curY), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8f), Cursor = Cursors.Hand };
+                btnOpenColab.FlatAppearance.BorderSize = 0;
+                btnOpenColab.Click += (s, e) => {
+                    try {
+                        string nbUrl = db.Settings.connection.colabNotebookUrl ?? "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai#scrollTo=zWve46xh2msm";
+                        Process.Start(new ProcessStartInfo(nbUrl) { UseShellExecute = true });
+                    } catch { }
+                };
+                pnl.Controls.Add(btnOpenColab);
+
+                Button btnLocalRelay = new Button { Text = "▶ Local Relay (8088)", Size = new Size(130, 28), Location = new Point(326, curY), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8f), Cursor = Cursors.Hand };
+                btnLocalRelay.FlatAppearance.BorderSize = 0;
+                btnLocalRelay.Click += (s, e) => {
+                    try {
+                        string scriptPath = "colab_relay_server.py";
+                        if (!File.Exists(scriptPath)) {
+                            string alt = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_relay_server.py");
+                            if (File.Exists(alt)) scriptPath = alt;
+                        }
+                        if (File.Exists(scriptPath)) {
+                            Process.Start(new ProcessStartInfo("python", scriptPath + " 8088") { CreateNoWindow = true, UseShellExecute = false });
+                            tbRelay.Text = "http://127.0.0.1:8088";
+                            ShowToast("Starting local Colab Relay on 127.0.0.1:8088...");
+                        }
+                    } catch { }
+                };
+                pnl.Controls.Add(btnLocalRelay);
+                curY += 34;
 
                 Label lblStatusResult = new Label { Text = "Current Status: " + (isColabConnected ? "ONLINE (" + colabRamText + ")" : "OFFLINE"), Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68), Location = new Point(20, curY), AutoSize = true };
                 pnl.Controls.Add(lblStatusResult);
@@ -1577,6 +1740,29 @@ namespace JDroidXDesk.Native
             }
             catch { }
 
+            // 4b. Local tunnel text files (if written by scripts)
+            try
+            {
+                string[] tunnelFiles = new string[] { "colab_tunnel.txt", "colab_url.txt", "tunnel.txt" };
+                foreach (string tf in tunnelFiles)
+                {
+                    string p = tf;
+                    if (!File.Exists(p)) p = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, tf);
+                    if (File.Exists(p))
+                    {
+                        string line = File.ReadAllText(p).Trim();
+                        if (!string.IsNullOrEmpty(line) && line.Contains(".trycloudflare.com"))
+                        {
+                            if (!line.StartsWith("http")) line = "https://" + line;
+                            line = line.TrimEnd('/');
+                            if (!candidateUrls.Contains(line)) candidateUrls.Insert(0, line);
+                            break;
+                        }
+                    }
+                }
+            }
+            catch { }
+
             // 5. Local ports
             if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
             if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
@@ -1605,6 +1791,12 @@ namespace JDroidXDesk.Native
             int rtt = 0;
 
             try {
+                isProbingCandidates = true;
+                if (this.IsHandleCreated && !this.IsDisposed)
+                {
+                    this.BeginInvoke(new Action(() => UpdateColabTelemetryUI()));
+                }
+
                 List<string> candidateUrls = GetRelayCandidateUrls();
                 foreach (string rUrl in candidateUrls)
                 {
@@ -1612,7 +1804,7 @@ namespace JDroidXDesk.Native
                         Stopwatch sw = Stopwatch.StartNew();
                         HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/ping");
                         req.Method = "GET";
-                        req.Timeout = 1800;
+                        req.Timeout = 1200;
                         using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                         using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                         {
@@ -1644,6 +1836,9 @@ namespace JDroidXDesk.Native
                     }
                 }
             } catch { }
+            finally {
+                isProbingCandidates = false;
+            }
 
             try {
                 if (this.IsHandleCreated && !this.IsDisposed)
@@ -1667,13 +1862,19 @@ namespace JDroidXDesk.Native
             if (lblMetaDiskVal != null && !lblMetaDiskVal.IsDisposed) lblMetaDiskVal.Text = colabDiskText;
             if (lblMetaStatusVal != null && !lblMetaStatusVal.IsDisposed)
             {
-                lblMetaStatusVal.Text = isColabConnected ? "● ONLINE" : "○ OFFLINE";
-                lblMetaStatusVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+                lblMetaStatusVal.Text = isColabConnected ? string.Format("● ONLINE ({0}ms)", lastMeasuredRttMs) : (isProbingCandidates ? "◌ PINGING..." : "○ OFFLINE");
+                lblMetaStatusVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
+            }
+            if (lblMetaHeartbeatVal != null && !lblMetaHeartbeatVal.IsDisposed)
+            {
+                lblMetaHeartbeatVal.Text = isColabConnected ? string.Format("ALIVE ({0}ms)", lastMeasuredRttMs) : (isProbingCandidates ? "PROBING" : "OFFLINE");
+                lblMetaHeartbeatVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
             }
             if (panelMetaRam != null && !panelMetaRam.IsDisposed) panelMetaRam.Invalidate();
             if (panelMetaGpu != null && !panelMetaGpu.IsDisposed) panelMetaGpu.Invalidate();
             if (panelMetaDisk != null && !panelMetaDisk.IsDisposed) panelMetaDisk.Invalidate();
             if (panelMetaStatus != null && !panelMetaStatus.IsDisposed) panelMetaStatus.Invalidate();
+            if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
         }
 
         private Button CreateLayoutIconBtn(string icon, string tooltip, EventHandler onClick, bool isActive)
