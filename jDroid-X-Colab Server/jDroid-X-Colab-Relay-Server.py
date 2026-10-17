@@ -24,9 +24,33 @@ INPUT_BUFFERS = {}
 ACTIVE_SESSIONS = {}
 
 def get_system_telemetry():
-    ram_str = "1.2 / 12.7 GB"
-    disk_str = "44.2 / 112.6 GB"
-    gpu_str = "0.0 / 15.0 GB"
+    ram_str = "--- / ---"
+    disk_str = "-- / --"
+    gpu_str = "N/A (CPU Mode)"
+    # Windows RAM detection via ctypes
+    try:
+        import ctypes
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("sullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+        stat = MEMORYSTATUSEX()
+        stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+            used = stat.ullTotalPhys - stat.ullAvailPhys
+            ram_str = f"{used / (1024**3):.1f} / {stat.ullTotalPhys / (1024**3):.1f} GB"
+    except Exception:
+        pass
+
+    # Linux RAM detection via /proc/meminfo
     try:
         if os.path.exists('/proc/meminfo'):
             with open('/proc/meminfo', 'r') as f:
@@ -36,15 +60,20 @@ def get_system_telemetry():
                 ram_str = f"{(mem_total - mem_avail)/(1024*1024):.1f} / {mem_total/(1024*1024):.1f} GB"
     except Exception:
         pass
+
+    # Disk usage (Windows drive or Linux root)
     try:
         import shutil
-        total, used, free = shutil.disk_usage('/')
+        target_dir = os.path.splitdrive(os.getcwd())[0] + os.path.sep if os.name == 'nt' else '/'
+        total, used, free = shutil.disk_usage(target_dir)
         disk_str = f"{used/(1024**3):.1f} / {total/(1024**3):.1f} GB"
     except Exception:
         pass
+
+    # GPU detection via nvidia-smi
     try:
         import subprocess
-        out = subprocess.check_output(["nvidia-smi", "--query-gpu=memory.used,memory.total", "--format=csv,nounits,noheader"]).decode().strip()
+        out = subprocess.check_output(["nvidia-smi", "--query-gpu=memory.used,memory.total", "--format=csv,nounits,noheader"], stderr=subprocess.DEVNULL).decode().strip()
         parts = [p.strip() for p in out.split(',')]
         if len(parts) >= 2:
             gpu_str = f"{float(parts[0])/1024:.1f} / {float(parts[1])/1024:.1f} GB"

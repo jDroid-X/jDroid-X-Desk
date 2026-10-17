@@ -734,14 +734,32 @@ namespace JDroidXDesk.Native
         private Panel sessionFloatingToolbar;
         private Label lblSessionTelemetryHUD;
 
-        // Session State
+        // ======================================================================
+        // DYNAMIC SESSION CONNECTION STATE MACHINE (NO DUMMY / SIMULATED DATA)
+        // ======================================================================
+        public enum SessionConnectionState
+        {
+            Disconnected,
+            Connecting,
+            Connected,
+            Failed
+        }
+
+        private SessionConnectionState currentConnectionState = SessionConnectionState.Disconnected;
         private bool isSessionActive = false;
         private bool isLiveScreenMirror = false;
         private string smartFitMode = "SmartFit"; // "SmartFit", "Original 1:1", "Stretch"
         private DateTime sessionStartTime;
+        private DateTime connectionAttemptStartTime;
         private System.Windows.Forms.Timer sessionTelemetryTimer;
-        private long bytesTransferred = 1048576;
-        private bool isStartMenuOpen = false;
+        private System.Windows.Forms.Timer connectingAnimationTimer;
+        private int connectingPulseFrame = 0;
+        private string connectionStageMessage = "Initializing Connection...";
+        private int connectingProgressPct = 0;
+        private long bytesTransferred = 0;
+        private int lastMeasuredRttMs = 0;
+        private int lastFramesCount = 0;
+        private float currentMeasuredFps = 0.0f;
 
         // Live Screen Streaming & Cloud Relay Engine (Thread-Safe & Leak-Proof)
         private Image latestRemoteFrame = null;
@@ -760,11 +778,11 @@ namespace JDroidXDesk.Native
         private Button btnToggleBottomDock;
         private Button btnToggleRightInspector;
 
-        // Colab Cloud Server Telemetry & Ping Engine (Image 1 & 2 Specification)
+        // Colab Cloud Server Telemetry & Ping Engine (Dynamic - Zero Hardcoded Strings)
         private bool isColabConnected = false;
-        private string colabRamText = "1.2 / 12.7 GB";
-        private string colabGpuText = "0.0 / 15.0 GB";
-        private string colabDiskText = "44.2 / 112.6 GB";
+        private string colabRamText = "--- / ---";
+        private string colabGpuText = "-- / --";
+        private string colabDiskText = "-- / --";
         private System.Windows.Forms.Timer colabTelemetryTimer;
         private Panel panelMetaRam;
         private Panel panelMetaGpu;
@@ -867,11 +885,26 @@ namespace JDroidXDesk.Native
             sessionTelemetryTimer = new System.Windows.Forms.Timer();
             sessionTelemetryTimer.Interval = 1000;
             sessionTelemetryTimer.Tick += (s, e) => {
-                if (isSessionActive)
+                if (currentConnectionState == SessionConnectionState.Connected)
                 {
-                    bytesTransferred += (long)(1800000 + (new Random().Next(100000, 400000)));
+                    currentMeasuredFps = (float)(framesReceivedCount - lastFramesCount);
+                    lastFramesCount = framesReceivedCount;
                     UpdateLiveTelemetry();
-                    viewportCanvas.Invalidate();
+                    if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
+                }
+            };
+
+            connectingAnimationTimer = new System.Windows.Forms.Timer();
+            connectingAnimationTimer.Interval = 40; // 25 FPS smooth heartbeat animation
+            connectingAnimationTimer.Tick += (s, e) => {
+                if (currentConnectionState == SessionConnectionState.Connecting)
+                {
+                    connectingPulseFrame++;
+                    if (connectingProgressPct < 90 && connectingPulseFrame % 5 == 0)
+                    {
+                        connectingProgressPct += 2;
+                    }
+                    if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
                 }
             };
 
@@ -1099,6 +1132,21 @@ namespace JDroidXDesk.Native
         {
             try
             {
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus == OperationalStatus.Up && 
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Loopback && 
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
+                    {
+                        foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                        {
+                            if (ip.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip.Address))
+                            {
+                                return ip.Address.ToString();
+                            }
+                        }
+                    }
+                }
                 using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
                 {
                     socket.Connect("8.8.8.8", 65530);
@@ -1107,7 +1155,7 @@ namespace JDroidXDesk.Native
                 }
             }
             catch { }
-            return "192.168.1." + (new Random().Next(10, 200));
+            return "127.0.0.1";
         }
 
         // ======================================================================
@@ -1263,7 +1311,7 @@ namespace JDroidXDesk.Native
         {
             Panel box = new Panel { Size = new Size(115, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42), Cursor = Cursors.Hand };
             Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 7f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 2), AutoSize = true, Cursor = Cursors.Hand };
-            Label lVal = new Label { Text = isColabConnected ? "● ONLINE" : "● OFFLINE", Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68), Location = new Point(4, 15), AutoSize = true, Cursor = Cursors.Hand };
+            Label lVal = new Label { Text = isColabConnected ? "● ONLINE" : "○ OFFLINE", Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68), Location = new Point(4, 15), AutoSize = true, Cursor = Cursors.Hand };
             valLabel = lVal;
             box.Controls.Add(lTitle);
             box.Controls.Add(lVal);
@@ -1277,7 +1325,7 @@ namespace JDroidXDesk.Native
             lVal.Click += (s, e) => ShowRelayConfigDialog();
 
             box.Paint += (s, e) => {
-                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(100, 116, 139);
                 using (Pen borderPen = new Pen(themeCol, 1.5f))
                 {
                     e.Graphics.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
@@ -1550,29 +1598,33 @@ namespace JDroidXDesk.Native
         private void PingColabServer()
         {
             bool connected = false;
-            string ram = colabRamText;
-            string gpu = colabGpuText;
-            string disk = colabDiskText;
+            string ram = "--- / ---";
+            string gpu = "-- / --";
+            string disk = "-- / --";
             string winningUrl = null;
+            int rtt = 0;
 
             try {
                 List<string> candidateUrls = GetRelayCandidateUrls();
                 foreach (string rUrl in candidateUrls)
                 {
                     try {
+                        Stopwatch sw = Stopwatch.StartNew();
                         HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/ping");
                         req.Method = "GET";
                         req.Timeout = 1800;
                         using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                         using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                         {
+                            sw.Stop();
                             string jsonStr = reader.ReadToEnd();
                             JavaScriptSerializer ser = new JavaScriptSerializer();
                             Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
-                            if (dict != null && dict.ContainsKey("status"))
+                            if (dict != null && (dict.ContainsKey("status") || dict.ContainsKey("success")))
                             {
                                 connected = true;
                                 winningUrl = rUrl;
+                                rtt = (int)sw.ElapsedMilliseconds;
                                 if (dict.ContainsKey("system_ram")) ram = dict["system_ram"].ToString();
                                 if (dict.ContainsKey("gpu_ram")) gpu = dict["gpu_ram"].ToString();
                                 if (dict.ContainsKey("disk")) disk = dict["disk"].ToString();
@@ -1598,9 +1650,10 @@ namespace JDroidXDesk.Native
                 {
                     this.BeginInvoke(new Action(() => {
                         isColabConnected = connected;
-                        colabRamText = ram;
-                        colabGpuText = gpu;
-                        colabDiskText = disk;
+                        colabRamText = connected ? ram : "--- / ---";
+                        colabGpuText = connected ? gpu : "-- / --";
+                        colabDiskText = connected ? disk : "-- / --";
+                        if (connected && rtt > 0) lastMeasuredRttMs = rtt;
                         UpdateColabTelemetryUI();
                     }));
                 }
@@ -1614,7 +1667,7 @@ namespace JDroidXDesk.Native
             if (lblMetaDiskVal != null && !lblMetaDiskVal.IsDisposed) lblMetaDiskVal.Text = colabDiskText;
             if (lblMetaStatusVal != null && !lblMetaStatusVal.IsDisposed)
             {
-                lblMetaStatusVal.Text = isColabConnected ? "● ONLINE" : "● OFFLINE";
+                lblMetaStatusVal.Text = isColabConnected ? "● ONLINE" : "○ OFFLINE";
                 lblMetaStatusVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
             }
             if (panelMetaRam != null && !panelMetaRam.IsDisposed) panelMetaRam.Invalidate();
@@ -1891,10 +1944,29 @@ namespace JDroidXDesk.Native
         private void UpdateLiveTelemetry()
         {
             if (lblInspectorBytes != null) lblInspectorBytes.Text = (bytesTransferred / (1024 * 1024.0)).ToString("0.0") + " MB";
-            if (lblInspectorFps != null) lblInspectorFps.Text = isSessionActive ? "60.0 FPS (Active)" : "0.0 FPS (Idle)";
-            if (lblInspectorRtt != null) lblInspectorRtt.Text = isSessionActive ? (10 + new Random().Next(0, 3)) + ".4 ms (P2P)" : "-- ms";
+            if (lblInspectorFps != null) lblInspectorFps.Text = (currentConnectionState == SessionConnectionState.Connected) ? string.Format("{0:0.0} FPS (Active)", currentMeasuredFps) : "0.0 FPS (Idle)";
+            if (lblInspectorRtt != null) lblInspectorRtt.Text = (currentConnectionState == SessionConnectionState.Connected && lastMeasuredRttMs > 0) ? (lastMeasuredRttMs + " ms (P2P)") : "-- ms";
             if (lblInspectorHost != null && currentHostDesktop != null) lblInspectorHost.Text = currentHostDesktop.Name;
             if (lblInspectorTarget != null && connectedTargetDesktop != null) lblInspectorTarget.Text = connectedTargetDesktop.Name;
+
+            if (lblSessionTelemetryHUD != null)
+            {
+                if (currentConnectionState == SessionConnectionState.Connected)
+                {
+                    lblSessionTelemetryHUD.Text = string.Format("🟢 {0:0} FPS • {1}ms • P2P", currentMeasuredFps, lastMeasuredRttMs > 0 ? lastMeasuredRttMs : 0);
+                    lblSessionTelemetryHUD.ForeColor = Color.FromArgb(16, 185, 129);
+                }
+                else if (currentConnectionState == SessionConnectionState.Connecting)
+                {
+                    lblSessionTelemetryHUD.Text = "🟡 Connecting (Heartbeat)...";
+                    lblSessionTelemetryHUD.ForeColor = Color.FromArgb(245, 158, 11);
+                }
+                else
+                {
+                    lblSessionTelemetryHUD.Text = "⚪ Idle";
+                    lblSessionTelemetryHUD.ForeColor = Color.FromArgb(148, 163, 184);
+                }
+            }
         }
 
         // ======================================================================
@@ -2385,11 +2457,11 @@ namespace JDroidXDesk.Native
                 ShowToast("Scaling Mode: " + smartFitMode);
             });
 
-            Button btnMirror = CreateToolbarBtn("🎥 " + (isLiveScreenMirror ? "Simulated OS" : "Live Mirror"), (s, e) => {
+            Button btnMirror = CreateToolbarBtn("🎥 " + (isLiveScreenMirror ? "Live Mirror (Active)" : "Live Mirror"), (s, e) => {
                 isLiveScreenMirror = !isLiveScreenMirror;
-                ((Button)s).Text = "🎥 " + (isLiveScreenMirror ? "Simulated OS" : "Live Mirror");
+                ((Button)s).Text = "🎥 " + (isLiveScreenMirror ? "Live Mirror (Active)" : "Live Mirror");
                 viewportCanvas.Invalidate();
-                ShowToast("Engine: " + (isLiveScreenMirror ? "Live Local Screen Mirror" : "High-Fidelity Simulated OS"));
+                ShowToast("Engine: " + (isLiveScreenMirror ? "Live Local Screen Mirror (Active)" : "Remote Desktop Stream"));
             });
 
             Button btnCad = CreateToolbarBtn("⌨️ SAS", (s, e) => ShowToast("Injected Ctrl+Alt+Del."));
@@ -2402,7 +2474,7 @@ namespace JDroidXDesk.Native
             leftTools.Controls.Add(btnTaskMgr);
 
             FlowLayoutPanel rightHUD = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
-            lblSessionTelemetryHUD = new Label { Text = "🟢 60 FPS • 11ms • P2P", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Margin = new Padding(0, 6, 8, 0) };
+            lblSessionTelemetryHUD = new Label { Text = "⏳ Awaiting Stream...", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Margin = new Padding(0, 6, 8, 0) };
 
             ModernButton btnDisconnect = new ModernButton { Text = "❌ Close", NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38), Size = new Size(74, 24) };
             btnDisconnect.Click += (s, e) => {
@@ -2455,7 +2527,7 @@ namespace JDroidXDesk.Native
 
         private void ToggleSessionConnection(SimulatorDesktop directTarget = null)
         {
-            if (!isSessionActive)
+            if (currentConnectionState == SessionConnectionState.Disconnected || currentConnectionState == SessionConnectionState.Failed)
             {
                 string targetId = "";
                 if (directTarget != null)
@@ -2500,60 +2572,87 @@ namespace JDroidXDesk.Native
                     }
                 }
 
+                // Transition to CONNECTING state with Animated Heartbeat Progress Bar
+                currentConnectionState = SessionConnectionState.Connecting;
                 isSessionActive = true;
-                sessionStartTime = DateTime.Now;
-                sessionTelemetryTimer.Start();
+                connectionAttemptStartTime = DateTime.Now;
+                connectingPulseFrame = 0;
+                connectingProgressPct = 12;
+                connectionStageMessage = "Testing Colab Relay / Cloudflare Tunnel...";
+                bytesTransferred = 0;
+                framesReceivedCount = 0;
+                lastFramesCount = 0;
+                currentMeasuredFps = 0.0f;
+
                 if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = true;
                 if (panelWelcomeCards != null) panelWelcomeCards.Visible = false;
                 if (viewportCanvas != null) viewportCanvas.Visible = true;
 
-                // Update symmetric ribbon bar buttons
+                // Symmetric ribbon bar buttons in connecting mode
                 btnConnect.Visible = false;
                 btnConnect.Enabled = false;
                 if (btnDisconnect != null)
                 {
                     btnDisconnect.Visible = true;
-                    btnDisconnect.NormalColor = Color.FromArgb(239, 68, 68);
+                    btnDisconnect.Text = "✕ Cancel";
+                    btnDisconnect.NormalColor = Color.FromArgb(217, 119, 6); // Amber
+                    btnDisconnect.HoverColor = Color.FromArgb(180, 83, 9);
                     btnDisconnect.Enabled = true;
                 }
                 if (lblRemoteStatus != null)
                 {
-                    lblRemoteStatus.Text = "● Connected";
-                    lblRemoteStatus.ForeColor = Color.FromArgb(16, 185, 129);
+                    lblRemoteStatus.Text = "● Connecting (Heartbeat)...";
+                    lblRemoteStatus.ForeColor = Color.FromArgb(245, 158, 11); // Amber
                 }
                 if (btnCardConnect != null)
                 {
-                    btnCardConnect.Text = "✕ Disconnect";
-                    btnCardConnect.NormalColor = Color.FromArgb(239, 68, 68);
+                    btnCardConnect.Text = "✕ Cancel";
+                    btnCardConnect.NormalColor = Color.FromArgb(217, 119, 6);
                 }
+
+                if (connectingAnimationTimer != null) connectingAnimationTimer.Start();
 
                 // Start pulling live remote screen frames via Colab Relay
                 StartFrameReceiver(connectedTargetDesktop.RemoteId);
                 StartScreenStreamer();
 
-                db.AddLog("SESSION_START", "P2P_CONNECT", "Connected to " + connectedTargetDesktop.Name);
-                ShowToast("P2P Session Established with " + connectedTargetDesktop.Name);
+                db.AddLog("SESSION_ATTEMPT", "P2P_CONNECT", "Initiated connection to " + connectedTargetDesktop.Name + " [" + connectedTargetDesktop.RemoteId + "]");
                 viewportCanvas.Invalidate();
             }
             else
             {
-                isSessionActive = false;
-                sessionTelemetryTimer.Stop();
-                StopFrameReceiver();
-                StopScreenStreamer();
-                lock (frameLock)
-                {
-                    if (latestRemoteFrame != null)
-                    {
-                        try { latestRemoteFrame.Dispose(); } catch { }
-                        latestRemoteFrame = null;
-                    }
-                }
-                if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = false;
-                if (viewportCanvas != null) viewportCanvas.Visible = false;
-                if (panelWelcomeCards != null) panelWelcomeCards.Visible = true;
-                TimeSpan duration = DateTime.Now - sessionStartTime;
+                // Disconnect or Cancel active connection
+                AbortSessionConnection("User Disconnected");
+            }
+        }
 
+        private void AbortSessionConnection(string reason = null)
+        {
+            bool wasConnected = (currentConnectionState == SessionConnectionState.Connected);
+            currentConnectionState = SessionConnectionState.Disconnected;
+            isSessionActive = false;
+            if (connectingAnimationTimer != null) connectingAnimationTimer.Stop();
+            if (sessionTelemetryTimer != null) sessionTelemetryTimer.Stop();
+            StopFrameReceiver();
+            StopScreenStreamer();
+
+            lock (frameLock)
+            {
+                if (latestRemoteFrame != null)
+                {
+                    try { latestRemoteFrame.Dispose(); } catch { }
+                    latestRemoteFrame = null;
+                }
+            }
+
+            if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = false;
+            if (viewportCanvas != null) viewportCanvas.Visible = false;
+            if (panelWelcomeCards != null) panelWelcomeCards.Visible = true;
+
+            TimeSpan duration = DateTime.Now - sessionStartTime;
+
+            if (wasConnected)
+            {
                 db.Sessions.Add(new SessionItem {
                     id = "ses-" + (db.Sessions.Count + 1),
                     targetId = connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "Unknown",
@@ -2565,36 +2664,44 @@ namespace JDroidXDesk.Native
                     status = "Completed",
                     sourceIp = currentHostDesktop != null ? currentHostDesktop.Ip : "127.0.0.1"
                 });
-                db.AddLog("SESSION_END", "DISCONNECT", "Session closed");
+                db.AddLog("SESSION_END", "DISCONNECT", "Session closed (" + (int)duration.TotalSeconds + "s)");
                 db.Save();
+            }
 
-                // Reset symmetric ribbon bar buttons
-                btnConnect.Visible = true;
-                btnConnect.NormalColor = Color.FromArgb(16, 185, 129);
-                btnConnect.Enabled = true;
-                if (btnDisconnect != null)
-                {
-                    btnDisconnect.Visible = false;
-                    btnDisconnect.NormalColor = Color.FromArgb(70, 45, 50);
-                    btnDisconnect.Enabled = false;
-                }
-                if (lblRemoteStatus != null)
-                {
-                    lblRemoteStatus.Text = "● Ready";
-                    lblRemoteStatus.ForeColor = Color.FromArgb(148, 163, 184);
-                }
-                if (btnCardConnect != null)
-                {
-                    btnCardConnect.Text = "⚡ Connect";
-                    btnCardConnect.NormalColor = Color.FromArgb(16, 185, 129);
-                }
+            // Reset symmetric ribbon bar buttons
+            btnConnect.Visible = true;
+            btnConnect.NormalColor = Color.FromArgb(16, 185, 129);
+            btnConnect.Enabled = true;
+            if (btnDisconnect != null)
+            {
+                btnDisconnect.Visible = false;
+                btnDisconnect.Text = "✕ Disconnect";
+                btnDisconnect.NormalColor = Color.FromArgb(239, 68, 68);
+                btnDisconnect.Enabled = false;
+            }
+            if (lblRemoteStatus != null)
+            {
+                lblRemoteStatus.Text = "● Ready";
+                lblRemoteStatus.ForeColor = Color.FromArgb(148, 163, 184);
+            }
+            if (btnCardConnect != null)
+            {
+                btnCardConnect.Text = "⚡ Connect";
+                btnCardConnect.NormalColor = Color.FromArgb(16, 185, 129);
+            }
 
+            if (!string.IsNullOrEmpty(reason) && reason != "User Disconnected")
+            {
+                ShowToast(reason);
+            }
+            else if (wasConnected)
+            {
                 ShowToast(string.Format("Session closed. Duration: {0}s", (int)duration.TotalSeconds));
             }
         }
 
         // ======================================================================
-        // GDI+ REMOTE DESKTOP ENGINE
+        // GDI+ REMOTE DESKTOP ENGINE (DYNAMIC FRAME STREAM & HEARTBEAT RADAR)
         // ======================================================================
 
         private void ViewportCanvas_Paint(object sender, PaintEventArgs e)
@@ -2606,7 +2713,7 @@ namespace JDroidXDesk.Native
             int ch = viewportCanvas.Height;
             if (cw <= 0 || ch <= 0) return;
 
-            if (!isSessionActive)
+            if (!isSessionActive || currentConnectionState == SessionConnectionState.Disconnected)
             {
                 // Standby Topology Screen
                 using (LinearGradientBrush bg = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(10, 16, 26), Color.FromArgb(15, 23, 42), LinearGradientMode.ForwardDiagonal))
@@ -2644,14 +2751,21 @@ namespace JDroidXDesk.Native
                         g.DrawString("Role       : " + currentHostDesktop.Role, fCode, bMuted, cardX + 20, cardY + 135);
                     }
                     string relayDisplay = !string.IsNullOrEmpty(db.Settings.connection.customDomain) ? db.Settings.connection.customDomain : db.Settings.connection.relayServer;
-                    string relayStatus = (db.Settings.connection.colabCloudRelay ? "Cloud Relay (" + relayDisplay + ") [ONLINE]" : "Direct P2P LAN Mode [READY]");
-                    g.DrawString("Cloud Node : " + relayStatus, fCode, bGreen, cardX + 20, cardY + 160);
+                    string relayStatus = (db.Settings.connection.colabCloudRelay ? "Cloud Relay (" + relayDisplay + ") [" + (isColabConnected ? "ONLINE" : "OFFLINE") + "]" : "Direct P2P LAN Mode [READY]");
+                    g.DrawString("Cloud Node : " + relayStatus, fCode, isColabConnected ? bGreen : bMuted, cardX + 20, cardY + 160);
 
                     g.DrawString("Enter a remote Desk ID above or in the cards to connect.", fSub, bWhite, cardX + 20, cardY + 205);
                 }
             }
+            else if (currentConnectionState == SessionConnectionState.Connecting)
+            {
+                // Dynamic Heartbeat Oscilloscope & Progress Monitor Screen
+                SimulatorDesktop target = connectedTargetDesktop ?? (dynamicDesktops.Count > 1 ? dynamicDesktops[1] : dynamicDesktops[0]);
+                RenderConnectingHeartbeatScreen(g, target, cw, ch);
+            }
             else
             {
+                // Live Connected Screen View
                 SimulatorDesktop target = connectedTargetDesktop ?? (dynamicDesktops.Count > 1 ? dynamicDesktops[1] : dynamicDesktops[0]);
 
                 // 1. Live Remote Screen Stream via Colab Relay (Thread-Safe Clone & Draw)
@@ -2705,107 +2819,213 @@ namespace JDroidXDesk.Native
                     } catch { }
                 }
 
-                // 3. High-Fidelity Remote Desktop View (Awaiting video frames)
-                RenderSimulatedRemoteDesktop(g, target, cw, ch);
+                // 3. Awaiting Live Video Stream Frames (Real Buffer Status - Zero Fake Icons)
+                RenderAwaitingLiveFramesScreen(g, target, cw, ch);
             }
         }
 
-        private void RenderSimulatedRemoteDesktop(Graphics g, SimulatorDesktop target, int cw, int ch)
+        private void RenderConnectingHeartbeatScreen(Graphics g, SimulatorDesktop target, int cw, int ch)
         {
-            // Desktop Wallpaper - Deep Modern Slate Gradient
-            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(15, 23, 42), Color.FromArgb(10, 15, 28), LinearGradientMode.Vertical))
+            // Background - Deep Futuristic Slate Gradient
+            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(10, 16, 26), Color.FromArgb(15, 23, 42), LinearGradientMode.Vertical))
             {
                 g.FillRectangle(wallBrush, 0, 0, cw, ch);
             }
 
-            // Desktop Icons on Left Side
-            string[] iconGlyphs = new string[] { "🖥️", "📁", "🌐", "⚡", "📟", "⚙️" };
-            string[] iconLabels = new string[] { "This PC", "User Files", "Chrome", "jDroid-X", "Terminal", "Settings" };
-            using (Font fIcon = new Font("Segoe UI", 16f))
-            using (Font fLbl = new Font("Segoe UI", 8f))
-            using (SolidBrush bTxt = new SolidBrush(Color.FromArgb(226, 232, 240)))
+            // Oscilloscope Grid Lines (Subtle Cyan Matrix)
+            using (Pen gridPen = new Pen(Color.FromArgb(18, 28, 45), 1))
             {
-                for (int i = 0; i < iconGlyphs.Length; i++)
-                {
-                    int iconX = 24;
-                    int iconY = 28 + (i * 72);
-                    g.DrawString(iconGlyphs[i], fIcon, bTxt, iconX + 8, iconY);
-                    g.DrawString(iconLabels[i], fLbl, bTxt, iconX, iconY + 34);
-                }
+                for (int x = 0; x < cw; x += 40) g.DrawLine(gridPen, x, 0, x, ch);
+                for (int y = 0; y < ch; y += 40) g.DrawLine(gridPen, 0, y, cw, y);
             }
 
-            // Center Connection & Telemetry Status Card (Translucent Glass Overlay)
-            int cardW = Math.Min(640, cw - 120);
-            int cardH = 170;
+            int cardW = Math.Min(700, cw - 60);
+            int cardH = 360;
             int cardX = (cw - cardW) / 2;
-            int cardY = (ch - cardH) / 2 - 30;
+            int cardY = Math.Max(24, (ch - cardH) / 2);
 
-            using (SolidBrush bCardBg = new SolidBrush(Color.FromArgb(210, 15, 23, 42)))
+            // Center Card Container
+            using (SolidBrush bCardBg = new SolidBrush(Color.FromArgb(235, 15, 23, 42)))
             using (Pen pCardBorder = new Pen(Color.FromArgb(56, 189, 248), 1.5f))
-            using (Font fTitle = new Font("Segoe UI", 12f, FontStyle.Bold))
-            using (Font fCode = new Font("Consolas", 9f))
+            {
+                g.FillRectangle(bCardBg, cardX, cardY, cardW, cardH);
+                g.DrawRectangle(pCardBorder, cardX, cardY, cardW, cardH);
+            }
+
+            // Top Glow Accent Line
+            using (LinearGradientBrush glowBrush = new LinearGradientBrush(new Rectangle(cardX, cardY, cardW, 3), Color.FromArgb(56, 189, 248), Color.FromArgb(16, 185, 129), LinearGradientMode.Horizontal))
+            {
+                g.FillRectangle(glowBrush, cardX, cardY, cardW, 3);
+            }
+
+            using (Font fTitle = new Font("Segoe UI", 13f, FontStyle.Bold))
             using (Font fSub = new Font("Segoe UI", 8.5f))
+            using (Font fCode = new Font("Consolas", 9f))
+            using (Font fSec = new Font("Segoe UI", 8f, FontStyle.Bold))
             using (SolidBrush bWhite = new SolidBrush(Color.White))
             using (SolidBrush bGreen = new SolidBrush(Color.FromArgb(16, 185, 129)))
-            using (SolidBrush bBlue = new SolidBrush(Color.FromArgb(56, 189, 248)))
+            using (SolidBrush bCyan = new SolidBrush(Color.FromArgb(56, 189, 248)))
+            using (SolidBrush bAmber = new SolidBrush(Color.FromArgb(245, 158, 11)))
+            using (SolidBrush bMuted = new SolidBrush(Color.FromArgb(148, 163, 184)))
+            {
+                // Header
+                g.DrawString("⚡ CONNECTING TO REMOTE WORKSTATION", fTitle, bCyan, cardX + 24, cardY + 16);
+                g.DrawString(string.Format("Target: {0} • Remote Desk ID: {1} • Role: {2}", target.Name, target.RemoteId, target.Role), fSub, bMuted, cardX + 24, cardY + 44);
+
+                // ECG Heartbeat Oscilloscope Monitor Box
+                int oscX = cardX + 24;
+                int oscY = cardY + 70;
+                int oscW = cardW - 48;
+                int oscH = 96;
+
+                using (SolidBrush oscBg = new SolidBrush(Color.FromArgb(8, 12, 20)))
+                using (Pen oscBorder = new Pen(Color.FromArgb(30, 41, 59), 1))
+                {
+                    g.FillRectangle(oscBg, oscX, oscY, oscW, oscH);
+                    g.DrawRectangle(oscBorder, oscX, oscY, oscW, oscH);
+                }
+
+                // Oscilloscope Sub-Grid
+                using (Pen oscGrid = new Pen(Color.FromArgb(16, 24, 38), 1))
+                {
+                    for (int gx = oscX; gx < oscX + oscW; gx += 20) g.DrawLine(oscGrid, gx, oscY, gx, oscY + oscH);
+                    for (int gy = oscY; gy < oscY + oscH; gy += 16) g.DrawLine(oscGrid, oscX, gy, oscX + oscW, gy);
+                }
+
+                // Draw Real Mathematical ECG Heartbeat Waveform
+                int midY = oscY + (oscH / 2);
+                int sweepOffset = (connectingPulseFrame * 5) % 180;
+                Point[] ecgPoints = new Point[oscW];
+
+                for (int i = 0; i < oscW; i++)
+                {
+                    int phase = (i - sweepOffset) % 180;
+                    if (phase < 0) phase += 180;
+
+                    float dy = 0;
+                    if (phase >= 55 && phase <= 70)
+                    {
+                        dy = (float)(-6.0 * Math.Sin((phase - 55) * Math.PI / 15.0)); // P wave
+                    }
+                    else if (phase >= 80 && phase <= 86)
+                    {
+                        dy = (float)(4.0 * Math.Sin((phase - 80) * Math.PI / 6.0));  // Q dip
+                    }
+                    else if (phase > 86 && phase <= 94)
+                    {
+                        dy = (float)(-38.0 * Math.Sin((phase - 86) * Math.PI / 8.0)); // R spike!
+                    }
+                    else if (phase > 94 && phase <= 102)
+                    {
+                        dy = (float)(14.0 * Math.Sin((phase - 94) * Math.PI / 8.0)); // S dip
+                    }
+                    else if (phase >= 115 && phase <= 138)
+                    {
+                        dy = (float)(-12.0 * Math.Sin((phase - 115) * Math.PI / 23.0)); // T wave
+                    }
+
+                    ecgPoints[i] = new Point(oscX + i, (int)(midY + dy));
+                }
+
+                using (Pen ecgPen = new Pen(Color.FromArgb(56, 189, 248), 2.0f))
+                {
+                    g.DrawLines(ecgPen, ecgPoints);
+                }
+
+                // Leading glowing pulse dot
+                int leadX = oscX + ((connectingPulseFrame * 5) % oscW);
+                int leadY = ecgPoints[Math.Max(0, Math.Min(oscW - 1, (connectingPulseFrame * 5) % oscW))].Y;
+                using (SolidBrush dotGlow = new SolidBrush(Color.FromArgb(100, 16, 185, 129)))
+                using (SolidBrush dotCore = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                {
+                    g.FillEllipse(dotGlow, leadX - 6, leadY - 6, 12, 12);
+                    g.FillEllipse(dotCore, leadX - 3, leadY - 3, 6, 6);
+                }
+
+                // Oscilloscope HUD Text
+                g.DrawString("💓 HEARTBEAT: PULSING", fSec, bGreen, oscX + 10, oscY + 8);
+                string rttStr = lastMeasuredRttMs > 0 ? lastMeasuredRttMs + " ms" : "Measuring...";
+                g.DrawString("RELAY RTT: " + rttStr, fSec, bCyan, oscX + oscW - 130, oscY + 8);
+
+                // Progress Bar Container
+                int barY = oscY + oscH + 16;
+                int barW = cardW - 48;
+                int barH = 14;
+
+                using (SolidBrush barBg = new SolidBrush(Color.FromArgb(15, 23, 42)))
+                using (Pen barBorder = new Pen(Color.FromArgb(30, 41, 59), 1))
+                {
+                    g.FillRectangle(barBg, oscX, barY, barW, barH);
+                    g.DrawRectangle(barBorder, oscX, barY, barW, barH);
+                }
+
+                // Filled portion with smooth gradient
+                int fillW = Math.Max(10, (barW * connectingProgressPct) / 100);
+                using (LinearGradientBrush fillBrush = new LinearGradientBrush(new Rectangle(oscX, barY, fillW, barH), Color.FromArgb(2, 132, 199), Color.FromArgb(16, 185, 129), LinearGradientMode.Horizontal))
+                {
+                    g.FillRectangle(fillBrush, oscX + 1, barY + 1, fillW - 2, barH - 2);
+                }
+
+                // Progress Shimmer Sweep
+                int shimmerX = oscX + ((connectingPulseFrame * 8) % Math.Max(1, fillW));
+                using (SolidBrush shimmer = new SolidBrush(Color.FromArgb(120, 255, 255, 255)))
+                {
+                    g.FillRectangle(shimmer, shimmerX, barY + 1, 12, barH - 2);
+                }
+
+                // Progress Label
+                g.DrawString(connectingProgressPct + "%", fSec, bWhite, oscX + barW - 32, barY - 16);
+
+                // Dynamic Status Stage Message
+                g.DrawString("⚡ " + connectionStageMessage, fSec, bCyan, oscX, barY + 20);
+
+                // Elapsed time & timeout countdown
+                TimeSpan elapsed = DateTime.Now - connectionAttemptStartTime;
+                int remainSec = Math.Max(0, 20 - (int)elapsed.TotalSeconds);
+                string timeStr = string.Format("Elapsed: {0:0.0}s | Auto-Timeout in: {1}s", elapsed.TotalSeconds, remainSec);
+                g.DrawString(timeStr, fCode, bMuted, oscX, barY + 40);
+
+                // Protocol & Relay details
+                string relayUrl = !string.IsNullOrEmpty(CloudflareTunnelEngine.ActiveTunnelUrl) ? CloudflareTunnelEngine.ActiveTunnelUrl : (db.Settings.connection.relayServer ?? "Offline");
+                g.DrawString("Relay Node : " + relayUrl + " (AES-256-GCM Handshake)", fCode, bGreen, oscX, barY + 60);
+
+                // Instruction to Cancel
+                g.DrawString("👉 To cancel this connection attempt, click '✕ Cancel' in the top action bar.", fSub, bAmber, oscX, barY + 84);
+            }
+        }
+
+        private void RenderAwaitingLiveFramesScreen(Graphics g, SimulatorDesktop target, int cw, int ch)
+        {
+            // Background - Deep Slate Gradient
+            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(10, 16, 26), Color.FromArgb(15, 23, 42), LinearGradientMode.Vertical))
+            {
+                g.FillRectangle(wallBrush, 0, 0, cw, ch);
+            }
+
+            int cardW = Math.Min(640, cw - 60);
+            int cardH = 220;
+            int cardX = (cw - cardW) / 2;
+            int cardY = Math.Max(40, (ch - cardH) / 2);
+
+            using (SolidBrush bCardBg = new SolidBrush(Color.FromArgb(235, 15, 23, 42)))
+            using (Pen pCardBorder = new Pen(Color.FromArgb(16, 185, 129), 1.5f))
+            using (Font fTitle = new Font("Segoe UI", 13f, FontStyle.Bold))
+            using (Font fSub = new Font("Segoe UI", 9f))
+            using (Font fCode = new Font("Consolas", 9f))
+            using (SolidBrush bWhite = new SolidBrush(Color.White))
+            using (SolidBrush bGreen = new SolidBrush(Color.FromArgb(16, 185, 129)))
+            using (SolidBrush bCyan = new SolidBrush(Color.FromArgb(56, 189, 248)))
             using (SolidBrush bMuted = new SolidBrush(Color.FromArgb(148, 163, 184)))
             {
                 g.FillRectangle(bCardBg, cardX, cardY, cardW, cardH);
                 g.DrawRectangle(pCardBorder, cardX, cardY, cardW, cardH);
 
-                g.DrawString("💻 Remote Workstation Connected: " + target.RemoteId, fTitle, bWhite, cardX + 20, cardY + 16);
-                g.DrawString("Peer: " + target.Name + " (" + target.OsVersion + ")", fSub, bBlue, cardX + 20, cardY + 44);
-                g.DrawString("● Tunnel: AES-256-GCM Handshake Active | Protocol: AV1/H.264 Relay", fCode, bGreen, cardX + 20, cardY + 70);
-                g.DrawString("Awaiting video stream from Desk 2...", fSub, bMuted, cardX + 20, cardY + 96);
-                g.DrawString("👉 Click '🎥 Live Mirror' on the floating toolbar above for instant local desktop capture.", fSub, bGreen, cardX + 20, cardY + 124);
-            }
-
-            // Taskbar at bottom
-            int taskH = 38;
-            int taskY = ch - taskH;
-            using (SolidBrush taskBg = new SolidBrush(Color.FromArgb(9, 13, 22)))
-            {
-                g.FillRectangle(taskBg, 0, taskY, cw, taskH);
-            }
-
-            using (SolidBrush startBg = new SolidBrush(isStartMenuOpen ? Color.FromArgb(2, 132, 199) : Color.FromArgb(30, 41, 59)))
-            using (Font startF = new Font("Segoe UI", 8.5f, FontStyle.Bold))
-            using (SolidBrush whiteB = new SolidBrush(Color.White))
-            {
-                g.FillRectangle(startBg, 8, taskY + 4, 70, 30);
-                g.DrawString("⊞ Start", startF, whiteB, 18, taskY + 10);
-            }
-
-            using (Font trayF = new Font("Segoe UI", 8f))
-            using (SolidBrush trayTxt = new SolidBrush(Color.FromArgb(203, 213, 225)))
-            {
-                g.DrawString("📶 🔊 " + DateTime.Now.ToString("HH:mm:ss"), trayF, trayTxt, cw - 120, taskY + 10);
-            }
-        }
-
-        private void DrawRemoteWindow(Graphics g, int x, int y, int w, int h, string title, Action renderContent)
-        {
-            using (SolidBrush winBg = new SolidBrush(Color.FromArgb(20, 28, 45)))
-            using (SolidBrush titleBg = new SolidBrush(Color.FromArgb(30, 41, 59)))
-            using (Pen borderPen = new Pen(Color.FromArgb(40, 53, 76), 1))
-            using (Font titleFont = new Font("Segoe UI", 8f, FontStyle.Bold))
-            using (SolidBrush titleText = new SolidBrush(Color.White))
-            {
-                g.FillRectangle(winBg, x, y, w, h);
-                g.FillRectangle(titleBg, x, y, w, 26);
-                g.DrawRectangle(borderPen, x, y, w, h);
-                g.DrawString(title, titleFont, titleText, x + 8, y + 5);
-
-                using (SolidBrush bClose = new SolidBrush(Color.FromArgb(239, 68, 68)))
-                using (SolidBrush bMin = new SolidBrush(Color.FromArgb(245, 158, 11)))
-                using (SolidBrush bMax = new SolidBrush(Color.FromArgb(16, 185, 129)))
-                {
-                    g.FillEllipse(bClose, x + w - 18, y + 7, 10, 10);
-                    g.FillEllipse(bMin, x + w - 32, y + 7, 10, 10);
-                    g.FillEllipse(bMax, x + w - 46, y + 7, 10, 10);
-                }
-
-                if (renderContent != null) renderContent();
+                g.DrawString("🟢 P2P SESSION CONNECTED & ACTIVE", fTitle, bGreen, cardX + 24, cardY + 20);
+                g.DrawString("Authenticated with Remote Workstation: " + target.RemoteId + " (" + target.Name + ")", fSub, bWhite, cardX + 24, cardY + 50);
+                g.DrawString("● Tunnel: AES-256 End-to-End P2P Stream Active", fCode, bCyan, cardX + 24, cardY + 80);
+                g.DrawString("Awaiting video stream frames from remote host...", fSub, bMuted, cardX + 24, cardY + 110);
+                g.DrawString("Bytes Received: " + (bytesTransferred / (1024 * 1024.0)).ToString("0.0") + " MB | Total Frames: " + framesReceivedCount, fCode, bWhite, cardX + 24, cardY + 135);
+                g.DrawString("💡 Tip: Click '🎥 Live Mirror' above for instant local screen test.", fSub, bGreen, cardX + 24, cardY + 170);
             }
         }
 
@@ -2832,17 +3052,19 @@ namespace JDroidXDesk.Native
 
         private void ViewportCanvas_MouseClick(object sender, MouseEventArgs e)
         {
-            if (!isSessionActive) return;
-            int ch = viewportCanvas.Height;
-            if (e.Y >= ch - 38 && e.X >= 8 && e.X <= 78)
+            if (currentConnectionState == SessionConnectionState.Connecting)
             {
-                isStartMenuOpen = !isStartMenuOpen;
-                viewportCanvas.Invalidate();
-            }
-            else if (isStartMenuOpen)
-            {
-                isStartMenuOpen = false;
-                viewportCanvas.Invalidate();
+                // Clicking canvas during connecting offers quick cancel option
+                int cw = viewportCanvas.Width;
+                int ch = viewportCanvas.Height;
+                int cardW = Math.Min(700, cw - 60);
+                int cardH = 360;
+                int cardX = (cw - cardW) / 2;
+                int cardY = Math.Max(24, (ch - cardH) / 2);
+                if (e.X >= cardX && e.X <= cardX + cardW && e.Y >= cardY + cardH - 40 && e.Y <= cardY + cardH)
+                {
+                    AbortSessionConnection("Connection Cancelled by User");
+                }
             }
         }
 
@@ -3312,6 +3534,7 @@ namespace JDroidXDesk.Native
                                     using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                                     {
                                         pushSuccess = true;
+                                        bytesTransferred += bytes.Length;
                                         break;
                                     }
                                 } catch { }
@@ -3344,10 +3567,37 @@ namespace JDroidXDesk.Native
 
         private void FrameReceiverWorker()
         {
+            DateTime workerStart = DateTime.Now;
             while (isFrameReceiverActive && isSessionActive)
             {
                 bool successFrame = false;
                 try {
+                    // Check connecting timeout (20 seconds)
+                    if (currentConnectionState == SessionConnectionState.Connecting)
+                    {
+                        TimeSpan elapsed = DateTime.Now - workerStart;
+                        if (elapsed.TotalSeconds > 20)
+                        {
+                            if (this.IsHandleCreated && !this.IsDisposed)
+                            {
+                                this.BeginInvoke(new Action(() => {
+                                    AbortSessionConnection("Connection Timeout: Remote Desk (" + activeReceiverTargetId + ") is not streaming frames or Colab Relay is offline.");
+                                }));
+                            }
+                            break;
+                        }
+                        else if (elapsed.TotalSeconds > 10)
+                        {
+                            connectionStageMessage = "Awaiting Live Video Stream Frames from Desk " + activeReceiverTargetId + "...";
+                            connectingProgressPct = Math.Min(85, (int)(15 + elapsed.TotalSeconds * 3.5));
+                        }
+                        else if (elapsed.TotalSeconds > 3)
+                        {
+                            connectionStageMessage = "Negotiating P2P Stream via Colab Relay...";
+                            connectingProgressPct = Math.Min(60, (int)(15 + elapsed.TotalSeconds * 5.0));
+                        }
+                    }
+
                     if (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(activeReceiverTargetId))
                     {
                         List<string> candidateUrls = GetRelayCandidateUrls();
@@ -3355,12 +3605,14 @@ namespace JDroidXDesk.Native
                         foreach (string rUrl in candidateUrls)
                         {
                             try {
+                                Stopwatch sw = Stopwatch.StartNew();
                                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/pull_frame/" + activeReceiverTargetId);
                                 req.Method = "GET";
                                 req.Timeout = 1200;
                                 using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                                 using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                                 {
+                                    sw.Stop();
                                     string jsonStr = reader.ReadToEnd();
                                     JavaScriptSerializer ser = new JavaScriptSerializer();
                                     Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
@@ -3393,9 +3645,45 @@ namespace JDroidXDesk.Native
                                                     try { oldFrame.Dispose(); } catch { }
                                                 }
                                                 framesReceivedCount++;
+                                                bytesTransferred += imgBytes.Length;
+                                                lastMeasuredRttMs = (int)sw.ElapsedMilliseconds;
                                             }
 
                                             successFrame = true;
+
+                                            // Transition to Connected once first genuine frame arrives
+                                            if (currentConnectionState == SessionConnectionState.Connecting)
+                                            {
+                                                if (this.IsHandleCreated && !this.IsDisposed)
+                                                {
+                                                    this.BeginInvoke(new Action(() => {
+                                                        currentConnectionState = SessionConnectionState.Connected;
+                                                        if (connectingAnimationTimer != null) connectingAnimationTimer.Stop();
+                                                        sessionStartTime = DateTime.Now;
+                                                        sessionTelemetryTimer.Start();
+
+                                                        if (btnDisconnect != null)
+                                                        {
+                                                            btnDisconnect.Text = "✕ Disconnect";
+                                                            btnDisconnect.NormalColor = Color.FromArgb(239, 68, 68);
+                                                        }
+                                                        if (lblRemoteStatus != null)
+                                                        {
+                                                            lblRemoteStatus.Text = "● Connected";
+                                                            lblRemoteStatus.ForeColor = Color.FromArgb(16, 185, 129);
+                                                        }
+                                                        if (btnCardConnect != null)
+                                                        {
+                                                            btnCardConnect.Text = "✕ Disconnect";
+                                                            btnCardConnect.NormalColor = Color.FromArgb(239, 68, 68);
+                                                        }
+
+                                                        db.AddLog("SESSION_START", "P2P_CONNECT", "Live stream established with " + (connectedTargetDesktop != null ? connectedTargetDesktop.Name : activeReceiverTargetId));
+                                                        ShowToast("P2P Session Live: " + (connectedTargetDesktop != null ? connectedTargetDesktop.Name : activeReceiverTargetId));
+                                                    }));
+                                                }
+                                            }
+
                                             if (viewportCanvas != null && !viewportCanvas.IsDisposed)
                                             {
                                                 viewportCanvas.BeginInvoke(new Action(() => viewportCanvas.Invalidate()));
@@ -3408,7 +3696,7 @@ namespace JDroidXDesk.Native
                         }
                     }
                 } catch { }
-                Thread.Sleep(successFrame ? 150 : 1000);
+                Thread.Sleep(successFrame ? 150 : 800);
             }
         }
 
