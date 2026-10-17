@@ -1758,7 +1758,7 @@ namespace JDroidXDesk.Native
             List<string> candidateUrls = new List<string>();
 
             // 1. Prioritize verified winning cache for 0ms discovery overhead
-            if (!string.IsNullOrEmpty(cachedWinningRelayUrl) && (DateTime.Now - lastWinningCheckTime).TotalSeconds < 25)
+            if (!string.IsNullOrEmpty(cachedWinningRelayUrl))
             {
                 candidateUrls.Add(cachedWinningRelayUrl);
             }
@@ -4227,7 +4227,7 @@ namespace JDroidXDesk.Native
                             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_frame");
                             req.Method = "POST";
                             req.ContentType = "application/json";
-                            req.Timeout = 1200;
+                            req.Timeout = 3500;
                             req.ContentLength = bytes.Length;
                             using (Stream os = req.GetRequestStream())
                             {
@@ -4462,11 +4462,11 @@ namespace JDroidXDesk.Native
             {
                 bool successFrame = false;
                 try {
-                    // Check connecting timeout (20 seconds)
+                    // Check connecting timeout (45 seconds)
                     if (currentConnectionState == SessionConnectionState.Connecting)
                     {
                         TimeSpan elapsed = DateTime.Now - workerStart;
-                        if (elapsed.TotalSeconds > 20)
+                        if (elapsed.TotalSeconds > 45)
                         {
                             if (this.IsHandleCreated && !this.IsDisposed)
                             {
@@ -4476,15 +4476,15 @@ namespace JDroidXDesk.Native
                             }
                             break;
                         }
-                        else if (elapsed.TotalSeconds > 10)
+                        else if (elapsed.TotalSeconds > 15)
                         {
                             connectionStageMessage = "Awaiting Live Video Stream Frames from Desk " + activeReceiverTargetId + "...";
-                            connectingProgressPct = Math.Min(85, (int)(15 + elapsed.TotalSeconds * 3.5));
+                            connectingProgressPct = Math.Min(90, (int)(20 + elapsed.TotalSeconds * 2.0));
                         }
                         else if (elapsed.TotalSeconds > 3)
                         {
                             connectionStageMessage = "Negotiating P2P Stream via Colab Relay...";
-                            connectingProgressPct = Math.Min(60, (int)(15 + elapsed.TotalSeconds * 5.0));
+                            connectingProgressPct = Math.Min(65, (int)(15 + elapsed.TotalSeconds * 4.0));
                         }
                     }
 
@@ -4498,7 +4498,7 @@ namespace JDroidXDesk.Native
                                 Stopwatch sw = Stopwatch.StartNew();
                                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/pull_frame/" + activeReceiverTargetId);
                                 req.Method = "GET";
-                                req.Timeout = 1200;
+                                req.Timeout = 3500;
                                 using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                                 using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                                 {
