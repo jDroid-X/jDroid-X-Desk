@@ -19,6 +19,8 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Web.Script.Serialization;
 using System.Runtime.InteropServices;
+using System.Net.Sockets;
+using System.Drawing.Imaging;
 
 namespace JDroidXDesk.Native
 {
@@ -586,8 +588,35 @@ namespace JDroidXDesk.Native
             db = new DatabaseContext();
             SyncDynamicDesktopsFromDatabase();
 
-            currentHostDesktop = dynamicDesktops.Count > 0 ? dynamicDesktops[0] : null;
-            connectedTargetDesktop = dynamicDesktops.Count > 1 ? dynamicDesktops[1] : currentHostDesktop;
+            // Intelligent station auto-detection based on host machine environment
+            string myHost = Environment.MachineName.ToUpper();
+            SimulatorDesktop autoDetected = dynamicDesktops.Find(d => myHost.Contains(d.Name.ToUpper()) || d.Name.ToUpper().Contains(myHost));
+            if (autoDetected != null)
+            {
+                currentHostDesktop = autoDetected;
+                connectedTargetDesktop = dynamicDesktops.Find(d => d.Key != currentHostDesktop.Key) ?? currentHostDesktop;
+            }
+            else
+            {
+                // Portable Client running on external Desk / remote PC
+                string uniqueId = GenerateMachineDeskId();
+                string uniquePass = GenerateMachinePasscode();
+                SimulatorDesktop localNode = new SimulatorDesktop {
+                    Key = "LOCAL",
+                    Name = Environment.MachineName,
+                    RemoteId = uniqueId,
+                    Passcode = uniquePass,
+                    Ip = GetLocalLanIp(),
+                    Role = "Remote Workstation (Portable Client)",
+                    OsVersion = Environment.OSVersion.VersionString,
+                    AccentColor = Color.FromArgb(56, 189, 248),
+                    ActiveApps = new[] { "Visual Studio Code", "Terminal", "Chrome" }
+                };
+                dynamicDesktops.Insert(0, localNode);
+                currentHostDesktop = localNode;
+                connectedTargetDesktop = dynamicDesktops.Count > 1 ? dynamicDesktops[1] : currentHostDesktop;
+            }
+
             currentLocalDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
             this.Text = "jDroid-X-Desk | Antigravity IDE Remote Desktop Workspace";
@@ -665,6 +694,64 @@ namespace JDroidXDesk.Native
             }
         }
 
+        private string GenerateMachineDeskId()
+        {
+            try
+            {
+                string host = Environment.MachineName.ToUpper();
+                if (host.Contains("JEET") || host.Contains("DESK1")) return "984-102-391";
+                if (host.Contains("ANTIGRAVITY") || host.Contains("NODE") || host.Contains("DESK2")) return "710-224-900";
+                if (host.Contains("INNOVANT") || host.Contains("STATION") || host.Contains("DESK3")) return "520-310-884";
+
+                string mac = "";
+                foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                    {
+                        mac = nic.GetPhysicalAddress().ToString();
+                        if (!string.IsNullOrEmpty(mac)) break;
+                    }
+                }
+                int hash = Math.Abs((host + mac).GetHashCode());
+                string s = hash.ToString().PadLeft(9, '3');
+                if (s.Length > 9) s = s.Substring(s.Length - 9);
+                return s.Substring(0, 3) + "-" + s.Substring(3, 3) + "-" + s.Substring(6, 3);
+            }
+            catch
+            {
+                return "710-224-900";
+            }
+        }
+
+        private string GenerateMachinePasscode()
+        {
+            try
+            {
+                int p = Math.Abs((Environment.MachineName + "PASS").GetHashCode()) % 900000 + 100000;
+                string s = p.ToString();
+                return s.Substring(0, 3) + "-" + s.Substring(3, 3);
+            }
+            catch
+            {
+                return "842-195";
+            }
+        }
+
+        private string GetLocalLanIp()
+        {
+            try
+            {
+                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+                {
+                    socket.Connect("8.8.8.8", 65530);
+                    IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                    if (endPoint != null) return endPoint.Address.ToString();
+                }
+            }
+            catch { }
+            return "192.168.1." + (new Random().Next(10, 200));
+        }
+
         // ======================================================================
         // ANTIGRAVITY IDE WORKSPACE ARCHITECTURE (ZERO OVERLAPPING HIERARCHY)
         // ======================================================================
@@ -733,7 +820,8 @@ namespace JDroidXDesk.Native
             // Host Node Dropdown Selector (Top Bar Pill)
             ComboBox cboHostPill = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(16, 185, 129), Size = new Size(185, 24), Margin = new Padding(0, 2, 0, 0) };
             foreach (SimulatorDesktop d in dynamicDesktops) cboHostPill.Items.Add("💻 " + d.Name);
-            if (cboHostPill.Items.Count > 0) cboHostPill.SelectedIndex = 0;
+            int curIdx = dynamicDesktops.IndexOf(currentHostDesktop);
+            cboHostPill.SelectedIndex = curIdx >= 0 ? curIdx : 0;
             cboHostPill.SelectedIndexChanged += (s, e) => {
                 if (cboHostPill.SelectedIndex >= 0 && cboHostPill.SelectedIndex < dynamicDesktops.Count)
                 {
@@ -1274,8 +1362,8 @@ namespace JDroidXDesk.Native
             // Target Connect on right
             FlowLayoutPanel targetBox = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
             Label lTargetPrompt = new Label { Text = "Target:", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Margin = new Padding(0, 4, 4, 0), AutoSize = true };
-            txtTargetId = new TextBox { Font = new Font("Consolas", 9.5f), Size = new Size(110, 22), Text = "710-224-900" };
-            txtTargetPass = new TextBox { Font = new Font("Consolas", 9.5f), Size = new Size(70, 22), UseSystemPasswordChar = true, Text = "884219" };
+            txtTargetId = new TextBox { Font = new Font("Consolas", 9.5f), Size = new Size(110, 22), Text = connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "710-224-900" };
+            txtTargetPass = new TextBox { Font = new Font("Consolas", 9.5f), Size = new Size(70, 22), UseSystemPasswordChar = true, Text = connectedTargetDesktop != null ? connectedTargetDesktop.Passcode : "884219" };
             btnConnect = new ModernButton { Text = "⚡ Connect", NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38), Size = new Size(86, 24) };
             btnConnect.Click += (s, e) => ToggleSessionConnection();
 
