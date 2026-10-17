@@ -166,6 +166,39 @@
       "durationSeconds": 1,
       "status": "Completed",
       "sourceIp": "192.168.1.44"
+    },
+    {
+      "id": "ses-7",
+      "targetId": "984-102-391",
+      "targetName": "JEET-DESK",
+      "type": "Direct P2P",
+      "startTime": "2026-10-17 12:17:01",
+      "endTime": "2026-10-17 12:17:03",
+      "durationSeconds": 2,
+      "status": "Completed",
+      "sourceIp": "192.168.1.44"
+    },
+    {
+      "id": "ses-8",
+      "targetId": "520-310-884",
+      "targetName": "INNOVANT-STATION",
+      "type": "Direct P2P",
+      "startTime": "2026-10-17 12:17:06",
+      "endTime": "2026-10-17 12:17:09",
+      "durationSeconds": 2,
+      "status": "Completed",
+      "sourceIp": "192.168.1.44"
+    },
+    {
+      "id": "ses-9",
+      "targetId": "984-102-391",
+      "targetName": "JEET-DESK",
+      "type": "Direct P2P",
+      "startTime": "2026-10-17 12:17:09",
+      "endTime": "2026-10-17 12:17:11",
+      "durationSeconds": 2,
+      "status": "Completed",
+      "sourceIp": "192.168.1.44"
     }
   ],
   "guardians": [
@@ -218,6 +251,48 @@
   ],
   "notifications": [],
   "logs": [
+    {
+      "timestamp": "2026-10-17 12:17:11",
+      "type": "SESSION_START",
+      "action": "P2P_CONNECT",
+      "details": "Connected to JDRO"
+    },
+    {
+      "timestamp": "2026-10-17 12:17:11",
+      "type": "SESSION_END",
+      "action": "DISCONNECT",
+      "details": "Session closed"
+    },
+    {
+      "timestamp": "2026-10-17 12:17:09",
+      "type": "SESSION_START",
+      "action": "P2P_CONNECT",
+      "details": "Connected to JEET-DESK"
+    },
+    {
+      "timestamp": "2026-10-17 12:17:09",
+      "type": "SESSION_END",
+      "action": "DISCONNECT",
+      "details": "Session closed"
+    },
+    {
+      "timestamp": "2026-10-17 12:17:06",
+      "type": "SESSION_START",
+      "action": "P2P_CONNECT",
+      "details": "Connected to INNOVANT-STATION"
+    },
+    {
+      "timestamp": "2026-10-17 12:17:03",
+      "type": "SESSION_END",
+      "action": "DISCONNECT",
+      "details": "Session closed"
+    },
+    {
+      "timestamp": "2026-10-17 12:17:01",
+      "type": "SESSION_START",
+      "action": "P2P_CONNECT",
+      "details": "Connected to JEET-DESK"
+    },
     {
       "timestamp": "2026-10-17 09:56:53",
       "type": "SESSION_END",
@@ -915,1026 +990,667 @@
       "details": null
     },
     {
-      "id": "1792213042437",
-      "level": "SECURITY_AUDIT",
-      "stage": "FIREBASE_PRESENCE_ACTIVE",
-      "msg": "System registered online at /devices/JDX-3C16-2B17",
-      "timestamp": "2026-10-17T04:57:22.437Z"
-    },
-    {
-      "id": "1792213205908",
-      "level": "INFO",
-      "stage": "STUN_HANDSHAKE",
-      "msg": "Primary System A initiated UDP connection request to Secondary System B (Port 21116)",
-      "timestamp": "2026-10-17T05:00:05.908Z"
-    },
-    {
-      "id": "1792213205914",
-      "level": "SECURITY_AUDIT",
-      "stage": "KEY_EXCHANGE",
-      "msg": "Ed25519 Elliptic Curve Key Exchange completed. Tunnel Encrypted.",
-      "timestamp": "2026-10-17T05:00:05.914Z"
-    },
-    {
-      "id": "1792213205923",
-      "level": "INFO",
-      "stage": "SESSION_ACCEPT",
-      "msg": "Secondary System B user accepted connection. Screen sharing & input control granted.",
-      "timestamp": "2026-10-17T05:00:05.923Z"
-    },
-    {
-      "id": "1792213205929",
-      "level": "TRACE",
-      "stage": "FRAME_STREAM",
-      "msg": "Remote Desktop stream active (1080p 60FPS, H.265 Codec, 1.8 Mbps)",
-      "timestamp": "2026-10-17T05:00:05.929Z"
-    },
-    {
-      "id": "REQ-1792213206440-1050",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.440Z"
-    },
-    {
-      "id": "REQ-1792213206452-1051",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.452Z"
-    },
-    {
-      "id": "REQ-1792213206471-1052",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.471Z"
-    },
-    {
-      "id": "REQ-1792213206491-1053",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.491Z"
-    },
-    {
-      "id": "REQ-1792213206500-1054",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/notifications",
-      "ip": "127.0.0.1",
-      "statusCode": 304,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/notifications -> HTTP 304 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.500Z"
-    },
-    {
-      "id": "REQ-1792213206520-1055",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 304,
-      "rttMs": 5,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 304 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.520Z"
-    },
-    {
-      "id": "REQ-1792213206535-1056",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.535Z"
-    },
-    {
-      "id": "REQ-1792213206559-1057",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 304,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 304 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:00:06.559Z"
-    },
-    {
-      "id": "1792213206779",
-      "level": "SECURITY_AUDIT",
-      "stage": "AUTH_SUCCESS",
-      "msg": "User authenticated: jdx-3c16-2b17@jdroid-x-desk.com. Console unlocked.",
-      "timestamp": "2026-10-17T05:00:06.779Z"
-    },
-    {
-      "id": "1792213207449",
-      "level": "SECURITY_AUDIT",
-      "stage": "FIREBASE_PRESENCE_ACTIVE",
-      "msg": "System registered online at /devices/JDX-3C16-2B17",
-      "timestamp": "2026-10-17T05:00:07.449Z"
-    },
-    {
-      "id": "REQ-1792213266547-1000",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 8,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (8ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.547Z"
-    },
-    {
-      "id": "REQ-1792213266569-1001",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/hardware-id",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 17,
-      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (17ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.569Z"
-    },
-    {
-      "id": "REQ-1792213266587-1002",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/system-telemetry",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 14,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (14ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.587Z"
-    },
-    {
-      "id": "REQ-1792213266620-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.620Z"
-    },
-    {
-      "id": "REQ-1792213266631-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792213266616-325",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 6,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792213266616-325 -> HTTP 200 (6ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.631Z"
-    },
-    {
-      "id": "REQ-1792213266640-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792213266616-325",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792213266616-325 -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.640Z"
-    },
-    {
-      "id": "1792213266646",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T05:01:06.646Z"
-    },
-    {
-      "id": "REQ-1792213266656-1006",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.656Z"
-    },
-    {
-      "id": "REQ-1792213266662-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.662Z"
-    },
-    {
-      "id": "REQ-1792213266669-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.669Z"
-    },
-    {
-      "id": "REQ-1792213266675-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.675Z"
-    },
-    {
-      "id": "REQ-1792213266681-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:01:06.681Z"
-    },
-    {
-      "id": "1792214569287",
-      "level": "SECURITY_AUDIT",
-      "stage": "FIREBASE_PRESENCE_ACTIVE",
-      "msg": "System registered online at /devices/JDX-3C16-2B17",
-      "timestamp": "2026-10-17T05:22:49.287Z"
-    },
-    {
-      "id": "1792214569309",
-      "level": "SECURITY_AUDIT",
-      "stage": "FIREBASE_PRESENCE_ACTIVE",
-      "msg": "System registered online at /devices/JDX-3C16-2B17",
-      "timestamp": "2026-10-17T05:22:49.309Z"
-    },
-    {
-      "id": "REQ-1792216714211-1000",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.211Z"
-    },
-    {
-      "id": "REQ-1792216714229-1001",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/hardware-id",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 14,
-      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (14ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.229Z"
-    },
-    {
-      "id": "REQ-1792216714243-1002",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/system-telemetry",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 9,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (9ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.243Z"
-    },
-    {
-      "id": "REQ-1792216714264-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.264Z"
-    },
-    {
-      "id": "REQ-1792216714273-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792216714260-776",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792216714260-776 -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.273Z"
-    },
-    {
-      "id": "REQ-1792216714279-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792216714260-776",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792216714260-776 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.279Z"
-    },
-    {
-      "id": "1792216714284",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T05:58:34.284Z"
-    },
-    {
-      "id": "REQ-1792216714294-1006",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.294Z"
-    },
-    {
-      "id": "REQ-1792216714299-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.299Z"
-    },
-    {
-      "id": "REQ-1792216714304-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.304Z"
-    },
-    {
-      "id": "REQ-1792216714308-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.308Z"
-    },
-    {
-      "id": "REQ-1792216714313-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T05:58:34.313Z"
-    },
-    {
-      "id": "REQ-1792217066801-1000",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.801Z"
-    },
-    {
-      "id": "REQ-1792217066821-1001",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/hardware-id",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 14,
-      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (14ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.821Z"
-    },
-    {
-      "id": "REQ-1792217066835-1002",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/system-telemetry",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 9,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (9ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.835Z"
-    },
-    {
-      "id": "REQ-1792217066854-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.854Z"
-    },
-    {
-      "id": "REQ-1792217066863-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792217066851-94",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792217066851-94 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.863Z"
-    },
-    {
-      "id": "REQ-1792217066872-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792217066851-94",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792217066851-94 -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.872Z"
-    },
-    {
-      "id": "1792217066877",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T06:04:26.877Z"
-    },
-    {
-      "id": "REQ-1792217066887-1006",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.887Z"
-    },
-    {
-      "id": "REQ-1792217066893-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.893Z"
-    },
-    {
-      "id": "REQ-1792217066898-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.898Z"
-    },
-    {
-      "id": "REQ-1792217066904-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.904Z"
-    },
-    {
-      "id": "REQ-1792217066909-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:26.909Z"
-    },
-    {
-      "id": "REQ-1792217085151-1000",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 20,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (20ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.151Z"
-    },
-    {
-      "id": "REQ-1792217085190-1001",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/hardware-id",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 25,
-      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (25ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.190Z"
-    },
-    {
-      "id": "REQ-1792217085210-1002",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/system-telemetry",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 15,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (15ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.210Z"
-    },
-    {
-      "id": "REQ-1792217085246-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 6,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (6ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.247Z"
-    },
-    {
-      "id": "REQ-1792217085259-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792217085241-500",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792217085241-500 -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.259Z"
-    },
-    {
-      "id": "REQ-1792217085270-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792217085241-500",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 6,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792217085241-500 -> HTTP 200 (6ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.270Z"
-    },
-    {
-      "id": "1792217085279",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T06:04:45.279Z"
-    },
-    {
-      "id": "REQ-1792217085296-1006",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.296Z"
-    },
-    {
-      "id": "REQ-1792217085302-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.302Z"
-    },
-    {
-      "id": "REQ-1792217085310-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.310Z"
-    },
-    {
-      "id": "REQ-1792217085316-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.316Z"
-    },
-    {
-      "id": "REQ-1792217085322-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:04:45.322Z"
-    },
-    {
-      "id": "1792218334264",
-      "level": "SECURITY_AUDIT",
-      "stage": "FIREBASE_PRESENCE_ACTIVE",
-      "msg": "System registered online at /devices/JDX-3C16-2B17",
-      "timestamp": "2026-10-17T06:25:34.264Z"
-    },
-    {
-      "id": "1792218334270",
-      "level": "SECURITY_AUDIT",
-      "stage": "FIREBASE_PRESENCE_ACTIVE",
-      "msg": "System registered online at /devices/JDX-3C16-2B17",
-      "timestamp": "2026-10-17T06:25:34.270Z"
-    },
-    {
-      "id": "REQ-1792218542459-1000",
+      "timestamp": "2026-10-17T04:57:22.437Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:05.908Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:05.914Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:05.923Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:05.929Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.440Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.452Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.471Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.491Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.500Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.520Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.535Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.559Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:06.779Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:00:07.449Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.547Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.569Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.587Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.620Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.631Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.640Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.646Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.656Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.662Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.669Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.675Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:01:06.681Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:22:49.287Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:22:49.309Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.211Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.229Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.243Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.264Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.273Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.279Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.284Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.294Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.299Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.304Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.308Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T05:58:34.313Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.801Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.821Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.835Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.854Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.863Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.872Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.877Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.887Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.893Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.898Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.904Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:26.909Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.151Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.190Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.210Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.247Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.259Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.270Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.279Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.296Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.302Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.310Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.316Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:04:45.322Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:25:34.264Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:25:34.270Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.459Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.475Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.488Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.507Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.515Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.522Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.526Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.536Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.540Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.544Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.548Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:02.552Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:57.943Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:57.964Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:57.986Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.011Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.021Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.031Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.037Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.047Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.054Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.059Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.065Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:29:58.070Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.519Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.535Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.550Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.571Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.579Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.587Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.592Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.602Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.607Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.612Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.617Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:39:27.622Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:43:31.944Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:43:31.965Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:43:31.980Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:43:31.999Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "timestamp": "2026-10-17T06:43:32.007Z",
+      "type": null,
+      "action": null,
+      "details": null
+    },
+    {
+      "id": "REQ-1792219658992-1000",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/settings",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.459Z"
+      "rttMs": 12,
+      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (12ms) from 127.0.0.1",
+      "timestamp": "2026-10-17T06:47:38.992Z"
     },
     {
-      "id": "REQ-1792218542475-1001",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/hardware-id",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 11,
-      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (11ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.475Z"
-    },
-    {
-      "id": "REQ-1792218542488-1002",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/system-telemetry",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 9,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (9ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.488Z"
-    },
-    {
-      "id": "REQ-1792218542507-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.507Z"
-    },
-    {
-      "id": "REQ-1792218542514-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792218542504-831",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792218542504-831 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.515Z"
-    },
-    {
-      "id": "REQ-1792218542522-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792218542504-831",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792218542504-831 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.522Z"
-    },
-    {
-      "id": "1792218542526",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T06:29:02.526Z"
-    },
-    {
-      "id": "REQ-1792218542536-1006",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.536Z"
-    },
-    {
-      "id": "REQ-1792218542540-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.540Z"
-    },
-    {
-      "id": "REQ-1792218542544-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.544Z"
-    },
-    {
-      "id": "REQ-1792218542548-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.548Z"
-    },
-    {
-      "id": "REQ-1792218542552-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:02.552Z"
-    },
-    {
-      "id": "REQ-1792218597943-1000",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:57.943Z"
-    },
-    {
-      "id": "REQ-1792218597964-1001",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/hardware-id",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 16,
-      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (16ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:57.964Z"
-    },
-    {
-      "id": "REQ-1792218597986-1002",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/system-telemetry",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 17,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (17ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:57.986Z"
-    },
-    {
-      "id": "REQ-1792218598011-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.011Z"
-    },
-    {
-      "id": "REQ-1792218598021-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792218598007-828",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792218598007-828 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.021Z"
-    },
-    {
-      "id": "REQ-1792218598031-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792218598007-828",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792218598007-828 -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.031Z"
-    },
-    {
-      "id": "1792218598037",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T06:29:58.037Z"
-    },
-    {
-      "id": "REQ-1792218598047-1006",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.047Z"
-    },
-    {
-      "id": "REQ-1792218598054-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.054Z"
-    },
-    {
-      "id": "REQ-1792218598059-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.059Z"
-    },
-    {
-      "id": "REQ-1792218598065-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.065Z"
-    },
-    {
-      "id": "REQ-1792218598070-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:29:58.070Z"
-    },
-    {
-      "id": "REQ-1792219167519-1000",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.519Z"
-    },
-    {
-      "id": "REQ-1792219167535-1001",
+      "id": "REQ-1792219659010-1001",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -1943,65 +1659,22 @@
       "statusCode": 200,
       "rttMs": 12,
       "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (12ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.535Z"
+      "timestamp": "2026-10-17T06:47:39.010Z"
     },
     {
-      "id": "REQ-1792219167550-1002",
+      "id": "REQ-1792219659023-1002",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/system-telemetry",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 11,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (11ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.550Z"
+      "rttMs": 10,
+      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (10ms) from 127.0.0.1",
+      "timestamp": "2026-10-17T06:47:39.023Z"
     },
     {
-      "id": "REQ-1792219167571-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.571Z"
-    },
-    {
-      "id": "REQ-1792219167579-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792219167567-907",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792219167567-907 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.579Z"
-    },
-    {
-      "id": "REQ-1792219167587-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792219167567-907",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792219167567-907 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.587Z"
-    },
-    {
-      "id": "1792219167592",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T06:39:27.592Z"
-    },
-    {
-      "id": "REQ-1792219167602-1006",
+      "id": "REQ-1792219659028-1003",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -2010,194 +1683,7 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.602Z"
-    },
-    {
-      "id": "REQ-1792219167607-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.607Z"
-    },
-    {
-      "id": "REQ-1792219167612-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.612Z"
-    },
-    {
-      "id": "REQ-1792219167617-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.617Z"
-    },
-    {
-      "id": "REQ-1792219167622-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:39:27.622Z"
-    },
-    {
-      "id": "REQ-1792219411944-1000",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:31.944Z"
-    },
-    {
-      "id": "REQ-1792219411965-1001",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/hardware-id",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 16,
-      "msg": "[IN/OUT] GET /api/hardware-id -> HTTP 200 (16ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:31.965Z"
-    },
-    {
-      "id": "REQ-1792219411980-1002",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/system-telemetry",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 12,
-      "msg": "[IN/OUT] GET /api/system-telemetry -> HTTP 200 (12ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:31.980Z"
-    },
-    {
-      "id": "REQ-1792219411999-1003",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "POST",
-      "url": "/api/sessions",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] POST /api/sessions -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:31.999Z"
-    },
-    {
-      "id": "REQ-1792219412007-1004",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "PUT",
-      "url": "/api/sessions/SES-1792219411995-554",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] PUT /api/sessions/SES-1792219411995-554 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:32.007Z"
-    },
-    {
-      "id": "REQ-1792219412016-1005",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "DELETE",
-      "url": "/api/sessions/SES-1792219411995-554",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] DELETE /api/sessions/SES-1792219411995-554 -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:32.016Z"
-    },
-    {
-      "id": "1792219412020",
-      "level": "INFO",
-      "stage": "TEST",
-      "msg": "Automated test suite probe",
-      "timestamp": "2026-10-17T06:43:32.020Z"
-    },
-    {
-      "id": "REQ-1792219412030-1006",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/groups",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/groups -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:32.030Z"
-    },
-    {
-      "id": "REQ-1792219412035-1007",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/devices",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/devices -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:32.035Z"
-    },
-    {
-      "id": "REQ-1792219412039-1008",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/guardians",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/guardians -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:32.039Z"
-    },
-    {
-      "id": "REQ-1792219412044-1009",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/safe-zones",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/safe-zones -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:32.044Z"
-    },
-    {
-      "id": "REQ-1792219412050-1010",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/contacts",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/contacts -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-17T06:43:32.050Z"
+      "timestamp": "2026-10-17T06:47:39.028Z"
     }
   ],
   "invites": []

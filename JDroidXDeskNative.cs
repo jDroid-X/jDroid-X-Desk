@@ -1172,7 +1172,36 @@ namespace JDroidXDesk.Native
             Panel termBottom = new Panel { Dock = DockStyle.Bottom, Height = 32, BackColor = Color.FromArgb(20, 27, 45) };
             terminalInput = new TextBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(20, 27, 45), ForeColor = Color.White, Font = new Font("Consolas", 10f, FontStyle.Bold), BorderStyle = BorderStyle.FixedSingle };
             terminalInput.KeyDown += (s, e) => {
-                if (e.KeyCode == Keys.Enter) ExecuteTerminalCommand();
+                if (e.KeyCode == Keys.Enter)
+                {
+                    ExecuteTerminalCommand();
+                    historyIndex = terminalHistory.Count;
+                }
+                else if (e.KeyCode == Keys.Up)
+                {
+                    if (terminalHistory.Count > 0 && historyIndex > 0)
+                    {
+                        historyIndex--;
+                        terminalInput.Text = terminalHistory[historyIndex];
+                        terminalInput.SelectionStart = terminalInput.Text.Length;
+                    }
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Down)
+                {
+                    if (terminalHistory.Count > 0 && historyIndex < terminalHistory.Count - 1)
+                    {
+                        historyIndex++;
+                        terminalInput.Text = terminalHistory[historyIndex];
+                        terminalInput.SelectionStart = terminalInput.Text.Length;
+                    }
+                    else
+                    {
+                        historyIndex = terminalHistory.Count;
+                        terminalInput.Text = "";
+                    }
+                    e.Handled = true;
+                }
             };
             Button btnExec = new Button { Text = "Execute", Dock = DockStyle.Right, Width = 80, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(2, 132, 199), Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnExec.Click += (s, e) => ExecuteTerminalCommand();
@@ -1382,7 +1411,12 @@ namespace JDroidXDesk.Native
             targetBox.Controls.Add(txtTargetPass);
             targetBox.Controls.Add(btnConnect);
 
+            lblLocalIp = new Label { Text = "IP: " + (currentHostDesktop != null ? currentHostDesktop.Ip : "127.0.0.1"), Font = new Font("Consolas", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(10, 0, 0, 0) };
+            lblLocalStatus = new Label { Text = "● Ready", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(6, 0, 0, 0) };
+
             localBar.Controls.Add(targetBox);
+            localBar.Controls.Add(lblLocalStatus);
+            localBar.Controls.Add(lblLocalIp);
             localBar.Controls.Add(btnCopy);
             localBar.Controls.Add(lblLocalPass);
             localBar.Controls.Add(lblLocalId);
@@ -1479,6 +1513,7 @@ namespace JDroidXDesk.Native
             currentHostDesktop = newHost;
             if (lblLocalId != null) lblLocalId.Text = "THIS DESK: " + currentHostDesktop.RemoteId;
             if (lblLocalPass != null) lblLocalPass.Text = "Pass: " + currentHostDesktop.Passcode;
+            if (lblLocalIp != null) lblLocalIp.Text = "IP: " + currentHostDesktop.Ip;
             UpdateDrawerForCurrentView("Console");
             RegisterWithColabRelay();
             ShowToast("Local Host switched to " + newHost.Name);
