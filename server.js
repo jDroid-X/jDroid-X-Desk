@@ -643,6 +643,15 @@ app.post('/api/remote/launch-terminal', (req, res) => {
     });
 });
 
+app.get(['/download', '/api/download/exe', '/api/download-exe'], (req, res) => {
+    const exeFile = path.join(__dirname, 'jDroid-X-Desk.exe');
+    if (fs.existsSync(exeFile)) {
+        res.download(exeFile, 'jDroid-X-Desk.exe');
+    } else {
+        res.status(404).json({ success: false, error: 'jDroid-X-Desk.exe not found on server.' });
+    }
+});
+
 app.get('/api/download-client', (req, res) => {
     const clientFile = path.join(__dirname, 'jDroid-Client.bat');
     if (fs.existsSync(clientFile)) {
