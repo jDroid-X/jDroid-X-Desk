@@ -1524,7 +1524,7 @@ namespace JDroidXDesk.Native
             btnCardInvite.FlatAppearance.BorderSize = 0;
             btnCardInvite.Click += (s, e) => {
                 if (currentHostDesktop != null) {
-                    string invite = string.Format("Join my jDroid-X Remote Desktop session.\nDesk ID: {0}\nDownload client: https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-X-Desk.exe", currentHostDesktop.RemoteId);
+                    string invite = string.Format("Join my jDroid-X Remote Desktop session.\nDesk ID: {0}\nDownload client: https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe", currentHostDesktop.RemoteId);
                     Clipboard.SetText(invite);
                     ShowToast("Complete invite message copied to clipboard!");
                 }
