@@ -162,27 +162,125 @@ async function runTests() {
         const getLogs = await makeRequest('GET', '/api/logs');
         assert(getLogs.statusCode === 200 && Array.isArray(getLogs.body.data), 'GET /api/logs returns audit log array');
 
-        // Test Relational Groups & Devices
+        // Test Relational Groups & Devices with Normalized Description
         const getGroups = await makeRequest('GET', '/api/groups');
         assert(getGroups.statusCode === 200 && Array.isArray(getGroups.body.data), 'GET /api/groups returns device groups with member counts');
+        assert(getGroups.body.data.length > 0 && typeof getGroups.body.data[0].description === 'string', 'GET /api/groups normalizes group description string');
 
+        // Scenario 1: Group Full CRUD Cycle
+        const postGroup = await makeRequest('POST', '/api/groups', { name: 'Test QA Group', description: 'Ephemeral QA node pool' });
+        assert(postGroup.statusCode === 200 && postGroup.body.data.id, 'POST /api/groups creates new device group');
+        const testGroupId = postGroup.body.data?.id;
+        if (testGroupId) {
+            const putGroup = await makeRequest('PUT', `/api/groups/${testGroupId}`, { name: 'Updated QA Group', description: 'Updated description' });
+            assert(putGroup.statusCode === 200 && putGroup.body.data.name === 'Updated QA Group', 'PUT /api/groups/:id updates group name & description');
+        }
+
+        // Scenario 2: Device Fleet Full CRUD Cycle
         const getDevices = await makeRequest('GET', '/api/devices');
         assert(getDevices.statusCode === 200 && Array.isArray(getDevices.body.data), 'GET /api/devices returns device fleet with relational groupId');
 
-        // Test Guardians Roster
-        const getGuardians = await makeRequest('GET', '/api/guardians');
-        assert(getGuardians.statusCode === 200 && Array.isArray(getGuardians.body.data), 'GET /api/guardians returns security personnel roster');
+        const postDevice = await makeRequest('POST', '/api/devices', { name: 'Test-Workstation-99', accessLevel: 'Admin', groupId: testGroupId });
+        assert(postDevice.statusCode === 200 && postDevice.body.data.id, 'POST /api/devices registers new machine with groupId');
+        const testDeviceId = postDevice.body.data?.id;
+        if (testDeviceId) {
+            const putDevice = await makeRequest('PUT', `/api/devices/${testDeviceId}`, { name: 'Test-Workstation-Updated', accessLevel: 'Standard' });
+            assert(putDevice.statusCode === 200 && putDevice.body.data.name === 'Test-Workstation-Updated', 'PUT /api/devices/:id updates workstation profile');
+            const delDevice = await makeRequest('DELETE', `/api/devices/${testDeviceId}`);
+            assert(delDevice.statusCode === 200, 'DELETE /api/devices/:id removes machine');
+        }
 
-        // Test Safe Zones
+        if (testGroupId) {
+            const delGroup = await makeRequest('DELETE', `/api/groups/${testGroupId}`);
+            assert(delGroup.statusCode === 200, 'DELETE /api/groups/:id cleans up test group and unassigns devices');
+        }
+
+        // Scenario 3: Safe Zones CIDR IP CRUD Cycle
         const getSafeZones = await makeRequest('GET', '/api/safe-zones');
         assert(getSafeZones.statusCode === 200 && Array.isArray(getSafeZones.body.data), 'GET /api/safe-zones returns CIDR IP perimeter list');
 
-        // Test Contacts & Notifications
+        const postSafeZone = await makeRequest('POST', '/api/safe-zones', { name: 'Test Lab Subnet', ip: '10.200.1.0/24' });
+        assert(postSafeZone.statusCode === 200 && postSafeZone.body.data.id, 'POST /api/safe-zones whitelists new CIDR perimeter');
+        const testSzId = postSafeZone.body.data?.id;
+        if (testSzId) {
+            const putSafeZone = await makeRequest('PUT', `/api/safe-zones/${testSzId}`, { name: 'Updated Lab Subnet', ip: '10.200.2.0/24' });
+            assert(putSafeZone.statusCode === 200 && putSafeZone.body.data.ip === '10.200.2.0/24', 'PUT /api/safe-zones/:id updates perimeter rule');
+            const delSafeZone = await makeRequest('DELETE', `/api/safe-zones/${testSzId}`);
+            assert(delSafeZone.statusCode === 200, 'DELETE /api/safe-zones/:id removes safe zone rule');
+        }
+
+        // Scenario 4: Guardians Security Personnel CRUD Cycle
+        const getGuardians = await makeRequest('GET', '/api/guardians');
+        assert(getGuardians.statusCode === 200 && Array.isArray(getGuardians.body.data), 'GET /api/guardians returns security personnel roster');
+
+        const postGuardian = await makeRequest('POST', '/api/guardians', { name: 'QA Sentinel', role: 'Compliance Inspector', contact: 'qa@jdroid-x.net' });
+        assert(postGuardian.statusCode === 200 && postGuardian.body.data.id, 'POST /api/guardians registers emergency supervisor');
+        const testGrdId = postGuardian.body.data?.id;
+        if (testGrdId) {
+            const putGuardian = await makeRequest('PUT', `/api/guardians/${testGrdId}`, { name: 'QA Lead Sentinel', role: 'Chief Compliance', contact: 'lead-qa@jdroid-x.net' });
+            assert(putGuardian.statusCode === 200 && putGuardian.body.data.name === 'QA Lead Sentinel', 'PUT /api/guardians/:id updates supervisor credentials');
+            const delGuardian = await makeRequest('DELETE', `/api/guardians/${testGrdId}`);
+            assert(delGuardian.statusCode === 200, 'DELETE /api/guardians/:id revokes supervisor credentials');
+        }
+
+        // Scenario 5: Partner Contacts Address Book CRUD Cycle
         const getContacts = await makeRequest('GET', '/api/contacts');
         assert(getContacts.statusCode === 200 && Array.isArray(getContacts.body.data), 'GET /api/contacts returns partner address book');
 
+        const postContact = await makeRequest('POST', '/api/contacts', { name: 'QA Remote Partner', remoteId: '123-456-789', group: 'Field Fleet' });
+        assert(postContact.statusCode === 200 && postContact.body.data.id, 'POST /api/contacts stores partner address book entry');
+        const testCntId = postContact.body.data?.id;
+        if (testCntId) {
+            const putContact = await makeRequest('PUT', `/api/contacts/${testCntId}`, { name: 'QA Remote Partner v2', remoteId: '987-654-321' });
+            assert(putContact.statusCode === 200 && putContact.body.data.remoteId === '987-654-321', 'PUT /api/contacts/:id updates partner remoteId');
+            const delContact = await makeRequest('DELETE', `/api/contacts/${testCntId}`);
+            assert(delContact.statusCode === 200, 'DELETE /api/contacts/:id deletes partner contact');
+        }
+
+        // Scenario 6: Notifications & Read-All
+        const postNotif = await makeRequest('POST', '/api/notifications', { title: 'Test Alert', message: 'Automated test suite notice', type: 'info' });
+        assert(postNotif.statusCode === 200 && postNotif.body.data.id, 'POST /api/notifications creates system alert');
+        const testNotifId = postNotif.body.data?.id;
+
         const getNotifs = await makeRequest('GET', '/api/notifications');
         assert(getNotifs.statusCode === 200 && Array.isArray(getNotifs.body.data), 'GET /api/notifications returns notification center events');
+
+        const readAllNotifs = await makeRequest('PUT', '/api/notifications/read-all');
+        assert(readAllNotifs.statusCode === 200 && readAllNotifs.body.success, 'PUT /api/notifications/read-all bulk-acknowledges notifications');
+
+        if (testNotifId) {
+            const delNotif = await makeRequest('DELETE', `/api/notifications/${testNotifId}`);
+            assert(delNotif.statusCode === 200, 'DELETE /api/notifications/:id dismisses notification');
+        }
+
+        // Scenario 7: AnyDesk Session Invitation Lifecycle
+        const postInvite = await makeRequest('POST', '/api/invites', { sourceId: 'JDX-TEST-SRC', targetId: 'JDX-TEST-TGT' });
+        assert(postInvite.statusCode === 200 && postInvite.body.data.id, 'POST /api/invites dispatches session invitation');
+        const testInviteId = postInvite.body.data?.id;
+
+        const getPending = await makeRequest('GET', '/api/invites/pending/JDX-TEST-TGT');
+        assert(getPending.statusCode === 200 && Array.isArray(getPending.body.data) && getPending.body.data.length > 0, 'GET /api/invites/pending/:targetId retrieves pending invite');
+
+        if (testInviteId) {
+            const respondInvite = await makeRequest('PUT', `/api/invites/${testInviteId}/respond`, { status: 'ACCEPTED' });
+            assert(respondInvite.statusCode === 200 && respondInvite.body.session?.id, 'PUT /api/invites/:id/respond accepts invite and creates live session');
+            if (respondInvite.body.session?.id) {
+                await makeRequest('DELETE', `/api/sessions/${respondInvite.body.session.id}`);
+            }
+        }
+
+        // Scenario 8: Download Endpoints
+        const dlExe = await makeRequest('GET', '/api/download-exe');
+        assert(dlExe.statusCode === 200, 'GET /api/download-exe serves executable package');
+
+        const dlClient = await makeRequest('GET', '/api/download-client');
+        assert(dlClient.statusCode === 200, 'GET /api/download-client serves batch client');
+
+        // Scenario 9: Native Windows Remote Endpoints Integration
+        if (process.platform === 'win32') {
+            const msraCheck = await makeRequest('POST', '/api/remote/launch-msra');
+            assert(msraCheck.statusCode === 200 && msraCheck.body.success, 'POST /api/remote/launch-msra launches Microsoft Remote Assistance');
+        }
 
     } catch (err) {
         assert(false, `API integration error: ${err.message}`);

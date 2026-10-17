@@ -13,23 +13,34 @@
 
 </div>
 
+<div align="center">
+
+<br/>
+
+<img src="assets/jdroid-x-desk-presentation.png" alt="jDroid-X-Desk Workspace Presentation" width="95%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+
+<br/>
+<br/>
+
+*Fig 1: jDroid-X-Desk Clean Standby Workspace — Dynamic SHA-256 Hardware Desk ID, One-Click Share & Connect Cards, and Zero-State Recent Connections for Fresh Installs.*
+
+<br/>
+
+[![Download Authorized EXE](https://img.shields.io/badge/Download-jDroid--X--Desk.exe%20(Authorized%20Build)-EF4444?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe)
+[![Official Web Gateway](https://img.shields.io/badge/Web%20Gateway-localhost%3A7070-10B981?style=for-the-badge&logo=google-chrome&logoColor=white)](http://localhost:7070)
+
+</div>
+
 ---
 
-## 🌟 Overview
+## 📥 Direct Download & Authorized Installation
 
-**jDroid-X-Desk** is a lightning-fast, ultra-portable, enterprise-ready remote desktop control and fleet management suite. Engineered following the industry standard of **Google Chrome Remote Desktop**, **RustDesk**, and **AnyDesk**, it combines a **zero-dependency native standalone Windows executable (`jDroid-X-Desk.exe`, 93 KB)** with a rich **full-stack WebRTC/Node.js web administration gateway**.
+The latest **jDroid-X-Desk** application is built and verified as an **authorized Windows executable** with embedded application manifests, high-resolution branding icons, and Authenticode signing credentials:
 
-Whether you need 1-click remote assistance for non-technical users or a central multi-node cloud relay infrastructure across remote clusters, **jDroid-X-Desk** delivers deterministic performance, hardware-grounded security, and frictionless usability.
-
----
-
-## 📥 Direct Download Paths
-
-Get the latest updated client and tools directly:
-
-| Artifact | Type | Size | Direct Download Link | Description |
+| Artifact | Type | Size | Direct Download Link | Security & Authority Specification |
 |---|---|---|---|---|
-| **jDroid-X-Desk.exe** | **Standalone Windows Native Executable** | **93 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single-file portable client**. Zero installer, zero dependencies. Runs on Windows 10, 11 & Server with dynamic hardware key. |
+| **jDroid-X-Desk.exe** | **Authorized Windows Native Executable** | **93 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Authorized Single-File Executable**: Embedded `app.manifest` (DPI-aware, Win 10/11), 256px icon, Authenticode Code Signed by `jDroid-X Enterprise Systems`. Zero dummy records on fresh install. |
+| **jDroid-X-Desk-Native.exe** | **Native Machine Executable** | **93 KB** | [📥 **Download jDroid-X-Desk-Native.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Native.exe) | Alternate direct binary distribution target. |
 | **jDroid-Share.bat** | **Portable Client Share Script** | **3.3 KB** | [📥 **Download jDroid-Share.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-Share.bat) | Lightweight 1-click batch launcher to start instant screen sharing for remote users. |
 | **jDroid-Client.bat** | **Technician Client Script** | **6.1 KB** | [📥 **Download jDroid-Client.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-Client.bat) | Portable admin remote access client launcher. |
 | **Local Web Gateway** | **HTTP Server Endpoint** | — | `http://localhost:7070/download` | Direct browser download endpoint served by the local gateway. |
@@ -77,8 +88,10 @@ Get the latest updated client and tools directly:
 
 ```
 jDroid-X-Desk/
-├── jDroid-X-Desk.exe           # Single standalone portable native client (93 KB, ZERO dependencies)
+├── jDroid-X-Desk.exe           # Single standalone portable native client (Authorized & Signed, 93 KB)
+├── jDroid-X-Desk-Native.exe    # Synchronized native machine executable
 ├── JDroidXDeskNative.cs        # Senior Dynamic OOPS MVC C# source code
+├── app.manifest                # Windows Application Manifest (DPI Aware, Win 10/11)
 ├── Launch-Desk.bat             # 1-Click launcher for full-stack Node.js server & browser UI
 ├── Launch-Native.bat           # 1-Click launcher for native Windows executable
 ├── jDroid-Share.bat            # Lightweight script for client screen sharing
@@ -87,12 +100,14 @@ jDroid-X-Desk/
 ├── app.js                      # Reactive frontend controller (OOPS MVC)
 ├── index.html                  # Responsive HTML5 desktop dashboard
 ├── styles.css                  # Modern high-contrast UI design system
-├── database.json               # Relational SQLite/JSON database context
+├── database.json               # Relational SQLite/JSON clean fresh install database
 ├── colab_relay_server.py       # Google Colab cloud relay bridge server
 ├── jDroid-X-Desk.ipynb         # Jupyter Notebook for running middle-layer Colab relay
 ├── windows_rdp.yaml            # Cloud RDP deployment configuration
-├── test.js                     # Automated Stage 5 verification test suite (55 tests)
+├── test.js                     # Automated Stage 5 verification test suite (80 assertions)
 ├── assets/
+│   ├── app.ico                 # 256x256 multi-resolution embedded application icon
+│   ├── jdroid-x-desk-presentation.png # High-resolution UI showcase presentation
 │   └── jdroidxlogo_trans.png   # Transparent jDroid-X branding logo
 └── docs/                       # Specifications, reverse engineering docs & analysis
     └── REA_CHROME_REMOTE_DESKTOP_ANALYSIS.md
@@ -146,7 +161,7 @@ node test.js
 [3/4] Verifying DOM Affordances & Element IDs...  [PASS]
 [4/4] Starting Server & Testing API Endpoints...  [PASS]
 ====================================================
- VERIFICATION RESULTS: 55 PASSED, 0 FAILED
+ VERIFICATION RESULTS: 80 PASSED, 0 FAILED
 ====================================================
 ```
 

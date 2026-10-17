@@ -464,17 +464,7 @@ class AppController {
         };
 
         // Check Firebase Auth state first — hide preloader after resolution
-        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-            firebase.auth().onAuthStateChanged((user) => {
-                hidePreloader();
-                if (user) {
-                    this.unlockConsole(user.email || 'Authenticated User');
-                } else {
-                    const gate = document.getElementById('login-gate-overlay');
-                    if (gate) gate.style.display = 'flex';
-                }
-            });
-        } else {
+        if (typeof firebase !== 'undefined') {
             try {
                 if (firebase.apps.length === 0) {
                     firebase.initializeApp({
@@ -498,11 +488,14 @@ class AppController {
                     }
                 });
             } catch (e) {
-                // Firebase unavailable — hide preloader and show login gate
                 hidePreloader();
                 const gate = document.getElementById('login-gate-overlay');
                 if (gate) gate.style.display = 'flex';
             }
+        } else {
+            hidePreloader();
+            const gate = document.getElementById('login-gate-overlay');
+            if (gate) gate.style.display = 'flex';
         }
     }
 
@@ -3123,7 +3116,7 @@ class GroupController {
             item.innerHTML = `
                 <div class="list-item-content">
                     <span class="list-item-title"><i class="fa-solid fa-users text-info"></i> ${ValidationUtil.escapeHTML(group.name)}</span>
-                    <span class="list-item-sub">${ValidationUtil.escapeHTML(group.description || 'No description')} &nbsp;<span class="badge badge-blue" style="font-size:0.6rem;">${group.members} member${group.members !== 1 ? 's' : ''}</span></span>
+                    <span class="list-item-sub">${ValidationUtil.escapeHTML(group.description || group.desc || 'No description')} &nbsp;<span class="badge badge-blue" style="font-size:0.6rem;">${group.members} member${group.members !== 1 ? 's' : ''}</span></span>
                 </div>
                 <div class="list-item-actions">
                     <button class="btn btn-outline btn-sm edit-grp-btn" data-id="${group.id}" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -3165,7 +3158,7 @@ class GroupController {
             </div>
             <div class="form-group">
                 <label>Description (Optional)</label>
-                <input type="text" id="grp-desc" class="input-text" value="${ValidationUtil.escapeHTML(group.description || '')}" placeholder="e.g. Level 2 Support Team">
+                <input type="text" id="grp-desc" class="input-text" value="${ValidationUtil.escapeHTML(group.description || group.desc || '')}" placeholder="e.g. Level 2 Support Team">
             </div>
         `;
         this.dialogView.show('Edit Group', bodyHtml, () => {
@@ -3360,14 +3353,10 @@ class GuardiansController {
                 window.appController.traceModel.addLog('SECURITY_AUDIT', 'KILL_SWITCH_ENGAGED', 'OPERATOR TRIGGERED EMERGENCY SESSION ISOLATION KILL SWITCH');
                 window.appController.view.showToast('error', 'KILL SWITCH ENGAGED', 'All active remote connections terminated immediately.');
                 
-                fetch('/api/notifications', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: 'EMERGENCY KILL SWITCH ENGAGED',
-                        message: 'Session isolation triggered by operator. All remote channels severed.',
-                        type: 'error'
-                    })
+                await (new NotificationsModel()).add({
+                    title: 'EMERGENCY KILL SWITCH ENGAGED',
+                    message: 'Session isolation triggered by operator. All remote channels severed.',
+                    type: 'error'
                 });
                 return true;
             }
@@ -3553,8 +3542,30 @@ class NotificationsModel {
             return data.data || [];
         } catch (e) { return []; }
     }
+    async add(n) {
+        try {
+            const res = await fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(n)
+            });
+            return await res.json();
+        } catch (e) { return { success: false, error: e.message }; }
+    }
     async markRead(id) {
         return fetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+    }
+    async markAllRead() {
+        try {
+            const res = await fetch('/api/notifications/read-all', { method: 'PUT' });
+            return await res.json();
+        } catch (e) {
+            const list = await this.fetchAll();
+            for (const n of list) {
+                await this.markRead(n.id);
+            }
+            return { success: true };
+        }
     }
     async remove(id) {
         return fetch(`/api/notifications/${id}`, { method: 'DELETE' });
@@ -3569,10 +3580,7 @@ class NotificationsController {
 
         if (this.btnMarkRead) {
             this.btnMarkRead.addEventListener('click', async () => {
-                const list = await this.model.fetchAll();
-                for (const n of list) {
-                    await this.model.markRead(n.id);
-                }
+                await this.model.markAllRead();
                 window.appController.view.showToast('info', 'Notifications Updated', 'All notifications marked as read.');
                 await this.renderList();
             });
@@ -3791,10 +3799,10 @@ class DeviceController {
     }
 
     async saveDevice() {
-        const id = this.idInput.value;
-        const name = this.nameInput.value.trim();
-        const groupId = this.groupSelect ? this.groupSelect.value : null;
-        const access = this.accessInput.value;
+        const id = this.idInput ? this.idInput.value : '';
+        const name = this.nameInput ? this.nameInput.value.trim() : '';
+        const groupId = this.groupSelect ? (this.groupSelect.value || null) : null;
+        const access = this.accessInput ? (this.accessInput.value || 'Standard') : 'Standard';
 
         const nameRegex = /^[a-zA-Z0-9 _.-]+$/;
         if (!name || !nameRegex.test(name)) {
@@ -3853,4 +3861,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.guardiansController.init();
     window.remoteContactsController.init();
     window.notificationsController.init();
+
+    // Trigger immediate view synchronization with fully initialized controllers
+    if (window.appController) {
+        window.appController.renderCurrentView();
+    }
 });

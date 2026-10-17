@@ -22,7 +22,21 @@ using System.Runtime.InteropServices;
 using System.Net.Sockets;
 using System.Drawing.Imaging;
 using System.Security.Cryptography;
+using System.Reflection;
 using Microsoft.Win32;
+
+[assembly: AssemblyTitle("jDroid-X-Desk")]
+[assembly: AssemblyDescription("Enterprise Remote Desktop & Machine Administration Workspace")]
+[assembly: AssemblyConfiguration("Release")]
+[assembly: AssemblyCompany("jDroid-X Enterprise Systems")]
+[assembly: AssemblyProduct("jDroid-X-Desk Remote Desktop Workspace")]
+[assembly: AssemblyCopyright("Copyright © 2026 JEET / jDroid-X Systems. All rights reserved.")]
+[assembly: AssemblyTrademark("jDroid-X")]
+[assembly: AssemblyCulture("")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: ComVisible(false)]
+[assembly: Guid("96B8F8C6-534B-446A-AE50-83B504E2EF1E")]
 
 namespace JDroidXDesk.Native
 {

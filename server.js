@@ -289,10 +289,11 @@ app.delete('/api/safe-zones/:id', (req, res) => { const db = readDB(); db.safeZo
 // ==========================================
 app.get('/api/groups', (req, res) => {
     const db = readDB();
-    // Dynamically populate member count from devices table relationship
+    // Dynamically populate member count from devices table relationship & normalize description
     const groupsWithMembers = db.groups.map(g => {
         const count = db.devices.filter(d => d.groupId === g.id).length;
-        return { ...g, members: count };
+        const desc = g.description || g.desc || '';
+        return { ...g, desc, description: desc, members: count };
     });
     res.json({ success: true, data: groupsWithMembers });
 });
@@ -428,6 +429,14 @@ app.post('/api/notifications', validateBody(['title', 'message']), (req, res) =>
     const db = readDB();
     const n = { id: Date.now().toString(), title: req.body.title.trim(), message: req.body.message.trim(), type: req.body.type || 'info', read: false, createdAt: new Date().toISOString() };
     db.notifications.push(n); writeDB(db); res.json({ success: true, data: n });
+});
+app.put('/api/notifications/read-all', (req, res) => {
+    const db = readDB();
+    if (Array.isArray(db.notifications)) {
+        db.notifications.forEach(n => { n.read = true; });
+        writeDB(db);
+    }
+    res.json({ success: true, message: 'All notifications marked as read.' });
 });
 app.put('/api/notifications/:id/read', (req, res) => {
     const db = readDB(); const i = db.notifications.findIndex(n => n.id === req.params.id);
@@ -643,12 +652,28 @@ app.post('/api/remote/launch-terminal', (req, res) => {
     });
 });
 
+app.post('/api/remote/launch-msra', (req, res) => {
+    if (os.platform() !== 'win32') {
+        return res.status(400).json({ success: false, error: 'Microsoft Remote Assistance is only available on Windows.' });
+    }
+    exec('start msra.exe /expert', (err) => {
+        if (err) {
+            console.error('[NATIVE REMOTE] Failed to launch MSRA:', err.message);
+            return res.status(500).json({ success: false, error: 'Failed to launch MSRA: ' + err.message });
+        }
+        res.json({ success: true, message: 'Microsoft Remote Assistance launched successfully.' });
+    });
+});
+
+// ==========================================
+// 12. APPLICATION DOWNLOAD API ROUTES
+// ==========================================
 app.get(['/download', '/api/download/exe', '/api/download-exe'], (req, res) => {
     const exeFile = path.join(__dirname, 'jDroid-X-Desk.exe');
     if (fs.existsSync(exeFile)) {
         res.download(exeFile, 'jDroid-X-Desk.exe');
     } else {
-        res.status(404).json({ success: false, error: 'jDroid-X-Desk.exe not found on server.' });
+        res.status(404).json({ success: false, error: 'Executable not found on server.' });
     }
 });
 
@@ -698,9 +723,8 @@ app.get('/api/hardware-id', (req, res) => {
         res.json({ success: true, deviceId: 'JDX-' + hash.substring(0,4) + '-' + hash.substring(4,8) });
     } catch (err) { res.json({ success: true, deviceId: 'JDX-RAND-0000' }); }
 });
-
 // ==========================================
-// 12. APPLICATION DOWNLOAD API ROUTES
+// 12. APPLICATION DOWNLOAD API ROUTES (Preserved Compatibility)
 // ==========================================
 app.get(['/download', '/download/exe', '/download/native'], (req, res) => {
     const exePath = path.join(__dirname, 'jDroid-X-Desk.exe');
