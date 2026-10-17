@@ -134,7 +134,7 @@ const DEFAULT_SCHEMA = {
         { id: "dev-3", name: "Field Mobile Node", ip: "10.0.4.120", groupId: "grp-2", group: "Field Fleet", status: "STANDBY", accessLevel: "Standard" }
     ],
     guardians: [
-        { id: "grd-1", name: "Antigravity AI Systems Architect", role: "Senior Systems Architect (Level 5)", contact: "jeet@jdroid-x.enterprise", status: "Active" },
+        { id: "grd-1", name: "jDroid-X Systems Architect", role: "Senior Systems Architect (Level 5)", contact: "jeet@jdroid-x.enterprise", status: "Active" },
         { id: "grd-2", name: "Enterprise Security Auditor", role: "Security & Compliance Officer", contact: "sec-ops@jdroid-x.enterprise", status: "Active" }
     ],
     contacts: [
@@ -577,7 +577,7 @@ app.put('/api/invites/:id/respond', (req, res) => {
             targetId: db.invites[idx].targetId,
             sourceId: db.invites[idx].sourceId,
             status: 'ACTIVE',
-            protocol: 'P2P AnyDesk Relay / Colab Cloud',
+            protocol: 'P2P jDroid-X Relay / Colab Cloud Mesh',
             permissions: db.invites[idx].permissions,
             startedAt: new Date().toISOString(),
             endedAt: null,
@@ -677,10 +677,12 @@ app.get(['/download', '/api/download/exe', '/api/download-exe'], (req, res) => {
     }
 });
 
-app.get('/api/download-client', (req, res) => {
-    const clientFile = path.join(__dirname, 'jDroid-Client.bat');
+app.get(['/api/download-client', '/api/download/client', '/api/download/share'], (req, res) => {
+    const clientFile = fs.existsSync(path.join(__dirname, 'jDroid-X-Client.bat')) 
+        ? path.join(__dirname, 'jDroid-X-Client.bat') 
+        : path.join(__dirname, 'jDroid-Client.bat');
     if (fs.existsSync(clientFile)) {
-        res.download(clientFile, 'jDroid-Client.bat');
+        res.download(clientFile, path.basename(clientFile));
     } else {
         res.status(404).json({ success: false, error: 'Client installer not found.' });
     }
@@ -736,9 +738,11 @@ app.get(['/download', '/download/exe', '/download/native'], (req, res) => {
 });
 
 app.get(['/download/bat', '/download/client', '/download/share'], (req, res) => {
-    const batPath = path.join(__dirname, 'jDroid-Client.bat');
+    const batPath = fs.existsSync(path.join(__dirname, 'jDroid-X-Client.bat'))
+        ? path.join(__dirname, 'jDroid-X-Client.bat')
+        : path.join(__dirname, 'jDroid-Client.bat');
     if (fs.existsSync(batPath)) {
-        res.download(batPath, 'jDroid-Client.bat');
+        res.download(batPath, path.basename(batPath));
     } else {
         res.status(404).send('Client script not found.');
     }

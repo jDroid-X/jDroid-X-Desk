@@ -28,10 +28,10 @@ using Microsoft.Win32;
 [assembly: AssemblyTitle("jDroid-X-Desk")]
 [assembly: AssemblyDescription("Enterprise Remote Desktop & Machine Administration Workspace")]
 [assembly: AssemblyConfiguration("Release")]
-[assembly: AssemblyCompany("jDroid-X Enterprise Systems")]
-[assembly: AssemblyProduct("jDroid-X-Desk Remote Desktop Workspace")]
-[assembly: AssemblyCopyright("Copyright © 2026 JEET / jDroid-X Systems. All rights reserved.")]
-[assembly: AssemblyTrademark("jDroid-X")]
+[assembly: AssemblyCompany("jDroid-X Studio")]
+[assembly: AssemblyProduct("jDroid-X-Desk")]
+[assembly: AssemblyCopyright("Copyright © 2026 JEET / jDroid-X Studio. All rights reserved.")]
+[assembly: AssemblyTrademark("jDroid-X Studio™")]
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyVersion("2.0.0.0")]
 [assembly: AssemblyFileVersion("2.0.0.0")]
@@ -202,8 +202,8 @@ namespace JDroidXDesk.Native
         public AccountSettings()
         {
             username = "JEET";
-            licenseType = "Enterprise Platinum (Unlimited)";
-            enterpriseTenant = "JEET-Antigravity-Innovant-Cluster";
+            licenseType = "Enterprise Platinum (Unlimited) - jDroid-X Studio";
+            enterpriseTenant = "jDroid-X Studio Enterprise Network";
         }
     }
 
@@ -2216,7 +2216,7 @@ namespace JDroidXDesk.Native
             viewSettingsStudio = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42), Padding = new Padding(12) };
 
             Panel header = new Panel { Dock = DockStyle.Top, Height = 42 };
-            Label lblTitle = new Label { Text = "Settings & Security Studio (RustDesk / AnyDesk Engine)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
+            Label lblTitle = new Label { Text = "Settings & Security Studio (jDroid-X Relay Engine)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
 
             ModernButton btnSave = new ModernButton { Text = "💾 Save & Apply", NormalColor = Color.FromArgb(16, 185, 129), HoverColor = Color.FromArgb(21, 150, 78), Size = new Size(130, 28), Dock = DockStyle.Right };
             btnSave.Click += (s, e) => {
@@ -2311,8 +2311,8 @@ namespace JDroidXDesk.Native
                     SyncFromGitHubBackend();
                 };
 
-                addH("Direct P2P & RustDesk Compatibility");
-                TextBox tbId = addTb("RustDesk ID Server (hbbs :21116)", db.Settings.connection.idServer);
+                addH("Direct P2P & Cloud Relay Mesh");
+                TextBox tbId = addTb("jDroid-X Rendezvous ID Server (hbbs :21116)", db.Settings.connection.idServer);
                 tbId.TextChanged += (s, e) => db.Settings.connection.idServer = tbId.Text.Trim();
 
                 Button btnSaveConn = new Button {

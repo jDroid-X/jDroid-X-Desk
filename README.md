@@ -33,16 +33,16 @@
 
 ---
 
-## 📥 Direct Download & Authorized Installation
+## 📥 Direct Download & Universal Installation
 
-The latest **jDroid-X-Desk** application is built and verified as an **authorized Windows executable** with embedded application manifests, high-resolution branding icons, and Authenticode signing credentials:
+**jDroid-X-Desk** is an enterprise subsidiary application of **jDroid-X Studio**. Built and verified as a **single universal Windows executable**, it runs on all Windows versions (Windows 7, 8, 8.1, 10, 11, and Windows Server) on AnyCPU (32-bit, 64-bit, and ARM64):
 
-| Artifact | Type | Size | Direct Download Link | Security & Authority Specification |
+| Artifact | Type | Size | Direct Download Link | Security & Universal Authority Specification |
 |---|---|---|---|---|
-| **jDroid-X-Desk.exe** | **Authorized Windows Native Executable** | **93 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Authorized Single-File Executable**: Embedded `app.manifest` (DPI-aware, Win 10/11), 256px icon, Authenticode Code Signed by `jDroid-X Enterprise Systems`. Zero dummy records on fresh install. |
-| **jDroid-X-Desk-Native.exe** | **Native Machine Executable** | **93 KB** | [📥 **Download jDroid-X-Desk-Native.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Native.exe) | Alternate direct binary distribution target. |
-| **jDroid-Share.bat** | **Portable Client Share Script** | **3.3 KB** | [📥 **Download jDroid-Share.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-Share.bat) | Lightweight 1-click batch launcher to start instant screen sharing for remote users. |
-| **jDroid-Client.bat** | **Technician Client Script** | **6.1 KB** | [📥 **Download jDroid-Client.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-Client.bat) | Portable admin remote access client launcher. |
+| **jDroid-X-Desk.exe** | **Single Universal Windows Executable** | **138 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single Canonical Executable**: Universal AnyCPU architecture, embedded `app.manifest` (DPI-aware, Win 7/8/10/11), 256px multi-resolution icon, multi-target .NET 4.0–4.8.1 runtime fallback, Authenticode signed by **`jDroid-X Studio`**. |
+| **jDroid-X-Client.bat** | **Canonical Technician Client Script** | **6.1 KB** | [📥 **Download jDroid-X-Client.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-X-Client.bat) | Portable admin remote access client launcher with automated Windows UAC elevation. |
+| **jDroid-X-Share.bat** | **Canonical Client Share Script** | **3.3 KB** | [📥 **Download jDroid-X-Share.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-X-Share.bat) | Lightweight 1-click batch launcher to start instant screen sharing for remote users. |
+| **jDroid-X-Desk-Native.exe** | **Synchronized Mirror Executable** | **138 KB** | [📥 **Download jDroid-X-Desk-Native.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Native.exe) | Backward-compatible mirror copy of the canonical `jDroid-X-Desk.exe`. |
 | **Local Web Gateway** | **HTTP Server Endpoint** | — | `http://localhost:7070/download` | Direct browser download endpoint served by the local gateway. |
 | **Official Repository** | **GitHub Repository** | — | [github.com/jDroid-X/jDroid-X-Desk](https://github.com/jDroid-X/jDroid-X-Desk) | Full source code, test suites, and documentation. |
 
@@ -88,23 +88,26 @@ The latest **jDroid-X-Desk** application is built and verified as an **authorize
 
 ```
 jDroid-X-Desk/
-├── jDroid-X-Desk.exe           # Single standalone portable native client (Authorized & Signed, 93 KB)
-├── jDroid-X-Desk-Native.exe    # Synchronized native machine executable
+├── jDroid-X-Desk.exe           # Single canonical universal Windows executable (Authorized & Signed, 138 KB)
+├── jDroid-X-Desk.exe.config    # Universal multi-target .NET runtime binding configuration
+├── jDroid-X-Desk-Native.exe    # Synchronized backward-compatible mirror executable
 ├── JDroidXDeskNative.cs        # Senior Dynamic OOPS MVC C# source code
-├── app.manifest                # Windows Application Manifest (DPI Aware, Win 10/11)
+├── app.manifest                # Windows Universal Application Manifest (AnyCPU, DPI Aware, Win 7/8/10/11)
 ├── Launch-Desk.bat             # 1-Click launcher for full-stack Node.js server & browser UI
 ├── Launch-Native.bat           # 1-Click launcher for native Windows executable
-├── jDroid-Share.bat            # Lightweight script for client screen sharing
-├── jDroid-Client.bat           # Portable remote desktop technician client
+├── jDroid-X-Client.bat         # Canonical technician remote desktop client (UAC elevated)
+├── jDroid-Client.bat           # Legacy alias technician client
+├── jDroid-X-Share.bat          # Canonical client screen sharing script
+├── jDroid-Share.bat            # Legacy alias screen sharing script
 ├── server.js                   # Node.js Express & WebRTC backend gateway
 ├── app.js                      # Reactive frontend controller (OOPS MVC)
 ├── index.html                  # Responsive HTML5 desktop dashboard
-├── styles.css                  # Modern high-contrast UI design system
-├── database.json               # Relational SQLite/JSON clean fresh install database
+├── styles.css                  # Modern high-contrast UI design system (Dual jDroid/AnyDesk CSS)
+├── database.json               # Relational SQLite/JSON enterprise database
 ├── colab_relay_server.py       # Google Colab cloud relay bridge server
 ├── jDroid-X-Desk.ipynb         # Jupyter Notebook for running middle-layer Colab relay
 ├── windows_rdp.yaml            # Cloud RDP deployment configuration
-├── test.js                     # Automated Stage 5 verification test suite (80 assertions)
+├── test.js                     # Automated Stage 5 verification test suite (84 assertions)
 ├── assets/
 │   ├── app.ico                 # 256x256 multi-resolution embedded application icon
 │   ├── jdroid-x-desk-presentation.png # High-resolution UI showcase presentation
@@ -161,7 +164,7 @@ node test.js
 [3/4] Verifying DOM Affordances & Element IDs...  [PASS]
 [4/4] Starting Server & Testing API Endpoints...  [PASS]
 ====================================================
- VERIFICATION RESULTS: 80 PASSED, 0 FAILED
+ VERIFICATION RESULTS: 84 PASSED, 0 FAILED
 ====================================================
 ```
 
@@ -169,8 +172,9 @@ node test.js
 
 ## 📄 License & Attribution
 
-Designed and developed for **jDroid-X Ecosystem**.  
+Designed and developed by **jDroid-X Studio**.  
+**jDroid-X-Desk** is an enterprise subsidiary application of **jDroid-X Studio**.  
 Architected following dynamic OOPS-based MVC standards.
 
-**Operator:** JEET | **Assistant:** jDroid-X  
+**Operator:** JEET | **Studio:** jDroid-X Studio | **Assistant:** jDroid-X  
 **Official Portal:** [https://www.jdroid-x.com](https://www.jdroid-x.com) | **Repository:** [https://github.com/jDroid-X/jDroid-X-Desk](https://github.com/jDroid-X/jDroid-X-Desk)

@@ -1559,7 +1559,7 @@ html, body {
 /* ==========================================================================
    ANYDESK REA SETTINGS STUDIO STYLES (MATCHING SCREENSHOTS 1 & 2)
    ========================================================================== */
-.anydesk-settings-container {
+.jdroid-settings-container, .anydesk-settings-container {
     display: grid;
     grid-template-columns: 240px 1fr;
     background: #ffffff;
@@ -1572,7 +1572,7 @@ html, body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
-.anydesk-settings-sidebar {
+.jdroid-settings-sidebar, .anydesk-settings-sidebar {
     background: #fbfbfb;
     border-right: 1px solid #eaeaea;
     padding: 1.2rem 0;
@@ -1580,23 +1580,23 @@ html, body {
     flex-direction: column;
 }
 
-.anydesk-sidebar-header {
+.jdroid-sidebar-header, .anydesk-sidebar-header {
     padding: 0 1.2rem 1rem 1.2rem;
 }
 
-.anydesk-sidebar-header h2 {
+.jdroid-sidebar-header h2, .anydesk-sidebar-header h2 {
     color: #ef3340;
     font-size: 1.4rem;
     margin: 0 0 0.8rem 0;
     font-weight: 600;
 }
 
-.anydesk-search-box {
+.jdroid-search-box, .anydesk-search-box {
     position: relative;
     margin-bottom: 0.5rem;
 }
 
-.anydesk-search-box input {
+.jdroid-search-box input, .anydesk-search-box input {
     width: 100%;
     padding: 0.45rem 0.6rem 0.45rem 2rem;
     font-size: 0.85rem;
@@ -1607,7 +1607,7 @@ html, body {
     box-sizing: border-box;
 }
 
-.anydesk-search-box i {
+.jdroid-search-box i, .anydesk-search-box i {
     position: absolute;
     left: 0.6rem;
     top: 50%;
@@ -1616,11 +1616,11 @@ html, body {
     font-size: 0.8rem;
 }
 
-.anydesk-sidebar-group {
+.jdroid-sidebar-group, .anydesk-sidebar-group {
     margin-top: 0.8rem;
 }
 
-.anydesk-group-label {
+.jdroid-group-label, .anydesk-group-label {
     padding: 0.2rem 1.2rem;
     font-size: 0.75rem;
     color: #888888;
@@ -1629,7 +1629,7 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-.anydesk-menu-item {
+.jdroid-menu-item, .anydesk-menu-item {
     display: flex;
     align-items: center;
     gap: 0.8rem;
@@ -1642,65 +1642,65 @@ html, body {
     border-left: 3px solid transparent;
 }
 
-.anydesk-menu-item:hover {
+.jdroid-menu-item:hover, .anydesk-menu-item:hover {
     background: #f2f2f2;
     color: #111111;
 }
 
-.anydesk-menu-item.active {
+.jdroid-menu-item.active, .anydesk-menu-item.active {
     background: #f3f3f3;
     color: #ef3340;
     font-weight: 600;
     border-left: 3px solid #ef3340;
 }
 
-.anydesk-menu-item i {
+.jdroid-menu-item i, .anydesk-menu-item i {
     width: 18px;
     text-align: center;
     font-size: 0.95rem;
 }
 
-.anydesk-settings-content {
+.jdroid-settings-content, .anydesk-settings-content {
     background: #ffffff;
     padding: 1.5rem 2.2rem;
     overflow-y: auto;
     max-height: 750px;
 }
 
-.anydesk-content-panel {
+.jdroid-content-panel, .anydesk-content-panel {
     display: none;
 }
 
-.anydesk-content-panel.active {
+.jdroid-content-panel.active, .anydesk-content-panel.active {
     display: block;
     animation: fadeIn 0.2s ease;
 }
 
-.anydesk-section {
+.jdroid-section, .anydesk-section {
     margin-bottom: 2rem;
     padding-bottom: 1.2rem;
     border-bottom: 1px solid #eeeeee;
 }
 
-.anydesk-section:last-child {
+.jdroid-section:last-child, .anydesk-section:last-child {
     border-bottom: none;
 }
 
-.anydesk-section-title {
+.jdroid-section-title, .anydesk-section-title {
     font-size: 1.15rem;
     font-weight: 600;
     color: #222222;
     margin: 0 0 1rem 0;
 }
 
-.anydesk-radio-group, .anydesk-check-group {
+.jdroid-radio-group, .jdroid-check-group, .anydesk-radio-group, .anydesk-check-group {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
     margin-bottom: 1rem;
 }
 
-.anydesk-radio-item, .anydesk-check-item {
+.jdroid-radio-item, .jdroid-check-item, .anydesk-radio-item, .anydesk-check-item {
     display: flex;
     align-items: center;
     gap: 0.6rem;
@@ -1709,13 +1709,15 @@ html, body {
     cursor: pointer;
 }
 
+.jdroid-radio-item input[type="radio"],
+.jdroid-check-item input[type="checkbox"],
 .anydesk-radio-item input[type="radio"],
 .anydesk-check-item input[type="checkbox"] {
     accent-color: #ef3340;
     cursor: pointer;
 }
 
-.anydesk-btn-red {
+.jdroid-btn-red, .anydesk-btn-red {
     background: #ef3340;
     color: #ffffff;
     border: none;
@@ -1727,11 +1729,11 @@ html, body {
     transition: background 0.15s ease;
 }
 
-.anydesk-btn-red:hover {
+.jdroid-btn-red:hover, .anydesk-btn-red:hover {
     background: #d62834;
 }
 
-.anydesk-btn-secondary {
+.jdroid-btn-secondary, .anydesk-btn-secondary {
     background: #f0f0f0;
     color: #333333;
     border: 1px solid #cccccc;
@@ -1741,18 +1743,18 @@ html, body {
     cursor: pointer;
 }
 
-.anydesk-btn-secondary:hover {
+.jdroid-btn-secondary:hover, .anydesk-btn-secondary:hover {
     background: #e4e4e4;
 }
 
-.anydesk-path-row {
+.jdroid-path-row, .anydesk-path-row {
     display: flex;
     align-items: center;
     gap: 0.8rem;
     margin-top: 0.4rem;
 }
 
-.anydesk-path-label {
+.jdroid-path-label, .anydesk-path-label {
     font-family: monospace;
     font-size: 0.8rem;
     color: #555555;
@@ -1760,7 +1762,7 @@ html, body {
     cursor: pointer;
 }
 
-.anydesk-box-list {
+.jdroid-box-list, .anydesk-box-list {
     border: 1px solid #cccccc;
     border-radius: 4px;
     min-height: 120px;
@@ -1772,14 +1774,14 @@ html, body {
     max-width: 520px;
 }
 
-.anydesk-box-actions {
+.jdroid-box-actions, .anydesk-box-actions {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
     margin-left: 0.5rem;
 }
 
-.anydesk-action-btn {
+.jdroid-action-btn, .anydesk-action-btn {
     width: 28px;
     height: 28px;
     border-radius: 4px;
@@ -1792,7 +1794,7 @@ html, body {
     color: #555555;
 }
 
-.anydesk-action-btn:hover {
+.jdroid-action-btn:hover, .anydesk-action-btn:hover {
     background: #f0f0f0;
     color: #ef3340;
 }
