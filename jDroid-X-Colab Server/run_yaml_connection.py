@@ -10,6 +10,7 @@ import re
 import json
 import subprocess
 import time
+import threading
 
 def parse_simple_yaml(file_path):
     """Parses windows_rdp.yaml with zero external dependencies."""
@@ -26,7 +27,6 @@ def parse_simple_yaml(file_path):
             if not raw:
                 continue
             
-            # Check indentation
             indent = len(line) - len(line.lstrip())
             stripped = raw.strip()
             
@@ -43,7 +43,6 @@ def parse_simple_yaml(file_path):
                 k = k.strip()
                 v = v.strip().strip('"').strip("'")
                 
-                # Type cast numbers / booleans
                 if v.isdigit():
                     v = int(v)
                 elif v.lower() == 'true':
@@ -60,19 +59,16 @@ def parse_simple_yaml(file_path):
     return config
 
 def main():
-    print("=" * 65)
-    print("   jDroid-X-Desk | YAML-Driven Connection Pipeline")
-    print("   Loading configuration from: windows_rdp.yaml")
-    print("=" * 65)
+    print("=" * 70)
+    print("   jDroid-X-Desk | Automated Cloud Relay & Connection Engine")
+    print("   Architecture: Enterprise YAML-Driven Micro-Broker")
+    print("=" * 70)
 
     yaml_path = "windows_rdp.yaml"
     if not os.path.exists(yaml_path):
-        # Fallback search
         alt_path = os.path.join(os.path.dirname(__file__), "windows_rdp.yaml")
         if os.path.exists(alt_path):
             yaml_path = alt_path
-        else:
-            print(f"[!] Warning: {yaml_path} not found. Using default parameters.")
 
     cfg = parse_simple_yaml(yaml_path)
     colab_cfg = cfg.get('colab', {})
@@ -84,57 +80,83 @@ def main():
     desk2_id = conn_cfg.get('desk2', {}).get('default_id', '710-224-900')
 
     print(f"[*] Configuration Loaded:")
-    print(f"    - Target Custom Domain: {custom_domain}")
+    print(f"    - Target Domain / Web:  {custom_domain}")
     print(f"    - Relay Port:           {relay_port}")
     print(f"    - Desk 1 (Viewer):      {desk1_id}")
     print(f"    - Desk 2 (Target Host): {desk2_id}")
-    print("-" * 65)
+    print("-" * 70)
 
-    # 1. Start Relay Server
+    # 1. Start Relay Server in Background
     relay_script = "colab_relay_server.py"
     if not os.path.exists(relay_script):
         alt_script = os.path.join(os.path.dirname(__file__), "colab_relay_server.py")
         if os.path.exists(alt_script):
             relay_script = alt_script
 
-    print(f"[*] Launching Relay Server ({relay_script}) on port {relay_port}...")
+    print(f"[*] Launching Central Relay Server on port {relay_port}...")
     server_proc = subprocess.Popen([sys.executable, relay_script, str(relay_port)])
     time.sleep(2)
-    print(f"[+] Relay Server is running (PID: {server_proc.pid})")
+    print(f"[+] Central Relay Server is active on PID {server_proc.pid}")
 
     # 2. Check Platform
     is_linux = sys.platform.startswith('linux')
 
     if is_linux:
-        print("[*] Detected Linux / Google Colab Environment.")
+        print("[*] Environment: Linux (Google Colab Container)")
         tunnel_bin = "./cloudflared-linux-amd64"
         
-        # Download cloudflared if missing
         if not os.path.exists(tunnel_bin):
-            print("[*] Downloading cloudflared binary...")
+            print("[*] Downloading secure cloudflared tunneling engine...")
             subprocess.run(["wget", "-q", "-nc", "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"])
             subprocess.run(["chmod", "+x", tunnel_bin])
 
-        # Check for Custom Domain Token
         tunnel_token = os.environ.get("CLOUDFLARE_TUNNEL_TOKEN", "").strip()
         if not tunnel_token and 'tunnel_token' in colab_cfg:
             tunnel_token = colab_cfg['tunnel_token']
 
         if tunnel_token:
-            print(f"[+] Tunnel Token detected! Routing directly to {custom_domain}...")
-            # Use --protocol http2 to prevent Colab QUIC/UDP hangs
+            print("=" * 70)
+            print(f"🚀 ROUTING THROUGH CUSTOM DOMAIN: {custom_domain}")
+            print(f"   All jDroid-X-Desk instances can connect directly via: {custom_domain}")
+            print("=" * 70)
             cmd = [tunnel_bin, "tunnel", "--protocol", "http2", "run", "--token", tunnel_token]
             subprocess.run(cmd)
         else:
-            print(f"[*] Starting Cloudflare Tunnel using HTTP/2 protocol (prevents UDP/QUIC freeze)...")
-            print(f"[*] Forwarding to local relay http://127.0.0.1:{relay_port}")
-            print(f"[*] If you want to use {custom_domain} permanently, set CLOUDFLARE_TUNNEL_TOKEN.")
+            print("[*] Initializing secure HTTPS tunnel over HTTP/2 protocol...")
             cmd = [tunnel_bin, "tunnel", "--protocol", "http2", "--url", f"http://127.0.0.1:{relay_port}"]
-            subprocess.run(cmd)
+            
+            # Run cloudflared and capture the public URL cleanly
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            tunnel_url = None
+            url_pattern = re.compile(r'https://[a-zA-Z0-9-]+\.trycloudflare\.com')
+
+            for line in iter(proc.stdout.readline, ''):
+                if not tunnel_url:
+                    match = url_pattern.search(line)
+                    if match:
+                        tunnel_url = match.group(0)
+                        print("\n" + "=" * 70)
+                        print("🎉 jDroid-X CLOUD RELAY SERVER IS ONLINE & READY!")
+                        print("=" * 70)
+                        print(f"\n   PUBLIC RELAY URL:\n   👉  {tunnel_url}  👈\n")
+                        print("   STEPS TO CONNECT IN jDroid-X-Desk:")
+                        print("   1. Open jDroid-X-Desk on Desk 1 and Desk 2")
+                        print("   2. In the top header, click the 'Colab Relay' status pill")
+                        print(f"   3. Enter: {tunnel_url}")
+                        print("   4. Click 'Save & Apply' -> Header turns GREEN with live meters!")
+                        print("=" * 70 + "\n")
+                        print("[*] Server is streaming active frame relays. Press Ctrl+C to stop.\n")
+                elif "error" in line.lower() and "failed" in line.lower():
+                    # Filter benign logs, only print genuine errors
+                    if "hard_fail=false" not in line and "precheck" not in line:
+                        print("[Tunnel Note]:", line.strip())
+
+            proc.wait()
     else:
-        print("[*] Detected Windows Environment.")
-        print(f"[+] Local Windows Relay Server is actively serving at http://127.0.0.1:{relay_port}")
-        print(f"[+] Remote connections can now connect directly or via {custom_domain}")
+        print("[*] Environment: Windows Desktop / Local Machine")
+        print(f"[+] Local Relay Server is active at http://127.0.0.1:{relay_port}")
+        print(f"[+] Direct connections can connect via your Local IP: http://localhost:{relay_port}")
+        print(f"[+] Or via your configured domain: {custom_domain}")
         try:
             while True:
                 time.sleep(1)
