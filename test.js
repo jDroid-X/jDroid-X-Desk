@@ -45,6 +45,13 @@ async function runTests() {
     assert(fs.existsSync('colab-rdp.txt'), 'colab-rdp.txt (Colab execution script) exists');
     assert(fs.existsSync('windows_rdp.yaml'), 'windows_rdp.yaml (RDP YAML configuration) exists');
     assert(fs.existsSync('jDroid-X-Desk.ipynb'), 'jDroid-X-Desk.ipynb (Colab Jupyter Notebook) exists');
+    assert(fs.existsSync('jDroid-X-Colab Server'), 'jDroid-X-Colab Server (dedicated root structure) exists');
+    assert(fs.existsSync('jDroid-X-Colab Server/jDroid-X-Colab-Relay-Server.py'), 'jDroid-X-Colab-Relay-Server.py (v3.0 relay server) exists');
+    assert(fs.existsSync('jDroid-X-Colab Server/colab-watchdog-keepalive.py'), 'colab-watchdog-keepalive.py (watchdog daemon) exists');
+    assert(fs.existsSync('jDroid-X-Colab Server/jDroid-X-Colab-Notebook.ipynb'), 'jDroid-X-Colab-Notebook.ipynb (Colab notebook) exists');
+    assert(fs.existsSync('jDroid-X-Colab Server/colab-setup.sh'), 'colab-setup.sh (Colab bootstrap script) exists');
+    assert(fs.existsSync('jDroid-X-Colab Server/windows_rdp_colab.yaml'), 'windows_rdp_colab.yaml exists');
+    assert(fs.existsSync('jDroid-X-Colab Server/README.md'), 'jDroid-X-Colab Server/README.md exists');
     assert(fs.existsSync('docs/headless/windowscmd.txt'), 'docs/headless/windowscmd.txt exists');
     assert(fs.existsSync('docs/headless/powershellcmd.txt'), 'docs/headless/powershellcmd.txt exists');
     assert(fs.existsSync('docs/headless/debianlinux.txt'), 'docs/headless/debianlinux.txt exists');

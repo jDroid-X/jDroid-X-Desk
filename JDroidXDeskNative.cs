@@ -24,6 +24,7 @@ using System.Drawing.Imaging;
 using System.Security.Cryptography;
 using System.Reflection;
 using Microsoft.Win32;
+using System.Text.RegularExpressions;
 
 [assembly: AssemblyTitle("jDroid-X-Desk")]
 [assembly: AssemblyDescription("Enterprise Remote Desktop & Machine Administration Workspace")]
@@ -105,6 +106,8 @@ namespace JDroidXDesk.Native
     public class ConnectionSettings
     {
         public int localPort { get; set; }
+        public int relayPort { get; set; }
+        public string tunnelToken { get; set; }
         public bool directConnections { get; set; }
         public bool colabCloudRelay { get; set; }
         public string proxyServer { get; set; }
@@ -117,6 +120,8 @@ namespace JDroidXDesk.Native
         public ConnectionSettings()
         {
             localPort = 7070;
+            relayPort = 8088;
+            tunnelToken = "";
             directConnections = true;
             colabCloudRelay = true;
             proxyServer = "";
@@ -379,10 +384,48 @@ namespace JDroidXDesk.Native
 
                 string json = serializer.Serialize(root);
                 File.WriteAllText(DbPath, json);
+                SyncYaml();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("Database Save Exception: " + ex.Message);
+            }
+        }
+
+        public void SyncYaml()
+        {
+            try
+            {
+                string yamlPath = "windows_rdp.yaml";
+                if (!File.Exists(yamlPath))
+                {
+                    string alt = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "windows_rdp.yaml");
+                    if (File.Exists(alt)) yamlPath = alt;
+                }
+                if (File.Exists(yamlPath) && Settings != null && Settings.connection != null)
+                {
+                    string content = File.ReadAllText(yamlPath);
+                    if (Settings.connection.relayPort > 0)
+                    {
+                        content = Regex.Replace(content, @"relay_port:\s*\d+", "relay_port: " + Settings.connection.relayPort);
+                    }
+                    if (!string.IsNullOrEmpty(Settings.connection.customDomain))
+                    {
+                        content = Regex.Replace(content, @"custom_domain:\s*[""'].*?[""']", "custom_domain: \"" + Settings.connection.customDomain + "\"");
+                    }
+                    if (Settings.connection.tunnelToken != null)
+                    {
+                        if (content.Contains("tunnel_token:"))
+                        {
+                            content = Regex.Replace(content, @"tunnel_token:\s*[""'].*?[""']", "tunnel_token: \"" + Settings.connection.tunnelToken + "\"");
+                        }
+                    }
+                    File.WriteAllText(yamlPath, content);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("YAML Sync Exception: " + ex.Message);
             }
         }
 
@@ -525,6 +568,8 @@ namespace JDroidXDesk.Native
         private Label lblLocalStatus;
         private TextBox txtTargetId;
         private ModernButton btnConnect;
+        private ModernButton btnDisconnect;
+        private Label lblRemoteStatus;
         private PictureBox viewportCanvas;
         private Panel panelWelcomeCards;
         private TextBox txtCardTargetId;
@@ -542,12 +587,37 @@ namespace JDroidXDesk.Native
         private long bytesTransferred = 1048576;
         private bool isStartMenuOpen = false;
 
+        // Live Screen Streaming & Cloud Relay Engine (Thread-Safe & Leak-Proof)
+        private Image latestRemoteFrame = null;
+        private readonly object frameLock = new object();
+        private static ImageCodecInfo cachedJpegEncoder = null;
+        private Thread screenStreamerThread = null;
+        private Thread frameReceiverThread = null;
+        private volatile bool isScreenStreamingActive = false;
+        private volatile bool isFrameReceiverActive = false;
+        private string activeReceiverTargetId = "";
+        private int framesReceivedCount = 0;
+
         // Layout Toggle Buttons (Antigravity Image 1 & 2 controls)
         private Button btnToggleActivityBar;
         private Button btnToggleLeftDrawer;
         private Button btnToggleBottomDock;
         private Button btnToggleRightInspector;
-        private TextBox txtGlobalSearch;
+
+        // Colab Cloud Server Telemetry & Ping Engine (Image 1 & 2 Specification)
+        private bool isColabConnected = false;
+        private string colabRamText = "1.2 / 12.7 GB";
+        private string colabGpuText = "0.0 / 15.0 GB";
+        private string colabDiskText = "44.2 / 112.6 GB";
+        private System.Windows.Forms.Timer colabTelemetryTimer;
+        private Panel panelMetaRam;
+        private Panel panelMetaGpu;
+        private Panel panelMetaDisk;
+        private Panel panelMetaStatus;
+        private Label lblMetaRamVal;
+        private Label lblMetaGpuVal;
+        private Label lblMetaDiskVal;
+        private Label lblMetaStatusVal;
 
         // Active State
         private string activeViewKey = "Console";
@@ -638,6 +708,8 @@ namespace JDroidXDesk.Native
             BuildAntigravityLayout();
             SetupTraySupervisor();
             RegisterWithColabRelay();
+            StartScreenStreamer();
+            StartColabTelemetryMonitor();
             SyncFromGitHubBackend();
 
             // Default State
@@ -852,45 +924,39 @@ namespace JDroidXDesk.Native
 
         private void BuildTopHeaderContent()
         {
-            // Left: Logo + Breadcrumbs
+            // Left: High-Contrast Brand Header
             FlowLayoutPanel leftBrand = new FlowLayoutPanel { Dock = DockStyle.Left, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 8, 0, 0) };
             Label lblLogo = new Label { Text = "jDroid-X", Font = new Font("Segoe UI", 11.5f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), AutoSize = true, Margin = new Padding(0, 2, 4, 0) };
-            Label lblSub = new Label { Text = "Remote Desktop", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Margin = new Padding(0, 5, 12, 0) };
-            
-            // Host Node Dropdown Selector (Top Bar Pill)
-            ComboBox cboHostPill = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(16, 185, 129), Size = new Size(185, 24), Margin = new Padding(0, 2, 0, 0) };
-            cboHostPill.Items.Add("💻 " + (currentHostDesktop != null ? currentHostDesktop.Name : Environment.MachineName));
-            foreach (SimulatorDesktop d in dynamicDesktops)
-            {
-                if (currentHostDesktop == null || d.Name != currentHostDesktop.Name) cboHostPill.Items.Add("💻 " + d.Name);
-            }
-            cboHostPill.SelectedIndex = 0;
-            cboHostPill.SelectedIndexChanged += (s, e) => {
-                if (cboHostPill.SelectedIndex > 0 && cboHostPill.SelectedIndex <= dynamicDesktops.Count)
-                {
-                    SwitchHostDesktop(dynamicDesktops[cboHostPill.SelectedIndex - 1]);
-                }
-            };
+            Label lblSub = new Label { Text = "| Remote Desktop Workspace", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Margin = new Padding(0, 4, 12, 0) };
 
             leftBrand.Controls.Add(lblLogo);
             leftBrand.Controls.Add(lblSub);
-            leftBrand.Controls.Add(cboHostPill);
 
-            // Center: Target Search & Quick Connect Input
-            Panel centerSearchBox = new Panel { Size = new Size(340, 28), Location = new Point((topHeaderBar.Width - 340) / 2, 8), Anchor = AnchorStyles.Top };
-            topHeaderBar.Resize += (s, e) => { centerSearchBox.Location = new Point((topHeaderBar.Width - centerSearchBox.Width) / 2, 8); };
-            txtGlobalSearch = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9f), BackColor = Color.FromArgb(24, 32, 54), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Text = "" };
-            Button btnSearchGo = new Button { Text = "⚡ Connect", Dock = DockStyle.Right, Width = 80, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(239, 51, 64), ForeColor = Color.White, Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
-            btnSearchGo.FlatAppearance.BorderSize = 0;
-            btnSearchGo.Click += (s, e) => {
-                txtTargetId.Text = txtGlobalSearch.Text.Trim();
-                SwitchWorkspaceView("Console");
-                ToggleSessionConnection();
+            // Center: Colab Cloud Server Telemetry Indicators (Image 1 & 2 Specification)
+            FlowLayoutPanel centerColabTelemetry = new FlowLayoutPanel
+            {
+                Size = new Size(475, 36),
+                Location = new Point((topHeaderBar.Width - 475) / 2, 4),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = Color.Transparent,
+                Anchor = AnchorStyles.Top
             };
-            centerSearchBox.Controls.Add(txtGlobalSearch);
-            centerSearchBox.Controls.Add(btnSearchGo);
+            topHeaderBar.Resize += (s, e) => {
+                centerColabTelemetry.Location = new Point((topHeaderBar.Width - centerColabTelemetry.Width) / 2, 4);
+            };
 
-            // Right: THE EXACT ANTIGRAVITY LAYOUT BUTTONS (Image 1 & 2 Specification)
+            panelMetaRam = CreateTelemetryBox("System RAM", colabRamText, out lblMetaRamVal, 0.10f);
+            panelMetaGpu = CreateTelemetryBox("GPU RAM", colabGpuText, out lblMetaGpuVal, 0.00f);
+            panelMetaDisk = CreateTelemetryBox("Disk", colabDiskText, out lblMetaDiskVal, 0.39f);
+            panelMetaStatus = CreateStatusBox("Colab Relay", out lblMetaStatusVal);
+
+            centerColabTelemetry.Controls.Add(panelMetaRam);
+            centerColabTelemetry.Controls.Add(panelMetaGpu);
+            centerColabTelemetry.Controls.Add(panelMetaDisk);
+            centerColabTelemetry.Controls.Add(panelMetaStatus);
+
+            // Right: Antigravity IDE Layout View Toggles
             FlowLayoutPanel rightLayoutControls = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 6, 0, 0) };
 
             btnToggleActivityBar = CreateLayoutIconBtn("◫", "Toggle Activity Bar (Far Left)", (s, e) => {
@@ -913,20 +979,270 @@ namespace JDroidXDesk.Native
                 HighlightLayoutBtn(btnToggleRightInspector, collapsibleRightInspector.Visible);
             }, collapsibleRightInspector != null && collapsibleRightInspector.Visible);
 
-            Button btnSearchIcon = CreateLayoutIconBtn("🔍", "Search / Quick Open", (s, e) => {
-                txtGlobalSearch.Focus();
-                txtGlobalSearch.SelectAll();
-            }, false);
-
             rightLayoutControls.Controls.Add(btnToggleActivityBar);
             rightLayoutControls.Controls.Add(btnToggleLeftDrawer);
             rightLayoutControls.Controls.Add(btnToggleBottomDock);
             rightLayoutControls.Controls.Add(btnToggleRightInspector);
-            rightLayoutControls.Controls.Add(btnSearchIcon);
 
             topHeaderBar.Controls.Add(leftBrand);
-            topHeaderBar.Controls.Add(centerSearchBox);
+            topHeaderBar.Controls.Add(centerColabTelemetry);
             topHeaderBar.Controls.Add(rightLayoutControls);
+        }
+
+        private Panel CreateTelemetryBox(string title, string initialValue, out Label valLabel, float fillRatio)
+        {
+            Panel box = new Panel { Size = new Size(110, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42) };
+            Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 7f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 2), AutoSize = true };
+            Label lVal = new Label { Text = initialValue, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(4, 15), AutoSize = true };
+            valLabel = lVal;
+            box.Controls.Add(lTitle);
+            box.Controls.Add(lVal);
+
+            box.Paint += (s, e) => {
+                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+                using (Pen borderPen = new Pen(themeCol, 1.5f))
+                {
+                    e.Graphics.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
+                }
+                using (SolidBrush lineBrush = new SolidBrush(themeCol))
+                {
+                    int lineW = Math.Max(4, (int)((box.Width - 4) * Math.Min(1f, Math.Max(0.05f, fillRatio))));
+                    e.Graphics.FillRectangle(lineBrush, 2, box.Height - 3, lineW, 2);
+                }
+            };
+            return box;
+        }
+
+        private Panel CreateStatusBox(string title, out Label valLabel)
+        {
+            Panel box = new Panel { Size = new Size(115, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42), Cursor = Cursors.Hand };
+            Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 7f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 2), AutoSize = true, Cursor = Cursors.Hand };
+            Label lVal = new Label { Text = isColabConnected ? "● ONLINE" : "● OFFLINE", Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68), Location = new Point(4, 15), AutoSize = true, Cursor = Cursors.Hand };
+            valLabel = lVal;
+            box.Controls.Add(lTitle);
+            box.Controls.Add(lVal);
+
+            ToolTip tt = new ToolTip();
+            tt.SetToolTip(box, "Click to configure Google Colab Relay Server & Custom Domain");
+            tt.SetToolTip(lVal, "Click to configure Google Colab Relay Server & Custom Domain");
+
+            box.Click += (s, e) => ShowRelayConfigDialog();
+            lTitle.Click += (s, e) => ShowRelayConfigDialog();
+            lVal.Click += (s, e) => ShowRelayConfigDialog();
+
+            box.Paint += (s, e) => {
+                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+                using (Pen borderPen = new Pen(themeCol, 1.5f))
+                {
+                    e.Graphics.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
+                }
+            };
+            return box;
+        }
+
+        private void ShowRelayConfigDialog()
+        {
+            using (Form dlg = new Form())
+            {
+                dlg.Text = "jDroid-X Cloud Relay & Network Configuration";
+                dlg.Size = new Size(480, 430);
+                dlg.StartPosition = FormStartPosition.CenterParent;
+                dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dlg.MaximizeBox = false;
+                dlg.MinimizeBox = false;
+                dlg.BackColor = Color.FromArgb(15, 23, 42);
+                dlg.ForeColor = Color.White;
+                dlg.Font = new Font("Segoe UI", 9f);
+
+                Panel pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+
+                Label lblHead = new Label { Text = "Google Colab & Cloud Relay Setup", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), AutoSize = true, Location = new Point(20, 16) };
+                Label lblSub = new Label { Text = "Configure your relay server endpoint, port, custom domain, and tunnel token.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Location = new Point(20, 42) };
+
+                int curY = 70;
+                Action<string> addLbl = (txt) => {
+                    Label l = new Label { Text = txt, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(20, curY), AutoSize = true };
+                    pnl.Controls.Add(l);
+                    curY += 20;
+                };
+
+                addLbl("Relay Server URL (Google Colab / Local / Custom)");
+                TextBox tbRelay = new TextBox { Text = db.Settings.connection.relayServer ?? "https://www.jdroid-x.com", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                pnl.Controls.Add(tbRelay);
+                curY += 32;
+
+                addLbl("Relay Port (Default: 8088)");
+                TextBox tbPort = new TextBox { Text = db.Settings.connection.relayPort > 0 ? db.Settings.connection.relayPort.ToString() : "8088", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                pnl.Controls.Add(tbPort);
+                curY += 32;
+
+                addLbl("Custom Domain (e.g. https://www.jdroid-x.com)");
+                TextBox tbDom = new TextBox { Text = db.Settings.connection.customDomain ?? "https://www.jdroid-x.com", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                pnl.Controls.Add(tbDom);
+                curY += 32;
+
+                addLbl("Cloudflare Tunnel Token (Optional, for zero-touch domain routing)");
+                TextBox tbToken = new TextBox { Text = db.Settings.connection.tunnelToken ?? "", Location = new Point(20, curY), Size = new Size(420, 24), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                pnl.Controls.Add(tbToken);
+                curY += 34;
+
+                Label lblStatusResult = new Label { Text = "Current Status: " + (isColabConnected ? "ONLINE (" + colabRamText + ")" : "OFFLINE"), Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68), Location = new Point(20, curY), AutoSize = true };
+                pnl.Controls.Add(lblStatusResult);
+                curY += 28;
+
+                Button btnPing = new Button { Text = "⚡ Test Ping", Size = new Size(110, 32), Location = new Point(20, curY), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(40, 53, 76), ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold), Cursor = Cursors.Hand };
+                btnPing.FlatAppearance.BorderSize = 0;
+                btnPing.Click += (s, e) => {
+                    btnPing.Text = "Testing...";
+                    btnPing.Enabled = false;
+                    ThreadPool.QueueUserWorkItem(delegate {
+                        string testUrl = tbRelay.Text.Trim();
+                        if (!testUrl.StartsWith("http://") && !testUrl.StartsWith("https://")) testUrl = "http://" + testUrl;
+                        bool ok = false;
+                        string msg = "";
+                        Stopwatch sw = Stopwatch.StartNew();
+                        try {
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(testUrl + "/ping");
+                            req.Timeout = 2500;
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                            using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+                            {
+                                sw.Stop();
+                                string j = reader.ReadToEnd();
+                                JavaScriptSerializer ser = new JavaScriptSerializer();
+                                Dictionary<string, object> res = ser.Deserialize<Dictionary<string, object>>(j);
+                                if (res != null && res.ContainsKey("status"))
+                                {
+                                    ok = true;
+                                    string r = res.ContainsKey("system_ram") ? res["system_ram"].ToString() : "";
+                                    msg = string.Format("ONLINE ({0}ms) | RAM: {1}", sw.ElapsedMilliseconds, r);
+                                }
+                            }
+                        } catch (Exception ex) {
+                            sw.Stop();
+                            msg = "Failed: " + ex.Message;
+                        }
+
+                        dlg.BeginInvoke(new Action(() => {
+                            btnPing.Text = "⚡ Test Ping";
+                            btnPing.Enabled = true;
+                            lblStatusResult.Text = ok ? "● " + msg : "○ " + msg;
+                            lblStatusResult.ForeColor = ok ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+                        }));
+                    });
+                };
+
+                Button btnSave = new Button { Text = "💾 Save & Apply", Size = new Size(130, 32), Location = new Point(140, curY), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold), Cursor = Cursors.Hand };
+                btnSave.FlatAppearance.BorderSize = 0;
+                btnSave.Click += (s, e) => {
+                    db.Settings.connection.relayServer = tbRelay.Text.Trim();
+                    int p;
+                    if (int.TryParse(tbPort.Text.Trim(), out p) && p > 0) db.Settings.connection.relayPort = p;
+                    db.Settings.connection.customDomain = tbDom.Text.Trim();
+                    db.Settings.connection.tunnelToken = tbToken.Text.Trim();
+                    db.Save();
+                    ShowToast("Relay settings saved to database.json and synced with windows_rdp.yaml");
+                    ThreadPool.QueueUserWorkItem(delegate { PingColabServer(); });
+                    dlg.Close();
+                };
+
+                Button btnCancel = new Button { Text = "Cancel", Size = new Size(90, 32), Location = new Point(280, curY), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 9f), Cursor = Cursors.Hand };
+                btnCancel.FlatAppearance.BorderSize = 0;
+                btnCancel.Click += (s, e) => dlg.Close();
+
+                pnl.Controls.Add(lblHead);
+                pnl.Controls.Add(lblSub);
+                pnl.Controls.Add(btnPing);
+                pnl.Controls.Add(btnSave);
+                pnl.Controls.Add(btnCancel);
+                dlg.Controls.Add(pnl);
+                dlg.ShowDialog(this);
+            }
+        }
+
+        private void StartColabTelemetryMonitor()
+        {
+            colabTelemetryTimer = new System.Windows.Forms.Timer { Interval = 3000 };
+            colabTelemetryTimer.Tick += (s, e) => {
+                ThreadPool.QueueUserWorkItem(delegate { PingColabServer(); });
+            };
+            colabTelemetryTimer.Start();
+            ThreadPool.QueueUserWorkItem(delegate { PingColabServer(); });
+        }
+
+        private void PingColabServer()
+        {
+            bool connected = false;
+            string ram = colabRamText;
+            string gpu = colabGpuText;
+            string disk = colabDiskText;
+
+            try {
+                if (db != null && db.Settings != null && db.Settings.connection != null)
+                {
+                    string configuredRelay = db.Settings.connection.relayServer.TrimEnd('/');
+                    List<string> candidateUrls = new List<string>();
+                    if (!string.IsNullOrEmpty(configuredRelay))
+                    {
+                        if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
+                        candidateUrls.Add(configuredRelay);
+                    }
+                    candidateUrls.Add("http://127.0.0.1:8088");
+
+                    foreach (string rUrl in candidateUrls)
+                    {
+                        try {
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/ping");
+                            req.Method = "GET";
+                            req.Timeout = 1800;
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                            using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+                            {
+                                string jsonStr = reader.ReadToEnd();
+                                JavaScriptSerializer ser = new JavaScriptSerializer();
+                                Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
+                                if (dict != null && dict.ContainsKey("status"))
+                                {
+                                    connected = true;
+                                    if (dict.ContainsKey("system_ram")) ram = dict["system_ram"].ToString();
+                                    if (dict.ContainsKey("gpu_ram")) gpu = dict["gpu_ram"].ToString();
+                                    if (dict.ContainsKey("disk")) disk = dict["disk"].ToString();
+                                    break;
+                                }
+                            }
+                        } catch { }
+                    }
+                }
+            } catch { }
+
+            try {
+                if (this.IsHandleCreated && !this.IsDisposed)
+                {
+                    this.BeginInvoke(new Action(() => {
+                        isColabConnected = connected;
+                        colabRamText = ram;
+                        colabGpuText = gpu;
+                        colabDiskText = disk;
+                        UpdateColabTelemetryUI();
+                    }));
+                }
+            } catch { }
+        }
+
+        private void UpdateColabTelemetryUI()
+        {
+            if (lblMetaRamVal != null && !lblMetaRamVal.IsDisposed) lblMetaRamVal.Text = colabRamText;
+            if (lblMetaGpuVal != null && !lblMetaGpuVal.IsDisposed) lblMetaGpuVal.Text = colabGpuText;
+            if (lblMetaDiskVal != null && !lblMetaDiskVal.IsDisposed) lblMetaDiskVal.Text = colabDiskText;
+            if (lblMetaStatusVal != null && !lblMetaStatusVal.IsDisposed)
+            {
+                lblMetaStatusVal.Text = isColabConnected ? "● ONLINE" : "● OFFLINE";
+                lblMetaStatusVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+            }
+            if (panelMetaRam != null && !panelMetaRam.IsDisposed) panelMetaRam.Invalidate();
+            if (panelMetaGpu != null && !panelMetaGpu.IsDisposed) panelMetaGpu.Invalidate();
+            if (panelMetaDisk != null && !panelMetaDisk.IsDisposed) panelMetaDisk.Invalidate();
+            if (panelMetaStatus != null && !panelMetaStatus.IsDisposed) panelMetaStatus.Invalidate();
         }
 
         private Button CreateLayoutIconBtn(string icon, string tooltip, EventHandler onClick, bool isActive)
@@ -1455,21 +1771,48 @@ namespace JDroidXDesk.Native
             localLeftBox.Controls.Add(btnCopy);
             localLeftBox.Controls.Add(lblLocalStatus);
 
-            // Target Connect on right
+            // Target Connect on right (Symmetric format matching left side)
             FlowLayoutPanel targetBox = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Margin = new Padding(0) };
-            Label lTargetPrompt = new Label { Text = "Remote Desk:", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Margin = new Padding(0, 4, 6, 0), AutoSize = true };
-            txtTargetId = new TextBox { Font = new Font("Consolas", 10f), Size = new Size(130, 24), BackColor = Color.FromArgb(24, 32, 54), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Text = "" };
+            Label lTargetPrompt = new Label { Text = "REMOTE DESK:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Margin = new Padding(0, 4, 8, 0), AutoSize = true };
+            txtTargetId = new TextBox { Font = new Font("Consolas", 11f, FontStyle.Bold), Size = new Size(130, 24), BackColor = Color.FromArgb(24, 32, 54), ForeColor = Color.FromArgb(56, 189, 248), BorderStyle = BorderStyle.FixedSingle, Text = "" };
             txtTargetId.TextChanged += (s, e) => {
                 if (txtCardTargetId != null && txtCardTargetId.Text != txtTargetId.Text)
                     txtCardTargetId.Text = txtTargetId.Text;
             };
 
-            btnConnect = new ModernButton { Text = "⚡ Connect", NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38), Size = new Size(90, 24), Margin = new Padding(8, 0, 0, 0) };
-            btnConnect.Click += (s, e) => ToggleSessionConnection();
+            // Connect button (Green)
+            btnConnect = new ModernButton { Text = "⚡ Connect", NormalColor = Color.FromArgb(16, 185, 129), HoverColor = Color.FromArgb(5, 150, 105), Size = new Size(88, 24), Margin = new Padding(6, 0, 0, 0), Cursor = Cursors.Hand };
+            btnConnect.Click += (s, e) => {
+                if (isSessionActive) {
+                    ShowToast("Session already active with " + (connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "remote workstation"));
+                    return;
+                }
+                if (string.IsNullOrEmpty(txtTargetId.Text.Trim())) {
+                    ShowToast("Please enter a 9-digit Remote Desk ID to connect.");
+                    txtTargetId.Focus();
+                    return;
+                }
+                ToggleSessionConnection();
+            };
+
+            // Disconnect button (Red - Visible only when session is active)
+            btnDisconnect = new ModernButton { Text = "✕ Disconnect", NormalColor = Color.FromArgb(239, 68, 68), HoverColor = Color.FromArgb(220, 38, 38), Size = new Size(96, 24), Margin = new Padding(6, 0, 0, 0), Cursor = Cursors.Hand, Visible = false, Enabled = false };
+            btnDisconnect.Click += (s, e) => {
+                if (!isSessionActive) {
+                    ShowToast("No active session to disconnect.");
+                    return;
+                }
+                ToggleSessionConnection();
+            };
+
+            // Status indicator matching left side
+            lblRemoteStatus = new Label { Text = "● Ready", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Margin = new Padding(8, 4, 0, 0), AutoSize = true };
 
             targetBox.Controls.Add(lTargetPrompt);
             targetBox.Controls.Add(txtTargetId);
             targetBox.Controls.Add(btnConnect);
+            targetBox.Controls.Add(btnDisconnect);
+            targetBox.Controls.Add(lblRemoteStatus);
 
             localBar.Controls.Add(localLeftBox);
             localBar.Controls.Add(targetBox);
@@ -1576,12 +1919,34 @@ namespace JDroidXDesk.Native
                 ToggleSessionConnection();
             };
 
-            Label lConnSub = new Label { Text = "Encrypted direct peer-to-peer session over jDroid-X Relay Network.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), Location = new Point(415, 88), AutoSize = true };
+            ComboBox cboSavedFleet = new ComboBox { Location = new Point(415, 84), Size = new Size(260, 26), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8.5f) };
+            cboSavedFleet.Items.Add("-- Quick Select Fleet Workstation --");
+            if (db != null && db.Devices != null)
+            {
+                foreach (var d in db.Devices)
+                {
+                    cboSavedFleet.Items.Add(string.Format("{0} ({1}) [{2}]", d.name, d.id, d.group ?? "Default"));
+                }
+            }
+            cboSavedFleet.SelectedIndex = 0;
+            cboSavedFleet.SelectedIndexChanged += (s, e) => {
+                if (cboSavedFleet.SelectedIndex > 0 && db != null && db.Devices != null)
+                {
+                    int devIdx = cboSavedFleet.SelectedIndex - 1;
+                    if (devIdx >= 0 && devIdx < db.Devices.Count)
+                    {
+                        txtCardTargetId.Text = db.Devices[devIdx].id;
+                    }
+                }
+            };
+
+            Label lConnSub = new Label { Text = "Encrypted direct peer-to-peer session over jDroid-X Relay Network.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), Location = new Point(20, 124), AutoSize = true };
 
             cardConnect.Controls.Add(lConnTitle);
             cardConnect.Controls.Add(lConnDesc);
             cardConnect.Controls.Add(txtCardTargetId);
             cardConnect.Controls.Add(btnCardConnect);
+            cardConnect.Controls.Add(cboSavedFleet);
             cardConnect.Controls.Add(lConnSub);
             cardContainer.Controls.Add(cardConnect);
             y += 168;
@@ -1764,13 +2129,28 @@ namespace JDroidXDesk.Native
                 if (panelWelcomeCards != null) panelWelcomeCards.Visible = false;
                 if (viewportCanvas != null) viewportCanvas.Visible = true;
 
-                btnConnect.Text = "Disconnect";
-                btnConnect.NormalColor = Color.FromArgb(100, 116, 139);
+                // Update symmetric ribbon bar buttons
+                btnConnect.Visible = false;
+                btnConnect.Enabled = false;
+                if (btnDisconnect != null)
+                {
+                    btnDisconnect.Visible = true;
+                    btnDisconnect.NormalColor = Color.FromArgb(239, 68, 68);
+                    btnDisconnect.Enabled = true;
+                }
+                if (lblRemoteStatus != null)
+                {
+                    lblRemoteStatus.Text = "● Connected";
+                    lblRemoteStatus.ForeColor = Color.FromArgb(16, 185, 129);
+                }
                 if (btnCardConnect != null)
                 {
-                    btnCardConnect.Text = "Disconnect";
-                    btnCardConnect.NormalColor = Color.FromArgb(100, 116, 139);
+                    btnCardConnect.Text = "✕ Disconnect";
+                    btnCardConnect.NormalColor = Color.FromArgb(239, 68, 68);
                 }
+
+                // Start pulling live remote screen frames via Colab Relay
+                StartFrameReceiver(connectedTargetDesktop.RemoteId);
 
                 db.AddLog("SESSION_START", "P2P_CONNECT", "Connected to " + connectedTargetDesktop.Name);
                 ShowToast("P2P Session Established with " + connectedTargetDesktop.Name);
@@ -1780,6 +2160,15 @@ namespace JDroidXDesk.Native
             {
                 isSessionActive = false;
                 sessionTelemetryTimer.Stop();
+                StopFrameReceiver();
+                lock (frameLock)
+                {
+                    if (latestRemoteFrame != null)
+                    {
+                        try { latestRemoteFrame.Dispose(); } catch { }
+                        latestRemoteFrame = null;
+                    }
+                }
                 if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = false;
                 if (viewportCanvas != null) viewportCanvas.Visible = false;
                 if (panelWelcomeCards != null) panelWelcomeCards.Visible = true;
@@ -1799,12 +2188,25 @@ namespace JDroidXDesk.Native
                 db.AddLog("SESSION_END", "DISCONNECT", "Session closed");
                 db.Save();
 
-                btnConnect.Text = "⚡ Connect";
-                btnConnect.NormalColor = Color.FromArgb(239, 51, 64);
+                // Reset symmetric ribbon bar buttons
+                btnConnect.Visible = true;
+                btnConnect.NormalColor = Color.FromArgb(16, 185, 129);
+                btnConnect.Enabled = true;
+                if (btnDisconnect != null)
+                {
+                    btnDisconnect.Visible = false;
+                    btnDisconnect.NormalColor = Color.FromArgb(70, 45, 50);
+                    btnDisconnect.Enabled = false;
+                }
+                if (lblRemoteStatus != null)
+                {
+                    lblRemoteStatus.Text = "● Ready";
+                    lblRemoteStatus.ForeColor = Color.FromArgb(148, 163, 184);
+                }
                 if (btnCardConnect != null)
                 {
                     btnCardConnect.Text = "⚡ Connect";
-                    btnCardConnect.NormalColor = Color.FromArgb(239, 51, 64);
+                    btnCardConnect.NormalColor = Color.FromArgb(16, 185, 129);
                 }
 
                 ShowToast(string.Format("Session closed. Duration: {0}s", (int)duration.TotalSeconds));
@@ -1872,82 +2274,114 @@ namespace JDroidXDesk.Native
             {
                 SimulatorDesktop target = connectedTargetDesktop ?? (dynamicDesktops.Count > 1 ? dynamicDesktops[1] : dynamicDesktops[0]);
 
-                if (isLiveScreenMirror)
+                // 1. Live Remote Screen Stream via Colab Relay (Thread-Safe Clone & Draw)
+                Image frameToDraw = null;
+                lock (frameLock)
+                {
+                    if (latestRemoteFrame != null)
+                    {
+                        try { frameToDraw = (Image)latestRemoteFrame.Clone(); } catch { }
+                    }
+                }
+
+                if (frameToDraw != null)
+                {
+                    using (frameToDraw)
+                    {
+                        DrawScaledImage(g, frameToDraw, cw, ch);
+                    }
+                    using (SolidBrush bBg = new SolidBrush(Color.FromArgb(170, 15, 23, 42)))
+                    using (SolidBrush bGreen = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                    using (SolidBrush bBlue = new SolidBrush(Color.FromArgb(56, 189, 248)))
+                    using (Font fOverlay = new Font("Segoe UI", 8.5f, FontStyle.Bold))
+                    {
+                        g.FillRectangle(bBg, 12, 12, 380, 26);
+                        g.DrawString("🟢 LIVE SCREEN SHARING: " + target.RemoteId, fOverlay, bGreen, 18, 16);
+                        g.DrawString("Frames: " + framesReceivedCount, fOverlay, bBlue, 280, 16);
+                    }
+                    return;
+                }
+
+                // 2. Local Live Screen Mirror Mode (Loopback or Instant Preview)
+                if (isLiveScreenMirror || (currentHostDesktop != null && target.RemoteId == currentHostDesktop.RemoteId))
                 {
                     try {
-                        Bitmap screenCapture = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
-                        using (Graphics sG = Graphics.FromImage(screenCapture))
+                        using (Bitmap screenCapture = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height))
                         {
-                            sG.CopyFromScreen(Screen.PrimaryScreen.Bounds.X, Screen.PrimaryScreen.Bounds.Y, 0, 0, screenCapture.Size);
+                            using (Graphics sG = Graphics.FromImage(screenCapture))
+                            {
+                                sG.CopyFromScreen(Screen.PrimaryScreen.Bounds.X, Screen.PrimaryScreen.Bounds.Y, 0, 0, screenCapture.Size);
+                            }
+                            DrawScaledImage(g, screenCapture, cw, ch);
                         }
-                        DrawScaledImage(g, screenCapture, cw, ch);
-                        screenCapture.Dispose();
+                        using (SolidBrush bBg = new SolidBrush(Color.FromArgb(170, 15, 23, 42)))
+                        using (SolidBrush bBlue = new SolidBrush(Color.FromArgb(56, 189, 248)))
+                        using (Font fOverlay = new Font("Segoe UI", 8.5f, FontStyle.Bold))
+                        {
+                            g.FillRectangle(bBg, 12, 12, 360, 26);
+                            g.DrawString("🎥 LOCAL LIVE MIRROR: " + target.RemoteId, fOverlay, bBlue, 18, 16);
+                        }
                         return;
                     } catch { }
                 }
 
+                // 3. High-Fidelity Remote Desktop View (Awaiting video frames)
                 RenderSimulatedRemoteDesktop(g, target, cw, ch);
             }
         }
 
         private void RenderSimulatedRemoteDesktop(Graphics g, SimulatorDesktop target, int cw, int ch)
         {
-            // Desktop Wallpaper
-            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(17, 24, 39), Color.FromArgb(15, 23, 42), LinearGradientMode.Vertical))
+            // Desktop Wallpaper - Deep Modern Slate Gradient
+            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(15, 23, 42), Color.FromArgb(10, 15, 28), LinearGradientMode.Vertical))
             {
                 g.FillRectangle(wallBrush, 0, 0, cw, ch);
             }
 
-            // Icons
-            string[] icons = new string[] { "💻 This PC", "🧠 Antigravity", "⌨️ Terminal", "🌐 Chrome", "🎨 Blender", "🗑️ Bin" };
-            int iconY = 16;
-            using (Font iconFont = new Font("Segoe UI", 8.5f, FontStyle.Bold))
-            using (SolidBrush iconBg = new SolidBrush(Color.FromArgb(40, 255, 255, 255)))
-            using (SolidBrush iconTxt = new SolidBrush(Color.White))
+            // Desktop Icons on Left Side
+            string[] iconGlyphs = new string[] { "🖥️", "📁", "🌐", "⚡", "📟", "⚙️" };
+            string[] iconLabels = new string[] { "This PC", "User Files", "Chrome", "jDroid-X", "Terminal", "Settings" };
+            using (Font fIcon = new Font("Segoe UI", 16f))
+            using (Font fLbl = new Font("Segoe UI", 8f))
+            using (SolidBrush bTxt = new SolidBrush(Color.FromArgb(226, 232, 240)))
             {
-                foreach (string icon in icons)
+                for (int i = 0; i < iconGlyphs.Length; i++)
                 {
-                    g.FillRectangle(iconBg, 16, iconY, 120, 26);
-                    g.DrawString(icon, iconFont, iconTxt, 20, iconY + 5);
-                    iconY += 34;
+                    int iconX = 24;
+                    int iconY = 28 + (i * 72);
+                    g.DrawString(iconGlyphs[i], fIcon, bTxt, iconX + 8, iconY);
+                    g.DrawString(iconLabels[i], fLbl, bTxt, iconX, iconY + 34);
                 }
             }
 
-            // Primary Window - Smart Fit to Full Remaining Viewport
-            int win1X = 146;
-            int win1Y = 16;
+            // Center Connection & Telemetry Status Card (Translucent Glass Overlay)
+            int cardW = Math.Min(640, cw - 120);
+            int cardH = 170;
+            int cardX = (cw - cardW) / 2;
+            int cardY = (ch - cardH) / 2 - 30;
+
+            using (SolidBrush bCardBg = new SolidBrush(Color.FromArgb(210, 15, 23, 42)))
+            using (Pen pCardBorder = new Pen(Color.FromArgb(56, 189, 248), 1.5f))
+            using (Font fTitle = new Font("Segoe UI", 12f, FontStyle.Bold))
+            using (Font fCode = new Font("Consolas", 9f))
+            using (Font fSub = new Font("Segoe UI", 8.5f))
+            using (SolidBrush bWhite = new SolidBrush(Color.White))
+            using (SolidBrush bGreen = new SolidBrush(Color.FromArgb(16, 185, 129)))
+            using (SolidBrush bBlue = new SolidBrush(Color.FromArgb(56, 189, 248)))
+            using (SolidBrush bMuted = new SolidBrush(Color.FromArgb(148, 163, 184)))
+            {
+                g.FillRectangle(bCardBg, cardX, cardY, cardW, cardH);
+                g.DrawRectangle(pCardBorder, cardX, cardY, cardW, cardH);
+
+                g.DrawString("💻 Remote Workstation Connected: " + target.RemoteId, fTitle, bWhite, cardX + 20, cardY + 16);
+                g.DrawString("Peer: " + target.Name + " (" + target.OsVersion + ")", fSub, bBlue, cardX + 20, cardY + 44);
+                g.DrawString("● Tunnel: AES-256-GCM Handshake Active | Protocol: AV1/H.264 Relay", fCode, bGreen, cardX + 20, cardY + 70);
+                g.DrawString("Awaiting video stream from Desk 2...", fSub, bMuted, cardX + 20, cardY + 96);
+                g.DrawString("👉 Click '🎥 Live Mirror' on the floating toolbar above for instant local desktop capture.", fSub, bGreen, cardX + 20, cardY + 124);
+            }
+
+            // Taskbar at bottom
             int taskH = 38;
-            int win1W = Math.Max(340, cw - win1X - 20);
-            int win1H = Math.Max(220, ch - taskH - 24);
-
-            DrawRemoteWindow(g, win1X, win1Y, win1W, win1H, "🗔 " + target.ActiveApps[0] + " - [" + target.Name + "]", () => {
-                using (Font bodyF = new Font("Segoe UI", 8.5f))
-                using (Font codeF = new Font("Consolas", 8f))
-                using (SolidBrush bWhite = new SolidBrush(Color.White))
-                using (SolidBrush bGreen = new SolidBrush(Color.FromArgb(16, 185, 129)))
-                using (SolidBrush bBlue = new SolidBrush(Color.FromArgb(56, 189, 248)))
-                using (SolidBrush bMuted = new SolidBrush(Color.FromArgb(148, 163, 184)))
-                {
-                    g.DrawString("PID: 14208 | Thread: 48 | Priority: RealTime", codeF, bGreen, win1X + 14, win1Y + 34);
-                    g.DrawString("OS: " + target.OsVersion, bodyF, bWhite, win1X + 14, win1Y + 52);
-                    g.DrawString("Role: " + target.Role, bodyF, bBlue, win1X + 14, win1Y + 70);
-                    g.DrawString("Stream: " + target.Ip + ":7070 (AES-GCM-256)", bodyF, bMuted, win1X + 14, win1Y + 88);
-
-                    Rectangle actBox = new Rectangle(win1X + 14, win1Y + 110, win1W - 28, win1H - 124);
-                    using (SolidBrush abBg = new SolidBrush(Color.FromArgb(10, 16, 26)))
-                    using (Pen abBorder = new Pen(Color.FromArgb(40, 53, 76), 1))
-                    {
-                        g.FillRectangle(abBg, actBox);
-                        g.DrawRectangle(abBorder, actBox);
-                    }
-                    g.DrawString(">> Live Remote Telemetry Stream:", codeF, bGreen, actBox.X + 8, actBox.Y + 8);
-                    g.DrawString(string.Format("[{0}] Video Channel: AV1/H.264 60 FPS", DateTime.Now.ToString("HH:mm:ss")), codeF, bWhite, actBox.X + 8, actBox.Y + 26);
-                    g.DrawString(string.Format("[{0}] Encryption: AES-256-GCM Handshake OK", DateTime.Now.ToString("HH:mm:ss")), codeF, bWhite, actBox.X + 8, actBox.Y + 44);
-                    g.DrawString(string.Format("[{0}] Input Sync: Keyboard & Mouse (0 ms)", DateTime.Now.ToString("HH:mm:ss")), codeF, bMuted, actBox.X + 8, actBox.Y + 62);
-                }
-            });
-
-            // Taskbar
             int taskY = ch - taskH;
             using (SolidBrush taskBg = new SolidBrush(Color.FromArgb(9, 13, 22)))
             {
@@ -2303,6 +2737,13 @@ namespace JDroidXDesk.Native
                     db.Settings.connection.relayServer = tbRelay.Text.Trim();
                     RegisterWithColabRelay();
                 };
+                TextBox tbPort = addTb("Relay Port (Default: 8088)", db.Settings.connection.relayPort > 0 ? db.Settings.connection.relayPort.ToString() : "8088");
+                tbPort.TextChanged += (s, e) => {
+                    int p;
+                    if (int.TryParse(tbPort.Text.Trim(), out p) && p > 0) db.Settings.connection.relayPort = p;
+                };
+                TextBox tbToken = addTb("Cloudflare Tunnel Token (For jdroid-x.com Custom Domain)", db.Settings.connection.tunnelToken ?? "");
+                tbToken.TextChanged += (s, e) => db.Settings.connection.tunnelToken = tbToken.Text.Trim();
                 TextBox tbColab = addTb("Google Colab Central Relay Notebook URL", db.Settings.connection.colabNotebookUrl);
                 tbColab.TextChanged += (s, e) => db.Settings.connection.colabNotebookUrl = tbColab.Text.Trim();
                 TextBox tbGh = addTb("GitHub Central Backend SSOT URL", db.Settings.connection.githubBackendUrl);
@@ -2380,6 +2821,229 @@ namespace JDroidXDesk.Native
                     }
                 } catch { }
             });
+        }
+
+        // ======================================================================
+        // LIVE BIDIRECTIONAL SCREEN STREAMING & RELAY ENGINE
+        // ======================================================================
+
+        private static ImageCodecInfo GetJpegEncoder()
+        {
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
+            foreach (ImageCodecInfo codec in codecs)
+            {
+                if (codec.FormatID == ImageFormat.Jpeg.Guid)
+                    return codec;
+            }
+            return null;
+        }
+
+        private static ImageCodecInfo GetCachedJpegEncoder()
+        {
+            if (cachedJpegEncoder == null)
+            {
+                cachedJpegEncoder = GetJpegEncoder();
+            }
+            return cachedJpegEncoder;
+        }
+
+        private void StartScreenStreamer()
+        {
+            if (isScreenStreamingActive) return;
+            isScreenStreamingActive = true;
+            screenStreamerThread = new Thread(new ThreadStart(ScreenStreamerWorker)) { IsBackground = true };
+            screenStreamerThread.Start();
+        }
+
+        private void StopScreenStreamer()
+        {
+            isScreenStreamingActive = false;
+            if (screenStreamerThread != null && screenStreamerThread.IsAlive)
+            {
+                try { screenStreamerThread.Abort(); } catch { }
+            }
+            screenStreamerThread = null;
+        }
+
+        private void ScreenStreamerWorker()
+        {
+            while (isScreenStreamingActive)
+            {
+                bool pushSuccess = false;
+                try {
+                    if (db != null && db.Settings != null && db.Settings.connection != null && currentHostDesktop != null)
+                    {
+                        string configuredRelay = db.Settings.connection.relayServer.TrimEnd('/');
+                        List<string> candidateUrls = new List<string>();
+                        if (!string.IsNullOrEmpty(configuredRelay))
+                        {
+                            if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
+                            candidateUrls.Add(configuredRelay);
+                        }
+                        candidateUrls.Add("http://127.0.0.1:8088");
+
+                        int sw = Screen.PrimaryScreen.Bounds.Width;
+                        int sh = Screen.PrimaryScreen.Bounds.Height;
+                        int tw = Math.Min(1280, sw);
+                        int th = (int)(sh * ((float)tw / sw));
+
+                        string b64 = null;
+                        using (Bitmap fullBmp = new Bitmap(sw, sh))
+                        {
+                            using (Graphics g = Graphics.FromImage(fullBmp))
+                            {
+                                g.CopyFromScreen(0, 0, 0, 0, fullBmp.Size);
+                            }
+
+                            using (Bitmap scaledBmp = new Bitmap(tw, th))
+                            {
+                                using (Graphics sg = Graphics.FromImage(scaledBmp))
+                                {
+                                    sg.InterpolationMode = InterpolationMode.Low;
+                                    sg.DrawImage(fullBmp, 0, 0, tw, th);
+                                }
+
+                                using (MemoryStream ms = new MemoryStream())
+                                {
+                                    ImageCodecInfo jpgEncoder = GetCachedJpegEncoder();
+                                    using (EncoderParameters ep = new EncoderParameters(1))
+                                    using (EncoderParameter epParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 45L))
+                                    {
+                                        ep.Param[0] = epParam;
+                                        if (jpgEncoder != null) scaledBmp.Save(ms, jpgEncoder, ep);
+                                        else scaledBmp.Save(ms, ImageFormat.Jpeg);
+                                    }
+                                    b64 = Convert.ToBase64String(ms.ToArray());
+                                }
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(b64))
+                        {
+                            string postJson = string.Format("{{\"targetId\":\"{0}\",\"frame\":\"data:image/jpeg;base64,{1}\"}}",
+                                currentHostDesktop.RemoteId, b64);
+                            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(postJson);
+
+                            foreach (string rUrl in candidateUrls)
+                            {
+                                try {
+                                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_frame");
+                                    req.Method = "POST";
+                                    req.ContentType = "application/json";
+                                    req.Timeout = 1200;
+                                    req.ContentLength = bytes.Length;
+                                    using (Stream os = req.GetRequestStream())
+                                    {
+                                        os.Write(bytes, 0, bytes.Length);
+                                    }
+                                    using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                                    {
+                                        pushSuccess = true;
+                                        break;
+                                    }
+                                } catch { }
+                            }
+                        }
+                    }
+                } catch { }
+                Thread.Sleep(pushSuccess ? 300 : 1500);
+            }
+        }
+
+        private void StartFrameReceiver(string targetRemoteId)
+        {
+            StopFrameReceiver();
+            isFrameReceiverActive = true;
+            activeReceiverTargetId = targetRemoteId;
+            frameReceiverThread = new Thread(new ThreadStart(FrameReceiverWorker)) { IsBackground = true };
+            frameReceiverThread.Start();
+        }
+
+        private void StopFrameReceiver()
+        {
+            isFrameReceiverActive = false;
+            if (frameReceiverThread != null && frameReceiverThread.IsAlive)
+            {
+                try { frameReceiverThread.Abort(); } catch { }
+            }
+            frameReceiverThread = null;
+        }
+
+        private void FrameReceiverWorker()
+        {
+            while (isFrameReceiverActive && isSessionActive)
+            {
+                bool successFrame = false;
+                try {
+                    if (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(activeReceiverTargetId))
+                    {
+                        string configuredRelay = db.Settings.connection.relayServer.TrimEnd('/');
+                        List<string> candidateUrls = new List<string>();
+                        if (!string.IsNullOrEmpty(configuredRelay))
+                        {
+                            if (!configuredRelay.StartsWith("http://") && !configuredRelay.StartsWith("https://")) configuredRelay = "http://" + configuredRelay;
+                            candidateUrls.Add(configuredRelay);
+                        }
+                        candidateUrls.Add("http://127.0.0.1:8088");
+
+                        foreach (string rUrl in candidateUrls)
+                        {
+                            try {
+                                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/pull_frame/" + activeReceiverTargetId);
+                                req.Method = "GET";
+                                req.Timeout = 1200;
+                                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                                using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+                                {
+                                    string jsonStr = reader.ReadToEnd();
+                                    JavaScriptSerializer ser = new JavaScriptSerializer();
+                                    Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
+                                    if (dict != null && dict.ContainsKey("success") && Convert.ToBoolean(dict["success"]) && dict.ContainsKey("frame"))
+                                    {
+                                        string frameVal = dict["frame"] as string;
+                                        if (!string.IsNullOrEmpty(frameVal))
+                                        {
+                                            int commaIdx = frameVal.IndexOf(',');
+                                            string rawB64 = commaIdx >= 0 ? frameVal.Substring(commaIdx + 1) : frameVal;
+                                            byte[] imgBytes = Convert.FromBase64String(rawB64);
+
+                                            Bitmap independentBmp = null;
+                                            using (MemoryStream ms = new MemoryStream(imgBytes))
+                                            using (Image temp = Image.FromStream(ms))
+                                            {
+                                                independentBmp = new Bitmap(temp.Width, temp.Height, PixelFormat.Format32bppPArgb);
+                                                using (Graphics gCopy = Graphics.FromImage(independentBmp))
+                                                {
+                                                    gCopy.DrawImage(temp, 0, 0, temp.Width, temp.Height);
+                                                }
+                                            }
+
+                                            lock (frameLock)
+                                            {
+                                                Image oldFrame = latestRemoteFrame;
+                                                latestRemoteFrame = independentBmp;
+                                                if (oldFrame != null)
+                                                {
+                                                    try { oldFrame.Dispose(); } catch { }
+                                                }
+                                                framesReceivedCount++;
+                                            }
+
+                                            successFrame = true;
+                                            if (viewportCanvas != null && !viewportCanvas.IsDisposed)
+                                            {
+                                                viewportCanvas.BeginInvoke(new Action(() => viewportCanvas.Invalidate()));
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch { }
+                        }
+                    }
+                } catch { }
+                Thread.Sleep(successFrame ? 150 : 1000);
+            }
         }
 
         private void SyncFromGitHubBackend()

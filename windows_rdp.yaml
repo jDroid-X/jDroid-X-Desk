@@ -13,6 +13,7 @@ colab:
   relay_port: 8088
   tunnel_provider: "cloudflared"
   custom_domain: "https://www.jdroid-x.com"
+  tunnel_token: ""
   web_repo_url: "https://github.com/jDroid-X/jDroid-X-Web"
   github_backend_url: "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main"
 

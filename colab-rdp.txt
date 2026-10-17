@@ -1,25 +1,29 @@
 # ==============================================================================
-# jDroid-X-Desk | Google Colab Centralized Cloud Relay & Remote Access Setup
+# jDroid-X-Desk | Google Colab YAML-Driven Central Relay & Remote Access
+# Executes direct from windows_rdp.yaml | Fixes UDP/QUIC Colab Freezes
 # Reference: https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai
 # ==============================================================================
 
-# Step 1: Clone or load jDroid-X Colab Cloud Relay Server & Config from GitHub Backend
-!wget -q -O colab_relay_server.py https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/colab_relay_server.py || echo "Local relay script used"
+# --- OPTION A: ONE-CLICK YAML EXECUTION (Recommended) ---
+# Fetches latest YAML configuration and executes connection directly:
 !wget -q -O windows_rdp.yaml https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/windows_rdp.yaml || echo "Local yaml used"
+!wget -q -O colab_relay_server.py https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/colab_relay_server.py || echo "Local server used"
+!wget -q -O run_yaml_connection.py https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/run_yaml_connection.py || echo "Local runner used"
+!python3 run_yaml_connection.py
 
-# Step 2: Download & Install Cloudflare Tunnel for secure public URL
-!wget -q -nc https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-!chmod +x cloudflared-linux-amd64
+# ==============================================================================
+# --- OPTION B: CUSTOM DOMAIN (https://www.jdroid-x.com) via CLOUDFLARE TOKEN ---
+# If you have your Cloudflare Tunnel Token for jdroid-x.com, run this cell:
+#
+# import os
+# os.environ["CLOUDFLARE_TUNNEL_TOKEN"] = "<YOUR_CLOUDFLARE_TUNNEL_TOKEN>"
+# !./cloudflared-linux-amd64 tunnel --protocol http2 run --token $CLOUDFLARE_TUNNEL_TOKEN
+# ==============================================================================
 
-# Step 3: Launch Central Relay Server on Port 8088
-import subprocess, time
-server_proc = subprocess.Popen(["python3", "colab_relay_server.py"])
-time.sleep(2)
-
-# Step 4: Expose Tunnel to the Internet (Option A: Quick Tunnel | Option B: Custom Domain https://www.jdroid-x.com)
-print("\n>>> jDroid-X Colab Cloud Relay is now running on Port 8088!")
-print(">>> Primary Custom Domain: https://www.jdroid-x.com (or https://relay.jdroid-x.com)")
-print(">>> If using Cloudflare Tunnel Token for www.jdroid-x.com, run:")
-print(">>> !./cloudflared-linux-amd64 tunnel run --token <YOUR_CLOUDFLARE_TUNNEL_TOKEN>")
-print(">>> Otherwise, starting public HTTPS Quick Tunnel below:\n")
-!./cloudflared-linux-amd64 tunnel --url http://127.0.0.1:8088
+# --- OPTION C: MANUAL SHELL STEPS (Using HTTP/2 TCP to prevent Colab hang) ---
+# !wget -q -nc https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+# !chmod +x cloudflared-linux-amd64
+# import subprocess, time
+# subprocess.Popen(["python3", "colab_relay_server.py", "8088"])
+# time.sleep(2)
+# !./cloudflared-linux-amd64 tunnel --protocol http2 --url http://127.0.0.1:8088
