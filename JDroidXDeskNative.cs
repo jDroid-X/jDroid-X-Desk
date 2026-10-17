@@ -686,11 +686,11 @@ namespace JDroidXDesk.Native
             BuildLeftDrawerContent();
 
             // 4. COLLAPSIBLE RIGHT INSPECTOR (DOCK: RIGHT, WIDTH: 260)
-            collapsibleRightInspector = new Panel { Dock = DockStyle.Right, Width = 260, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(12) };
+            collapsibleRightInspector = new Panel { Dock = DockStyle.Right, Width = 260, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(12), Visible = false };
             BuildRightInspectorContent();
 
             // 5. COLLAPSIBLE BOTTOM PANEL (DOCK: BOTTOM, HEIGHT: 200)
-            collapsibleBottomDock = new Panel { Dock = DockStyle.Bottom, Height = 200, BackColor = Color.FromArgb(9, 13, 22), Padding = new Padding(0) };
+            collapsibleBottomDock = new Panel { Dock = DockStyle.Bottom, Height = 200, BackColor = Color.FromArgb(9, 13, 22), Padding = new Padding(0), Visible = false };
             BuildBottomDockContent();
 
             // 6. MAIN CENTER EDITOR WORK AREA (DOCK: FILL - ZERO OVERLAP)
@@ -699,13 +699,14 @@ namespace JDroidXDesk.Native
 
             // -------------------------------------------------------------
             // CRITICAL WINFORMS NON-OVERLAPPING DOCK ORDER:
-            // Explicit SetChildIndex guarantees zero overlapping!
-            // 0: topHeaderBar (full top)
-            // 1: activityBar (far left below header)
-            // 2: collapsibleLeftDrawer (left drawer beside activity bar)
-            // 3: collapsibleRightInspector (right inspector)
-            // 4: collapsibleBottomDock (bottom terminal dock)
-            // 5: centerEditorWorkArea (fills remaining viewport)
+            // In WinForms: Control at highest index docks FIRST (takes outer edge).
+            // Control at index 0 docks LAST (fills remaining interior space).
+            // 5: topHeaderBar (docked 1st: takes full top 0,0,W,44)
+            // 4: activityBar (docked 2nd: takes far left 0,44,48,H-44)
+            // 3: collapsibleLeftDrawer (docked 3rd: takes left 48,44,260,H-44)
+            // 2: collapsibleRightInspector (docked 4th: takes right W-260,44,260,H-44)
+            // 1: collapsibleBottomDock (docked 5th: takes bottom 308,H-200,W-568,200)
+            // 0: centerEditorWorkArea (docked LAST: fills exact remaining center rectangle!)
             // -------------------------------------------------------------
             this.Controls.Add(topHeaderBar);
             this.Controls.Add(activityBar);
@@ -714,12 +715,12 @@ namespace JDroidXDesk.Native
             this.Controls.Add(collapsibleBottomDock);
             this.Controls.Add(centerEditorWorkArea);
 
-            this.Controls.SetChildIndex(topHeaderBar, 0);
-            this.Controls.SetChildIndex(activityBar, 1);
-            this.Controls.SetChildIndex(collapsibleLeftDrawer, 2);
-            this.Controls.SetChildIndex(collapsibleRightInspector, 3);
-            this.Controls.SetChildIndex(collapsibleBottomDock, 4);
-            this.Controls.SetChildIndex(centerEditorWorkArea, 5);
+            this.Controls.SetChildIndex(topHeaderBar, 5);
+            this.Controls.SetChildIndex(activityBar, 4);
+            this.Controls.SetChildIndex(collapsibleLeftDrawer, 3);
+            this.Controls.SetChildIndex(collapsibleRightInspector, 2);
+            this.Controls.SetChildIndex(collapsibleBottomDock, 1);
+            this.Controls.SetChildIndex(centerEditorWorkArea, 0);
         }
 
         private void BuildTopHeaderContent()
@@ -746,6 +747,7 @@ namespace JDroidXDesk.Native
 
             // Center: Target Search & Quick Connect Input
             Panel centerSearchBox = new Panel { Size = new Size(340, 28), Location = new Point((topHeaderBar.Width - 340) / 2, 8), Anchor = AnchorStyles.Top };
+            topHeaderBar.Resize += (s, e) => { centerSearchBox.Location = new Point((topHeaderBar.Width - centerSearchBox.Width) / 2, 8); };
             txtGlobalSearch = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9f), BackColor = Color.FromArgb(24, 32, 54), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Text = "710-224-900" };
             Button btnSearchGo = new Button { Text = "⚡ Connect", Dock = DockStyle.Right, Width = 80, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(239, 51, 64), ForeColor = Color.White, Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnSearchGo.FlatAppearance.BorderSize = 0;
@@ -933,8 +935,10 @@ namespace JDroidXDesk.Native
 
             drawerContentPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(8) };
 
-            collapsibleLeftDrawer.Controls.Add(drawerContentPanel);
             collapsibleLeftDrawer.Controls.Add(drawerHeader);
+            collapsibleLeftDrawer.Controls.Add(drawerContentPanel);
+            collapsibleLeftDrawer.Controls.SetChildIndex(drawerHeader, 1);
+            collapsibleLeftDrawer.Controls.SetChildIndex(drawerContentPanel, 0);
 
             UpdateDrawerForCurrentView("Console");
         }
@@ -1004,7 +1008,9 @@ namespace JDroidXDesk.Native
             Label lblHdr = new Label { Text = "SESSION TELEMETRY HUD", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Dock = DockStyle.Top, Height = 28 };
             collapsibleRightInspector.Controls.Add(lblHdr);
 
-            TableLayoutPanel hudGrid = new TableLayoutPanel { Dock = DockStyle.Top, Height = 240, RowCount = 6 };
+            TableLayoutPanel hudGrid = new TableLayoutPanel { Dock = DockStyle.Top, Height = 250, ColumnCount = 1, RowCount = 6 };
+            hudGrid.ColumnStyles.Clear();
+            hudGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             for (int i = 0; i < 6; i++) hudGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
 
             Action<int, string, string, Action<Label>> addMetric = (row, label, val, setRef) => {
@@ -1178,8 +1184,8 @@ namespace JDroidXDesk.Native
 
             centerEditorWorkArea.Controls.Add(mainTabBar);
             centerEditorWorkArea.Controls.Add(viewContainer);
-            centerEditorWorkArea.Controls.SetChildIndex(mainTabBar, 0);
-            centerEditorWorkArea.Controls.SetChildIndex(viewContainer, 1);
+            centerEditorWorkArea.Controls.SetChildIndex(mainTabBar, 1);
+            centerEditorWorkArea.Controls.SetChildIndex(viewContainer, 0);
         }
 
         private void BuildMainTabBar()
@@ -1247,7 +1253,7 @@ namespace JDroidXDesk.Native
             viewConsole = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42), Padding = new Padding(8) };
 
             // Top Floating Session Bar
-            sessionFloatingToolbar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(20, 28, 45), Padding = new Padding(6, 4, 6, 4) };
+            sessionFloatingToolbar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(20, 28, 45), Padding = new Padding(6, 4, 6, 4), Visible = false };
             BuildFloatingSessionToolbar();
 
             // Local Node Info Ribbon (Slim, Smart Fit)
@@ -1291,9 +1297,9 @@ namespace JDroidXDesk.Native
             viewConsole.Controls.Add(sessionFloatingToolbar);
             viewConsole.Controls.Add(localBar);
             viewConsole.Controls.Add(viewportCanvas);
-            viewConsole.Controls.SetChildIndex(sessionFloatingToolbar, 0);
+            viewConsole.Controls.SetChildIndex(sessionFloatingToolbar, 2);
             viewConsole.Controls.SetChildIndex(localBar, 1);
-            viewConsole.Controls.SetChildIndex(viewportCanvas, 2);
+            viewConsole.Controls.SetChildIndex(viewportCanvas, 0);
         }
 
         private void BuildFloatingSessionToolbar()
@@ -1413,6 +1419,7 @@ namespace JDroidXDesk.Native
                 isSessionActive = true;
                 sessionStartTime = DateTime.Now;
                 sessionTelemetryTimer.Start();
+                if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = true;
 
                 btnConnect.Text = "Disconnect";
                 btnConnect.NormalColor = Color.FromArgb(100, 116, 139);
@@ -1425,6 +1432,7 @@ namespace JDroidXDesk.Native
             {
                 isSessionActive = false;
                 sessionTelemetryTimer.Stop();
+                if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = false;
                 TimeSpan duration = DateTime.Now - sessionStartTime;
 
                 db.Sessions.Add(new SessionItem {
@@ -1549,11 +1557,12 @@ namespace JDroidXDesk.Native
                 }
             }
 
-            // Primary Window
-            int win1X = Math.Min(150, cw / 4);
+            // Primary Window - Smart Fit to Full Remaining Viewport
+            int win1X = 146;
             int win1Y = 16;
-            int win1W = Math.Max(340, (cw - win1X - 20) * 3 / 5);
-            int win1H = Math.Max(220, ch - 80);
+            int taskH = 38;
+            int win1W = Math.Max(340, cw - win1X - 20);
+            int win1H = Math.Max(220, ch - taskH - 24);
 
             DrawRemoteWindow(g, win1X, win1Y, win1W, win1H, "🗔 " + target.ActiveApps[0] + " - [" + target.Name + "]", () => {
                 using (Font bodyF = new Font("Segoe UI", 8.5f))
@@ -1583,7 +1592,6 @@ namespace JDroidXDesk.Native
             });
 
             // Taskbar
-            int taskH = 38;
             int taskY = ch - taskH;
             using (SolidBrush taskBg = new SolidBrush(Color.FromArgb(9, 13, 22)))
             {
