@@ -17,7 +17,7 @@
       "colabCloudRelay": true,
       "proxyServer": "",
       "idServer": "relay.jdroid-x.net:21116",
-      "relayServer": "https://www.jdroid-x.com",
+      "relayServer": "https://closes-motion-metal-staying.trycloudflare.com",
       "customDomain": "https://www.jdroid-x.com",
       "webRepoUrl": "https://github.com/jDroid-X/jDroid-X-Web",
       "colabNotebookUrl": "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai",
