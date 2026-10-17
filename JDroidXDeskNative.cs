@@ -94,6 +94,8 @@ namespace JDroidXDesk.Native
         public string proxyServer { get; set; }
         public string idServer { get; set; }
         public string relayServer { get; set; }
+        public string customDomain { get; set; }
+        public string webRepoUrl { get; set; }
         public string colabNotebookUrl { get; set; }
         public string githubBackendUrl { get; set; }
         public ConnectionSettings()
@@ -103,7 +105,9 @@ namespace JDroidXDesk.Native
             colabCloudRelay = true;
             proxyServer = "";
             idServer = "relay.jdroid-x.net:21116";
-            relayServer = "http://127.0.0.1:8088";
+            relayServer = "https://www.jdroid-x.com";
+            customDomain = "https://www.jdroid-x.com";
+            webRepoUrl = "https://github.com/jDroid-X/jDroid-X-Web";
             colabNotebookUrl = "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
             githubBackendUrl = "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main";
         }
@@ -1602,8 +1606,9 @@ namespace JDroidXDesk.Native
                         g.DrawString("IP Address : " + currentHostDesktop.Ip + ":7070 (AES-256)", fCode, bWhite, cardX + 20, cardY + 110);
                         g.DrawString("Role       : " + currentHostDesktop.Role, fCode, bMuted, cardX + 20, cardY + 135);
                     }
-                    string relayStatus = (db.Settings.connection.colabCloudRelay ? "Colab Cloud Relay (" + db.Settings.connection.relayServer + ") [READY]" : "Direct P2P LAN Mode [READY]");
-                    g.DrawString("Relay Node : " + relayStatus, fCode, bGreen, cardX + 20, cardY + 160);
+                    string relayDisplay = !string.IsNullOrEmpty(db.Settings.connection.customDomain) ? db.Settings.connection.customDomain : db.Settings.connection.relayServer;
+                    string relayStatus = (db.Settings.connection.colabCloudRelay ? "Cloud Relay (" + relayDisplay + ") [ONLINE]" : "Direct P2P LAN Mode [READY]");
+                    g.DrawString("Cloud Node : " + relayStatus, fCode, bGreen, cardX + 20, cardY + 160);
 
                     g.DrawString("Click any desktop node in the left drawer to connect.", fSub, bWhite, cardX + 20, cardY + 205);
                 }
@@ -2026,13 +2031,19 @@ namespace JDroidXDesk.Native
             }
             else if (category == "Connection")
             {
+                addH("Primary Enterprise Cloud Domain & Web Integration");
+                TextBox tbDom = addTb("Primary Branded Cloud Domain", db.Settings.connection.customDomain);
+                tbDom.TextChanged += (s, e) => db.Settings.connection.customDomain = tbDom.Text.Trim();
+                TextBox tbWeb = addTb("jDroid-X-Web Repository URL", db.Settings.connection.webRepoUrl);
+                tbWeb.TextChanged += (s, e) => db.Settings.connection.webRepoUrl = tbWeb.Text.Trim();
+
                 addH("Google Colab & Cloud Relay Configuration");
                 CheckBox cbColab = addCb("Enable Google Colab Central Cloud Relay", db.Settings.connection.colabCloudRelay);
                 cbColab.CheckedChanged += (s, e) => {
                     db.Settings.connection.colabCloudRelay = cbColab.Checked;
                     RegisterWithColabRelay();
                 };
-                TextBox tbRelay = addTb("Cloud Relay Server URL (e.g. http://127.0.0.1:8088 or https://*.trycloudflare.com)", db.Settings.connection.relayServer);
+                TextBox tbRelay = addTb("Cloud Relay Server URL (Default: https://www.jdroid-x.com)", db.Settings.connection.relayServer);
                 tbRelay.TextChanged += (s, e) => {
                     db.Settings.connection.relayServer = tbRelay.Text.Trim();
                     RegisterWithColabRelay();
@@ -2048,6 +2059,25 @@ namespace JDroidXDesk.Native
                 addH("Direct P2P & RustDesk Compatibility");
                 TextBox tbId = addTb("RustDesk ID Server (hbbs :21116)", db.Settings.connection.idServer);
                 tbId.TextChanged += (s, e) => db.Settings.connection.idServer = tbId.Text.Trim();
+
+                Button btnSaveConn = new Button {
+                    Text = "💾 Save & Persist Network Settings",
+                    Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                    BackColor = Color.FromArgb(16, 185, 129),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Location = new Point(14, y),
+                    Size = new Size(340, 32),
+                    Cursor = Cursors.Hand
+                };
+                btnSaveConn.Click += (s, e) => {
+                    db.Save();
+                    ShowToast("Network settings successfully saved to database.json");
+                    RegisterWithColabRelay();
+                    viewportCanvas.Invalidate();
+                };
+                settingsSubContentPanel.Controls.Add(btnSaveConn);
+                y += 42;
             }
             else if (category == "Security")
             {

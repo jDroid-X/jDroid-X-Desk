@@ -16,7 +16,10 @@ import subprocess, time
 server_proc = subprocess.Popen(["python3", "colab_relay_server.py"])
 time.sleep(2)
 
-# Step 4: Expose Tunnel to the Internet
-print("\n>>> jDroid-X Colab Cloud Relay is now running!")
-print(">>> Copy the *.trycloudflare.com URL below into Desk 1 and Desk 2:\n")
+# Step 4: Expose Tunnel to the Internet (Option A: Quick Tunnel | Option B: Custom Domain https://www.jdroid-x.com)
+print("\n>>> jDroid-X Colab Cloud Relay is now running on Port 8088!")
+print(">>> Primary Custom Domain: https://www.jdroid-x.com (or https://relay.jdroid-x.com)")
+print(">>> If using Cloudflare Tunnel Token for www.jdroid-x.com, run:")
+print(">>> !./cloudflared-linux-amd64 tunnel run --token <YOUR_CLOUDFLARE_TUNNEL_TOKEN>")
+print(">>> Otherwise, starting public HTTPS Quick Tunnel below:\n")
 !./cloudflared-linux-amd64 tunnel --url http://127.0.0.1:8088

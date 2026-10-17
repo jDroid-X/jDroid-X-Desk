@@ -42,6 +42,8 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
             status = {
                 'status': 'ONLINE',
                 'service': 'jDroid-X Colab Cloud Relay Server',
+                'custom_domain': 'https://www.jdroid-x.com',
+                'web_repo': 'https://github.com/jDroid-X/jDroid-X-Web',
                 'active_devices': len(DEVICES),
                 'devices': list(DEVICES.values()),
                 'frames_buffered': len(FRAME_BUFFERS),
