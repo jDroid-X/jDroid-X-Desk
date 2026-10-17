@@ -40,7 +40,7 @@ async function runTests() {
     assert(fs.existsSync('jDroid-X-Client.bat'), 'jDroid-X-Client.bat (canonical portable admin client) exists');
     assert(fs.existsSync('jDroid-Client.bat'), 'jDroid-Client.bat (legacy alias client) exists');
     assert(fs.existsSync('JDroidXDeskNative.cs'), 'JDroidXDeskNative.cs (pure native C# source) exists');
-    assert(fs.existsSync('jDroid-X-Desk-Native.exe'), 'jDroid-X-Desk-Native.exe (legacy synchronized mirror) exists');
+    assert(fs.existsSync('jDroid-X-Desk-Universal.zip'), 'jDroid-X-Desk-Universal.zip (unified portable application distribution) exists');
     assert(fs.existsSync('colab_relay_server.py'), 'colab_relay_server.py (central cloud relay server) exists');
     assert(fs.existsSync('colab-rdp.txt'), 'colab-rdp.txt (Colab execution script) exists');
     assert(fs.existsSync('windows_rdp.yaml'), 'windows_rdp.yaml (RDP YAML configuration) exists');

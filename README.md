@@ -39,10 +39,11 @@
 
 | Artifact | Type | Size | Direct Download Link | Security & Universal Authority Specification |
 |---|---|---|---|---|
-| **jDroid-X-Desk.exe** | **Single Universal Windows Executable** | **138 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single Canonical Executable**: Universal AnyCPU architecture, embedded `app.manifest` (DPI-aware, Win 7/8/10/11), 256px multi-resolution icon, multi-target .NET 4.0–4.8.1 runtime fallback, Authenticode signed by **`jDroid-X Studio`**. |
+| **jDroid-X-Desk.exe** | **Single Universal Windows Executable** | **117 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single Canonical Executable**: Universal AnyCPU architecture, embedded `app.manifest` (DPI-aware, Win 7/8/10/11), multi-target .NET 4.0–4.8.1 runtime fallback, Authenticode signed by **`jDroid-X Studio Enterprise`**. |
+| **jDroid-X-Desk-Universal.zip** | **Portable Distribution Archive** | **125 KB** | [📥 **Download jDroid-X-Desk-Universal.zip**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Universal.zip) | Standalone package containing the unified executable, manifest, configs, and 1-click `Install-Or-Run.bat` unblock launcher. |
+| **Install-Or-Run.bat** | **1-Click SmartScreen Unblock Launcher** | **1 KB** | [📥 **Download Install-Or-Run.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/Install-Or-Run.bat) | 1-click script that automatically unblocks the Mark-of-the-Web on Windows and launches `jDroid-X-Desk.exe`. |
 | **jDroid-X-Client.bat** | **Canonical Technician Client Script** | **6.1 KB** | [📥 **Download jDroid-X-Client.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-X-Client.bat) | Portable admin remote access client launcher with automated Windows UAC elevation. |
 | **jDroid-X-Share.bat** | **Canonical Client Share Script** | **3.3 KB** | [📥 **Download jDroid-X-Share.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-X-Share.bat) | Lightweight 1-click batch launcher to start instant screen sharing for remote users. |
-| **jDroid-X-Desk-Native.exe** | **Synchronized Mirror Executable** | **138 KB** | [📥 **Download jDroid-X-Desk-Native.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Native.exe) | Backward-compatible mirror copy of the canonical `jDroid-X-Desk.exe`. |
 | **Local Web Gateway** | **HTTP Server Endpoint** | — | `http://localhost:7070/download` | Direct browser download endpoint served by the local gateway. |
 | **Official Repository** | **GitHub Repository** | — | [github.com/jDroid-X/jDroid-X-Desk](https://github.com/jDroid-X/jDroid-X-Desk) | Full source code, test suites, and documentation. |
 
@@ -88,17 +89,19 @@
 
 ```
 jDroid-X-Desk/
-├── jDroid-X-Desk.exe           # Single canonical universal Windows executable (Authorized & Signed, 138 KB)
+├── jDroid-X-Desk.exe           # Single canonical universal Windows executable (Authenticode Signed, AnyCPU)
 ├── jDroid-X-Desk.exe.config    # Universal multi-target .NET runtime binding configuration
-├── jDroid-X-Desk-Native.exe    # Synchronized backward-compatible mirror executable
-├── JDroidXDeskNative.cs        # Senior Dynamic OOPS MVC C# source code
+├── jDroid-X-Desk-Universal.zip # Complete standalone portable distribution package
+├── JDroidXDeskNative.cs        # Senior Dynamic OOPS MVC C# source code (Safe cooperative threads & authenticated streaming)
 ├── app.manifest                # Windows Universal Application Manifest (AnyCPU, DPI Aware, Win 7/8/10/11)
+├── Install-Or-Run.bat          # 1-Click safe runner (unblocks Windows SmartScreen Mark-of-the-Web)
 ├── Launch-Desk.bat             # 1-Click launcher for full-stack Node.js server & browser UI
 ├── Launch-Native.bat           # 1-Click launcher for native Windows executable
 ├── jDroid-X-Client.bat         # Canonical technician remote desktop client (UAC elevated)
 ├── jDroid-Client.bat           # Legacy alias technician client
 ├── jDroid-X-Share.bat          # Canonical client screen sharing script
 ├── jDroid-Share.bat            # Legacy alias screen sharing script
+├── run_yaml_connection.py      # Python YAML connection executor (auto-tunnel & pairing)
 ├── server.js                   # Node.js Express & WebRTC backend gateway
 ├── app.js                      # Reactive frontend controller (OOPS MVC)
 ├── index.html                  # Responsive HTML5 desktop dashboard
@@ -107,11 +110,18 @@ jDroid-X-Desk/
 ├── colab_relay_server.py       # Google Colab cloud relay bridge server
 ├── jDroid-X-Desk.ipynb         # Jupyter Notebook for running middle-layer Colab relay
 ├── windows_rdp.yaml            # Cloud RDP deployment configuration
-├── test.js                     # Automated Stage 5 verification test suite (84 assertions)
+├── test.js                     # Automated Stage 5 verification test suite (91 assertions)
 ├── assets/
 │   ├── app.ico                 # 256x256 multi-resolution embedded application icon
 │   ├── jdroid-x-desk-presentation.png # High-resolution UI showcase presentation
 │   └── jdroidxlogo_trans.png   # Transparent jDroid-X branding logo
+├── jDroid-X-Colab Server/      # Dedicated watchdog & relay scripts for Google Colab
+│   ├── jDroid-X-Colab-Notebook.ipynb # Production Colab notebook
+│   ├── jDroid-X-Colab-Relay-Server.py# Production Colab relay server
+│   ├── colab-watchdog-keepalive.py   # Background keep-alive daemon
+│   ├── run_yaml_connection.py        # Connection bootstrap script
+│   ├── windows_rdp_colab.yaml        # Colab RDP config
+│   └── README.md                     # Colab architecture & setup guide
 └── docs/                       # Specifications, reverse engineering docs & analysis
     └── REA_CHROME_REMOTE_DESKTOP_ANALYSIS.md
 ```
