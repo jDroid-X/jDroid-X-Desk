@@ -924,8 +924,8 @@ class AppController {
                         transmitHotkeys: document.getElementById('ad-set-transmit-hotkeys')?.checked !== false,
                         onlineStatusVisibility: document.getElementById('ad-set-online-vis')?.checked !== false,
                         allowDataCollection: document.getElementById('ad-set-allow-telemetry')?.checked || false,
-                        screenshotPath: document.getElementById('ad-ss-path-display')?.textContent.trim() || 'C:\\Users\\Default\\Pictures\\AnyDesk',
-                        chatLogPath: document.getElementById('ad-chat-path-display')?.textContent.trim() || 'C:\\Users\\Default\\AppData\\Roaming\\AnyDesk\\chat'
+                        screenshotPath: document.getElementById('ad-ss-path-display')?.textContent.trim() || 'C:\\Users\\Default\\Pictures\\jDroid-X',
+                        chatLogPath: document.getElementById('ad-chat-path-display')?.textContent.trim() || 'C:\\Users\\Default\\AppData\\Roaming\\jDroid-X\\chat'
                     },
                     connection: {
                         allowDirectConnections: document.getElementById('ad-conn-direct')?.checked !== false,
@@ -949,7 +949,7 @@ class AppController {
                     recording: {
                         autoRecordIncoming: document.getElementById('ad-rec-incoming')?.checked || false,
                         autoRecordOutgoing: document.getElementById('ad-rec-outgoing')?.checked || false,
-                        sessionRecordPath: document.getElementById('ad-sess-rec-path-display')?.textContent.trim() || 'C:\\Users\\Default\\Videos\\AnyDesk'
+                        sessionRecordPath: document.getElementById('ad-sess-rec-path-display')?.textContent.trim() || 'C:\\Users\\Default\\Videos\\jDroid-X'
                     },
                     display: {
                         followCursor: document.getElementById('ad-disp-follow-cursor')?.checked || false,
@@ -964,8 +964,8 @@ class AppController {
                 };
 
                 await this.settingsModel.saveToAPI(settingsPayload);
-                this.view.showToast('success', 'Settings Synchronized', 'All AnyDesk settings saved and synchronized to database.');
-                this.traceModel.addLog('CONFIG', 'SETTINGS_SAVED', 'AnyDesk Studio settings persisted to database');
+                this.view.showToast('success', 'Settings Synchronized', 'All jDroid-X settings saved and synchronized to database.');
+                this.traceModel.addLog('CONFIG', 'SETTINGS_SAVED', 'jDroid-X Studio settings persisted to database');
             });
         }
 
@@ -1422,27 +1422,79 @@ class AppController {
 
     bindThemeToggle() {
         const themeBtn = document.getElementById('theme-toggle-btn');
-        if (themeBtn) {
-            // UX-6: Restore saved theme preference on load — Light-First Discipline
-            const savedTheme = localStorage.getItem('jdx_theme') || 'light';
-            if (savedTheme === 'light') {
-                document.body.classList.add('light-theme');
-                const icon = themeBtn.querySelector('i');
-                if (icon) icon.className = 'fa-solid fa-sun';
+        const themeSelector = document.getElementById('global-theme-selector');
+
+        const ALL_THEME_CLASSES = [
+            'light-theme', 'dark-theme', 'theme-light', 'theme-dark', 'theme-nord',
+            'theme-solarized-light', 'theme-solarized-dark', 'theme-monokai',
+            'theme-dracula', 'theme-tokyo-night', 'theme-cyberpunk', 'theme-emerald',
+            'theme-ocean', 'theme-sunset', 'theme-gruvbox', 'theme-slate', 'theme-high-contrast'
+        ];
+
+        const applyTheme = (themeName) => {
+            let targetClass = themeName;
+            if (targetClass === 'light') targetClass = 'light-theme';
+            if (targetClass === 'dark') targetClass = 'dark-theme';
+            if (!targetClass || !ALL_THEME_CLASSES.includes(targetClass)) targetClass = 'light-theme';
+
+            ALL_THEME_CLASSES.forEach(c => document.body.classList.remove(c));
+            document.body.classList.add(targetClass);
+
+            localStorage.setItem('jdroid_theme', targetClass);
+            localStorage.setItem('jdx_theme', targetClass === 'light-theme' ? 'light' : (targetClass === 'dark-theme' ? 'dark' : targetClass));
+
+            if (themeSelector && themeSelector.value !== targetClass) {
+                themeSelector.value = targetClass;
             }
 
-            themeBtn.addEventListener('click', () => {
-                document.body.classList.toggle('light-theme');
+            if (themeBtn) {
                 const icon = themeBtn.querySelector('i');
-                if (document.body.classList.contains('light-theme')) {
-                    icon.className = 'fa-solid fa-sun';
-                    localStorage.setItem('jdx_theme', 'light');
-                } else {
-                    icon.className = 'fa-solid fa-moon';
-                    localStorage.setItem('jdx_theme', 'dark');
+                if (icon) {
+                    const isLightParadigm = targetClass === 'light-theme' || targetClass === 'theme-solarized-light';
+                    icon.className = isLightParadigm ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
                 }
+            }
+
+            if (window.serverAdminController) {
+                const eng = window.serverAdminController.currentActiveEngine || 'sunshine';
+                window.serverAdminController.probeEngineStatus(eng);
+            }
+
+            fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: targetClass })
+            }).catch(() => {});
+        };
+
+        // 1. Initial Load: Light-First Discipline
+        const savedTheme = localStorage.getItem('jdroid_theme') || localStorage.getItem('jdx_theme') || 'light-theme';
+        applyTheme(savedTheme);
+
+        // 2. Global Dropdown Selector Listener
+        if (themeSelector) {
+            themeSelector.addEventListener('change', (e) => {
+                applyTheme(e.target.value);
             });
         }
+
+        // 3. Quick Sun/Moon Toggle Button Listener
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                const isLight = document.body.classList.contains('light-theme') || document.body.classList.contains('theme-solarized-light');
+                const nextTheme = isLight ? 'dark-theme' : 'light-theme';
+                applyTheme(nextTheme);
+            });
+        }
+
+        // 4. Cross-Tab & Cross-Iframe Synchronization via Storage Event
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'jdroid_theme' || e.key === 'jdx_theme') {
+                if (e.newValue) {
+                    applyTheme(e.newValue);
+                }
+            }
+        });
     }
 
     bindRemoteConnectLogic() {
@@ -2148,7 +2200,8 @@ class AppController {
             'device-health': 'Device Health & Telemetry',
             'user-profile': 'Senior Systems Architect Profile',
             'system-settings': 'System Preferences & Startup',
-            'privacy-controls': 'Privacy & Security Governance'
+            'privacy-controls': 'Privacy & Security Governance',
+            'server-admin': 'Server Admin & Open-Source Engines'
         };
 
         if (titleMap[viewId]) {
@@ -2184,6 +2237,8 @@ class AppController {
             this.renderUserProfile();
         } else if (viewId === 'system-settings') {
             this.hydrateSettingsStudio();
+        } else if (viewId === 'server-admin') {
+            if (window.serverAdminController) window.serverAdminController.render();
         }
     }
 
@@ -3745,6 +3800,7 @@ class DeviceController {
         this.listEl = document.getElementById('device-list-ul');
         this.modal = document.getElementById('add-device-modal');
         this.nameInput = document.getElementById('device-modal-name');
+        this.ipInput = document.getElementById('device-modal-ip');
         this.groupSelect = document.getElementById('device-modal-group');
         this.accessInput = document.getElementById('device-modal-access');
         this.idInput = document.getElementById('device-modal-id');
@@ -3754,6 +3810,16 @@ class DeviceController {
         
         const openBtn = document.getElementById('btn-open-add-device');
         if(openBtn) openBtn.onclick = () => this.openAddModal();
+
+        const manageGrpBtn = document.getElementById('btn-fleet-manage-groups');
+        if (manageGrpBtn) {
+            manageGrpBtn.onclick = () => {
+                if (window.appController) {
+                    window.appController.switchView('remote-contacts');
+                    window.appController.view.showToast('info', 'Address Book & Groups', 'Manage device groups and contacts.');
+                }
+            };
+        }
         
         if(this.saveBtn) this.saveBtn.onclick = () => this.saveDevice();
         
@@ -3810,7 +3876,7 @@ class DeviceController {
 
         this.listEl.innerHTML = '';
         if (devices.length === 0) {
-            this.listEl.innerHTML = '<li style="padding: 0.6rem; text-align: center; color: var(--text-muted);">No devices registered yet.</li>';
+            this.listEl.innerHTML = '<li style="padding: 0.6rem; text-align: center; color: var(--text-muted);">No devices registered yet. Click "Register New Device" to add.</li>';
             return;
         }
 
@@ -3824,8 +3890,9 @@ class DeviceController {
                     <h4 style="margin: 0; color: var(--text-color);"><i class="fa-solid fa-laptop text-primary"></i> ${ValidationUtil.escapeHTML(d.name)}</h4>
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">
                         Group: <span class="badge badge-blue">${ValidationUtil.escapeHTML(groupName)}</span> | 
-                        Access: ${ValidationUtil.escapeHTML(d.accessLevel)} | 
-                        Status: <span class="${d.status === 'Online' ? 'text-emerald' : 'text-warning'}">${ValidationUtil.escapeHTML(d.status)}</span>
+                        ${d.ip ? 'Desk ID/IP: <code style="font-size:0.75rem; font-family:var(--font-mono);">' + ValidationUtil.escapeHTML(d.ip) + '</code> | ' : ''}
+                        Access: ${ValidationUtil.escapeHTML(d.accessLevel || 'Standard')} | 
+                        Status: <span class="${d.status === 'Online' || d.status === 'ONLINE' ? 'text-emerald' : 'text-warning'}">● ${ValidationUtil.escapeHTML(d.status || 'Standby')}</span>
                     </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -3836,9 +3903,9 @@ class DeviceController {
             `;
             li.querySelector('.connect-btn').onclick = () => {
                 const targetInput = document.getElementById('target-id-input');
-                if (targetInput) targetInput.value = d.name.includes('-') ? d.name : (d.id || d.name);
+                if (targetInput) targetInput.value = d.ip || (d.name.includes('-') ? d.name : (d.id || d.name));
                 window.appController.switchView('remote-console');
-                window.appController.view.showToast('info', 'Target Selected', `Selected ${d.name} from Address Book. Click 'Connect' to begin session.`);
+                window.appController.view.showToast('info', 'Target Selected', `Selected ${d.name} (${d.ip || d.id}) from Fleet. Click 'Connect' to begin session.`);
             };
             li.querySelector('.edit-btn').onclick = () => this.openEditModal(d);
             li.querySelector('.delete-btn').onclick = () => this.deleteDevice(d.id, d.name);
@@ -3851,6 +3918,7 @@ class DeviceController {
         await this.populateGroupDropdowns();
         if(this.idInput) this.idInput.value = '';
         if(this.nameInput) this.nameInput.value = '';
+        if(this.ipInput) this.ipInput.value = '';
         if(this.groupSelect) this.groupSelect.value = '';
         if(this.accessInput) this.accessInput.value = 'Standard';
         if(this.title) this.title.innerHTML = '<i class="fa-solid fa-plus"></i> Register Device';
@@ -3861,8 +3929,9 @@ class DeviceController {
         await this.populateGroupDropdowns();
         if(this.idInput) this.idInput.value = d.id;
         if(this.nameInput) this.nameInput.value = d.name;
+        if(this.ipInput) this.ipInput.value = d.ip || '';
         if(this.groupSelect) this.groupSelect.value = d.groupId || '';
-        if(this.accessInput) this.accessInput.value = d.accessLevel;
+        if(this.accessInput) this.accessInput.value = d.accessLevel || 'Standard';
         if(this.title) this.title.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Device';
         if(this.modal) this.modal.classList.add('active');
     }
@@ -3874,6 +3943,7 @@ class DeviceController {
     async saveDevice() {
         const id = this.idInput ? this.idInput.value : '';
         const name = this.nameInput ? this.nameInput.value.trim() : '';
+        const ip = this.ipInput ? this.ipInput.value.trim() : null;
         const groupId = this.groupSelect ? (this.groupSelect.value || null) : null;
         const access = this.accessInput ? (this.accessInput.value || 'Standard') : 'Standard';
 
@@ -3885,11 +3955,11 @@ class DeviceController {
 
         try {
             if (id) {
-                const res = await this.model.update(id, { name, groupId, accessLevel: access });
+                const res = await this.model.update(id, { name, ip, groupId, accessLevel: access });
                 if(!res.success) throw new Error(res.error);
                 window.appController.view.showToast('success', 'Device Updated', 'Device details saved.');
             } else {
-                const res = await this.model.add({ name, groupId, accessLevel: access, status: 'Online' });
+                const res = await this.model.add({ name, ip, groupId, accessLevel: access, status: 'Online' });
                 if(!res.success) throw new Error(res.error);
                 window.appController.view.showToast('success', 'Device Registered', 'New device added to fleet.');
             }
@@ -3917,6 +3987,322 @@ class DeviceController {
     }
 }
 
+// ==========================================
+// SERVER ADMIN & ENGINE MANAGEMENT MVC MODULES
+// ==========================================
+class ServerAdminModel {
+    async fetchConfig() {
+        try {
+            const res = await fetch('/api/admin/config');
+            const data = await res.json();
+            return data.data || null;
+        } catch (e) { return null; }
+    }
+    async saveConfig(config) {
+        try {
+            const res = await fetch('/api/admin/config', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            return await res.json();
+        } catch (e) { return { success: false, error: e.message }; }
+    }
+    async switchEngine(engineId) {
+        try {
+            const res = await fetch('/api/admin/engine/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ engine: engineId })
+            });
+            return await res.json();
+        } catch (e) { return { success: false, error: e.message }; }
+    }
+    async fetchMetrics() {
+        try {
+            const res = await fetch('/api/admin/metrics');
+            const data = await res.json();
+            return data.data || null;
+        } catch (e) { return null; }
+    }
+    async fetchLogs(level = 'ALL', limit = 100) {
+        try {
+            const res = await fetch(`/api/admin/logs?level=${level}&limit=${limit}`);
+            const data = await res.json();
+            return data.data || [];
+        } catch (e) { return []; }
+    }
+    async purgeLogs() {
+        try {
+            const res = await fetch('/api/admin/logs', { method: 'DELETE' });
+            return await res.json();
+        } catch (e) { return { success: false, error: e.message }; }
+    }
+}
+
+class ServerAdminController {
+    constructor(model) {
+        this.model = model;
+        this.logs = [];
+        this.bound = false;
+    }
+
+    init() {
+        if (!this.bound) {
+            this.bindEvents();
+            this.bound = true;
+        }
+    }
+
+    bindEvents() {
+        const refreshBtn = document.getElementById('inapp-refresh-admin-btn');
+        if (refreshBtn) refreshBtn.onclick = () => this.render();
+
+        document.querySelectorAll('.inapp-switch-btn').forEach(btn => {
+            btn.onclick = async () => {
+                const eng = btn.getAttribute('data-engine');
+                window.appController.view.showToast('info', 'Switching Engine', `Activating jDroid-Engine ${eng}...`);
+                const res = await this.model.switchEngine(eng);
+                if (res.success) {
+                    window.appController.view.showToast('success', 'Engine Switched', `jDroid-Engine updated to ${res.engineInfo?.name || eng}`);
+                    await this.render();
+                } else {
+                    window.appController.view.showToast('error', 'Switch Failed', res.error || 'Failed to switch engine');
+                }
+            };
+        });
+
+        // 1-Click Automated Start Script Launchers (scripts/start-*.bat)
+        document.querySelectorAll('.inapp-run-btn').forEach(btn => {
+            btn.onclick = async (e) => {
+                e.stopPropagation();
+                const eng = btn.getAttribute('data-engine');
+                await this.launchEngineScript(eng);
+            };
+        });
+
+        const webHdrRunBtn = document.getElementById('web-header-run-script-btn');
+        if (webHdrRunBtn) {
+            webHdrRunBtn.onclick = async () => {
+                const curEng = this.currentActiveEngine || 'sunshine';
+                await this.launchEngineScript(curEng);
+            };
+        }
+
+        const consoleRunBtn = document.getElementById('console-run-script-btn');
+        if (consoleRunBtn) {
+            consoleRunBtn.onclick = async () => {
+                const curEng = this.currentActiveEngine || 'sunshine';
+                await this.launchEngineScript(curEng);
+            };
+        }
+
+        const consoleSwitchBtn = document.getElementById('console-switch-engine-btn');
+        if (consoleSwitchBtn) {
+            consoleSwitchBtn.onclick = () => {
+                if (window.appController) window.appController.switchView('server-admin');
+            };
+        }
+
+        const webHdrBadge = document.getElementById('web-header-engine-badge');
+        if (webHdrBadge) {
+            webHdrBadge.onclick = () => {
+                if (window.appController) window.appController.switchView('server-admin');
+            };
+        }
+
+        const saveLimitsBtn = document.getElementById('inapp-save-limits-btn');
+        if (saveLimitsBtn) {
+            saveLimitsBtn.onclick = async () => {
+                const limits = {
+                    maxConcurrentSessions: parseInt(document.getElementById('inapp-lim-sessions')?.value, 10) || 10,
+                    bandwidthLimitMbps: parseInt(document.getElementById('inapp-lim-bandwidth')?.value, 10) || 50,
+                    maxFps: parseInt(document.getElementById('inapp-lim-fps')?.value, 10) || 60,
+                    idleTimeoutMinutes: parseInt(document.getElementById('inapp-lim-timeout')?.value, 10) || 15,
+                    logRetentionDays: parseInt(document.getElementById('inapp-lim-retention')?.value, 10) || 7,
+                    hardwareAcceleration: document.getElementById('inapp-lim-hw')?.value || 'nvenc_cuda'
+                };
+                const res = await this.model.saveConfig({ processingLimits: limits });
+                if (res.success) {
+                    window.appController.view.showToast('success', 'Limits Saved', 'Processing limits & quotas updated successfully.');
+                } else {
+                    window.appController.view.showToast('error', 'Save Failed', res.error || 'Could not save limits.');
+                }
+            };
+        }
+
+        const searchInput = document.getElementById('inapp-log-search');
+        if (searchInput) searchInput.oninput = () => this.filterAndRenderLogs();
+
+        const levelSelect = document.getElementById('inapp-log-level');
+        if (levelSelect) levelSelect.onchange = async () => {
+            this.logs = await this.model.fetchLogs(levelSelect.value, 100);
+            this.filterAndRenderLogs();
+        };
+
+        const purgeBtn = document.getElementById('inapp-purge-logs-btn');
+        if (purgeBtn) {
+            purgeBtn.onclick = async () => {
+                if (confirm('Are you sure you want to purge all server logs?')) {
+                    const res = await this.model.purgeLogs();
+                    if (res.success) {
+                        window.appController.view.showToast('warning', 'Logs Purged', `Cleared ${res.cleared} log entries.`);
+                        this.logs = [];
+                        this.filterAndRenderLogs();
+                    }
+                }
+            };
+        }
+    }
+
+    async launchEngineScript(engineId) {
+        window.appController.view.showToast('info', 'Launching Script', `Starting ${engineId} start script...`);
+        try {
+            const res = await fetch('/api/admin/engine/launch-script', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ engine: engineId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.appController.view.showToast('success', 'Script Launched', data.message || `Started ${engineId}`);
+                setTimeout(() => this.probeEngineStatus(engineId), 1200);
+            } else {
+                window.appController.view.showToast('warning', 'Script Warning', data.error || 'Failed to start script');
+            }
+        } catch (err) {
+            window.appController.view.showToast('error', 'Launcher Error', err.message);
+        }
+    }
+
+    async probeEngineStatus(engineId) {
+        try {
+            const res = await fetch(`/api/admin/engine/probe?engine=${encodeURIComponent(engineId)}`);
+            const data = await res.json();
+            const isLive = data.isListening;
+            const port = data.port || (engineId === 'sunshine' ? 47990 : (engineId === 'rustdesk' ? 21116 : (engineId === 'guacamole' ? 8080 : 8088)));
+
+            const hdrStatus = document.getElementById('web-header-engine-status');
+            if (hdrStatus) {
+                hdrStatus.textContent = isLive ? `[● RUNNING : ${port}]` : `[⚠️ STOPPED]`;
+                hdrStatus.style.color = isLive ? 'var(--accent-emerald)' : 'var(--text-muted)';
+            }
+
+            const probeBadge = document.getElementById('console-engine-probe-badge');
+            const probeText = document.getElementById('console-engine-probe-text');
+            if (probeText) {
+                probeText.textContent = isLive ? `Port ${port} Active & Listening` : `Daemon Offline (Port ${port})`;
+            }
+            if (probeBadge) {
+                probeBadge.className = isLive ? 'badge badge-green' : 'badge badge-blue';
+            }
+
+            this.updateMarqueeTickerText(engineId, isLive, port);
+        } catch (_) {}
+    }
+
+    updateMarqueeTickerText(engineId, isLive, port) {
+        const ticker = document.getElementById('web-marquee-ticker');
+        if (!ticker) return;
+        const themeMap = {
+            'light-theme': 'Light Enterprise', 'dark-theme': 'Dark Studio',
+            'theme-nord': 'Nord Arctic', 'theme-solarized-light': 'Solarized Light',
+            'theme-solarized-dark': 'Solarized Dark', 'theme-monokai': 'Monokai Pro',
+            'theme-dracula': 'Dracula Midnight', 'theme-tokyo-night': 'Tokyo Night',
+            'theme-cyberpunk': 'Cyberpunk Neon', 'theme-emerald': 'Matrix Emerald',
+            'theme-ocean': 'Deep Ocean', 'theme-sunset': 'Crimson Sunset',
+            'theme-gruvbox': 'Gruvbox Retro', 'theme-slate': 'Titanium Slate',
+            'theme-high-contrast': 'High Contrast'
+        };
+        const activeClass = Array.from(document.body.classList).find(c => themeMap[c]) || 'light-theme';
+        const theme = themeMap[activeClass] || 'Light Enterprise';
+        const hostId = document.getElementById('local-device-id')?.textContent || '984-102-391';
+        ticker.innerHTML = `⚡ jDroid-X Remote Console &middot; jDroid-Engine: ${engineId.toUpperCase()} [${isLive ? '● RUNNING : ' + port : '⚠️ STOPPED'}] &middot; Security: AES-256-GCM &middot; Host Desk ID: ${hostId} &middot; Node Gateway: HTTP 200 (Port 12345) &middot; RTT Latency: &lt;2ms LAN / 14ms WAN &middot; Codec: Hardware Acceleration &middot; SmartFit: Mobile / Tablet / Laptop / 4K / Flat 55"+ TV &middot; Theme: ${theme} &middot; Operator: JEET &middot; System Status: ALL SYSTEMS NOMINAL`;
+    }
+
+    updateActiveEngineUI(activeId) {
+        this.currentActiveEngine = activeId;
+        const displayNames = {
+            sunshine: 'Sunshine',
+            rustdesk: 'RustDesk',
+            guacamole: 'Guacamole',
+            jdroidRelay: 'Google Colab'
+        };
+        const prettyName = displayNames[activeId] || activeId;
+
+        const hdrName = document.getElementById('web-header-engine-name');
+        if (hdrName) hdrName.textContent = `jDroid-Engine: ${prettyName}`;
+
+        const consoleTitle = document.getElementById('console-active-engine-title');
+        if (consoleTitle) consoleTitle.textContent = `jDroid-Engine: ${prettyName}`;
+
+        ['sunshine', 'rustdesk', 'guacamole', 'jdroidRelay'].forEach(id => {
+            const box = document.getElementById(`inapp-card-${id}`);
+            const badge = document.getElementById(`inapp-badge-${id}`);
+            const btn = box?.querySelector('.inapp-switch-btn');
+            if (box && badge && btn) {
+                if (id === activeId) {
+                    box.style.border = '2px solid var(--accent-emerald)';
+                    badge.className = 'badge badge-green';
+                    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> ACTIVE';
+                    btn.className = 'btn btn-primary btn-sm inapp-switch-btn';
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Active jDroid-Engine';
+                } else {
+                    box.style.border = '1px solid var(--border-color)';
+                    badge.className = 'badge badge-blue';
+                    badge.innerHTML = '<i class="fa-solid fa-circle"></i> READY';
+                    btn.className = 'btn btn-secondary btn-sm inapp-switch-btn';
+                    btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine';
+                }
+            }
+        });
+
+        this.probeEngineStatus(activeId);
+    }
+
+    filterAndRenderLogs() {
+        const tbody = document.getElementById('inapp-log-tbody');
+        if (!tbody) return;
+
+        const q = (document.getElementById('inapp-log-search')?.value || '').toLowerCase();
+        let list = this.logs;
+        if (q) {
+            list = list.filter(l => (l.id || '').toLowerCase().includes(q) || (l.msg || '').toLowerCase().includes(q) || (l.stage || '').toLowerCase().includes(q) || (l.ip || '').includes(q));
+        }
+
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.2rem;">No matching server processing logs.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map(l => {
+            let lvlColor = 'var(--accent-blue)';
+            if (l.level === 'WARN') lvlColor = 'var(--accent-amber)';
+            if (l.level === 'ERROR') lvlColor = 'var(--accent-red)';
+            if (l.level === 'AUDIT') lvlColor = 'var(--accent-purple)';
+            if (l.level === 'TRACE') lvlColor = 'var(--accent-emerald)';
+
+            const timeStr = l.timestamp ? (l.timestamp.includes('T') ? l.timestamp.split('T')[1].replace('Z','') : l.timestamp) : '--';
+            const rttStr = l.rttMs !== undefined ? `${l.rttMs}ms` : '--';
+            const ipStr = l.ip || '127.0.0.1';
+            const stageStr = l.stage || l.method || 'SERVER';
+            const msgStr = l.msg || l.message || l.details || JSON.stringify(l);
+
+            return `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 0.35rem 0.6rem; color: var(--text-dim);">${ValidationUtil.escapeHTML(l.id || '--')}</td>
+                    <td style="padding: 0.35rem 0.6rem; color: var(--text-muted);">${ValidationUtil.escapeHTML(timeStr)}</td>
+                    <td style="padding: 0.35rem 0.6rem; color: ${lvlColor}; font-weight: 700;">${ValidationUtil.escapeHTML(l.level || 'INFO')}</td>
+                    <td style="padding: 0.35rem 0.6rem; color: var(--accent-blue);">${ValidationUtil.escapeHTML(stageStr)}</td>
+                    <td style="padding: 0.35rem 0.6rem; color: var(--accent-emerald); font-weight: 600;">${ValidationUtil.escapeHTML(rttStr)}</td>
+                    <td style="padding: 0.35rem 0.6rem; color: var(--text-muted);">${ValidationUtil.escapeHTML(ipStr)}</td>
+                    <td style="padding: 0.35rem 0.6rem; color: var(--text-main); word-break: break-word;">${ValidationUtil.escapeHTML(msgStr)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
 // Initialize New MVC Modules
 document.addEventListener('DOMContentLoaded', () => {
     const dialogView = new DialogView();
@@ -3927,6 +4313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.guardiansController = new GuardiansController(new GuardiansModel(), dialogView);
     window.remoteContactsController = new RemoteContactsController(new RemoteContactsModel(), dialogView);
     window.notificationsController = new NotificationsController(new NotificationsModel());
+    window.serverAdminController = new ServerAdminController(new ServerAdminModel());
     
     window.safeZoneController.init();
     window.groupController.init();
@@ -3934,6 +4321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.guardiansController.init();
     window.remoteContactsController.init();
     window.notificationsController.init();
+    window.serverAdminController.render();
 
     // Trigger immediate view synchronization with fully initialized controllers
     if (window.appController) {

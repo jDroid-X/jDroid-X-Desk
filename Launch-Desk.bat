@@ -3,6 +3,12 @@ setlocal
 TITLE jDroid-X-Desk Launcher
 cd /d "%~dp0"
 
+:: Strangler Forwarder: Delegate to encapsulated scripts/launch-desk.bat
+if exist "scripts\launch-desk.bat" (
+    call "scripts\launch-desk.bat" %*
+    exit /b %ERRORLEVEL%
+)
+
 echo ========================================================
 echo          jDroid-X-Desk Remote Desktop Console
 echo ========================================================

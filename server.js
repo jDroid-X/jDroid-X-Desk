@@ -1,220 +1,41 @@
+/**
+ * jDroid-X-Desk Server Entrypoint (server.js)
+ * Architecture: Clean OOPS MVC Gateway Entrypoint
+ * Model Layer: models/db-context.js
+ * Controller Layer: controllers/server-controller.js
+ * Service Layer: services/hardware-monitor-service.js
+ * Views Layer: views/ (index.html, admin.html)
+ */
+
 const express = require('express');
 const path = require('path');
-const { exec } = require('child_process');
-const fs = require('fs');
-const os = require('os');
-const crypto = require('crypto');
+const dbContext = require('./models/db-context');
+const ServerController = require('./controllers/server-controller');
 
 const app = express();
 const PORT = process.env.PORT || 12345;
-const DB_PATH = path.join(__dirname, 'database.json');
 
 process.on('uncaughtException', (err) => { console.error('[SERVER ERROR] Uncaught Exception:', err.message); });
 process.on('unhandledRejection', (reason) => { console.error('[SERVER ERROR] Unhandled Rejection:', reason); });
 
 app.use(express.json());
+
+// Encapsulated Static Route Mounts (OOPS MVC View & Asset Standard)
 app.use(express.static(__dirname));
+app.use('/views', express.static(path.join(__dirname, 'views')));
+app.use('/controllers', express.static(path.join(__dirname, 'controllers')));
+app.use('/models', express.static(path.join(__dirname, 'models')));
+app.use('/services', express.static(path.join(__dirname, 'services')));
+app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
+app.use('/styles', express.static(path.join(__dirname, 'styles')));
 
-const defaultUserProfile = process.env.USERPROFILE || 'C:\\Users\\Public';
-const defaultAppData = process.env.APPDATA || path.join(defaultUserProfile, 'AppData', 'Roaming');
-
-const DEFAULT_SETTINGS = {
-    pingThresholdMs: 100,
-    downloadThresholdMBs: 1.0,
-    toastDurationMs: 4000,
-    defaultAccessLevel: 'Standard',
-    theme: 'light',
-    networkBaseline: '4G/5G Auto',
-    autoStartup: false,
-    jarvisTelemetry: true,
-    language: 'autoselect',
-    general: {
-        hideLocalTaskbar: false,
-        requestComment: false,
-        openAddressBookOnStartup: false,
-        showAcceptWindowOnChat: false,
-        showPopupsForInvites: true,
-        soundOnIncoming: false,
-        transmitHotkeys: true,
-        screenshotPath: path.join(defaultUserProfile, 'Pictures', 'jDroid-X'),
-        chatLogPath: path.join(defaultAppData, 'jDroid-X', 'chat'),
-        onlineStatusVisibility: true,
-        allowDataCollection: false
-    },
-    connection: {
-        allowDirectConnections: true,
-        localPort: 7070,
-        proxyMode: 'detect',
-        proxyType: 'HTTP(S)',
-        proxyAddress: '',
-        proxyPort: '',
-        proxyAuthMode: 'ntlm',
-        proxyUsername: '',
-        proxyPassword: ''
-    },
-    wakeOnLan: {
-        mode: 'enabled',
-        authorizedClients: []
-    },
-    screenRecording: {
-        enabled: true,
-        recordingPath: path.join(defaultUserProfile, 'Videos', 'jDroid-X', 'recordings'),
-        audioInput: 'default',
-        micInput: 'default'
-    },
-    access: {
-        interactiveAccess: 'open_only',
-        unattendedPassword: '',
-        allowSaveLoginTokens: true,
-        enable2FA: false,
-        aclEnabled: false,
-        aclAddresses: [],
-        localDiscovery: true,
-        excludeFromDiscovery: false,
-        autoDisconnectMinutes: 10
-    },
-    permissions: {
-        globalPrint: true,
-        globalSyncClipboard: true,
-        globalSyncClipboardFiles: true,
-        globalLockOnEnd: false,
-        activeProfile: 'Default'
-    },
-    privacy: {
-        screenFrameEnabled: false,
-        screenFrameColor: '#ff6666',
-        screenFrameOpacity: 50,
-        screenFrameWidth: 5
-    },
-    display: {
-        quality: 'best_quality',
-        visualHelpers: 'show_on_movement',
-        followCursor: false,
-        followWindowFocus: false,
-        showSizeHelper: false,
-        viewMode: 'optimize_shrink',
-        edgeScrolling: false,
-        fullScreenMode: 'automatic',
-        hardwareAcceleration: 'direct3d',
-        use16BitRenderer: false,
-        rememberPerDesk: true
-    },
-    audio: {
-        transmission: 'audio_output',
-        outputDevice: 'default',
-        exclusivePlayback: false
-    },
-    recording: {
-        autoRecordIncoming: false,
-        autoRecordOutgoing: false,
-        sessionRecordPath: path.join(defaultUserProfile, 'Videos', 'jDroid-X')
-    },
-    printer: {
-        incomingPrintJobs: 'default_printer',
-        autoPrint: false
-    },
-    account: {
-        email: '',
-        licenseKey: 'free-1',
-        licenseType: 'Free Non-Commercial'
-    }
-};
-
-const DEFAULT_SCHEMA = {
-    safeZones: [
-        { id: "SZ-01", name: "Corporate HQ Subnet", ip: "192.168.1.0/24" },
-        { id: "SZ-02", name: "Secure VPN Perimeter", ip: "10.0.0.0/16" }
-    ],
-    groups: [
-        { id: "grp-1", name: "Core Workstations", description: "Primary enterprise production nodes", members: 2 },
-        { id: "grp-2", name: "Field Fleet", description: "Mobile client workstations and support endpoints", members: 1 }
-    ],
-    sessions: [],
-    invites: [],
-    devices: [
-        { id: "dev-1", name: "HQ Primary Workstation", ip: "192.168.1.44", groupId: "grp-1", group: "Core Workstations", status: "ONLINE", accessLevel: "Admin" },
-        { id: "dev-2", name: "Lab Render Station", ip: "192.168.1.105", groupId: "grp-1", group: "Core Workstations", status: "ONLINE", accessLevel: "Full Control" },
-        { id: "dev-3", name: "Field Mobile Node", ip: "10.0.4.120", groupId: "grp-2", group: "Field Fleet", status: "STANDBY", accessLevel: "Standard" }
-    ],
-    guardians: [
-        { id: "grd-1", name: "jDroid-X Systems Architect", role: "Senior Systems Architect (Level 5)", contact: "jeet@jdroid-x.enterprise", status: "Active" },
-        { id: "grd-2", name: "Enterprise Security Auditor", role: "Security & Compliance Officer", contact: "sec-ops@jdroid-x.enterprise", status: "Active" }
-    ],
-    contacts: [
-        { id: "cnt-1", name: "Lead Architect JEET", remoteId: "984-102-391", groupId: "grp-1", group: "Core Workstations" },
-        { id: "cnt-2", name: "Support Specialist Alpha", remoteId: "520-310-884", groupId: "grp-2", group: "Field Fleet" }
-    ],
-    notifications: [
-        { id: "notif-1", title: "System Security Baseline Verified", message: "All workstations running AES-GCM-256 encrypted peer-to-peer tunnels.", type: "success", read: false, timestamp: "2026-10-16T15:20:00.000Z" },
-        { id: "notif-2", title: "Google Colab Relay Standby", message: "Cloud relay bridge available for high-bandwidth remote screen acceleration.", type: "info", read: true, timestamp: "2026-10-16T14:45:00.000Z" }
-    ],
-    settings: DEFAULT_SETTINGS,
-    logs: []
-};
-
-const RETENTION_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days in Milliseconds
-let reqLogSeq = 1000;
-
-function purgeOldLogs(db) {
-    if (!Array.isArray(db.logs)) return false;
-    const cutoff = Date.now() - RETENTION_MS;
-    const initialLen = db.logs.length;
-    db.logs = db.logs.filter(l => {
-        const t = new Date(l.timestamp).getTime();
-        return !isNaN(t) && t >= cutoff;
-    });
-    return db.logs.length < initialLen;
-}
-
-function writeDB(data) {
-    const tmpPath = DB_PATH + '.tmp_' + Date.now();
-    try {
-        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
-        try {
-            fs.renameSync(tmpPath, DB_PATH);
-        } catch (renameErr) {
-            if (renameErr.code === 'EPERM' || renameErr.code === 'EBUSY') {
-                fs.copyFileSync(tmpPath, DB_PATH);
-                try { fs.unlinkSync(tmpPath); } catch (_) {}
-            } else {
-                throw renameErr;
-            }
-        }
-    } catch (e) {
-        if (fs.existsSync(tmpPath)) { try { fs.unlinkSync(tmpPath); } catch (_) {} }
-        throw e;
-    }
-}
-
-function readDB() {
-    if (!fs.existsSync(DB_PATH)) fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_SCHEMA, null, 2));
-    try {
-        const raw = fs.readFileSync(DB_PATH, 'utf8');
-        const parsed = JSON.parse(raw);
-        let dirty = false;
-        for (const key of Object.keys(DEFAULT_SCHEMA)) {
-            if (!parsed[key]) {
-                parsed[key] = Array.isArray(DEFAULT_SCHEMA[key]) ? [] : { ...DEFAULT_SCHEMA[key] };
-                dirty = true;
-            }
-        }
-        if (purgeOldLogs(parsed)) dirty = true;
-        if (dirty) writeDB(parsed);
-        return parsed;
-    } catch (e) {
-        console.error('[DATABASE CORRUPTION] Resetting.', e.message);
-        const bk = DB_PATH + '.backup_' + Date.now();
-        if (fs.existsSync(DB_PATH)) fs.renameSync(DB_PATH, bk);
-        fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_SCHEMA, null, 2));
-        return { ...DEFAULT_SCHEMA };
-    }
-}
+let reqLogSeq = 1;
 
 // Automatic Hourly Background 7-Day Log Purging Maintenance
 setInterval(() => {
     try {
-        const db = readDB();
-        if (purgeOldLogs(db)) writeDB(db);
+        const db = dbContext.readDB();
+        if (dbContext.purgeOldLogs(db)) dbContext.writeDB(db);
     } catch (_) {}
 }, 3600000); // 1 Hour
 
@@ -230,11 +51,10 @@ app.use((req, res, next) => {
 
     res.on('finish', () => {
         const durationMs = Date.now() - start;
-        // Don't recursively log calls to /api/logs GET/POST to avoid infinite logging loops
         if (req.url.startsWith('/api/logs')) return;
 
         try {
-            const db = readDB();
+            const db = dbContext.readDB();
             const logEntry = {
                 id: `REQ-${Date.now()}-${reqLogSeq++}`,
                 level: res.statusCode >= 400 ? (res.statusCode >= 500 ? 'ERROR' : 'WARN') : 'INFO',
@@ -249,545 +69,40 @@ app.use((req, res, next) => {
             };
 
             db.logs.push(logEntry);
-            purgeOldLogs(db);
-            writeDB(db);
+            dbContext.purgeOldLogs(db);
+            dbContext.writeDB(db);
         } catch (_) {}
     });
 
     next();
 });
 
-function validateBody(requiredFields, maxLen = 255) {
-    return (req, res, next) => {
-        for (const field of requiredFields) {
-            const val = req.body[field];
-            if (!val || typeof val !== 'string' || val.trim().length === 0)
-                return res.status(400).json({ success: false, error: 'Field "' + field + '" is required and cannot be empty.' });
-            if (val.trim().length > maxLen)
-                return res.status(400).json({ success: false, error: 'Field "' + field + '" exceeds max length of ' + maxLen + ' characters.' });
-        }
-        next();
-    };
-}
+// Register OOPS MVC Controller routes
+ServerController.registerRoutes(app, dbContext);
 
-// ==========================================
-// 1. SAFE ZONES API
-// ==========================================
-app.get('/api/safe-zones', (req, res) => { const db = readDB(); res.json({ success: true, data: db.safeZones }); });
-app.post('/api/safe-zones', validateBody(['ip', 'name']), (req, res) => {
-    const db = readDB();
-    const z = { id: Date.now().toString(), ip: req.body.ip.trim(), name: req.body.name.trim(), addedAt: new Date().toISOString() };
-    db.safeZones.push(z); writeDB(db); res.json({ success: true, data: z });
+// Server Listener
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log('[SUCCESS] jDroid-X-Desk Server running on http://localhost:' + PORT);
 });
-app.put('/api/safe-zones/:id', validateBody(['ip', 'name']), (req, res) => {
-    const db = readDB(); const i = db.safeZones.findIndex(z => z.id === req.params.id);
-    if (i === -1) return res.status(404).json({ success: false, error: 'Safe zone not found.' });
-    db.safeZones[i] = { ...db.safeZones[i], ip: req.body.ip.trim(), name: req.body.name.trim(), updatedAt: new Date().toISOString() };
-    writeDB(db); res.json({ success: true, data: db.safeZones[i] });
-});
-app.delete('/api/safe-zones/:id', (req, res) => { const db = readDB(); db.safeZones = db.safeZones.filter(z => z.id !== req.params.id); writeDB(db); res.json({ success: true }); });
-
-// ==========================================
-// 2. DEVICE GROUPS API (Relational calculation)
-// ==========================================
-app.get('/api/groups', (req, res) => {
-    const db = readDB();
-    // Dynamically populate member count from devices table relationship & normalize description
-    const groupsWithMembers = db.groups.map(g => {
-        const count = db.devices.filter(d => d.groupId === g.id).length;
-        const desc = g.description || g.desc || '';
-        return { ...g, desc, description: desc, members: count };
-    });
-    res.json({ success: true, data: groupsWithMembers });
-});
-app.post('/api/groups', validateBody(['name']), (req, res) => {
-    const db = readDB();
-    const g = { id: Date.now().toString(), name: req.body.name.trim(), description: (req.body.description || '').trim(), members: 0, addedAt: new Date().toISOString() };
-    db.groups.push(g); writeDB(db); res.json({ success: true, data: g });
-});
-app.put('/api/groups/:id', validateBody(['name']), (req, res) => {
-    const db = readDB(); const i = db.groups.findIndex(g => g.id === req.params.id);
-    if (i === -1) return res.status(404).json({ success: false, error: 'Group not found.' });
-    db.groups[i] = { ...db.groups[i], name: req.body.name.trim(), description: (req.body.description || '').trim(), updatedAt: new Date().toISOString() };
-    writeDB(db); res.json({ success: true, data: db.groups[i] });
-});
-app.delete('/api/groups/:id', (req, res) => {
-    const db = readDB();
-    db.groups = db.groups.filter(g => g.id !== req.params.id);
-    // Unassign devices from deleted group
-    db.devices = db.devices.map(d => d.groupId === req.params.id ? { ...d, groupId: null } : d);
-    writeDB(db); res.json({ success: true });
-});
-
-// ==========================================
-// 3. DEVICES FLEET API (Relational Group By & Dynamic Name Resolution)
-// ==========================================
-app.get('/api/devices', (req, res) => {
-    const db = readDB();
-    const groupMap = {};
-    (db.groups || []).forEach(g => { groupMap[g.id] = g.name; });
-    let devices = db.devices || [];
-    if (req.query.groupId && req.query.groupId !== 'ALL') {
-        devices = devices.filter(d => d.groupId === req.query.groupId);
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.log('[INFO] Port ' + PORT + ' already in use.');
+    } else {
+        console.error('[SERVER ERROR]', err.message);
     }
-    const result = devices.map(d => ({
-        ...d,
-        groupName: d.groupId ? (groupMap[d.groupId] || 'Unassigned') : 'Unassigned'
-    }));
-    res.json({ success: true, data: result });
 });
-app.post('/api/devices', validateBody(['name', 'accessLevel']), (req, res) => {
-    const db = readDB();
-    if (!/^[a-zA-Z0-9 _.-]+$/.test(req.body.name)) return res.status(400).json({ success: false, error: 'Device Name contains invalid characters.' });
-    const d = {
-        id: Date.now().toString(),
-        name: req.body.name.trim(),
-        accessLevel: req.body.accessLevel.trim(),
-        groupId: req.body.groupId || null,
-        status: req.body.status || 'Online',
-        addedAt: new Date().toISOString()
-    };
-    db.devices.push(d); writeDB(db); res.json({ success: true, data: d });
-});
-app.put('/api/devices/:id', validateBody(['name', 'accessLevel']), (req, res) => {
-    const db = readDB(); const i = db.devices.findIndex(d => d.id === req.params.id);
-    if (i === -1) return res.status(404).json({ success: false, error: 'Device not found.' });
-    if (!/^[a-zA-Z0-9 _.-]+$/.test(req.body.name)) return res.status(400).json({ success: false, error: 'Device Name contains invalid characters.' });
-    db.devices[i] = {
-        ...db.devices[i],
-        name: req.body.name.trim(),
-        accessLevel: req.body.accessLevel.trim(),
-        groupId: req.body.groupId !== undefined ? req.body.groupId : db.devices[i].groupId,
-        status: req.body.status || db.devices[i].status,
-        updatedAt: new Date().toISOString()
-    };
-    writeDB(db); res.json({ success: true, data: db.devices[i] });
-});
-app.delete('/api/devices/:id', (req, res) => { const db = readDB(); db.devices = db.devices.filter(d => d.id !== req.params.id); writeDB(db); res.json({ success: true }); });
 
-// ==========================================
-// 4. GUARDIANS / FAMILY API
-// ==========================================
-app.get('/api/guardians', (req, res) => { const db = readDB(); res.json({ success: true, data: db.guardians }); });
-app.post('/api/guardians', validateBody(['name', 'role', 'contact']), (req, res) => {
-    const db = readDB();
-    const g = {
-        id: Date.now().toString(),
-        name: req.body.name.trim(),
-        role: req.body.role.trim(),
-        contact: req.body.contact.trim(),
-        status: req.body.status || 'Active',
-        addedAt: new Date().toISOString()
-    };
-    db.guardians.push(g); writeDB(db); res.json({ success: true, data: g });
-});
-app.put('/api/guardians/:id', validateBody(['name', 'role', 'contact']), (req, res) => {
-    const db = readDB(); const i = db.guardians.findIndex(g => g.id === req.params.id);
-    if (i === -1) return res.status(404).json({ success: false, error: 'Guardian not found.' });
-    db.guardians[i] = { ...db.guardians[i], name: req.body.name.trim(), role: req.body.role.trim(), contact: req.body.contact.trim(), status: req.body.status || 'Active', updatedAt: new Date().toISOString() };
-    writeDB(db); res.json({ success: true, data: db.guardians[i] });
-});
-app.delete('/api/guardians/:id', (req, res) => { const db = readDB(); db.guardians = db.guardians.filter(g => g.id !== req.params.id); writeDB(db); res.json({ success: true }); });
-
-// ==========================================
-// 5. REMOTE CONTACTS API
-// ==========================================
-app.get('/api/contacts', (req, res) => { const db = readDB(); res.json({ success: true, data: db.contacts }); });
-app.post('/api/contacts', validateBody(['name', 'remoteId']), (req, res) => {
-    const db = readDB();
-    const c = {
-        id: Date.now().toString(),
-        name: req.body.name.trim(),
-        remoteId: req.body.remoteId.trim(),
-        group: req.body.group || 'General',
-        addedAt: new Date().toISOString()
-    };
-    db.contacts.push(c); writeDB(db); res.json({ success: true, data: c });
-});
-app.put('/api/contacts/:id', validateBody(['name', 'remoteId']), (req, res) => {
-    const db = readDB(); const i = db.contacts.findIndex(c => c.id === req.params.id);
-    if (i === -1) return res.status(404).json({ success: false, error: 'Contact not found.' });
-    db.contacts[i] = { ...db.contacts[i], name: req.body.name.trim(), remoteId: req.body.remoteId.trim(), group: req.body.group || 'General', updatedAt: new Date().toISOString() };
-    writeDB(db); res.json({ success: true, data: db.contacts[i] });
-});
-app.delete('/api/contacts/:id', (req, res) => { const db = readDB(); db.contacts = db.contacts.filter(c => c.id !== req.params.id); writeDB(db); res.json({ success: true }); });
-
-// ==========================================
-// 6. DYNAMIC SYSTEM SETTINGS API (No hardcoding)
-// ==========================================
-app.get('/api/settings', (req, res) => {
-    const db = readDB();
-    try {
-        if (fs.existsSync('colab_tunnel.txt')) {
-            const tunnelUrl = fs.readFileSync('colab_tunnel.txt', 'utf-8').trim();
-            if (tunnelUrl && tunnelUrl.includes('.trycloudflare.com')) {
-                db.settings = db.settings || {};
-                db.settings.connection = db.settings.connection || {};
-                db.settings.connection.relayServer = tunnelUrl;
-                db.settings.connection.colabRelayUrl = tunnelUrl;
-            }
-        }
-    } catch (_) {}
-    res.json({ success: true, data: db.settings });
-});
-const saveSettingsHandler = (req, res) => {
-    const db = readDB();
-    db.settings = { ...db.settings, ...req.body, updatedAt: new Date().toISOString() };
-    if (req.body && req.body.connection && req.body.connection.relayServer) {
-        try {
-            const rUrl = req.body.connection.relayServer.trim();
-            if (rUrl.includes('.trycloudflare.com')) {
-                fs.writeFileSync('colab_tunnel.txt', rUrl, 'utf-8');
-            }
-        } catch (_) {}
-    }
-    writeDB(db);
-    res.json({ success: true, data: db.settings, message: 'System Settings Saved Successfully' });
+// Backward-compatible re-exports for legacy callers (Chesterton's Fence)
+module.exports = {
+    app,
+    server,
+    dbContext,
+    ServerController,
+    readDB: dbContext.readDB,
+    writeDB: dbContext.writeDB,
+    purgeOldLogs: dbContext.purgeOldLogs,
+    deepMerge: dbContext.deepMerge,
+    DEFAULT_SETTINGS: dbContext.DEFAULT_SETTINGS,
+    DEFAULT_SERVER_CONFIG: dbContext.DEFAULT_SERVER_CONFIG,
+    DEFAULT_SCHEMA: dbContext.DEFAULT_SCHEMA
 };
-app.put('/api/settings', saveSettingsHandler);
-app.post('/api/settings', saveSettingsHandler);
-
-// ==========================================
-// 7. SYSTEM LOGS & TELEMETRY AUDIT API
-// ==========================================
-app.get('/api/logs', (req, res) => { const db = readDB(); res.json({ success: true, data: db.logs }); });
-app.post('/api/logs', (req, res) => {
-    const db = readDB();
-    const log = { id: Date.now().toString(), level: req.body.level || 'INFO', stage: req.body.stage || 'GENERAL', msg: req.body.msg || '', timestamp: new Date().toISOString() };
-    db.logs.push(log);
-    if (db.logs.length > 500) db.logs.shift(); // Keep last 500 logs
-    writeDB(db);
-    res.json({ success: true, data: log });
-});
-app.delete('/api/logs', (req, res) => { const db = readDB(); db.logs = []; writeDB(db); res.json({ success: true, message: 'Logs cleared.' }); });
-
-// ==========================================
-// 8. NOTIFICATIONS CENTER API
-// ==========================================
-app.get('/api/notifications', (req, res) => { const db = readDB(); res.json({ success: true, data: db.notifications }); });
-app.post('/api/notifications', validateBody(['title', 'message']), (req, res) => {
-    const db = readDB();
-    const n = { id: Date.now().toString(), title: req.body.title.trim(), message: req.body.message.trim(), type: req.body.type || 'info', read: false, createdAt: new Date().toISOString() };
-    db.notifications.push(n); writeDB(db); res.json({ success: true, data: n });
-});
-app.put('/api/notifications/read-all', (req, res) => {
-    const db = readDB();
-    if (Array.isArray(db.notifications)) {
-        db.notifications.forEach(n => { n.read = true; });
-        writeDB(db);
-    }
-    res.json({ success: true, message: 'All notifications marked as read.' });
-});
-app.put('/api/notifications/:id/read', (req, res) => {
-    const db = readDB(); const i = db.notifications.findIndex(n => n.id === req.params.id);
-    if (i !== -1) { db.notifications[i].read = true; writeDB(db); }
-    res.json({ success: true });
-});
-app.delete('/api/notifications/:id', (req, res) => { const db = readDB(); db.notifications = db.notifications.filter(n => n.id !== req.params.id); writeDB(db); res.json({ success: true }); });
-
-// ==========================================
-// 9. REMOTE DESKTOP SESSIONS API (Synced with DB)
-// ==========================================
-app.get('/api/sessions', (req, res) => {
-    const db = readDB();
-    res.json({ success: true, data: db.sessions || [] });
-});
-
-app.post('/api/sessions', validateBody(['targetId']), (req, res) => {
-    const db = readDB();
-    const session = {
-        id: `SES-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        targetId: req.body.targetId.trim(),
-        targetName: (req.body.targetName || 'Secondary Workstation').trim(),
-        sourceId: (req.body.sourceId || 'PRIMARY-LOCAL').trim(),
-        status: 'ACTIVE',
-        protocol: req.body.protocol || 'Windows Remote Assistance / P2P',
-        quality: req.body.quality || '1080p',
-        startedAt: new Date().toISOString(),
-        endedAt: null,
-        durationSeconds: 0
-    };
-    if (!Array.isArray(db.sessions)) db.sessions = [];
-    db.sessions.push(session);
-    writeDB(db);
-    res.json({ success: true, data: session });
-});
-
-app.put('/api/sessions/:id', (req, res) => {
-    const db = readDB();
-    if (!Array.isArray(db.sessions)) db.sessions = [];
-    const idx = db.sessions.findIndex(s => s.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ success: false, error: 'Session not found.' });
-
-    const existing = db.sessions[idx];
-    const endedAt = req.body.endedAt || (req.body.status === 'TERMINATED' ? new Date().toISOString() : existing.endedAt);
-    let durationSeconds = existing.durationSeconds;
-    if (endedAt && existing.startedAt) {
-        durationSeconds = Math.max(1, Math.round((new Date(endedAt) - new Date(existing.startedAt)) / 1000));
-    }
-
-    db.sessions[idx] = {
-        ...existing,
-        ...req.body,
-        endedAt: endedAt,
-        durationSeconds: req.body.durationSeconds || durationSeconds,
-        updatedAt: new Date().toISOString()
-    };
-    writeDB(db);
-    res.json({ success: true, data: db.sessions[idx] });
-});
-
-app.delete('/api/sessions/:id', (req, res) => {
-    const db = readDB();
-    if (!Array.isArray(db.sessions)) db.sessions = [];
-    db.sessions = db.sessions.filter(s => s.id !== req.params.id);
-    writeDB(db);
-    res.json({ success: true, message: 'Session record deleted.' });
-});
-
-// ==========================================
-// 8B. ANYDESK SESSION INVITATION API
-// ==========================================
-app.get('/api/invites', (req, res) => {
-    const db = readDB();
-    res.json({ success: true, data: db.invites || [] });
-});
-
-app.post('/api/invites', validateBody(['targetId']), (req, res) => {
-    const db = readDB();
-    if (!Array.isArray(db.invites)) db.invites = [];
-    const now = Date.now();
-    const invite = {
-        id: `INV-${now}-${Math.floor(Math.random() * 1000)}`,
-        sourceId: (req.body.sourceId || 'PRIMARY-LOCAL').trim(),
-        targetId: req.body.targetId.trim(),
-        profile: req.body.profile || 'Default',
-        permissions: req.body.permissions || {
-            audio: true,
-            control: true,
-            restart: false,
-            privacyMode: false,
-            ctrlAltDel: true,
-            blockInput: true,
-            lockDevice: true,
-            clipboard: true,
-            fileTransfer: true,
-            fileManager: true,
-            systemInfo: true,
-            whiteboard: true,
-            recordSession: true,
-            uacElevation: false
-        },
-        status: 'PENDING',
-        createdAt: new Date(now).toISOString(),
-        expiresAt: new Date(now + 2 * 60 * 1000).toISOString()
-    };
-    db.invites.push(invite);
-    writeDB(db);
-    res.json({ success: true, data: invite, message: 'Session invitation dispatched (Valid for 2 minutes).' });
-});
-
-app.get('/api/invites/pending/:targetId', (req, res) => {
-    const db = readDB();
-    const target = req.params.targetId.trim().toUpperCase();
-    const now = new Date();
-    const pending = (db.invites || []).filter(inv => {
-        return inv.status === 'PENDING' &&
-            inv.targetId.toUpperCase() === target &&
-            new Date(inv.expiresAt) > now;
-    });
-    res.json({ success: true, data: pending });
-});
-
-app.put('/api/invites/:id/respond', (req, res) => {
-    const db = readDB();
-    if (!Array.isArray(db.invites)) db.invites = [];
-    const idx = db.invites.findIndex(inv => inv.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ success: false, error: 'Invitation not found.' });
-
-    const status = req.body.status === 'ACCEPTED' ? 'ACCEPTED' : 'REJECTED';
-    db.invites[idx].status = status;
-    db.invites[idx].respondedAt = new Date().toISOString();
-
-    let session = null;
-    if (status === 'ACCEPTED') {
-        if (!Array.isArray(db.sessions)) db.sessions = [];
-        session = {
-            id: `SES-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            targetId: db.invites[idx].targetId,
-            sourceId: db.invites[idx].sourceId,
-            status: 'ACTIVE',
-            protocol: 'P2P jDroid-X Relay / Colab Cloud Mesh',
-            permissions: db.invites[idx].permissions,
-            startedAt: new Date().toISOString(),
-            endedAt: null,
-            durationSeconds: 0
-        };
-        db.sessions.push(session);
-    }
-
-    writeDB(db);
-    res.json({ success: true, data: db.invites[idx], session });
-});
-
-
-// ==========================================
-// 10. REAL SYSTEM TELEMETRY & OS METRICS
-// ==========================================
-app.get('/api/system-telemetry', (req, res) => {
-    const db = readDB();
-    const ifaces = os.networkInterfaces();
-    const netList = [];
-    for (const name of Object.keys(ifaces)) {
-        for (const iface of ifaces[name]) {
-            if (!iface.internal) {
-                netList.push({ name, family: iface.family, address: iface.address });
-            }
-        }
-    }
-
-    const telemetry = {
-        hostname: os.hostname(),
-        platform: os.platform(),
-        arch: os.arch(),
-        uptimeSeconds: os.uptime(),
-        totalMemoryMB: Math.round(os.totalmem() / 1024 / 1024),
-        freeMemoryMB: Math.round(os.freemem() / 1024 / 1024),
-        memoryUsagePercent: Math.round(((os.totalmem() - os.freemem()) / os.totalmem()) * 100),
-        cpuCount: os.cpus().length,
-        cpuModel: os.cpus()[0]?.model || 'Standard CPU',
-        interfaces: netList,
-        activeSessions: (db.sessions || []).filter(s => s.status === 'ACTIVE').length,
-        totalDevices: (db.devices || []).length
-    };
-    res.json({ success: true, data: telemetry });
-});
-
-// ==========================================
-// 11. NATIVE WINDOWS REMOTE SHARING API (Zero Cost)
-// ==========================================
-app.post('/api/remote/launch-quick-assist', (req, res) => {
-    if (os.platform() !== 'win32') {
-        return res.status(400).json({ success: false, error: 'Quick Assist is only available on Windows.' });
-    }
-    exec('start ms-quick-assist:', (err) => {
-        if (err) {
-            console.error('[NATIVE REMOTE] Failed to launch Quick Assist:', err.message);
-            return res.status(500).json({ success: false, error: 'Failed to launch Quick Assist: ' + err.message });
-        }
-        res.json({ success: true, message: 'Windows Quick Assist launched successfully.' });
-    });
-});
-
-app.post('/api/remote/launch-terminal', (req, res) => {
-    if (os.platform() !== 'win32') {
-        return res.status(400).json({ success: false, error: 'Remote Terminal is only available on Windows.' });
-    }
-    exec('start powershell -NoExit -Command "Write-Host \'=== jDroid-X Remote Administrator Terminal (Admin Rights Verified) ===\' -ForegroundColor Green; powershell"', (err) => {
-        if (err) {
-            console.error('[NATIVE REMOTE] Failed to launch Terminal:', err.message);
-            return res.status(500).json({ success: false, error: 'Failed to launch Terminal: ' + err.message });
-        }
-        res.json({ success: true, message: 'Remote Administrator Terminal launched successfully.' });
-    });
-});
-
-app.post('/api/remote/launch-msra', (req, res) => {
-    if (os.platform() !== 'win32') {
-        return res.status(400).json({ success: false, error: 'Microsoft Remote Assistance is only available on Windows.' });
-    }
-    exec('start msra.exe /expert', (err) => {
-        if (err) {
-            console.error('[NATIVE REMOTE] Failed to launch MSRA:', err.message);
-            return res.status(500).json({ success: false, error: 'Failed to launch MSRA: ' + err.message });
-        }
-        res.json({ success: true, message: 'Microsoft Remote Assistance launched successfully.' });
-    });
-});
-
-// ==========================================
-// 12. APPLICATION DOWNLOAD API ROUTES
-// ==========================================
-app.get(['/download', '/api/download/exe', '/api/download-exe'], (req, res) => {
-    const exeFile = path.join(__dirname, 'jDroid-X-Desk.exe');
-    if (fs.existsSync(exeFile)) {
-        res.download(exeFile, 'jDroid-X-Desk.exe');
-    } else {
-        res.status(404).json({ success: false, error: 'Executable not found on server.' });
-    }
-});
-
-app.get(['/api/download-client', '/api/download/client', '/api/download/share'], (req, res) => {
-    const clientFile = fs.existsSync(path.join(__dirname, 'jDroid-X-Client.bat')) 
-        ? path.join(__dirname, 'jDroid-X-Client.bat') 
-        : path.join(__dirname, 'jDroid-Client.bat');
-    if (fs.existsSync(clientFile)) {
-        res.download(clientFile, path.basename(clientFile));
-    } else {
-        res.status(404).json({ success: false, error: 'Client installer not found.' });
-    }
-});
-
-
-// ==========================================
-// 9. UTILITY ENDPOINTS
-// ==========================================
-app.get('/api/firebase-config', (req, res) => {
-    res.json({ success: true, config: { apiKey: process.env.JDX_FB_API_KEY || null, projectId: process.env.JDX_FB_PROJECT_ID || null, databaseURL: process.env.JDX_FB_DB_URL || null } });
-});
-
-app.post('/api/startup', (req, res) => {
-    try {
-        const enable = req.body.enable;
-        const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-        const startupFolder = path.join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
-        const shortcutPath = path.join(startupFolder, 'jDroid-X-Desk.lnk');
-        const targetPath = path.join(__dirname, 'start_jdroid_app.vbs');
-        if (enable) {
-            const vbs = '\n                Set oWS = WScript.CreateObject("WScript.Shell")\n                sLinkFile = "' + shortcutPath.replace(/\\/g, '\\\\') + '"\n                Set oLink = oWS.CreateShortcut(sLinkFile)\n                oLink.TargetPath = "wscript.exe"\n                oLink.Arguments = """' + targetPath.replace(/\\/g, '\\\\') + '"""\n                oLink.WorkingDirectory = "' + __dirname.replace(/\\/g, '\\\\') + '"\n                oLink.Description = "jDroid-X-Desk Remote Desktop Console"\n                oLink.Save\n            ';
-            const tmp = path.join(__dirname, 'temp_startup_shortcut.vbs');
-            try { fs.writeFileSync(tmp, vbs); } catch (we) { return res.status(500).json({ success: false, error: 'Failed to write VBS script. Permission denied.' }); }
-            exec('cscript //nologo "' + tmp + '"', (err) => { if (fs.existsSync(tmp)) fs.unlinkSync(tmp); if (err) return res.status(500).json({ success: false, error: err.message }); res.json({ success: true, message: 'Startup enabled' }); });
-        } else {
-            if (fs.existsSync(shortcutPath)) fs.unlinkSync(shortcutPath);
-            res.json({ success: true, message: 'Startup disabled' });
-        }
-    } catch (err) { res.status(500).json({ success: false, error: err.message }); }
-});
-
-app.post('/api/shutdown', (req, res) => { res.json({ success: true, message: 'Server shutting down' }); setTimeout(() => process.exit(0), 1000); });
-
-app.get('/api/hardware-id', (req, res) => {
-    try {
-        const ifaces = os.networkInterfaces(); let mac = '00:00:00:00:00:00';
-        for (const n of Object.keys(ifaces)) { for (const i of ifaces[n]) { if (!i.internal && i.mac !== '00:00:00:00:00:00') { mac = i.mac; break; } } if (mac !== '00:00:00:00:00:00') break; }
-        const hash = crypto.createHash('md5').update(os.hostname() + '-' + mac).digest('hex').toUpperCase();
-        res.json({ success: true, deviceId: 'JDX-' + hash.substring(0,4) + '-' + hash.substring(4,8) });
-    } catch (err) { res.json({ success: true, deviceId: 'JDX-RAND-0000' }); }
-});
-// ==========================================
-// 12. APPLICATION DOWNLOAD API ROUTES (Preserved Compatibility)
-// ==========================================
-app.get(['/download', '/download/exe', '/download/native'], (req, res) => {
-    const exePath = path.join(__dirname, 'jDroid-X-Desk.exe');
-    if (fs.existsSync(exePath)) {
-        res.download(exePath, 'jDroid-X-Desk.exe');
-    } else {
-        res.status(404).send('Executable file jDroid-X-Desk.exe not found on server.');
-    }
-});
-
-app.get(['/download/bat', '/download/client', '/download/share'], (req, res) => {
-    const batPath = fs.existsSync(path.join(__dirname, 'jDroid-X-Client.bat'))
-        ? path.join(__dirname, 'jDroid-X-Client.bat')
-        : path.join(__dirname, 'jDroid-Client.bat');
-    if (fs.existsSync(batPath)) {
-        res.download(batPath, path.basename(batPath));
-    } else {
-        res.status(404).send('Client script not found.');
-    }
-});
-
-const server = app.listen(PORT, '0.0.0.0', () => { console.log('[SUCCESS] jDroid-X-Desk Server running on http://localhost:' + PORT); });
-server.on('error', (err) => { if (err.code === 'EADDRINUSE') { console.log('[INFO] Port ' + PORT + ' already in use.'); } else { console.error('[SERVER ERROR]', err.message); } });
-

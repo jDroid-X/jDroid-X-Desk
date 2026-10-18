@@ -16,3 +16,5 @@ Thumbs.db
 *.bak.exe
 __pycache__/
 scratch/
+graphify-out/
+Archives/

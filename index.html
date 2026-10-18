@@ -11,9 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/themes/themes.css">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="dark-theme">
+<body class="light-theme">
     <!-- UX-2: App Preloader — shown while Firebase auth state resolves -->
     <div id="app-preloader" style="position:fixed;inset:0;z-index:999999;background:rgba(4,8,20,0.98);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;">
         <img src="assets/jdroidxlogo_trans.png" alt="Loading" style="width:64px;height:64px;filter:drop-shadow(0 0 20px rgba(0,102,255,0.7));animation:logoPulse 1.5s ease-in-out infinite;">
@@ -197,6 +198,15 @@
                                 </div>
                             </a>
                         </li>
+                        <li class="nav-item" data-view="server-admin">
+                            <a href="#server-admin" id="nav-server-admin">
+                                <i class="fa-solid fa-server text-emerald"></i>
+                                <div class="nav-text-block">
+                                    <span class="nav-title">Server Admin & Limits</span>
+                                    <span class="nav-sub">Engine models, quotas & logs</span>
+                                </div>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
@@ -306,7 +316,35 @@
                     <h1 id="view-title" class="page-title">Remote Control Console</h1>
                 </div>
 
-                <div class="topbar-right">
+                <div class="topbar-right" style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <span id="web-header-gateway-pill" class="status-pill status-pill-green" title="Active Gateway Telemetry">
+                        <i class="fa-solid fa-server"></i> <span id="web-gateway-status-text">Port 12345 (HTTP 200)</span>
+                    </span>
+                    <div id="web-header-engine-badge" class="badge badge-blue" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.65rem; font-size: 0.75rem; border-radius: 6px;" title="Active jDroid-Engine. Click to switch.">
+                        <i class="fa-solid fa-bolt" style="color: var(--accent-amber);"></i>
+                        <span id="web-header-engine-name">jDroid-Engine: Sunshine</span>
+                        <span id="web-header-engine-status" style="color: var(--accent-emerald); font-weight: bold;">[● RUNNING]</span>
+                    </div>
+                    <button id="web-header-run-script-btn" class="btn btn-secondary btn-sm" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; border-radius: 6px;" title="🚀 Run Automated Startup Script for Active Engine">
+                        <i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> Run Script
+                    </button>
+                    <select id="global-theme-selector" class="theme-select-dropdown" aria-label="Universal Theme Selector" title="Select Theme Paradigm">
+                        <option value="light-theme">☀️ Light Enterprise</option>
+                        <option value="dark-theme">🌙 Dark Studio</option>
+                        <option value="theme-nord">❄️ Nord Arctic</option>
+                        <option value="theme-solarized-light">🌅 Solarized Light</option>
+                        <option value="theme-solarized-dark">🌌 Solarized Dark</option>
+                        <option value="theme-monokai">🎨 Monokai Pro</option>
+                        <option value="theme-dracula">🧛 Dracula Midnight</option>
+                        <option value="theme-tokyo-night">🗼 Tokyo Night</option>
+                        <option value="theme-cyberpunk">⚡ Cyberpunk Neon</option>
+                        <option value="theme-emerald">🌲 Matrix Emerald</option>
+                        <option value="theme-ocean">🌊 Deep Ocean</option>
+                        <option value="theme-sunset">🌇 Crimson Sunset</option>
+                        <option value="theme-gruvbox">📻 Gruvbox Retro</option>
+                        <option value="theme-slate">🛡️ Titanium Slate</option>
+                        <option value="theme-high-contrast">👁️ High Contrast</option>
+                    </select>
                     <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme" aria-label="Toggle Theme">
                         <i class="fa-solid fa-moon"></i>
                     </button>
@@ -322,36 +360,44 @@
                 
                 <!-- VIEW 1: UNIFIED REMOTE CONTROL CONSOLE -->
                 <section id="view-remote-console" class="view-panel active">
-                    <!-- Top Action / Client Download Banner -->
-                    <div style="background: linear-gradient(135deg, rgba(30,136,229,0.12), rgba(0,230,118,0.08)); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.9rem 1.2rem; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;">
-                        <div style="display: flex; align-items: center; gap: 0.8rem;">
-                            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(30,136,229,0.2); display: flex; align-items: center; justify-content: center; color: var(--accent-blue); font-size: 1.3rem;">
-                                <i class="fa-solid fa-share-nodes"></i>
-                            </div>
-                            <div>
-                                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Share System Control with Remote User</h4>
-                                <p style="margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Send the lightweight portable client (.BAT) to your partner for instant connection with Windows-level Admin rights.</p>
-                            </div>
+                    <!-- SmartFit Active Engine & Fast-Action Banner -->
+                    <div class="engine-active-banner">
+                        <div class="engine-info-group">
+                            <span class="badge badge-green" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+                                <i class="fa-solid fa-bolt"></i> <strong id="console-active-engine-title">jDroid-Engine: Sunshine</strong>
+                            </span>
+                            <span id="console-engine-probe-badge" class="badge badge-blue" style="font-size: 0.72rem; padding: 0.25rem 0.55rem;">
+                                <i class="fa-solid fa-circle-dot" style="color: var(--accent-emerald);"></i> <span id="console-engine-probe-text">Port 47990 Listening</span>
+                            </span>
+                            <span id="console-sync-badge" class="badge" style="background: rgba(16,185,129,0.15); color: var(--accent-emerald); font-size: 0.72rem; padding: 0.25rem 0.55rem;">
+                                <i class="fa-solid fa-circle-check"></i> Backend Synced
+                            </span>
                         </div>
                         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                            <a id="btn-download-exe" href="jDroid-X-Desk.exe" download="jDroid-X-Desk.exe" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; font-weight: 600; text-decoration: none;">
-                                <i class="fa-solid fa-download"></i> Download Native App (.EXE)
+                            <button id="console-run-script-btn" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem;">
+                                <i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> 🚀 Run Script
+                            </button>
+                            <button id="console-switch-engine-btn" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem;">
+                                <i class="fa-solid fa-sliders" style="color: var(--accent-amber);"></i> Switch Engine
+                            </button>
+                            <a id="btn-download-exe" href="jDroid-X-Desk.exe" download="jDroid-X-Desk.exe" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem; text-decoration: none;">
+                                <i class="fa-solid fa-download"></i> Download .EXE
                             </a>
-                            <button id="btn-download-share-bat" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; font-weight: 600;">
-                                <i class="fa-solid fa-file-code"></i> Download Script (.BAT)
+                            <button id="btn-download-share-bat" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem;">
+                                <i class="fa-solid fa-file-code"></i> Download .BAT
                             </button>
                         </div>
                     </div>
 
-                    <!-- AnyDesk Style 2-Hero Card Connection Grid -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem;">
-                        <!-- CARD 1: THIS DESK (Allow Remote Access) -->
-                        <div class="widget-box" style="border-top: 4px solid var(--accent-blue); display: flex; flex-direction: column; justify-content: space-between;">
+                    <!-- AnyDesk Style 2-Hero Card Connection Grid: Step 2 & Step 3 Side-by-Side -->
+                    <div class="remote-console-2col-grid">
+                        <!-- CARD 1: STEP 2 - THIS DESK (Share Screen - Get Support) -->
+                        <div class="widget-box" style="border-top: 4px solid var(--accent-blue); display: flex; flex-direction: column; justify-content: space-between; margin: 0;">
                             <div>
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="fa-solid fa-laptop text-primary" style="font-size: 1.25rem;"></i>
-                                        <h3 style="margin: 0; font-size: 1.05rem;">This Desk</h3>
+                                        <h3 style="margin: 0; font-size: 1.05rem;">Step 2: Share Screen (Get Support)</h3>
                                     </div>
                                     <span class="badge badge-green" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-circle-check"></i> Ready for Connections</span>
                                 </div>
@@ -387,13 +433,13 @@
                             </div>
                         </div>
 
-                        <!-- CARD 2: REMOTE DESK (Control Another Computer) -->
-                        <div class="widget-box" style="border-top: 4px solid var(--accent-purple); display: flex; flex-direction: column; justify-content: space-between;">
+                        <!-- CARD 2: STEP 3 - REMOTE DESK (Connect - Give Support) -->
+                        <div class="widget-box" style="border-top: 4px solid var(--accent-purple); display: flex; flex-direction: column; justify-content: space-between; margin: 0;">
                             <div>
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="fa-solid fa-tower-broadcast" style="color: var(--accent-purple); font-size: 1.25rem;"></i>
-                                        <h3 style="margin: 0; font-size: 1.05rem;">Remote Desk</h3>
+                                        <h3 style="margin: 0; font-size: 1.05rem;">Step 3: Connect to Partner (Give Support)</h3>
                                     </div>
                                     <span class="badge" style="background: rgba(124,77,255,0.15); color: var(--accent-purple); font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-terminal"></i> Admin Control</span>
                                 </div>
@@ -411,7 +457,7 @@
 
                                     <div style="display: flex; gap: 0.5rem; margin-top: 0.9rem;">
                                         <button id="connect-session-btn" class="btn btn-primary" style="flex: 2; padding: 0.55rem; font-weight: 600; font-size: 0.9rem;">
-                                            <i class="fa-solid fa-link"></i> Connect & Control Screen
+                                             <i class="fa-solid fa-link"></i> Connect & Control Screen
                                         </button>
                                         <button id="launch-canvas-btn" class="btn btn-secondary" style="flex: 1; padding: 0.55rem; font-size: 0.8rem;" disabled>
                                             <i class="fa-solid fa-expand"></i> View Screen
@@ -544,7 +590,10 @@
                                 <option value="ALL">Filter by Group (All)</option>
                             </select>
                         </div>
-                        <button class="btn btn-primary btn-sm" id="btn-open-add-device"><i class="fa-solid fa-plus"></i> Register New Device</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn btn-secondary btn-sm" id="btn-fleet-manage-groups"><i class="fa-solid fa-users"></i> Manage Groups</button>
+                            <button class="btn btn-primary btn-sm" id="btn-open-add-device"><i class="fa-solid fa-plus"></i> Register New Device</button>
+                        </div>
                     </div>
 
                     <div class="list-box-container margin-top-md" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; min-height: 200px;">
@@ -821,15 +870,15 @@
                     </div>
                 </section>
 
-                <!-- VIEW 12: ANYDESK ENTERPRISE SETTINGS STUDIO (REA IMPLEMENTATION) -->
+                <!-- VIEW 12: jDroid-X ENTERPRISE SETTINGS STUDIO -->
                 <section id="view-system-settings" class="view-panel">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                         <div>
                             <h2 style="margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fa-solid fa-sliders text-danger"></i> AnyDesk Settings Studio
+                                <i class="fa-solid fa-sliders text-danger"></i> jDroid-X Settings Studio
                             </h2>
                             <span style="font-size: 0.8rem; color: var(--text-muted);">
-                                Comprehensive OOPS MVC Settings Matrix matching AnyDesk 9.8.1 specifications
+                                Comprehensive OOPS MVC Settings Matrix (jDroid-X Enterprise Console)
                             </span>
                         </div>
                         <div style="display: flex; gap: 0.5rem;">
@@ -2029,7 +2078,263 @@
                     </div>
                 </section>
 
+                <!-- VIEW 14: SERVER ADMIN & OPEN-SOURCE ENGINES -->
+                <section id="view-server-admin" class="view-panel">
+                    <div class="screen-hint-box">
+                        <i class="fa-solid fa-lightbulb hint-icon"></i>
+                        <div class="hint-text">
+                            <strong>Server Administration &amp; Engine Switcher:</strong> Monitor and switch dynamically between <strong>RustDesk</strong> (Direct Match P2P), <strong>Sunshine &amp; Moonlight</strong> (Lowest Latency in the World), <strong>Apache Guacamole + FreeRDP</strong> (Clientless HTML5), and <strong>jDroid-X Cloud Relay</strong>. Adjust hardware compute processing limits and audit live server logs.
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Strip -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.2rem;">
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.9rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 8px; background: rgba(0,242,254,0.12); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                <i class="fa-solid fa-microchip"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);" id="inapp-cpu-cores">-- Cores</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);" id="inapp-cpu-sub">Host Processor</div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.9rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 8px; background: rgba(0,230,118,0.12); color: var(--accent-emerald); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                <i class="fa-solid fa-memory"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);" id="inapp-mem-usage">--% RAM</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);" id="inapp-mem-sub">Memory Load</div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.9rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 8px; background: rgba(124,77,255,0.12); color: var(--accent-purple); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);" id="inapp-active-engine">Sunshine</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Active Streaming Engine</div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.9rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 8px; background: rgba(255,171,0,0.12); color: var(--accent-amber); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);" id="inapp-server-uptime">Uptime: --</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Port 12345 Gateway</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Engine Switcher Cards -->
+                    <div class="widget-box">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+                            <div>
+                                <h3><i class="fa-solid fa-layer-group text-primary"></i> Open-Source Engines in <code>jDroid-X-Desk-Server/Github/</code></h3>
+                                <p>Select and activate the remote desktop engine suitable for your bandwidth and workload requirements.</p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <a href="/admin" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Fullscreen Admin Page
+                                </a>
+                                <button id="inapp-refresh-admin-btn" class="btn btn-secondary btn-sm">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <!-- Sunshine & Moonlight -->
+                            <div class="widget-box inapp-engine-box" id="inapp-card-sunshine" style="border: 2px solid var(--accent-emerald); background: var(--bg-tertiary);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="badge badge-green" id="inapp-badge-sunshine"><i class="fa-solid fa-circle-check"></i> ACTIVE</span>
+                                    <span style="font-size: 0.72rem; color: var(--accent-amber); font-weight: 600;"><i class="fa-solid fa-gauge-high"></i> Lowest Latency (Sub-5ms)</span>
+                                </div>
+                                <h4 style="margin: 0.4rem 0 0.15rem 0; font-size: 1.05rem;"><i class="fa-solid fa-sun" style="color: var(--accent-amber);"></i> Sunshine &amp; Moonlight</h4>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">DirectX Duplication + NVIDIA NVENC Hardware Stream</div>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem 0;">Direct GPU VRAM capture with sub-2ms encode latency. Best for multimedia and high-speed desktop interaction.</p>
+                                <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px; font-size: 0.72rem; font-family: var(--font-mono); margin: 0.4rem 0;">
+                                    <strong>Manual Setup:</strong> Browse https://localhost:47990 to configure admin pass &amp; enter Moonlight 4-digit PIN once.
+                                </div>
+                                <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem;">
+                                    <button class="btn btn-primary btn-sm inapp-switch-btn" data-engine="sunshine" style="flex: 1;"><i class="fa-solid fa-check"></i> Active jDroid-Engine</button>
+                                    <button class="btn btn-secondary btn-sm inapp-run-btn" data-engine="sunshine" title="Run Start Script (scripts/start-sunshine.bat)"><i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> 🚀</button>
+                                    <a href="https://localhost:47990" target="_blank" class="btn btn-secondary btn-sm" title="Open Sunshine Web GUI"><i class="fa-solid fa-external-link"></i></a>
+                                </div>
+                            </div>
+
+                            <!-- RustDesk -->
+                            <div class="widget-box inapp-engine-box" id="inapp-card-rustdesk" style="border: 1px solid var(--border-color); background: var(--bg-tertiary);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="badge badge-blue" id="inapp-badge-rustdesk"><i class="fa-solid fa-circle"></i> READY</span>
+                                    <span style="font-size: 0.72rem; color: var(--accent-blue); font-weight: 600;"><i class="fa-solid fa-shield-halved"></i> Direct Match P2P</span>
+                                </div>
+                                <h4 style="margin: 0.4rem 0 0.15rem 0; font-size: 1.05rem;"><i class="fa-solid fa-shield-halved" style="color: var(--accent-blue);"></i> RustDesk</h4>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">STUN/TURN NAT Traversal &amp; P2P Encrypted Tunnels</div>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem 0;">Direct match remote desktop engine. Traverses symmetric NATs and firewalls cleanly with zero router port forwarding.</p>
+                                <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px; font-size: 0.72rem; font-family: var(--font-mono); margin: 0.4rem 0;">
+                                    <strong>Manual Setup:</strong> 0-config with community public servers. For unlimited bandwidth, configure custom hbbs/hbbr server with key.
+                                </div>
+                                <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem;">
+                                    <button class="btn btn-secondary btn-sm inapp-switch-btn" data-engine="rustdesk" style="flex: 1;"><i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine</button>
+                                    <button class="btn btn-secondary btn-sm inapp-run-btn" data-engine="rustdesk" title="Run Start Script (scripts/start-rustdesk.bat)"><i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> 🚀</button>
+                                </div>
+                            </div>
+
+                            <!-- Apache Guacamole + FreeRDP -->
+                            <div class="widget-box inapp-engine-box" id="inapp-card-guacamole" style="border: 1px solid var(--border-color); background: var(--bg-tertiary);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="badge badge-blue" id="inapp-badge-guacamole"><i class="fa-solid fa-circle"></i> READY</span>
+                                    <span style="font-size: 0.72rem; color: var(--accent-purple); font-weight: 600;"><i class="fa-solid fa-globe"></i> Clientless HTML5</span>
+                                </div>
+                                <h4 style="margin: 0.4rem 0 0.15rem 0; font-size: 1.05rem;"><i class="fa-solid fa-cubes" style="color: var(--accent-purple);"></i> Apache Guacamole + FreeRDP</h4>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">Pure Web Browser Gateway to Windows RDP (3389)</div>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem 0;">Connects to Windows Remote Desktop over HTML5 WebSockets. Zero client binary download or installation required for viewers.</p>
+                                <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px; font-size: 0.72rem; font-family: var(--font-mono); margin: 0.4rem 0;">
+                                    <strong>Manual Setup:</strong> Runs in Docker/WSL. Point guacd connection to Windows host IP, port 3389, and Windows user password (NLA).
+                                </div>
+                                <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem;">
+                                    <button class="btn btn-secondary btn-sm inapp-switch-btn" data-engine="guacamole" style="flex: 1;"><i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine</button>
+                                    <button class="btn btn-secondary btn-sm inapp-run-btn" data-engine="guacamole" title="Run Start Script (scripts/start-guacamole.bat)"><i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> 🚀</button>
+                                </div>
+                            </div>
+
+                            <!-- jDroid-X Google Colab Cloud Relay -->
+                            <div class="widget-box inapp-engine-box" id="inapp-card-jdroidRelay" style="border: 1px solid var(--border-color); background: var(--bg-tertiary);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="badge badge-purple" id="inapp-badge-jdroidRelay"><i class="fa-solid fa-cloud"></i> GOOGLE COLAB</span>
+                                    <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;"><i class="fa-solid fa-microchip"></i> CUDA + TPU 0ms</span>
+                                </div>
+                                <h4 style="margin: 0.4rem 0 0.15rem 0; font-size: 1.05rem;"><i class="fa-solid fa-tower-broadcast" style="color: var(--accent-emerald);"></i> jDroid-X Google Colab Cloud Relay</h4>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">Multi-Threaded Asynchronous Colab Stream (Port 8088)</div>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem 0;">Asynchronous binary frame streaming with pre-allocated CUDA tensor buffers and Cloudflare public tunnel bridging.</p>
+                                <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px; font-size: 0.72rem; font-family: var(--font-mono); margin: 0.4rem 0;">
+                                    <strong>Manual Setup:</strong> 0-config required. Initializes automatically with Cloudflare bridge.
+                                </div>
+                                <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem;">
+                                    <button class="btn btn-secondary btn-sm inapp-switch-btn" data-engine="jdroidRelay" style="flex: 1;"><i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine</button>
+                                    <button class="btn btn-secondary btn-sm inapp-run-btn" data-engine="jdroidRelay" title="Run Start Script (scripts/start-google-colab.bat)"><i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> 🚀</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Limits & Quotas -->
+                    <div class="widget-box margin-top-md">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+                            <div>
+                                <h3><i class="fa-solid fa-sliders text-warning"></i> Processing Limits &amp; Resource Quotas</h3>
+                                <p>Set concurrency limits, maximum throughput, target FPS, and idle disconnection rules.</p>
+                            </div>
+                            <button id="inapp-save-limits-btn" class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-floppy-disk"></i> Save &amp; Apply Limits
+                            </button>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-top: 0.8rem;">
+                            <div style="background: var(--bg-tertiary); padding: 0.7rem; border-radius: 6px;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Max Concurrent Sessions</label>
+                                <input type="number" id="inapp-lim-sessions" min="1" max="50" value="10" class="search-bar-mini" style="width: 100%; margin-top: 0.3rem;">
+                            </div>
+                            <div style="background: var(--bg-tertiary); padding: 0.7rem; border-radius: 6px;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Bandwidth Limit (Mbps)</label>
+                                <input type="number" id="inapp-lim-bandwidth" min="5" max="200" value="50" class="search-bar-mini" style="width: 100%; margin-top: 0.3rem;">
+                            </div>
+                            <div style="background: var(--bg-tertiary); padding: 0.7rem; border-radius: 6px;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Maximum Target FPS</label>
+                                <select id="inapp-lim-fps" class="search-bar-mini" style="width: 100%; margin-top: 0.3rem;">
+                                    <option value="30">30 FPS</option>
+                                    <option value="60" selected>60 FPS (Balanced Smooth HD)</option>
+                                    <option value="120">120 FPS (Ultra-Fast)</option>
+                                </select>
+                            </div>
+                            <div style="background: var(--bg-tertiary); padding: 0.7rem; border-radius: 6px;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Idle Timeout (Minutes)</label>
+                                <input type="number" id="inapp-lim-timeout" min="1" max="180" value="15" class="search-bar-mini" style="width: 100%; margin-top: 0.3rem;">
+                            </div>
+                            <div style="background: var(--bg-tertiary); padding: 0.7rem; border-radius: 6px;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Log Retention (Days)</label>
+                                <input type="number" id="inapp-lim-retention" min="1" max="30" value="7" class="search-bar-mini" style="width: 100%; margin-top: 0.3rem;">
+                            </div>
+                            <div style="background: var(--bg-tertiary); padding: 0.7rem; border-radius: 6px;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Hardware Acceleration</label>
+                                <select id="inapp-lim-hw" class="search-bar-mini" style="width: 100%; margin-top: 0.3rem;">
+                                    <option value="nvenc_cuda" selected>NVENC + CUDA</option>
+                                    <option value="direct3d">Direct3D 11 Surface</option>
+                                    <option value="software">Software Fallback</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Processing Logs Table -->
+                    <div class="widget-box margin-top-md">
+                        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+                            <div>
+                                <h3><i class="fa-solid fa-list-ul text-info"></i> Live Server Request &amp; Processing Logs</h3>
+                                <p>Real-time audit log of HTTP traffic, engine handshakes, and system exceptions.</p>
+                            </div>
+                            <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                                <input type="text" id="inapp-log-search" placeholder="Filter by text, IP, route..." class="search-bar-mini" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; width: 170px;">
+                                <select id="inapp-log-level" class="search-bar-mini" style="padding: 0.25rem 0.4rem; font-size: 0.75rem;">
+                                    <option value="ALL">ALL LEVELS</option>
+                                    <option value="INFO">INFO</option>
+                                    <option value="AUDIT">AUDIT</option>
+                                    <option value="WARN">WARN</option>
+                                    <option value="ERROR">ERROR</option>
+                                </select>
+                                <button id="inapp-purge-logs-btn" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                                    <i class="fa-solid fa-trash"></i> Purge
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="margin-top-sm" style="max-height: 340px; overflow-y: auto; background: #060911; border: 1px solid var(--border-color); border-radius: 8px;">
+                            <table style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.76rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-bright); color: var(--text-muted); text-align: left; background: rgba(255,255,255,0.03);">
+                                        <th style="padding: 0.4rem 0.6rem;">Packet ID</th>
+                                        <th style="padding: 0.4rem 0.6rem;">Timestamp</th>
+                                        <th style="padding: 0.4rem 0.6rem;">Level</th>
+                                        <th style="padding: 0.4rem 0.6rem;">Stage</th>
+                                        <th style="padding: 0.4rem 0.6rem;">RTT</th>
+                                        <th style="padding: 0.4rem 0.6rem;">Client IP</th>
+                                        <th style="padding: 0.4rem 0.6rem;">Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inapp-log-tbody">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.2rem;">
+                                            <i class="fa-solid fa-spinner fa-spin"></i> Loading live server logs...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
             </div>
+
+            <!-- Real-Time Scrolling Marquee Metadata Footer -->
+            <footer id="web-marquee-footer" class="web-marquee-footer">
+                <div class="marquee-tag">
+                    <i class="fa-solid fa-tower-broadcast" style="color: var(--accent-emerald);"></i>
+                    <span>jDroid-X TELEMETRY</span>
+                </div>
+                <div class="marquee-content-container">
+                    <div id="web-marquee-ticker" class="marquee-ticker-text">
+                        ⚡ jDroid-X Remote Console &middot; jDroid-Engine: SUNSHINE [● RUNNING : 47990] &middot; Security: AES-256-GCM &middot; Host Desk ID: 984-102-391 &middot; Node Gateway: HTTP 200 (Port 12345) &middot; RTT Latency: &lt;2ms LAN / 14ms WAN &middot; Codec: NVENC CUDA 60FPS &middot; SmartFit: Mobile / Tablet / Laptop / 4K / Flat 55"+ TV &middot; Theme: Active &middot; Operator: JEET &middot; System Status: ALL SYSTEMS NOMINAL
+                    </div>
+                </div>
+                <div class="marquee-controls">
+                    <span id="footer-sync-indicator" class="badge badge-green" style="font-size: 0.68rem; padding: 0.2rem 0.5rem;"><i class="fa-solid fa-circle-check"></i> SYNCED</span>
+                </div>
+            </footer>
         </main>
 
         <!-- Bottom Navigation Bar (Mobile Viewports Only) -->
@@ -2317,6 +2622,9 @@
                 <label style="font-size: 0.8rem;">Device Name (Alphanumeric, space, hyphen, dot, underscore):</label>
                 <input type="text" id="device-modal-name" class="search-bar-mini" placeholder="e.g. Office-Desktop-01" style="width: 100%; margin-top: 0.1rem;">
                 
+                <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">IP Address / Desk ID (Optional):</label>
+                <input type="text" id="device-modal-ip" class="search-bar-mini" placeholder="e.g. 192.168.1.100 or 984-102-391" style="width: 100%; margin-top: 0.1rem;">
+
                 <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">Assign Group:</label>
                 <select id="device-modal-group" class="search-bar-mini" style="width: 100%; margin-top: 0.1rem; background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.2rem; border-radius: 4px;">
                     <option value="">Unassigned (No Group)</option>

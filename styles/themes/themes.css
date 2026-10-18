@@ -1,0 +1,560 @@
+/* ==========================================================================
+   jDroid-X Universal Design System & Master Themes (15 Paradigms)
+   Standardized OOPS MVC View Design Tokens & High-Contrast Light-First
+   ========================================================================== */
+
+/* Typography Font Imports */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
+
+:root {
+    /* Base Font Family Tokens */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-heading: 'Outfit', var(--font-sans);
+    --font-mono: 'JetBrains Mono', SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+
+    /* Base Dimensions & Transition Tokens */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-pill: 9999px;
+    --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* 1. DEFAULT PARADIGM: LIGHT ENTERPRISE (Light-First Discipline) */
+    --bg-primary: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    --bg-card: #ffffff;
+    --bg-glass: rgba(255, 255, 255, 0.88);
+    
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-dim: #94a3b8;
+    
+    --accent: #0284c7;
+    --accent-hover: #0369a1;
+    --accent-glow: rgba(2, 132, 199, 0.18);
+    --accent-blue: #0284c7;
+    --accent-purple: #7c3aed;
+    --accent-emerald: #059669;
+    --accent-amber: #d97706;
+    --accent-red: #dc2626;
+
+    --border-color: #e2e8f0;
+    --border-subtle: #cbd5e1;
+    --border-bright: #94a3b8;
+
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.12);
+
+    /* Standard Status Pills */
+    --badge-green-bg: rgba(5, 150, 105, 0.12);
+    --badge-green-text: #059669;
+    --badge-blue-bg: rgba(2, 132, 199, 0.12);
+    --badge-blue-text: #0284c7;
+    --badge-amber-bg: rgba(217, 119, 6, 0.12);
+    --badge-amber-text: #d97706;
+    --badge-red-bg: rgba(220, 38, 38, 0.12);
+    --badge-red-text: #dc2626;
+}
+
+/* 2. DARK STUDIO (Deep Obsidian Studio) */
+body.dark-theme,
+body.theme-dark {
+    --bg-primary: #0b0f19;
+    --bg-surface: #111827;
+    --bg-secondary: #131c2e;
+    --bg-tertiary: #1e293b;
+    --bg-card: #151d30;
+    --bg-glass: rgba(21, 29, 48, 0.78);
+
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+
+    --accent: #00f2fe;
+    --accent-hover: #38bdf8;
+    --accent-glow: rgba(0, 242, 254, 0.25);
+    --accent-blue: #00f2fe;
+    --accent-purple: #7c4dff;
+    --accent-emerald: #00e676;
+    --accent-amber: #ffab00;
+    --accent-red: #ff3366;
+
+    --border-color: rgba(255, 255, 255, 0.09);
+    --border-subtle: rgba(255, 255, 255, 0.14);
+    --border-bright: rgba(255, 255, 255, 0.22);
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.55);
+    --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.7);
+
+    --badge-green-bg: rgba(0, 230, 118, 0.16);
+    --badge-green-text: #00e676;
+    --badge-blue-bg: rgba(0, 242, 254, 0.16);
+    --badge-blue-text: #00f2fe;
+    --badge-amber-bg: rgba(255, 171, 0, 0.16);
+    --badge-amber-text: #ffab00;
+    --badge-red-bg: rgba(255, 51, 102, 0.16);
+    --badge-red-text: #ff3366;
+}
+
+/* 3. NORD ARCTIC (Nordic Frost) */
+body.theme-nord {
+    --bg-primary: #2e3440;
+    --bg-surface: #3b4252;
+    --bg-secondary: #434c5e;
+    --bg-tertiary: #4c566a;
+    --bg-card: #3b4252;
+    --bg-glass: rgba(59, 66, 82, 0.85);
+    --text-main: #eceff4;
+    --text-muted: #d8dee9;
+    --text-dim: #9aa5b8;
+    --accent: #88c0d0;
+    --accent-hover: #81a1c1;
+    --accent-glow: rgba(136, 192, 208, 0.25);
+    --border-color: #4c566a;
+    --border-subtle: #5e6c87;
+    --border-bright: #88c0d0;
+    --badge-green-bg: rgba(163, 190, 140, 0.2);
+    --badge-green-text: #a3be8c;
+    --badge-blue-bg: rgba(136, 192, 208, 0.2);
+    --badge-blue-text: #88c0d0;
+    --badge-amber-bg: rgba(235, 203, 139, 0.2);
+    --badge-amber-text: #ebcb8b;
+}
+
+/* 4. SOLARIZED LIGHT */
+body.theme-solarized-light {
+    --bg-primary: #fdf6e3;
+    --bg-surface: #eee8d5;
+    --bg-secondary: #fdf6e3;
+    --bg-tertiary: #e0d8c3;
+    --bg-card: #fdf6e3;
+    --bg-glass: rgba(253, 246, 227, 0.9);
+    --text-main: #657b83;
+    --text-muted: #586e75;
+    --text-dim: #93a1a1;
+    --accent: #268bd2;
+    --accent-hover: #2aa198;
+    --accent-glow: rgba(38, 139, 210, 0.2);
+    --border-color: #d3cbb7;
+    --border-subtle: #b7ad97;
+    --border-bright: #268bd2;
+    --badge-green-bg: rgba(133, 153, 0, 0.15);
+    --badge-green-text: #859900;
+    --badge-blue-bg: rgba(38, 139, 210, 0.15);
+    --badge-blue-text: #268bd2;
+    --badge-amber-bg: rgba(181, 137, 0, 0.15);
+    --badge-amber-text: #b58900;
+}
+
+/* 5. SOLARIZED DARK */
+body.theme-solarized-dark {
+    --bg-primary: #002b36;
+    --bg-surface: #073642;
+    --bg-secondary: #002b36;
+    --bg-tertiary: #0b4352;
+    --bg-card: #073642;
+    --bg-glass: rgba(7, 54, 66, 0.88);
+    --text-main: #839496;
+    --text-muted: #93a1a1;
+    --text-dim: #586e75;
+    --accent: #2aa198;
+    --accent-hover: #268bd2;
+    --accent-glow: rgba(42, 161, 152, 0.25);
+    --border-color: #0b4352;
+    --border-subtle: #145b6e;
+    --border-bright: #2aa198;
+    --badge-green-bg: rgba(133, 153, 0, 0.2);
+    --badge-green-text: #859900;
+    --badge-blue-bg: rgba(42, 161, 152, 0.2);
+    --badge-blue-text: #2aa198;
+    --badge-amber-bg: rgba(181, 137, 0, 0.2);
+    --badge-amber-text: #b58900;
+}
+
+/* 6. MONOKAI PRO */
+body.theme-monokai {
+    --bg-primary: #2d2a2e;
+    --bg-surface: #221f22;
+    --bg-secondary: #363337;
+    --bg-tertiary: #403e41;
+    --bg-card: #221f22;
+    --bg-glass: rgba(34, 31, 34, 0.88);
+    --text-main: #fcfcfa;
+    --text-muted: #939293;
+    --text-dim: #727072;
+    --accent: #ffd866;
+    --accent-hover: #ff6188;
+    --accent-glow: rgba(255, 216, 102, 0.25);
+    --border-color: #403e41;
+    --border-subtle: #575459;
+    --border-bright: #ffd866;
+    --badge-green-bg: rgba(169, 220, 118, 0.2);
+    --badge-green-text: #a9dc76;
+    --badge-blue-bg: rgba(120, 220, 232, 0.2);
+    --badge-blue-text: #78dce8;
+    --badge-amber-bg: rgba(255, 216, 102, 0.2);
+    --badge-amber-text: #ffd866;
+}
+
+/* 7. DRACULA MIDNIGHT */
+body.theme-dracula {
+    --bg-primary: #282a36;
+    --bg-surface: #1e1f29;
+    --bg-secondary: #343746;
+    --bg-tertiary: #44475a;
+    --bg-card: #21222c;
+    --bg-glass: rgba(33, 34, 44, 0.85);
+    --text-main: #f8f8f2;
+    --text-muted: #bd93f9;
+    --text-dim: #6272a4;
+    --accent: #ff79c6;
+    --accent-hover: #bd93f9;
+    --accent-glow: rgba(255, 121, 198, 0.25);
+    --border-color: #44475a;
+    --border-subtle: #565a75;
+    --border-bright: #ff79c6;
+    --badge-green-bg: rgba(80, 250, 123, 0.2);
+    --badge-green-text: #50fa7b;
+    --badge-blue-bg: rgba(139, 233, 253, 0.2);
+    --badge-blue-text: #8be9fd;
+    --badge-amber-bg: rgba(241, 250, 140, 0.2);
+    --badge-amber-text: #f1fa8c;
+}
+
+/* 8. TOKYO NIGHT */
+body.theme-tokyo-night {
+    --bg-primary: #1a1b26;
+    --bg-surface: #16161e;
+    --bg-secondary: #24283b;
+    --bg-tertiary: #2f3549;
+    --bg-card: #1f2335;
+    --bg-glass: rgba(31, 35, 53, 0.85);
+    --text-main: #c0caf5;
+    --text-muted: #7aa2f7;
+    --text-dim: #565f89;
+    --accent: #7aa2f7;
+    --accent-hover: #bb9af7;
+    --accent-glow: rgba(122, 162, 247, 0.25);
+    --border-color: #292e42;
+    --border-subtle: #3b4261;
+    --border-bright: #7aa2f7;
+    --badge-green-bg: rgba(158, 206, 106, 0.2);
+    --badge-green-text: #9ece6a;
+    --badge-blue-bg: rgba(122, 162, 247, 0.2);
+    --badge-blue-text: #7aa2f7;
+    --badge-amber-bg: rgba(224, 175, 104, 0.2);
+    --badge-amber-text: #e0af68;
+}
+
+/* 9. CYBERPUNK NEON */
+body.theme-cyberpunk {
+    --bg-primary: #0d0221;
+    --bg-surface: #0f0826;
+    --bg-secondary: #1a0845;
+    --bg-tertiary: #260a63;
+    --bg-card: #15053b;
+    --bg-glass: rgba(21, 5, 59, 0.85);
+    --text-main: #00f2fe;
+    --text-muted: #ff007f;
+    --text-dim: #7928ca;
+    --accent: #ffee00;
+    --accent-hover: #00f2fe;
+    --accent-glow: rgba(255, 238, 0, 0.35);
+    --border-color: #3b1085;
+    --border-subtle: #ff007f;
+    --border-bright: #00f2fe;
+    --badge-green-bg: rgba(0, 255, 157, 0.2);
+    --badge-green-text: #00ff9d;
+    --badge-blue-bg: rgba(0, 242, 254, 0.2);
+    --badge-blue-text: #00f2fe;
+    --badge-amber-bg: rgba(255, 238, 0, 0.2);
+    --badge-amber-text: #ffee00;
+}
+
+/* 10. MATRIX EMERALD */
+body.theme-emerald {
+    --bg-primary: #05140b;
+    --bg-surface: #030f08;
+    --bg-secondary: #092615;
+    --bg-tertiary: #0e3b21;
+    --bg-card: #081d11;
+    --bg-glass: rgba(8, 29, 17, 0.85);
+    --text-main: #00ff66;
+    --text-muted: #10b981;
+    --text-dim: #047857;
+    --accent: #10b981;
+    --accent-hover: #34d399;
+    --accent-glow: rgba(16, 185, 129, 0.3);
+    --border-color: #0e3b21;
+    --border-subtle: #195e36;
+    --border-bright: #10b981;
+    --badge-green-bg: rgba(16, 185, 129, 0.22);
+    --badge-green-text: #34d399;
+    --badge-blue-bg: rgba(6, 182, 212, 0.22);
+    --badge-blue-text: #22d3ee;
+    --badge-amber-bg: rgba(245, 158, 11, 0.22);
+    --badge-amber-text: #fbbf24;
+}
+
+/* 11. DEEP OCEAN */
+body.theme-ocean {
+    --bg-primary: #031b33;
+    --bg-surface: #021426;
+    --bg-secondary: #05294d;
+    --bg-tertiary: #083b6e;
+    --bg-card: #042240;
+    --bg-glass: rgba(4, 34, 64, 0.85);
+    --text-main: #e0f2fe;
+    --text-muted: #7dd3fc;
+    --text-dim: #38bdf8;
+    --accent: #38bdf8;
+    --accent-hover: #0284c7;
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    --border-color: #0b4987;
+    --border-subtle: #1265b5;
+    --border-bright: #38bdf8;
+    --badge-green-bg: rgba(52, 211, 153, 0.2);
+    --badge-green-text: #34d399;
+    --badge-blue-bg: rgba(56, 189, 248, 0.2);
+    --badge-blue-text: #38bdf8;
+    --badge-amber-bg: rgba(251, 191, 36, 0.2);
+    --badge-amber-text: #fbbf24;
+}
+
+/* 12. CRIMSON SUNSET */
+body.theme-sunset {
+    --bg-primary: #1c0910;
+    --bg-surface: #14060b;
+    --bg-secondary: #2b0e1a;
+    --bg-tertiary: #401426;
+    --bg-card: #240c16;
+    --bg-glass: rgba(36, 12, 22, 0.85);
+    --text-main: #ffe4e6;
+    --text-muted: #fb7185;
+    --text-dim: #f43f5e;
+    --accent: #f43f5e;
+    --accent-hover: #e11d48;
+    --accent-glow: rgba(244, 63, 94, 0.3);
+    --border-color: #4a182c;
+    --border-subtle: #6e2442;
+    --border-bright: #f43f5e;
+    --badge-green-bg: rgba(52, 211, 153, 0.2);
+    --badge-green-text: #34d399;
+    --badge-blue-bg: rgba(125, 211, 252, 0.2);
+    --badge-blue-text: #7dd3fc;
+    --badge-amber-bg: rgba(251, 146, 60, 0.2);
+    --badge-amber-text: #fb923c;
+}
+
+/* 13. GRUVBOX RETRO */
+body.theme-gruvbox {
+    --bg-primary: #282828;
+    --bg-surface: #1d2021;
+    --bg-secondary: #32302f;
+    --bg-tertiary: #3c3836;
+    --bg-card: #282828;
+    --bg-glass: rgba(40, 40, 40, 0.88);
+    --text-main: #ebdbb2;
+    --text-muted: #d5c4a1;
+    --text-dim: #a89984;
+    --accent: #fe8019;
+    --accent-hover: #fabd2f;
+    --accent-glow: rgba(254, 128, 25, 0.25);
+    --border-color: #504945;
+    --border-subtle: #665c54;
+    --border-bright: #fe8019;
+    --badge-green-bg: rgba(184, 187, 38, 0.2);
+    --badge-green-text: #b8bb26;
+    --badge-blue-bg: rgba(131, 165, 152, 0.2);
+    --badge-blue-text: #83a598;
+    --badge-amber-bg: rgba(250, 189, 47, 0.2);
+    --badge-amber-text: #fabd2f;
+}
+
+/* 14. TITANIUM SLATE ENTERPRISE */
+body.theme-slate {
+    --bg-primary: #0f172a;
+    --bg-surface: #090e17;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-card: #131c2e;
+    --bg-glass: rgba(19, 28, 46, 0.85);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --accent: #38bdf8;
+    --accent-hover: #0ea5e9;
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    --border-color: #334155;
+    --border-subtle: #475569;
+    --border-bright: #38bdf8;
+    --badge-green-bg: rgba(16, 185, 129, 0.18);
+    --badge-green-text: #10b981;
+    --badge-blue-bg: rgba(56, 189, 248, 0.18);
+    --badge-blue-text: #38bdf8;
+    --badge-amber-bg: rgba(245, 158, 11, 0.18);
+    --badge-amber-text: #f59e0b;
+}
+
+/* 15. HIGH-CONTRAST ACCESSIBILITY */
+body.theme-high-contrast {
+    --bg-primary: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e5e5e5;
+    --bg-card: #ffffff;
+    --bg-glass: #ffffff;
+    --text-main: #000000;
+    --text-muted: #111111;
+    --text-dim: #333333;
+    --accent: #0000ee;
+    --accent-hover: #000088;
+    --accent-glow: rgba(0, 0, 238, 0.15);
+    --border-color: #000000;
+    --border-subtle: #333333;
+    --border-bright: #000000;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: 0 4px 0 #000000;
+    --badge-green-bg: #000000;
+    --badge-green-text: #ffffff;
+    --badge-blue-bg: #0000ee;
+    --badge-blue-text: #ffffff;
+    --badge-amber-bg: #000000;
+    --badge-amber-text: #ffff00;
+}
+
+/* ==========================================================================
+   Universal Layout Hierarchy Classes (Header, Action Bar, Bento, Footer)
+   ========================================================================== */
+
+/* Universal Screen Action Bar */
+.screen-action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 1rem;
+    margin-bottom: 1.15rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.action-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.action-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Standardized Bento / 2-Column Responsive Card Grid */
+.bento-grid-2col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+    align-items: stretch;
+}
+
+@media (max-width: 960px) {
+    .bento-grid-2col {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* Standard Interactive Card Hover Elevation */
+.card-interactive {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-subtle);
+}
+
+/* Standardized Status Pills */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.22rem 0.6rem;
+    border-radius: var(--radius-pill);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.status-pill-green {
+    background: var(--badge-green-bg);
+    color: var(--badge-green-text);
+}
+
+.status-pill-blue {
+    background: var(--badge-blue-bg);
+    color: var(--badge-blue-text);
+}
+
+.status-pill-amber {
+    background: var(--badge-amber-bg);
+    color: var(--badge-amber-text);
+}
+
+.status-pill-red {
+    background: var(--badge-red-bg);
+    color: var(--badge-red-text);
+}
+
+/* Standard Universal Theme Selector Dropdown */
+.theme-select-dropdown {
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.theme-select-dropdown:hover {
+    border-color: var(--accent);
+}
+
+.theme-select-dropdown:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.theme-select-dropdown option {
+    background: var(--bg-surface);
+    color: var(--text-main);
+}
+

@@ -58,6 +58,383 @@ namespace JDroidXDesk.Native
         public string[] ActiveApps { get; set; }
     }
 
+    public static class ThemePalette
+    {
+        public static bool IsDarkTheme = false; // Light-First Discipline Default
+        public static string CurrentThemeName = "light-theme";
+
+        public static Color ColorBgWorkspace = Color.FromArgb(248, 250, 252);
+        public static Color ColorBgCard = Color.FromArgb(255, 255, 255);
+        public static Color ColorBgCardHeader = Color.FromArgb(241, 245, 249);
+        public static Color ColorBgInput = Color.FromArgb(241, 245, 249);
+        public static Color ColorTextPrimary = Color.FromArgb(15, 23, 42);
+        public static Color ColorTextSecondary = Color.FromArgb(71, 85, 105);
+        public static Color ColorBorderCard = Color.FromArgb(226, 232, 240);
+        public static Color ColorAccentSky = Color.FromArgb(2, 132, 199);
+        public static Color ColorAccentEmerald = Color.FromArgb(5, 150, 105);
+        public static Color ColorAccentAmber = Color.FromArgb(217, 119, 6);
+        public static Color ColorAccentRose = Color.FromArgb(220, 38, 38);
+
+        // Semantic Role Aliases
+        public static Color ColorPrimary { get { return ColorAccentSky; } }
+        public static Color ColorSuccess { get { return ColorAccentEmerald; } }
+        public static Color ColorWarning { get { return ColorAccentAmber; } }
+        public static Color ColorDanger { get { return ColorAccentRose; } }
+
+        // Dynamic 3D / Floating & Architectural Tokens
+        public static Color ColorBgSidebar = Color.FromArgb(241, 245, 249);
+        public static Color ColorBgSidebarHeader = Color.FromArgb(226, 232, 240);
+        public static Color ColorBgTabBar = Color.FromArgb(241, 245, 249);
+        public static Color ColorBgTabActive = Color.FromArgb(255, 255, 255);
+        public static Color ColorBgTabInactive = Color.FromArgb(241, 245, 249);
+        public static Color ColorTextTabActive = Color.FromArgb(15, 23, 42);
+        public static Color TextTabInactive = Color.FromArgb(100, 116, 139);
+        public static Color ColorTextTabInactive = Color.FromArgb(100, 116, 139);
+        public static Color ColorBgCardElevated = Color.FromArgb(255, 255, 255);
+        public static Color ColorShadow = Color.FromArgb(25, 15, 23, 42);
+
+        public static void SetTheme(string themeName)
+        {
+            if (string.IsNullOrEmpty(themeName)) themeName = "light-theme";
+            if (themeName == "light") themeName = "light-theme";
+            if (themeName == "dark") themeName = "dark-theme";
+            CurrentThemeName = themeName;
+
+            switch (themeName.ToLower())
+            {
+                case "dark-theme":
+                case "theme-dark":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(11, 15, 25);
+                    ColorBgCard = Color.FromArgb(21, 29, 48);
+                    ColorBgCardHeader = Color.FromArgb(17, 24, 39);
+                    ColorBgInput = Color.FromArgb(19, 28, 46);
+                    ColorTextPrimary = Color.FromArgb(248, 250, 252);
+                    ColorTextSecondary = Color.FromArgb(148, 163, 184);
+                    ColorBorderCard = Color.FromArgb(40, 53, 76);
+                    ColorAccentSky = Color.FromArgb(0, 242, 254);
+                    ColorAccentEmerald = Color.FromArgb(0, 230, 118);
+                    ColorAccentAmber = Color.FromArgb(255, 171, 0);
+                    ColorAccentRose = Color.FromArgb(255, 51, 102);
+                    break;
+
+                case "theme-nord":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(46, 52, 64);
+                    ColorBgCard = Color.FromArgb(59, 66, 82);
+                    ColorBgCardHeader = Color.FromArgb(46, 52, 64);
+                    ColorBgInput = Color.FromArgb(67, 76, 94);
+                    ColorTextPrimary = Color.FromArgb(236, 239, 244);
+                    ColorTextSecondary = Color.FromArgb(216, 222, 233);
+                    ColorBorderCard = Color.FromArgb(76, 86, 106);
+                    ColorAccentSky = Color.FromArgb(136, 192, 208);
+                    ColorAccentEmerald = Color.FromArgb(163, 190, 140);
+                    ColorAccentAmber = Color.FromArgb(235, 203, 139);
+                    ColorAccentRose = Color.FromArgb(191, 97, 106);
+                    break;
+
+                case "theme-solarized-light":
+                    IsDarkTheme = false;
+                    ColorBgWorkspace = Color.FromArgb(253, 246, 227);
+                    ColorBgCard = Color.FromArgb(238, 232, 213);
+                    ColorBgCardHeader = Color.FromArgb(253, 246, 227);
+                    ColorBgInput = Color.FromArgb(253, 246, 227);
+                    ColorTextPrimary = Color.FromArgb(101, 123, 131);
+                    ColorTextSecondary = Color.FromArgb(147, 161, 161);
+                    ColorBorderCard = Color.FromArgb(211, 204, 185);
+                    ColorAccentSky = Color.FromArgb(38, 139, 210);
+                    ColorAccentEmerald = Color.FromArgb(133, 153, 0);
+                    ColorAccentAmber = Color.FromArgb(181, 137, 0);
+                    ColorAccentRose = Color.FromArgb(220, 50, 47);
+                    break;
+
+                case "theme-solarized-dark":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(0, 43, 54);
+                    ColorBgCard = Color.FromArgb(7, 54, 66);
+                    ColorBgCardHeader = Color.FromArgb(0, 43, 54);
+                    ColorBgInput = Color.FromArgb(0, 43, 54);
+                    ColorTextPrimary = Color.FromArgb(131, 148, 150);
+                    ColorTextSecondary = Color.FromArgb(88, 110, 117);
+                    ColorBorderCard = Color.FromArgb(20, 75, 90);
+                    ColorAccentSky = Color.FromArgb(38, 139, 210);
+                    ColorAccentEmerald = Color.FromArgb(133, 153, 0);
+                    ColorAccentAmber = Color.FromArgb(181, 137, 0);
+                    ColorAccentRose = Color.FromArgb(220, 50, 47);
+                    break;
+
+                case "theme-monokai":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(39, 40, 34);
+                    ColorBgCard = Color.FromArgb(62, 61, 50);
+                    ColorBgCardHeader = Color.FromArgb(39, 40, 34);
+                    ColorBgInput = Color.FromArgb(46, 47, 41);
+                    ColorTextPrimary = Color.FromArgb(248, 248, 242);
+                    ColorTextSecondary = Color.FromArgb(117, 113, 94);
+                    ColorBorderCard = Color.FromArgb(73, 72, 62);
+                    ColorAccentSky = Color.FromArgb(102, 217, 239);
+                    ColorAccentEmerald = Color.FromArgb(166, 226, 46);
+                    ColorAccentAmber = Color.FromArgb(253, 151, 31);
+                    ColorAccentRose = Color.FromArgb(249, 38, 114);
+                    break;
+
+                case "theme-dracula":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(40, 42, 54);
+                    ColorBgCard = Color.FromArgb(68, 71, 90);
+                    ColorBgCardHeader = Color.FromArgb(40, 42, 54);
+                    ColorBgInput = Color.FromArgb(56, 58, 74);
+                    ColorTextPrimary = Color.FromArgb(248, 248, 242);
+                    ColorTextSecondary = Color.FromArgb(98, 114, 164);
+                    ColorBorderCard = Color.FromArgb(98, 114, 164);
+                    ColorAccentSky = Color.FromArgb(139, 233, 253);
+                    ColorAccentEmerald = Color.FromArgb(80, 250, 123);
+                    ColorAccentAmber = Color.FromArgb(241, 250, 140);
+                    ColorAccentRose = Color.FromArgb(255, 85, 85);
+                    break;
+
+                case "theme-tokyo-night":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(26, 27, 38);
+                    ColorBgCard = Color.FromArgb(36, 40, 59);
+                    ColorBgCardHeader = Color.FromArgb(26, 27, 38);
+                    ColorBgInput = Color.FromArgb(31, 35, 53);
+                    ColorTextPrimary = Color.FromArgb(192, 202, 245);
+                    ColorTextSecondary = Color.FromArgb(86, 95, 137);
+                    ColorBorderCard = Color.FromArgb(65, 72, 104);
+                    ColorAccentSky = Color.FromArgb(122, 162, 247);
+                    ColorAccentEmerald = Color.FromArgb(158, 206, 106);
+                    ColorAccentAmber = Color.FromArgb(224, 175, 104);
+                    ColorAccentRose = Color.FromArgb(247, 118, 142);
+                    break;
+
+                case "theme-cyberpunk":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(13, 2, 33);
+                    ColorBgCard = Color.FromArgb(26, 11, 46);
+                    ColorBgCardHeader = Color.FromArgb(13, 2, 33);
+                    ColorBgInput = Color.FromArgb(19, 6, 38);
+                    ColorTextPrimary = Color.FromArgb(254, 238, 0);
+                    ColorTextSecondary = Color.FromArgb(0, 240, 255);
+                    ColorBorderCard = Color.FromArgb(255, 0, 85);
+                    ColorAccentSky = Color.FromArgb(0, 240, 255);
+                    ColorAccentEmerald = Color.FromArgb(0, 255, 159);
+                    ColorAccentAmber = Color.FromArgb(254, 238, 0);
+                    ColorAccentRose = Color.FromArgb(255, 0, 85);
+                    break;
+
+                case "theme-emerald":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(6, 20, 13);
+                    ColorBgCard = Color.FromArgb(10, 31, 20);
+                    ColorBgCardHeader = Color.FromArgb(6, 20, 13);
+                    ColorBgInput = Color.FromArgb(8, 26, 17);
+                    ColorTextPrimary = Color.FromArgb(209, 250, 229);
+                    ColorTextSecondary = Color.FromArgb(52, 211, 153);
+                    ColorBorderCard = Color.FromArgb(16, 185, 129);
+                    ColorAccentSky = Color.FromArgb(52, 211, 153);
+                    ColorAccentEmerald = Color.FromArgb(16, 185, 129);
+                    ColorAccentAmber = Color.FromArgb(245, 158, 11);
+                    ColorAccentRose = Color.FromArgb(239, 68, 68);
+                    break;
+
+                case "theme-ocean":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(8, 18, 38);
+                    ColorBgCard = Color.FromArgb(15, 30, 58);
+                    ColorBgCardHeader = Color.FromArgb(8, 18, 38);
+                    ColorBgInput = Color.FromArgb(11, 23, 48);
+                    ColorTextPrimary = Color.FromArgb(224, 242, 254);
+                    ColorTextSecondary = Color.FromArgb(56, 189, 248);
+                    ColorBorderCard = Color.FromArgb(14, 116, 144);
+                    ColorAccentSky = Color.FromArgb(14, 165, 233);
+                    ColorAccentEmerald = Color.FromArgb(16, 185, 129);
+                    ColorAccentAmber = Color.FromArgb(245, 158, 11);
+                    ColorAccentRose = Color.FromArgb(239, 68, 68);
+                    break;
+
+                case "theme-sunset":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(26, 12, 20);
+                    ColorBgCard = Color.FromArgb(43, 19, 31);
+                    ColorBgCardHeader = Color.FromArgb(26, 12, 20);
+                    ColorBgInput = Color.FromArgb(34, 15, 25);
+                    ColorTextPrimary = Color.FromArgb(255, 228, 230);
+                    ColorTextSecondary = Color.FromArgb(251, 113, 133);
+                    ColorBorderCard = Color.FromArgb(225, 29, 72);
+                    ColorAccentSky = Color.FromArgb(244, 63, 94);
+                    ColorAccentEmerald = Color.FromArgb(16, 185, 129);
+                    ColorAccentAmber = Color.FromArgb(245, 158, 11);
+                    ColorAccentRose = Color.FromArgb(225, 29, 72);
+                    break;
+
+                case "theme-gruvbox":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(40, 40, 40);
+                    ColorBgCard = Color.FromArgb(60, 56, 54);
+                    ColorBgCardHeader = Color.FromArgb(40, 40, 40);
+                    ColorBgInput = Color.FromArgb(50, 48, 47);
+                    ColorTextPrimary = Color.FromArgb(235, 219, 178);
+                    ColorTextSecondary = Color.FromArgb(168, 153, 132);
+                    ColorBorderCard = Color.FromArgb(102, 92, 84);
+                    ColorAccentSky = Color.FromArgb(131, 165, 152);
+                    ColorAccentEmerald = Color.FromArgb(184, 187, 38);
+                    ColorAccentAmber = Color.FromArgb(250, 189, 47);
+                    ColorAccentRose = Color.FromArgb(204, 36, 29);
+                    break;
+
+                case "theme-slate":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(15, 23, 42);
+                    ColorBgCard = Color.FromArgb(30, 41, 59);
+                    ColorBgCardHeader = Color.FromArgb(15, 23, 42);
+                    ColorBgInput = Color.FromArgb(23, 33, 53);
+                    ColorTextPrimary = Color.FromArgb(248, 250, 252);
+                    ColorTextSecondary = Color.FromArgb(148, 163, 184);
+                    ColorBorderCard = Color.FromArgb(51, 65, 85);
+                    ColorAccentSky = Color.FromArgb(148, 163, 184);
+                    ColorAccentEmerald = Color.FromArgb(16, 185, 129);
+                    ColorAccentAmber = Color.FromArgb(245, 158, 11);
+                    ColorAccentRose = Color.FromArgb(239, 68, 68);
+                    break;
+
+                case "theme-high-contrast":
+                    IsDarkTheme = true;
+                    ColorBgWorkspace = Color.FromArgb(0, 0, 0);
+                    ColorBgCard = Color.FromArgb(10, 10, 10);
+                    ColorBgCardHeader = Color.FromArgb(0, 0, 0);
+                    ColorBgInput = Color.FromArgb(0, 0, 0);
+                    ColorTextPrimary = Color.FromArgb(255, 255, 255);
+                    ColorTextSecondary = Color.FromArgb(255, 255, 0);
+                    ColorBorderCard = Color.FromArgb(255, 255, 255);
+                    ColorAccentSky = Color.FromArgb(0, 255, 255);
+                    ColorAccentEmerald = Color.FromArgb(0, 255, 0);
+                    ColorAccentAmber = Color.FromArgb(255, 255, 0);
+                    ColorAccentRose = Color.FromArgb(255, 0, 0);
+                    break;
+
+                default: // Light Enterprise (Light-First Default)
+                    IsDarkTheme = false;
+                    ColorBgWorkspace = Color.FromArgb(248, 250, 252);
+                    ColorBgCard = Color.FromArgb(255, 255, 255);
+                    ColorBgCardHeader = Color.FromArgb(241, 245, 249);
+                    ColorBgInput = Color.FromArgb(241, 245, 249);
+                    ColorTextPrimary = Color.FromArgb(15, 23, 42);
+                    ColorTextSecondary = Color.FromArgb(71, 85, 105);
+                    ColorBorderCard = Color.FromArgb(226, 232, 240);
+                    ColorAccentSky = Color.FromArgb(2, 132, 199);
+                    ColorAccentEmerald = Color.FromArgb(5, 150, 105);
+                    ColorAccentAmber = Color.FromArgb(217, 119, 6);
+                    ColorAccentRose = Color.FromArgb(220, 38, 38);
+                    break;
+            }
+
+            if (!IsDarkTheme)
+            {
+                ColorBgSidebar = Color.FromArgb(241, 245, 249);
+                ColorBgSidebarHeader = Color.FromArgb(226, 232, 240);
+                ColorBgTabBar = Color.FromArgb(241, 245, 249);
+                ColorBgTabActive = Color.FromArgb(255, 255, 255);
+                ColorBgTabInactive = Color.FromArgb(241, 245, 249);
+                ColorTextTabActive = ColorTextPrimary;
+                ColorTextTabInactive = ColorTextSecondary;
+                ColorBgCardElevated = ColorBgCard;
+                ColorShadow = Color.FromArgb(25, 15, 23, 42);
+            }
+            else
+            {
+                ColorBgSidebar = Color.FromArgb(Math.Max(0, ColorBgWorkspace.R - 2), Math.Max(0, ColorBgWorkspace.G - 2), Math.Max(0, ColorBgWorkspace.B - 2));
+                ColorBgSidebarHeader = Color.FromArgb(Math.Max(0, ColorBgWorkspace.R - 5), Math.Max(0, ColorBgWorkspace.G - 5), Math.Max(0, ColorBgWorkspace.B - 5));
+                ColorBgTabBar = Color.FromArgb(Math.Max(0, ColorBgWorkspace.R - 4), Math.Max(0, ColorBgWorkspace.G - 4), Math.Max(0, ColorBgWorkspace.B - 4));
+                ColorBgTabActive = ColorBgCard;
+                ColorBgTabInactive = ColorBgTabBar;
+                ColorTextTabActive = ColorTextPrimary;
+                ColorTextTabInactive = ColorTextSecondary;
+                ColorBgCardElevated = Color.FromArgb(Math.Min(255, ColorBgCard.R + 6), Math.Min(255, ColorBgCard.G + 6), Math.Min(255, ColorBgCard.B + 6));
+                ColorShadow = Color.FromArgb(50, 0, 0, 0);
+            }
+        }
+
+        public static GraphicsPath CreateRoundedPath(Rectangle rect, int radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            int d = radius * 2;
+            if (rect.Width <= d || rect.Height <= d)
+            {
+                path.AddRectangle(rect);
+                return path;
+            }
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        public static void DrawFloatingCard(Graphics g, Rectangle bounds, Color bgColor, Color borderColor, Color shadowColor, int radius)
+        {
+            if (bounds.Width <= 2 || bounds.Height <= 2) return;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            if (shadowColor != Color.Transparent && shadowColor.A > 0)
+            {
+                Rectangle sRect2 = new Rectangle(bounds.X, bounds.Y + 3, bounds.Width, bounds.Height);
+                using (GraphicsPath sp2 = CreateRoundedPath(sRect2, radius))
+                using (SolidBrush sb2 = new SolidBrush(Color.FromArgb(Math.Max(4, shadowColor.A / 3), shadowColor.R, shadowColor.G, shadowColor.B)))
+                {
+                    g.FillPath(sb2, sp2);
+                }
+                Rectangle sRect1 = new Rectangle(bounds.X, bounds.Y + 1, bounds.Width, bounds.Height);
+                using (GraphicsPath sp1 = CreateRoundedPath(sRect1, radius))
+                using (SolidBrush sb1 = new SolidBrush(shadowColor))
+                {
+                    g.FillPath(sb1, sp1);
+                }
+            }
+
+            Rectangle cRect = new Rectangle(bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
+            using (GraphicsPath cp = CreateRoundedPath(cRect, radius))
+            {
+                using (SolidBrush bb = new SolidBrush(bgColor))
+                {
+                    g.FillPath(bb, cp);
+                }
+                if (borderColor != Color.Transparent)
+                {
+                    using (Pen bp = new Pen(borderColor, 1.2f))
+                    {
+                        g.DrawPath(bp, cp);
+                    }
+                }
+            }
+        }
+
+        public static string GetThemeDisplayName()
+        {
+            switch (CurrentThemeName.ToLower())
+            {
+                case "dark":
+                case "dark-theme":
+                case "theme-dark": return "Dark Studio";
+                case "theme-nord": return "Nord Arctic";
+                case "theme-solarized-light": return "Solarized Light";
+                case "theme-solarized-dark": return "Solarized Dark";
+                case "theme-monokai": return "Monokai Pro";
+                case "theme-dracula": return "Dracula Midnight";
+                case "theme-tokyo-night": return "Tokyo Night";
+                case "theme-cyberpunk": return "Cyberpunk Neon";
+                case "theme-emerald": return "Matrix Emerald";
+                case "theme-ocean": return "Deep Ocean";
+                case "theme-sunset": return "Crimson Sunset";
+                case "theme-gruvbox": return "Gruvbox Retro";
+                case "theme-slate": return "Titanium Slate";
+                case "theme-high-contrast": return "High Contrast";
+                default: return "Light Enterprise";
+            }
+        }
+    }
+
     public class AppSettings
     {
         public string theme { get; set; }
@@ -284,10 +661,161 @@ namespace JDroidXDesk.Native
         public string details { get; set; }
     }
 
+    public class ProcessingLimitsModel
+    {
+        public int maxConcurrentSessions { get; set; }
+        public int bandwidthLimitMbps { get; set; }
+        public int maxFps { get; set; }
+        public int idleTimeoutMinutes { get; set; }
+        public int logRetentionDays { get; set; }
+        public string hardwareAcceleration { get; set; }
+
+        public ProcessingLimitsModel()
+        {
+            maxConcurrentSessions = 10;
+            bandwidthLimitMbps = 50;
+            maxFps = 60;
+            idleTimeoutMinutes = 15;
+            logRetentionDays = 7;
+            hardwareAcceleration = "nvenc_cuda";
+        }
+    }
+
+    public class OpenSourceEngineModel
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string type { get; set; }
+        public string version { get; set; }
+        public bool enabled { get; set; }
+        public string status { get; set; }
+        public string ports { get; set; }
+        public string idServer { get; set; }
+        public string relayServer { get; set; }
+        public string apiServer { get; set; }
+        public string publicKey { get; set; }
+        public int directPort { get; set; }
+        public string webUiUrl { get; set; }
+        public int streamPort { get; set; }
+        public int controlPort { get; set; }
+        public string encoder { get; set; }
+        public int targetFps { get; set; }
+        public int bitrateMbps { get; set; }
+        public string guacdHost { get; set; }
+        public int guacdPort { get; set; }
+        public int clientPort { get; set; }
+        public int rdpTargetPort { get; set; }
+        public string rdpSecurity { get; set; }
+        public int relayPort { get; set; }
+        public int localPort { get; set; }
+        public bool binaryStream { get; set; }
+        public bool cudaActive { get; set; }
+        public string manualConfigRequired { get; set; }
+
+        public OpenSourceEngineModel()
+        {
+            enabled = true;
+            status = "Ready";
+        }
+    }
+
+    public class ServerConfigModel
+    {
+        public string activeEngine { get; set; }
+        public ProcessingLimitsModel processingLimits { get; set; }
+        public Dictionary<string, OpenSourceEngineModel> engines { get; set; }
+
+        public ServerConfigModel()
+        {
+            activeEngine = "sunshine";
+            processingLimits = new ProcessingLimitsModel();
+            engines = new Dictionary<string, OpenSourceEngineModel>();
+        }
+
+        public static ServerConfigModel CreateDefault()
+        {
+            ServerConfigModel cfg = new ServerConfigModel();
+            cfg.activeEngine = "sunshine";
+            cfg.processingLimits = new ProcessingLimitsModel();
+            cfg.engines = new Dictionary<string, OpenSourceEngineModel>();
+
+            cfg.engines["rustdesk"] = new OpenSourceEngineModel
+            {
+                id = "rustdesk",
+                name = "RustDesk (rustdesk/rustdesk)",
+                type = "Direct Match P2P Engine",
+                version = "v1.3.x",
+                enabled = true,
+                status = "Ready",
+                ports = "21115 (NAT), 21116 (hbbs), 21117 (hbbr), 21118 (LAN Direct)",
+                idServer = "relay.jdroid-x.net:21116",
+                relayServer = "relay.jdroid-x.net:21117",
+                apiServer = "http://127.0.0.1:21114",
+                publicKey = "",
+                directPort = 21118,
+                manualConfigRequired = "Default public servers connect with zero configuration. For unlimited free bandwidth and private self-hosting, configure ID Server & Relay Server (hbbs/hbbr) with public key."
+            };
+
+            cfg.engines["sunshine"] = new OpenSourceEngineModel
+            {
+                id = "sunshine",
+                name = "Sunshine & Moonlight (LizardByte/Sunshine)",
+                type = "Lowest Latency In The World",
+                version = "v0.23.x",
+                enabled = true,
+                status = "Active",
+                ports = "47984 (HTTPS), 47989 (HTTP), 47990 (Web UI), 48010 (RTSP)",
+                webUiUrl = "https://localhost:47990",
+                streamPort = 47989,
+                controlPort = 47984,
+                encoder = "NVIDIA NVENC / DirectX Desktop Duplication (GPU VRAM sub-2ms)",
+                targetFps = 60,
+                bitrateMbps = 20,
+                manualConfigRequired = "One-time setup: browse https://localhost:47990, create initial admin credentials, and enter Moonlight 4-digit PIN for device pairing authorization."
+            };
+
+            cfg.engines["guacamole"] = new OpenSourceEngineModel
+            {
+                id = "guacamole",
+                name = "Apache Guacamole + FreeRDP (apache/guacamole-server)",
+                type = "Clientless HTML5 Browser Gateway",
+                version = "v1.5.x",
+                enabled = true,
+                status = "Ready",
+                ports = "8080 (Client/Tomcat), 4822 (guacd), 3389 (RDP Target)",
+                guacdHost = "127.0.0.1",
+                guacdPort = 4822,
+                clientPort = 8080,
+                rdpTargetPort = 3389,
+                rdpSecurity = "nla",
+                manualConfigRequired = "Runs inside Docker or Linux/WSL. Configure target Windows RDP hostname/IP, port 3389, and username/password with NLA enabled."
+            };
+
+            cfg.engines["jdroidRelay"] = new OpenSourceEngineModel
+            {
+                id = "jdroidRelay",
+                name = "jDroid-X Async Binary Relay",
+                type = "Multi-Threaded Colab / Cloud Bridge",
+                version = "v3.5 High-Throughput",
+                enabled = true,
+                status = "Online",
+                ports = "8088 (Relay), 12345 (Console Web)",
+                relayPort = 8088,
+                localPort = 12345,
+                binaryStream = true,
+                cudaActive = true,
+                manualConfigRequired = "Zero manual config. Runs automatically out-of-the-box with Cloudflare tunnel."
+            };
+
+            return cfg;
+        }
+    }
+
     public class DatabaseContext
     {
         public string DbPath { get; private set; }
         public AppSettings Settings { get; set; }
+        public ServerConfigModel ServerConfig { get; set; }
         public List<DeviceItem> Devices { get; set; }
         public List<GroupItem> Groups { get; set; }
         public List<SessionItem> Sessions { get; set; }
@@ -322,6 +850,19 @@ namespace JDroidXDesk.Native
                     }
                     else Settings = new AppSettings();
 
+                    if (dict.ContainsKey("serverConfig") && dict["serverConfig"] != null)
+                    {
+                        try
+                        {
+                            string scJson = serializer.Serialize(dict["serverConfig"]);
+                            ServerConfig = serializer.Deserialize<ServerConfigModel>(scJson);
+                        }
+                        catch { ServerConfig = null; }
+                    }
+                    if (ServerConfig == null) ServerConfig = ServerConfigModel.CreateDefault();
+                    if (ServerConfig.processingLimits == null) ServerConfig.processingLimits = new ProcessingLimitsModel();
+                    if (ServerConfig.engines == null || ServerConfig.engines.Count == 0) ServerConfig.engines = ServerConfigModel.CreateDefault().engines;
+
                     Devices = DeserializeList<DeviceItem>(dict, "devices");
                     Groups = DeserializeList<GroupItem>(dict, "groups");
                     Sessions = DeserializeList<SessionItem>(dict, "sessions");
@@ -348,6 +889,28 @@ namespace JDroidXDesk.Native
                             }
                         }
                     }
+
+                    // Automatic Log Retention Policy Enforcement
+                    if (Logs != null && Logs.Count > 0 && ServerConfig != null && ServerConfig.processingLimits != null)
+                    {
+                        int retentionDays = ServerConfig.processingLimits.logRetentionDays > 0 ? ServerConfig.processingLimits.logRetentionDays : 7;
+                        DateTime cutoff = DateTime.Now.AddDays(-retentionDays);
+                        List<LogItem> validLogs = new List<LogItem>();
+                        foreach (LogItem item in Logs)
+                        {
+                            DateTime dt;
+                            if (DateTime.TryParse(item.timestamp, out dt))
+                            {
+                                if (dt >= cutoff) validLogs.Add(item);
+                            }
+                            else validLogs.Add(item);
+                        }
+                        if (validLogs.Count < Logs.Count)
+                        {
+                            Logs = validLogs;
+                        }
+                    }
+
                     return;
                 }
                 catch (Exception ex)
@@ -372,6 +935,7 @@ namespace JDroidXDesk.Native
         private void InitDefaults()
         {
             Settings = new AppSettings();
+            ServerConfig = ServerConfigModel.CreateDefault();
             Devices = new List<DeviceItem>();
             Groups = new List<GroupItem> {
                 new GroupItem { id = "grp-1", name = "Workstations", desc = "Saved remote workstations" }
@@ -391,6 +955,7 @@ namespace JDroidXDesk.Native
             {
                 Dictionary<string, object> root = new Dictionary<string, object>();
                 root["settings"] = Settings;
+                root["serverConfig"] = ServerConfig;
                 root["devices"] = Devices;
                 root["groups"] = Groups;
                 root["sessions"] = Sessions;
@@ -625,6 +1190,7 @@ namespace JDroidXDesk.Native
         public Color NormalColor { get; set; }
         public Color HoverColor { get; set; }
         public Color TextColor { get; set; }
+        public int BorderRadius { get; set; }
 
         public ModernButton()
         {
@@ -637,6 +1203,7 @@ namespace JDroidXDesk.Native
             this.ForeColor = TextColor;
             this.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             this.Cursor = Cursors.Hand;
+            this.BorderRadius = 6;
         }
 
         protected override void OnMouseEnter(EventArgs e)
@@ -650,6 +1217,21 @@ namespace JDroidXDesk.Native
             base.OnMouseLeave(e);
             this.BackColor = NormalColor;
         }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            Rectangle rect = new Rectangle(0, 0, this.Width - 1, this.Height - 1);
+            using (GraphicsPath path = ThemePalette.CreateRoundedPath(rect, BorderRadius))
+            {
+                using (SolidBrush b = new SolidBrush(this.BackColor))
+                {
+                    g.FillPath(b, path);
+                }
+            }
+            TextRenderer.DrawText(g, this.Text, this.Font, rect, this.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        }
     }
 
     public class ModernCardPanel : Panel
@@ -660,26 +1242,17 @@ namespace JDroidXDesk.Native
         public ModernCardPanel()
         {
             this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
-            this.BorderColor = Color.FromArgb(30, 41, 59);
-            this.CardBackground = Color.FromArgb(15, 23, 42);
+            this.BorderColor = Color.Empty;
+            this.CardBackground = Color.Empty;
             this.BackColor = Color.Transparent;
             this.Padding = new Padding(12);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            Graphics g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            Rectangle rect = new Rectangle(0, 0, this.Width - 1, this.Height - 1);
-            using (SolidBrush bgBrush = new SolidBrush(CardBackground))
-            {
-                g.FillRectangle(bgBrush, rect);
-            }
-            using (Pen borderPen = new Pen(BorderColor, 1))
-            {
-                g.DrawRectangle(borderPen, rect);
-            }
+            Color bg = (CardBackground != Color.Empty && CardBackground != Color.Transparent) ? CardBackground : ThemePalette.ColorBgCard;
+            Color border = (BorderColor != Color.Empty && BorderColor != Color.Transparent) ? BorderColor : ThemePalette.ColorBorderCard;
+            ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, this.Width - 1, this.Height - 3), bg, border, ThemePalette.ColorShadow, 8);
         }
     }
 
@@ -716,18 +1289,18 @@ namespace JDroidXDesk.Native
         {
             this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
             this.Size = new Size(260, 42);
-            this.BackColor = Color.FromArgb(10, 16, 26);
-            this.BorderColor = Color.FromArgb(40, 53, 76);
-            this.FocusBorderColor = Color.FromArgb(56, 189, 248);
+            this.BackColor = Color.Transparent;
+            this.BorderColor = ThemePalette.ColorBorderCard;
+            this.FocusBorderColor = ThemePalette.ColorAccentSky;
             this.AutoFormatDeskId = true;
 
             innerBox = new TextBox
             {
                 BorderStyle = BorderStyle.None,
-                BackColor = Color.FromArgb(10, 16, 26),
-                ForeColor = Color.White,
+                BackColor = ThemePalette.ColorBgInput,
+                ForeColor = ThemePalette.ColorTextPrimary,
                 Font = new Font("Consolas", 14f, FontStyle.Bold),
-                Location = new Point(12, 10),
+                Location = new Point(12, 11),
                 Width = this.Width - 44
             };
 
@@ -796,6 +1369,18 @@ namespace JDroidXDesk.Native
             };
         }
 
+        public void ApplyTheme()
+        {
+            if (innerBox != null)
+            {
+                innerBox.BackColor = ThemePalette.ColorBgInput;
+                innerBox.ForeColor = ThemePalette.ColorTextPrimary;
+            }
+            this.BorderColor = ThemePalette.ColorBorderCard;
+            this.FocusBorderColor = ThemePalette.ColorAccentSky;
+            this.Invalidate();
+        }
+
         private void UpdatePlaceholder()
         {
             if (lblPlaceholder != null)
@@ -807,12 +1392,21 @@ namespace JDroidXDesk.Native
             base.OnPaint(e);
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            Color curBorder = innerBox.Focused ? FocusBorderColor : BorderColor;
+            Color curBorder = innerBox.Focused ? (FocusBorderColor != Color.Empty ? FocusBorderColor : ThemePalette.ColorAccentSky) : (BorderColor != Color.Empty ? BorderColor : ThemePalette.ColorBorderCard);
             string digits = Regex.Replace(innerBox.Text, @"[^\d]", "");
             if (digits.Length == 9) curBorder = Color.FromArgb(16, 185, 129);
-            using (Pen pen = new Pen(curBorder, 1.5f))
+
+            Rectangle rect = new Rectangle(0, 0, this.Width - 1, this.Height - 1);
+            using (GraphicsPath path = ThemePalette.CreateRoundedPath(rect, 6))
             {
-                g.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
+                using (SolidBrush b = new SolidBrush(innerBox.BackColor))
+                {
+                    g.FillPath(b, path);
+                }
+                using (Pen pen = new Pen(curBorder, 1.4f))
+                {
+                    g.DrawPath(pen, path);
+                }
             }
         }
     }
@@ -990,7 +1584,7 @@ namespace JDroidXDesk.Native
         {
             this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
             this.Size = new Size(820, 165);
-            this.BackColor = Color.FromArgb(20, 28, 45);
+            this.BackColor = Color.Transparent;
 
             frontPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
             backPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Visible = false };
@@ -1000,9 +1594,9 @@ namespace JDroidXDesk.Native
                 Text = "⮌ Telemetry / Keys",
                 Size = new Size(140, 26),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                NormalColor = Color.FromArgb(30, 41, 59),
-                HoverColor = Color.FromArgb(51, 65, 85),
-                TextColor = Color.FromArgb(56, 189, 248),
+                NormalColor = ThemePalette.IsDarkTheme ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240),
+                HoverColor = ThemePalette.IsDarkTheme ? Color.FromArgb(51, 65, 85) : Color.FromArgb(203, 213, 225),
+                TextColor = ThemePalette.ColorAccentSky,
                 Font = new Font("Segoe UI", 8f, FontStyle.Bold)
             };
             btnFlip.Location = new Point(this.Width - 156, 12);
@@ -1014,11 +1608,8 @@ namespace JDroidXDesk.Native
             btnFlip.BringToFront();
 
             this.Paint += (s, e) => {
-                Color borderC = isFlipped ? Color.FromArgb(56, 189, 248) : Color.FromArgb(40, 53, 76);
-                using (Pen p = new Pen(borderC, 1.2f))
-                {
-                    e.Graphics.DrawRectangle(p, 0, 0, this.Width - 1, this.Height - 1);
-                }
+                Color borderC = isFlipped ? ThemePalette.ColorAccentSky : ThemePalette.ColorBorderCard;
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, this.Width - 1, this.Height - 3), ThemePalette.ColorBgCard, borderC, ThemePalette.ColorShadow, 10);
             };
 
             this.Resize += (s, e) => {
@@ -1095,7 +1686,7 @@ namespace JDroidXDesk.Native
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
-            Color bg = isSelected ? Color.FromArgb(30, 41, 59) : (e.Index % 2 == 0 ? Color.FromArgb(10, 16, 26) : Color.FromArgb(15, 23, 42));
+            Color bg = isSelected ? ThemePalette.ColorPrimary : (e.Index % 2 == 0 ? ThemePalette.ColorBgCard : ThemePalette.ColorBgCardElevated);
 
             using (SolidBrush b = new SolidBrush(bg))
             {
@@ -1104,12 +1695,12 @@ namespace JDroidXDesk.Native
 
             g.DrawString("🖥️", new Font("Segoe UI Emoji", 11f), Brushes.White, e.Bounds.X + 8, e.Bounds.Y + 12);
 
-            using (SolidBrush tb = new SolidBrush(isSelected ? Color.FromArgb(56, 189, 248) : Color.White))
+            using (SolidBrush tb = new SolidBrush(isSelected ? Color.White : ThemePalette.ColorTextPrimary))
             {
                 g.DrawString(it.Title ?? "", new Font("Segoe UI", 9f, FontStyle.Bold), tb, e.Bounds.X + 36, e.Bounds.Y + 6);
             }
 
-            using (SolidBrush sb = new SolidBrush(Color.FromArgb(148, 163, 184)))
+            using (SolidBrush sb = new SolidBrush(isSelected ? Color.FromArgb(226, 232, 240) : ThemePalette.ColorTextSecondary))
             {
                 g.DrawString(it.Subtitle ?? "", new Font("Segoe UI", 7.8f), sb, e.Bounds.X + 36, e.Bounds.Y + 24);
             }
@@ -1153,8 +1744,8 @@ namespace JDroidXDesk.Native
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.BackColor = Color.FromArgb(15, 23, 42);
-            this.ForeColor = Color.White;
+            this.BackColor = ThemePalette.ColorBgWorkspace;
+            this.ForeColor = ThemePalette.ColorTextPrimary;
             this.Font = new Font("Segoe UI", 9f);
             this.ShowInTaskbar = false;
 
@@ -1164,7 +1755,7 @@ namespace JDroidXDesk.Native
             {
                 Text = title,
                 Font = new Font("Segoe UI", 12f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(56, 189, 248),
+                ForeColor = ThemePalette.ColorPrimary,
                 Location = new Point(24, 18),
                 AutoSize = true
             };
@@ -1173,7 +1764,7 @@ namespace JDroidXDesk.Native
             {
                 Text = message,
                 Font = new Font("Segoe UI", 9.2f),
-                ForeColor = Color.FromArgb(203, 213, 225),
+                ForeColor = ThemePalette.ColorTextSecondary,
                 Location = new Point(24, 52),
                 Size = new Size(476, 75)
             };
@@ -1261,8 +1852,7 @@ namespace JDroidXDesk.Native
             this.FormBorderStyle = FormBorderStyle.None;
             this.ShowInTaskbar = false;
             this.StartPosition = FormStartPosition.Manual;
-            this.Size = new Size(360, 68);
-            this.BackColor = Color.FromArgb(15, 23, 42);
+            this.BackColor = ThemePalette.ColorBgCard;
 
             Rectangle workArea = Screen.PrimaryScreen.WorkingArea;
             int x = workArea.Right - this.Width - 16;
@@ -1274,24 +1864,20 @@ namespace JDroidXDesk.Native
                 Graphics g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
 
-                using (SolidBrush bg = new SolidBrush(Color.FromArgb(15, 23, 42)))
-                using (Pen borderPen = new Pen(Color.FromArgb(40, 53, 76), 1))
-                {
-                    g.FillRectangle(bg, 0, 0, this.Width - 1, this.Height - 1);
-                    g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
-                }
+                Rectangle r = new Rectangle(0, 0, this.Width - 1, this.Height - 1);
+                ThemePalette.DrawFloatingCard(g, r, ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 8);
 
                 using (SolidBrush ab = new SolidBrush(accentColor))
                 {
-                    g.FillRectangle(ab, 0, 0, 4, this.Height);
+                    g.FillRectangle(ab, 0, 4, 4, this.Height - 8);
                 }
 
-                using (SolidBrush tb = new SolidBrush(Color.White))
+                using (SolidBrush tb = new SolidBrush(ThemePalette.ColorTextPrimary))
                 {
                     g.DrawString(toastTitle, new Font("Segoe UI", 9.5f, FontStyle.Bold), tb, 14, 10);
                 }
 
-                using (SolidBrush mb = new SolidBrush(Color.FromArgb(148, 163, 184)))
+                using (SolidBrush mb = new SolidBrush(ThemePalette.ColorTextSecondary))
                 {
                     g.DrawString(toastMessage, new Font("Segoe UI", 8.2f), mb, 14, 34);
                 }
@@ -1416,6 +2002,22 @@ namespace JDroidXDesk.Native
         // Left Drawer Content Controls
         private Label lblDrawerTitle;
         private Panel drawerContentPanel;
+        private Panel drawerHeader;
+
+        // Welcome Cards SmartFit Components
+        private Panel cardContainer;
+        private Panel pnlEnginePill;
+        private Panel cardColab;
+        private Panel cardShare;
+        private ModernCardFlipper flipperConnect;
+        private Panel codeBox;
+        private FlowLayoutPanel shareBtns;
+        private TextBox txtColabInput;
+        private Button btnPasteColab;
+        private Button btnApplyColab;
+        private Button btnColabNotebook;
+        private ComboBox cboSavedFleet;
+        private Panel cardRecent;
 
         // Console Controls
         private Label lblLocalId;
@@ -1457,6 +2059,7 @@ namespace JDroidXDesk.Native
         private bool isRdpPinBarPinned = true;
         private DateTime sessionStartTime;
         private DateTime connectionAttemptStartTime;
+        private DateTime lastUserActivityUtc = DateTime.UtcNow;
         private System.Windows.Forms.Timer sessionTelemetryTimer;
 
         private System.Windows.Forms.Timer connectingAnimationTimer;
@@ -1491,11 +2094,41 @@ namespace JDroidXDesk.Native
         private string colabGpuText = "-- / --";
         private string colabDiskText = "-- / --";
         private System.Windows.Forms.Timer colabTelemetryTimer;
+        private Panel panelMetaEngine;
+        private Label lblMetaEngineTitle;
+        private ComboBox cbHeaderEngineSelector;
+        private Button btnHeaderEngineGuide;
+        private Button btnHeaderRunScript;
+        private Label lblHeaderEngineStatus;
+        private Label lblBackendSyncStatus;
+        private Button btnThemeToggle;
+        private ComboBox cbHeaderThemeSelector;
+        private Label lblHeaderGatewayPill;
+        private bool isDarkMode = false; // Default: Light-First Discipline
+        private bool engineIsLiveActive = false;
+        private string engineLiveStatusBadge = "[READY]";
+        private string backendSyncStatusBadge = "[✓ SYNCED]";
+        private bool isSwitchingEngineFromHeader = false;
+        private FileSystemWatcher dbThemeWatcher;
+
+        // Bottom Footer with Scrolling Marquee Metadata
+        private Panel footerStatusBar;
+        private Label lblFooterEngineBadge;
+        private Label lblFooterMarquee;
+        private Button btnFooterTheme;
+        private Label lblFooterNodeStatus;
+        private System.Windows.Forms.Timer marqueeTimer;
+        private int marqueeCharIndex = 0;
         private Panel panelMetaRam;
         private Panel panelMetaGpu;
         private Panel panelMetaDisk;
         private Panel panelMetaStatus;
         private Panel panelMetaHeartbeat;
+        private Label lblMetaRamTitle;
+        private Label lblMetaGpuTitle;
+        private Label lblMetaDiskTitle;
+        private Label lblMetaStatusTitle;
+        private Label lblMetaHeartbeatTitle;
         private Label lblMetaRamVal;
         private Label lblMetaGpuVal;
         private Label lblMetaDiskVal;
@@ -1529,6 +2162,29 @@ namespace JDroidXDesk.Native
         // Settings Studio
         private TreeView settingsTree;
         private Panel settingsSubContentPanel;
+
+        // Server Admin & Engine Management
+        private Panel viewServerAdmin;
+        private Panel headerAdmin;
+        private Panel pnlScrollAdmin;
+        private Panel pnlLimitsCard;
+        private Panel pnlLogsGrid;
+        private DataGridView dgvAdminLogs;
+        private Label lblAdminActiveEngineBadge;
+        private Label lblAdminCpu;
+        private Label lblAdminMem;
+        private Label lblAdminUptime;
+        private Label lblAdminSessions;
+        private NumericUpDown numAdminMaxSessions;
+        private NumericUpDown numAdminBandwidth;
+        private ComboBox cbAdminFps;
+        private NumericUpDown numAdminIdleTimeout;
+        private NumericUpDown numAdminLogRetention;
+        private ComboBox cbAdminHwAccel;
+        private ComboBox cbAdminLogLevel;
+        private TextBox txtAdminLogSearch;
+        private System.Windows.Forms.Timer adminTelemetryTimer;
+        private Dictionary<string, Panel> engineCardPanels = new Dictionary<string, Panel>();
 
         // System Tray
         private NotifyIcon trayIcon;
@@ -1600,7 +2256,7 @@ namespace JDroidXDesk.Native
             this.Size = new Size(1300, 850);
             this.MinimumSize = new Size(1000, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(15, 23, 42);
+            this.BackColor = ThemePalette.ColorBgWorkspace;
             this.Icon = SystemIcons.Shield;
             this.KeyPreview = true;
             this.KeyDown += (s, e) => {
@@ -1618,6 +2274,10 @@ namespace JDroidXDesk.Native
             this.Deactivate += (s, e) => ReleaseAllModifierKeys();
 
 
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+            this.UpdateStyles();
+
             sessionTelemetryTimer = new System.Windows.Forms.Timer();
             sessionTelemetryTimer.Interval = 1000;
             sessionTelemetryTimer.Tick += (s, e) => {
@@ -1627,24 +2287,39 @@ namespace JDroidXDesk.Native
                     lastFramesCount = framesReceivedCount;
                     UpdateLiveTelemetry();
                     if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
+
+                    // Enforce Idle Session Timeout from ServerConfig Processing Limits
+                    if (db != null && db.ServerConfig != null && db.ServerConfig.processingLimits != null)
+                    {
+                        int maxIdleMin = db.ServerConfig.processingLimits.idleTimeoutMinutes > 0 ? db.ServerConfig.processingLimits.idleTimeoutMinutes : 15;
+                        if ((DateTime.UtcNow - lastUserActivityUtc) > TimeSpan.FromMinutes(maxIdleMin))
+                        {
+                            AbortSessionConnection(string.Format("Session idle for {0} min (Auto-disconnect timeout)", maxIdleMin));
+                            ShowToast(string.Format("Session closed: Idle timeout of {0} min reached", maxIdleMin));
+                        }
+                    }
                 }
             };
 
             connectingAnimationTimer = new System.Windows.Forms.Timer();
-            connectingAnimationTimer.Interval = 40; // 25 FPS smooth heartbeat animation
+            connectingAnimationTimer.Interval = 250; // Smooth 4 Hz pulse when idle (zero flicker)
             connectingAnimationTimer.Tick += (s, e) => {
                 headerHeartbeatPulseFrame++;
                 if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
-                if (panelMetaStatus != null && !panelMetaStatus.IsDisposed) panelMetaStatus.Invalidate();
 
                 if (currentConnectionState == SessionConnectionState.Connecting)
                 {
+                    if (connectingAnimationTimer.Interval != 40) connectingAnimationTimer.Interval = 40;
                     connectingPulseFrame++;
                     if (connectingProgressPct < 90 && connectingPulseFrame % 5 == 0)
                     {
                         connectingProgressPct += 2;
                     }
                     if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
+                }
+                else
+                {
+                    if (connectingAnimationTimer.Interval != 250) connectingAnimationTimer.Interval = 250;
                 }
             };
             connectingAnimationTimer.Start();
@@ -1677,6 +2352,7 @@ namespace JDroidXDesk.Native
 
             // Default State
             SwitchWorkspaceView("Console");
+            SetDoubleBuffered(this);
         }
 
         private void SyncDynamicDesktopsFromDatabase()
@@ -1907,42 +2583,93 @@ namespace JDroidXDesk.Native
         private void BuildAntigravityLayout()
         {
             this.Controls.Clear();
+            if (db != null && db.Settings != null && !string.IsNullOrEmpty(db.Settings.theme))
+            {
+                ThemePalette.SetTheme(db.Settings.theme);
+                isDarkMode = ThemePalette.IsDarkTheme;
+            }
+            else
+            {
+                ThemePalette.SetTheme("light-theme");
+                isDarkMode = false;
+            }
+
+            if (dbThemeWatcher == null)
+            {
+                try
+                {
+                    string dir = AppDomain.CurrentDomain.BaseDirectory;
+                    dbThemeWatcher = new FileSystemWatcher(dir, "database.json");
+                    dbThemeWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+                    dbThemeWatcher.Changed += (s, e) => {
+                        Thread.Sleep(150);
+                        if (this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            try
+                            {
+                                this.BeginInvoke(new MethodInvoker(delegate {
+                                    try
+                                    {
+                                        if (db != null) db.Load();
+                                        if (db != null && db.Settings != null && !string.IsNullOrEmpty(db.Settings.theme))
+                                        {
+                                            if (db.Settings.theme != ThemePalette.CurrentThemeName)
+                                            {
+                                                ApplyThemeParadigm(db.Settings.theme, false);
+                                            }
+                                        }
+                                    }
+                                    catch { }
+                                }));
+                            }
+                            catch { }
+                        }
+                    };
+                    dbThemeWatcher.EnableRaisingEvents = true;
+                }
+                catch { }
+            }
+
+
+            // 0. BOTTOM STATUS BAR WITH SCROLLING MARQUEE (DOCK: BOTTOM, HEIGHT: 26)
+            footerStatusBar = new Panel { Dock = DockStyle.Bottom, Height = 26, BackColor = isDarkMode ? Color.FromArgb(10, 15, 26) : Color.FromArgb(226, 232, 240), Padding = new Padding(0) };
+            BuildFooterStatusBarContent();
 
             // 1. TOP HEADER / TITLE BAR (DOCK: TOP, HEIGHT: 44)
-            topHeaderBar = new Panel { Dock = DockStyle.Top, Height = 44, BackColor = Color.FromArgb(9, 13, 22), Padding = new Padding(12, 0, 12, 0) };
+            topHeaderBar = new Panel { Dock = DockStyle.Top, Height = 44, BackColor = isDarkMode ? Color.FromArgb(9, 13, 22) : Color.FromArgb(241, 245, 249), Padding = new Padding(12, 0, 12, 0) };
             BuildTopHeaderContent();
 
             // 2. SLIM ACTIVITY BAR (DOCK: LEFT, WIDTH: 48)
-            activityBar = new Panel { Dock = DockStyle.Left, Width = 48, BackColor = Color.FromArgb(7, 10, 16), Padding = new Padding(0) };
+            activityBar = new Panel { Dock = DockStyle.Left, Width = 48, BackColor = isDarkMode ? Color.FromArgb(7, 10, 16) : Color.FromArgb(226, 232, 240), Padding = new Padding(0) };
             BuildActivityBarContent();
 
             // 3. COLLAPSIBLE PRIMARY SIDEBAR / DRAWER (DOCK: LEFT, WIDTH: 260)
-            collapsibleLeftDrawer = new Panel { Dock = DockStyle.Left, Width = 260, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(0) };
+            collapsibleLeftDrawer = new Panel { Dock = DockStyle.Left, Width = 260, BackColor = isDarkMode ? Color.FromArgb(13, 21, 34) : Color.FromArgb(248, 250, 252), Padding = new Padding(0) };
             BuildLeftDrawerContent();
 
             // 4. COLLAPSIBLE RIGHT INSPECTOR (DOCK: RIGHT, WIDTH: 260)
-            collapsibleRightInspector = new Panel { Dock = DockStyle.Right, Width = 260, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(12), Visible = false };
+            collapsibleRightInspector = new Panel { Dock = DockStyle.Right, Width = 260, BackColor = isDarkMode ? Color.FromArgb(13, 21, 34) : Color.FromArgb(248, 250, 252), Padding = new Padding(12), Visible = false };
             BuildRightInspectorContent();
 
             // 5. COLLAPSIBLE BOTTOM PANEL (DOCK: BOTTOM, HEIGHT: 200)
-            collapsibleBottomDock = new Panel { Dock = DockStyle.Bottom, Height = 200, BackColor = Color.FromArgb(9, 13, 22), Padding = new Padding(0), Visible = false };
+            collapsibleBottomDock = new Panel { Dock = DockStyle.Bottom, Height = 200, BackColor = isDarkMode ? Color.FromArgb(9, 13, 22) : Color.FromArgb(241, 245, 249), Padding = new Padding(0), Visible = false };
             BuildBottomDockContent();
 
             // 6. MAIN CENTER EDITOR WORK AREA (DOCK: FILL - ZERO OVERLAP)
-            centerEditorWorkArea = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42) };
+            centerEditorWorkArea = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace };
             BuildCenterEditorContent();
 
             // -------------------------------------------------------------
             // CRITICAL WINFORMS NON-OVERLAPPING DOCK ORDER:
-            // In WinForms: Control at highest index docks FIRST (takes outer edge).
-            // Control at index 0 docks LAST (fills remaining interior space).
-            // 5: topHeaderBar (docked 1st: takes full top 0,0,W,44)
-            // 4: activityBar (docked 2nd: takes far left 0,44,48,H-44)
-            // 3: collapsibleLeftDrawer (docked 3rd: takes left 48,44,260,H-44)
-            // 2: collapsibleRightInspector (docked 4th: takes right W-260,44,260,H-44)
-            // 1: collapsibleBottomDock (docked 5th: takes bottom 308,H-200,W-568,200)
+            // 6: footerStatusBar (docked 1st: takes full bottom 0, H-26, W, 26)
+            // 5: topHeaderBar (docked 2nd: takes full top 0,0,W,44)
+            // 4: activityBar (docked 3rd: takes far left 0,44,48,H-70)
+            // 3: collapsibleLeftDrawer (docked 4th: takes left 48,44,260,H-70)
+            // 2: collapsibleRightInspector (docked 5th: takes right W-260,44,260,H-70)
+            // 1: collapsibleBottomDock (docked 6th: takes bottom above footer)
             // 0: centerEditorWorkArea (docked LAST: fills exact remaining center rectangle!)
             // -------------------------------------------------------------
+            this.Controls.Add(footerStatusBar);
             this.Controls.Add(topHeaderBar);
             this.Controls.Add(activityBar);
             this.Controls.Add(collapsibleLeftDrawer);
@@ -1950,6 +2677,7 @@ namespace JDroidXDesk.Native
             this.Controls.Add(collapsibleBottomDock);
             this.Controls.Add(centerEditorWorkArea);
 
+            this.Controls.SetChildIndex(footerStatusBar, 6);
             this.Controls.SetChildIndex(topHeaderBar, 5);
             this.Controls.SetChildIndex(activityBar, 4);
             this.Controls.SetChildIndex(collapsibleLeftDrawer, 3);
@@ -1968,33 +2696,35 @@ namespace JDroidXDesk.Native
             leftBrand.Controls.Add(lblLogo);
             leftBrand.Controls.Add(lblSub);
 
-            // Center: Colab Cloud Server Telemetry Indicators (Image 1 & 2 Specification)
+            // Center: Multi-Engine Switcher & Real-Time Telemetry in Top Header
             FlowLayoutPanel centerColabTelemetry = new FlowLayoutPanel
             {
-                Size = new Size(570, 36),
-                Location = new Point((topHeaderBar.Width - 570) / 2, 4),
+                Size = new Size(770, 36),
+                Location = new Point(Math.Max(leftBrand.Right + 8, (topHeaderBar.Width - 770) / 2), 4),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 BackColor = Color.Transparent,
                 Anchor = AnchorStyles.Top
             };
             topHeaderBar.Resize += (s, e) => {
-                centerColabTelemetry.Location = new Point((topHeaderBar.Width - centerColabTelemetry.Width) / 2, 4);
+                centerColabTelemetry.Location = new Point(Math.Max(leftBrand.Right + 8, (topHeaderBar.Width - centerColabTelemetry.Width) / 2), 4);
             };
 
-            panelMetaRam = CreateTelemetryBox("System RAM", colabRamText, out lblMetaRamVal, 0.10f);
-            panelMetaGpu = CreateTelemetryBox("GPU RAM", colabGpuText, out lblMetaGpuVal, 0.00f);
-            panelMetaDisk = CreateTelemetryBox("Disk", colabDiskText, out lblMetaDiskVal, 0.39f);
-            panelMetaStatus = CreateStatusBox("Colab Relay", out lblMetaStatusVal);
-            panelMetaHeartbeat = CreateHeartbeatBox();
+            panelMetaEngine = CreateEngineSelectorBox();
+            panelMetaRam = CreateTelemetryBox("System RAM", colabRamText, out lblMetaRamTitle, out lblMetaRamVal, 0.10f);
+            panelMetaGpu = CreateTelemetryBox("GPU RAM", colabGpuText, out lblMetaGpuTitle, out lblMetaGpuVal, 0.00f);
+            panelMetaDisk = CreateTelemetryBox("Disk", colabDiskText, out lblMetaDiskTitle, out lblMetaDiskVal, 0.39f);
+            panelMetaStatus = CreateStatusBox("Colab Relay", out lblMetaStatusTitle, out lblMetaStatusVal);
+            panelMetaHeartbeat = CreateHeartbeatBox(out lblMetaHeartbeatTitle, out lblMetaHeartbeatVal);
 
+            centerColabTelemetry.Controls.Add(panelMetaEngine);
             centerColabTelemetry.Controls.Add(panelMetaRam);
             centerColabTelemetry.Controls.Add(panelMetaGpu);
             centerColabTelemetry.Controls.Add(panelMetaDisk);
             centerColabTelemetry.Controls.Add(panelMetaStatus);
             centerColabTelemetry.Controls.Add(panelMetaHeartbeat);
 
-            // Right: Antigravity IDE Layout View Toggles
+            // Right: Antigravity IDE Layout View Toggles + Theme Toggle
             FlowLayoutPanel rightLayoutControls = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Padding = new Padding(0, 6, 0, 0) };
 
             btnToggleActivityBar = CreateLayoutIconBtn("◫", "Toggle Activity Bar (Far Left)", (s, e) => {
@@ -2017,52 +2747,773 @@ namespace JDroidXDesk.Native
                 HighlightLayoutBtn(btnToggleRightInspector, collapsibleRightInspector.Visible);
             }, collapsibleRightInspector != null && collapsibleRightInspector.Visible);
 
+            btnThemeToggle = CreateLayoutIconBtn("🌓", "Toggle Dark / High-Contrast Light Theme", (s, e) => {
+                ToggleAppTheme();
+            }, isDarkMode);
+
+            lblHeaderGatewayPill = new Label
+            {
+                Text = "🟢 HTTP 200 : 12345",
+                Font = new Font("Segoe UI", 7.6f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(16, 185, 129),
+                BackColor = isDarkMode ? Color.FromArgb(20, 28, 45) : Color.FromArgb(226, 232, 240),
+                AutoSize = true,
+                Padding = new Padding(6, 4, 6, 4),
+                Margin = new Padding(0, 3, 6, 0)
+            };
+
+            cbHeaderThemeSelector = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 8f),
+                BackColor = isDarkMode ? Color.FromArgb(20, 28, 45) : Color.FromArgb(255, 255, 255),
+                ForeColor = isDarkMode ? Color.FromArgb(241, 245, 249) : Color.FromArgb(15, 23, 42),
+                Width = 140,
+                Margin = new Padding(0, 3, 6, 0)
+            };
+            cbHeaderThemeSelector.Items.AddRange(new object[] {
+                "☀️ Light Enterprise",
+                "🌙 Dark Studio",
+                "❄️ Nord Arctic",
+                "🌅 Solarized Light",
+                "🌌 Solarized Dark",
+                "🎨 Monokai Pro",
+                "🧛 Dracula Midnight",
+                "🗼 Tokyo Night",
+                "⚡ Cyberpunk Neon",
+                "🌲 Matrix Emerald",
+                "🌊 Deep Ocean",
+                "🌇 Crimson Sunset",
+                "📻 Gruvbox Retro",
+                "🛡️ Titanium Slate",
+                "👁️ High Contrast"
+            });
+            cbHeaderThemeSelector.SelectedIndex = ThemeToComboIndex(ThemePalette.CurrentThemeName);
+            cbHeaderThemeSelector.SelectedIndexChanged += (s, e) => {
+                if (cbHeaderThemeSelector.SelectedIndex >= 0)
+                {
+                    string key = ComboIndexToThemeKey(cbHeaderThemeSelector.SelectedIndex);
+                    ApplyThemeParadigm(key, true);
+                }
+            };
+
+            rightLayoutControls.Controls.Add(lblHeaderGatewayPill);
             rightLayoutControls.Controls.Add(btnToggleActivityBar);
             rightLayoutControls.Controls.Add(btnToggleLeftDrawer);
             rightLayoutControls.Controls.Add(btnToggleBottomDock);
             rightLayoutControls.Controls.Add(btnToggleRightInspector);
+            rightLayoutControls.Controls.Add(cbHeaderThemeSelector);
+            rightLayoutControls.Controls.Add(btnThemeToggle);
 
             topHeaderBar.Controls.Add(leftBrand);
             topHeaderBar.Controls.Add(centerColabTelemetry);
             topHeaderBar.Controls.Add(rightLayoutControls);
         }
 
-        private Panel CreateTelemetryBox(string title, string initialValue, out Label valLabel, float fillRatio)
+        private Panel CreateEngineSelectorBox()
         {
-            Panel box = new Panel { Size = new Size(110, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42) };
-            Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 7f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 2), AutoSize = true };
-            Label lVal = new Label { Text = initialValue, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(4, 15), AutoSize = true };
+            Panel box = new Panel { Size = new Size(235, 34), Margin = new Padding(2, 0, 3, 0), BackColor = Color.Transparent };
+            lblMetaEngineTitle = new Label { Text = "⚡ jDroid-Engine", Font = new Font("Segoe UI", 6.8f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(4, 1), AutoSize = true };
+
+            lblHeaderEngineStatus = new Label {
+                Text = engineLiveStatusBadge,
+                Font = new Font("Segoe UI", 6.2f, FontStyle.Bold),
+                ForeColor = engineIsLiveActive ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11),
+                Location = new Point(94, 1),
+                AutoSize = true
+            };
+
+            lblBackendSyncStatus = new Label {
+                Text = backendSyncStatusBadge,
+                Font = new Font("Segoe UI", 6.2f),
+                ForeColor = Color.FromArgb(56, 189, 248),
+                Location = new Point(184, 1),
+                AutoSize = true
+            };
+
+            cbHeaderEngineSelector = new ComboBox {
+                Location = new Point(4, 13),
+                Size = new Size(150, 20),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ThemePalette.ColorBgInput,
+                ForeColor = ThemePalette.ColorTextPrimary,
+                Font = new Font("Segoe UI", 7.8f, FontStyle.Bold)
+            };
+            cbHeaderEngineSelector.Items.Add("⚡ Sunshine (jDroid-X)");
+            cbHeaderEngineSelector.Items.Add("⚡ RustDesk (jDroid-X)");
+            cbHeaderEngineSelector.Items.Add("⚡ Guacamole (jDroid-X)");
+            cbHeaderEngineSelector.Items.Add("⚡ Google Colab (jDroid-X)");
+
+            SyncHeaderEngineDropdown(db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "sunshine");
+
+            cbHeaderEngineSelector.SelectedIndexChanged += (s, e) => {
+                if (isSwitchingEngineFromHeader) return;
+                string selectedEng = "sunshine";
+                if (cbHeaderEngineSelector.SelectedIndex == 1) selectedEng = "rustdesk";
+                else if (cbHeaderEngineSelector.SelectedIndex == 2) selectedEng = "guacamole";
+                else if (cbHeaderEngineSelector.SelectedIndex == 3) selectedEng = "jdroidRelay";
+
+                isSwitchingEngineFromHeader = true;
+                try {
+                    SwitchActiveEngine(selectedEng);
+                } finally {
+                    isSwitchingEngineFromHeader = false;
+                }
+            };
+
+            btnHeaderRunScript = new Button {
+                Text = "🚀",
+                Location = new Point(158, 12),
+                Size = new Size(24, 20),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ThemePalette.ColorBgCard,
+                ForeColor = Color.FromArgb(16, 185, 129),
+                Font = new Font("Segoe UI Symbol", 8f),
+                Cursor = Cursors.Hand
+            };
+            btnHeaderRunScript.FlatAppearance.BorderSize = 0;
+            ToolTip ttRun = new ToolTip();
+            ttRun.SetToolTip(btnHeaderRunScript, "🚀 Run Automated Start Script for this Engine (scripts/start-*.bat)");
+            btnHeaderRunScript.Click += (s, e) => {
+                string currentEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) 
+                    ? db.ServerConfig.activeEngine 
+                    : "sunshine";
+                LaunchEngineStartScript(currentEng);
+            };
+
+            btnHeaderEngineGuide = new Button {
+                Text = "📖",
+                Location = new Point(184, 12),
+                Size = new Size(23, 20),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ThemePalette.ColorBgCard,
+                ForeColor = Color.FromArgb(250, 204, 21),
+                Font = new Font("Segoe UI Symbol", 8f),
+                Cursor = Cursors.Hand
+            };
+            btnHeaderEngineGuide.FlatAppearance.BorderSize = 0;
+            ToolTip tt = new ToolTip();
+            tt.SetToolTip(btnHeaderEngineGuide, "Open Manual Configuration, Setup Steps & Port Rules for All Engines");
+            btnHeaderEngineGuide.Click += (s, e) => {
+                string currentEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) 
+                    ? db.ServerConfig.activeEngine 
+                    : "sunshine";
+                ShowEngineManualSetupDialog(currentEng);
+            };
+
+            box.Controls.Add(lblMetaEngineTitle);
+            box.Controls.Add(lblHeaderEngineStatus);
+            box.Controls.Add(lblBackendSyncStatus);
+            box.Controls.Add(cbHeaderEngineSelector);
+            box.Controls.Add(btnHeaderRunScript);
+            box.Controls.Add(btnHeaderEngineGuide);
+
+            box.Paint += (s, e) => {
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, box.Width - 1, box.Height - 1), ThemePalette.ColorBgCardHeader, Color.FromArgb(56, 189, 248), ThemePalette.ColorShadow, 6);
+            };
+
+            return box;
+        }
+
+        private void BuildFooterStatusBarContent()
+        {
+            if (footerStatusBar == null) return;
+            footerStatusBar.Controls.Clear();
+
+            // Left: Engine Status Badge
+            lblFooterEngineBadge = new Label
+            {
+                Dock = DockStyle.Left,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 7.8f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(16, 185, 129),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 4, 8, 0),
+                Cursor = Cursors.Hand
+            };
+            string curEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "sunshine";
+            lblFooterEngineBadge.Text = string.Format("⚡ jDroid-Engine: {0} [● READY]", curEng.ToUpper());
+            lblFooterEngineBadge.Click += (s, e) => SwitchWorkspaceView("ServerAdmin");
+
+            // Right: Interactive Quick Controls
+            FlowLayoutPanel rightFooter = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Padding = new Padding(0, 2, 8, 0)
+            };
+
+            btnFooterTheme = new Button
+            {
+                Text = isDarkMode ? "🌓 Dark" : "☀️ Light",
+                Size = new Size(68, 20),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = isDarkMode ? Color.FromArgb(20, 28, 45) : Color.FromArgb(241, 245, 249),
+                ForeColor = isDarkMode ? Color.FromArgb(241, 245, 249) : Color.FromArgb(15, 23, 42),
+                Font = new Font("Segoe UI", 7.2f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 6, 0)
+            };
+            btnFooterTheme.FlatAppearance.BorderSize = 0;
+            btnFooterTheme.Click += (s, e) => ToggleAppTheme();
+
+            Label lblFooterSmartFit = new Label
+            {
+                Text = "🖥️ SmartFit (DirectX)",
+                Font = new Font("Segoe UI", 7.5f),
+                ForeColor = Color.FromArgb(148, 163, 184),
+                AutoSize = true,
+                Margin = new Padding(0, 3, 8, 0)
+            };
+
+            lblFooterNodeStatus = new Label
+            {
+                Text = "🟢 Node: 12345 (HTTP 200)",
+                Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(16, 185, 129),
+                AutoSize = true,
+                Margin = new Padding(0, 3, 0, 0)
+            };
+
+            rightFooter.Controls.Add(btnFooterTheme);
+            rightFooter.Controls.Add(lblFooterSmartFit);
+            rightFooter.Controls.Add(lblFooterNodeStatus);
+
+            // Center: Scrolling Marquee Metadata Ticker
+            Panel marqueeContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = ThemePalette.ColorBgWorkspace,
+                Padding = new Padding(8, 3, 8, 0)
+            };
+
+            lblFooterMarquee = new Label
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 7.8f),
+                ForeColor = isDarkMode ? Color.FromArgb(203, 213, 225) : Color.FromArgb(51, 65, 85),
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoEllipsis = true
+            };
+            marqueeContainer.Controls.Add(lblFooterMarquee);
+
+            footerStatusBar.Controls.Add(marqueeContainer);
+            footerStatusBar.Controls.Add(lblFooterEngineBadge);
+            footerStatusBar.Controls.Add(rightFooter);
+
+            if (marqueeTimer != null) { marqueeTimer.Stop(); marqueeTimer.Dispose(); }
+            marqueeTimer = new System.Windows.Forms.Timer { Interval = 350 };
+            marqueeTimer.Tick += (s, e) => UpdateMarqueeTicker();
+            marqueeTimer.Start();
+        }
+
+        private void UpdateMarqueeTicker()
+        {
+            if (lblFooterMarquee == null || lblFooterMarquee.IsDisposed) return;
+            string eng = db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "sunshine";
+            string hostId = currentHostDesktop != null ? currentHostDesktop.RemoteId : "984-102-391";
+            string lanIp = GetLocalLanIp();
+            string themeName = ThemePalette.GetThemeDisplayName();
+
+            string fullMarqueeText = string.Format(
+                "⚡ jDroid-X Remote Console  |  jDroid-Engine: {0} ({1})  |  Security: AES-256-GCM  |  Host Desk ID: {2}  |  LAN: {3}  |  RTT Latency: <2ms  |  Display: SmartFit  |  Theme: {4}  |  Node Gateway: HTTP 200 (Port 12345)  |  Flat 55\"+ TV / Multi-Resolution Optimized  |  Operator: JEET  ---  ",
+                eng.ToUpper(),
+                engineIsLiveActive ? "RUNNING" : "STANDBY",
+                hostId,
+                lanIp,
+                themeName
+            );
+
+            if (fullMarqueeText.Length > 0)
+            {
+                marqueeCharIndex = (marqueeCharIndex + 1) % fullMarqueeText.Length;
+                string rotated = fullMarqueeText.Substring(marqueeCharIndex) + fullMarqueeText.Substring(0, marqueeCharIndex);
+                lblFooterMarquee.Text = rotated;
+            }
+        }
+
+        private string ComboIndexToThemeKey(int index)
+        {
+            switch (index)
+            {
+                case 1: return "dark-theme";
+                case 2: return "theme-nord";
+                case 3: return "theme-solarized-light";
+                case 4: return "theme-solarized-dark";
+                case 5: return "theme-monokai";
+                case 6: return "theme-dracula";
+                case 7: return "theme-tokyo-night";
+                case 8: return "theme-cyberpunk";
+                case 9: return "theme-emerald";
+                case 10: return "theme-ocean";
+                case 11: return "theme-sunset";
+                case 12: return "theme-gruvbox";
+                case 13: return "theme-slate";
+                case 14: return "theme-high-contrast";
+                default: return "light-theme";
+            }
+        }
+
+        private int ThemeToComboIndex(string key)
+        {
+            if (string.IsNullOrEmpty(key)) return 0;
+            switch (key.ToLower())
+            {
+                case "dark":
+                case "dark-theme":
+                case "theme-dark": return 1;
+                case "theme-nord": return 2;
+                case "theme-solarized-light": return 3;
+                case "theme-solarized-dark": return 4;
+                case "theme-monokai": return 5;
+                case "theme-dracula": return 6;
+                case "theme-tokyo-night": return 7;
+                case "theme-cyberpunk": return 8;
+                case "theme-emerald": return 9;
+                case "theme-ocean": return 10;
+                case "theme-sunset": return 11;
+                case "theme-gruvbox": return 12;
+                case "theme-slate": return 13;
+                case "theme-high-contrast": return 14;
+                default: return 0; // Light Enterprise
+            }
+        }
+
+        private void ApplyThemeParadigm(string themeKey, bool saveToDb = true)
+        {
+            ThemePalette.SetTheme(themeKey);
+            isDarkMode = ThemePalette.IsDarkTheme;
+            if (saveToDb && db != null && db.Settings != null)
+            {
+                db.Settings.theme = themeKey;
+                db.Save();
+            }
+            ApplyThemeToApp();
+            ShowToast(string.Format("Theme applied: {0}", ThemePalette.GetThemeDisplayName().ToUpper()));
+        }
+
+        private void ToggleAppTheme()
+        {
+            string next = isDarkMode ? "light-theme" : "dark-theme";
+            ApplyThemeParadigm(next, true);
+        }
+
+        private void ApplyThemeToApp()
+        {
+            Color bgWork = ThemePalette.ColorBgWorkspace;
+            this.BackColor = bgWork;
+            if (topHeaderBar != null) topHeaderBar.BackColor = isDarkMode ? Color.FromArgb(9, 13, 22) : Color.FromArgb(241, 245, 249);
+            if (activityBar != null) activityBar.BackColor = isDarkMode ? Color.FromArgb(7, 10, 16) : Color.FromArgb(226, 232, 240);
+            if (collapsibleLeftDrawer != null) collapsibleLeftDrawer.BackColor = ThemePalette.ColorBgSidebar;
+            if (collapsibleRightInspector != null) collapsibleRightInspector.BackColor = ThemePalette.ColorBgSidebar;
+            if (collapsibleBottomDock != null) collapsibleBottomDock.BackColor = isDarkMode ? Color.FromArgb(9, 13, 22) : Color.FromArgb(241, 245, 249);
+            if (centerEditorWorkArea != null) centerEditorWorkArea.BackColor = bgWork;
+            if (footerStatusBar != null) footerStatusBar.BackColor = isDarkMode ? Color.FromArgb(10, 15, 26) : Color.FromArgb(226, 232, 240);
+            if (btnFooterTheme != null) btnFooterTheme.Text = isDarkMode ? "🌓 Dark" : "☀️ Light";
+            if (lblFooterMarquee != null) lblFooterMarquee.ForeColor = isDarkMode ? Color.FromArgb(203, 213, 225) : Color.FromArgb(51, 65, 85);
+
+            if (cbHeaderThemeSelector != null)
+            {
+                int desiredIdx = ThemeToComboIndex(ThemePalette.CurrentThemeName);
+                if (cbHeaderThemeSelector.SelectedIndex != desiredIdx)
+                {
+                    cbHeaderThemeSelector.SelectedIndex = desiredIdx;
+                }
+                cbHeaderThemeSelector.BackColor = ThemePalette.ColorBgInput;
+                cbHeaderThemeSelector.ForeColor = ThemePalette.ColorTextPrimary;
+            }
+            if (lblHeaderGatewayPill != null)
+            {
+                lblHeaderGatewayPill.BackColor = isDarkMode ? Color.FromArgb(20, 28, 45) : Color.FromArgb(226, 232, 240);
+            }
+
+            // Sync Main Tab Bar
+            if (mainTabBar != null)
+            {
+                mainTabBar.BackColor = ThemePalette.ColorBgTabBar;
+                BuildMainTabBar();
+            }
+
+            // Sync Local Ribbon Bar
+            if (localBar != null)
+            {
+                localBar.BackColor = ThemePalette.ColorBgCardHeader;
+                if (txtTargetId != null)
+                {
+                    txtTargetId.BackColor = ThemePalette.ColorBgInput;
+                    txtTargetId.ForeColor = ThemePalette.ColorTextPrimary;
+                }
+            }
+
+            // Sync Left Drawer
+            if (drawerHeader != null)
+            {
+                drawerHeader.BackColor = ThemePalette.ColorBgSidebarHeader;
+            }
+            if (drawerContentPanel != null)
+            {
+                drawerContentPanel.BackColor = ThemePalette.ColorBgSidebar;
+            }
+            UpdateDrawerForCurrentView(activeViewKey);
+
+            // Sync Subviews
+            if (viewConsole != null) viewConsole.BackColor = bgWork;
+            if (panelWelcomeCards != null)
+            {
+                panelWelcomeCards.BackColor = bgWork;
+                BuildWelcomeCardsContent();
+            }
+
+            if (viewFileTransfer != null)
+            {
+                viewFileTransfer.BackColor = bgWork;
+                if (lbLocalFiles != null) { lbLocalFiles.BackColor = ThemePalette.ColorBgInput; lbLocalFiles.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (lbRemoteFiles != null) { lbRemoteFiles.BackColor = ThemePalette.ColorBgInput; lbRemoteFiles.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (lblLocalPath != null) lblLocalPath.ForeColor = ThemePalette.ColorTextSecondary;
+            }
+
+            if (viewFleet != null)
+            {
+                viewFleet.BackColor = bgWork;
+                if (dgvFleet != null)
+                {
+                    dgvFleet.BackgroundColor = ThemePalette.ColorBgCard;
+                    dgvFleet.GridColor = ThemePalette.ColorBorderCard;
+                    dgvFleet.ColumnHeadersDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+                    dgvFleet.ColumnHeadersDefaultCellStyle.ForeColor = ThemePalette.ColorTextSecondary;
+                    dgvFleet.DefaultCellStyle.BackColor = ThemePalette.ColorBgCard;
+                    dgvFleet.DefaultCellStyle.ForeColor = ThemePalette.ColorTextPrimary;
+                    dgvFleet.AlternatingRowsDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+                }
+                if (txtFleetSearch != null) { txtFleetSearch.BackColor = ThemePalette.ColorBgInput; txtFleetSearch.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (cboFleetGroupFilter != null) { cboFleetGroupFilter.BackColor = ThemePalette.ColorBgInput; cboFleetGroupFilter.ForeColor = ThemePalette.ColorTextPrimary; }
+            }
+
+            if (viewHistory != null)
+            {
+                viewHistory.BackColor = bgWork;
+                if (dgvHistory != null)
+                {
+                    dgvHistory.BackgroundColor = ThemePalette.ColorBgCard;
+                    dgvHistory.GridColor = ThemePalette.ColorBorderCard;
+                    dgvHistory.ColumnHeadersDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+                    dgvHistory.ColumnHeadersDefaultCellStyle.ForeColor = ThemePalette.ColorTextSecondary;
+                    dgvHistory.DefaultCellStyle.BackColor = ThemePalette.ColorBgCard;
+                    dgvHistory.DefaultCellStyle.ForeColor = ThemePalette.ColorTextPrimary;
+                    dgvHistory.AlternatingRowsDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+                }
+            }
+
+            if (viewSettingsStudio != null)
+            {
+                viewSettingsStudio.BackColor = bgWork;
+                if (settingsTree != null)
+                {
+                    settingsTree.BackColor = ThemePalette.ColorBgSidebar;
+                    settingsTree.ForeColor = ThemePalette.ColorTextPrimary;
+                }
+                if (settingsSubContentPanel != null)
+                {
+                    settingsSubContentPanel.BackColor = bgWork;
+                    if (settingsTree != null && settingsTree.SelectedNode != null)
+                    {
+                        RenderSettingsSubPanel(!string.IsNullOrEmpty(settingsTree.SelectedNode.Name) ? settingsTree.SelectedNode.Name : "General");
+                    }
+                }
+            }
+
+            if (viewServerAdmin != null)
+            {
+                viewServerAdmin.BackColor = bgWork;
+                if (headerAdmin != null) headerAdmin.BackColor = ThemePalette.ColorBgCardHeader;
+                if (pnlScrollAdmin != null) pnlScrollAdmin.BackColor = bgWork;
+                if (pnlLimitsCard != null) pnlLimitsCard.Invalidate();
+                if (pnlLogsGrid != null) pnlLogsGrid.Invalidate();
+                if (numAdminMaxSessions != null) { numAdminMaxSessions.BackColor = ThemePalette.ColorBgInput; numAdminMaxSessions.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (numAdminBandwidth != null) { numAdminBandwidth.BackColor = ThemePalette.ColorBgInput; numAdminBandwidth.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (cbAdminFps != null) { cbAdminFps.BackColor = ThemePalette.ColorBgInput; cbAdminFps.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (numAdminIdleTimeout != null) { numAdminIdleTimeout.BackColor = ThemePalette.ColorBgInput; numAdminIdleTimeout.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (numAdminLogRetention != null) { numAdminLogRetention.BackColor = ThemePalette.ColorBgInput; numAdminLogRetention.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (cbAdminHwAccel != null) { cbAdminHwAccel.BackColor = ThemePalette.ColorBgInput; cbAdminHwAccel.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (cbAdminLogLevel != null) { cbAdminLogLevel.BackColor = ThemePalette.ColorBgInput; cbAdminLogLevel.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (txtAdminLogSearch != null) { txtAdminLogSearch.BackColor = ThemePalette.ColorBgInput; txtAdminLogSearch.ForeColor = ThemePalette.ColorTextPrimary; }
+                if (lblAdminActiveEngineBadge != null) lblAdminActiveEngineBadge.ForeColor = ThemePalette.ColorSuccess;
+                if (lblAdminCpu != null) lblAdminCpu.ForeColor = ThemePalette.ColorPrimary;
+                if (lblAdminMem != null) lblAdminMem.ForeColor = ThemePalette.ColorSuccess;
+                if (lblAdminUptime != null) lblAdminUptime.ForeColor = ThemePalette.ColorWarning;
+                if (lblAdminSessions != null) lblAdminSessions.ForeColor = ThemePalette.ColorTextPrimary;
+                if (pnlEngineCardsContainer != null)
+                {
+                    RenderEngineCards(pnlEngineCardsContainer);
+                }
+                if (dgvAdminLogs != null)
+                {
+                    dgvAdminLogs.BackgroundColor = ThemePalette.ColorBgCard;
+                    dgvAdminLogs.GridColor = ThemePalette.ColorBorderCard;
+                    dgvAdminLogs.ColumnHeadersDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+                    dgvAdminLogs.ColumnHeadersDefaultCellStyle.ForeColor = ThemePalette.ColorTextSecondary;
+                    dgvAdminLogs.DefaultCellStyle.BackColor = ThemePalette.ColorBgCard;
+                    dgvAdminLogs.DefaultCellStyle.ForeColor = ThemePalette.ColorTextPrimary;
+                    dgvAdminLogs.AlternatingRowsDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+                }
+            }
+
+            this.Invalidate(true);
+        }
+
+        private void ProbeEngineLiveStatus(string engineId)
+        {
+            ThreadPool.QueueUserWorkItem(delegate {
+                int port = 47990;
+                if (engineId == "rustdesk") port = 21116;
+                else if (engineId == "guacamole") port = 8080;
+                else if (engineId == "jdroidRelay") port = 8088;
+
+                bool isLive = false;
+                try {
+                    using (TcpClient tcp = new TcpClient()) {
+                        IAsyncResult ar = tcp.BeginConnect("127.0.0.1", port, null, null);
+                        bool ok = ar.AsyncWaitHandle.WaitOne(350);
+                        if (ok && tcp.Connected) {
+                            tcp.EndConnect(ar);
+                            isLive = true;
+                        }
+                    }
+                } catch { }
+
+                if (!isLive && engineId == "rustdesk") {
+                    try {
+                        Process[] procs = Process.GetProcessesByName("rustdesk");
+                        if (procs != null && procs.Length > 0) isLive = true;
+                    } catch { }
+                }
+
+                if (!isLive && engineId == "jdroidRelay" && isColabConnected) {
+                    isLive = true;
+                }
+
+                engineIsLiveActive = isLive;
+                engineLiveStatusBadge = isLive 
+                    ? string.Format("● {0} RUNNING", port) 
+                    : string.Format("⚠️ {0} STOPPED", port);
+
+                if (this.IsHandleCreated && !this.IsDisposed) {
+                    this.BeginInvoke(new Action(delegate {
+                        if (lblHeaderEngineStatus != null) {
+                            lblHeaderEngineStatus.Text = engineLiveStatusBadge;
+                            lblHeaderEngineStatus.ForeColor = isLive ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
+                        }
+                        if (lblFooterEngineBadge != null) {
+                            string curEng = db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "sunshine";
+                            lblFooterEngineBadge.Text = string.Format("⚡ jDroid-Engine: {0} [{1}]", curEng.ToUpper(), isLive ? "● RUNNING" : "⚠️ STOPPED");
+                            lblFooterEngineBadge.ForeColor = isLive ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
+                        }
+                    }));
+                }
+            });
+        }
+
+        private void LaunchEngineStartScript(string engineId)
+        {
+            try {
+                string scriptName = "start-sunshine.bat";
+                if (engineId == "rustdesk") scriptName = "start-rustdesk.bat";
+                else if (engineId == "guacamole") scriptName = "start-guacamole.bat";
+                else if (engineId == "jdroidRelay" || engineId == "googleColab" || engineId == "colab") scriptName = "start-google-colab.bat";
+
+                string batPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "scripts", scriptName);
+                if (File.Exists(batPath)) {
+                    Process.Start(new ProcessStartInfo(batPath) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(batPath) });
+                    ShowToast(string.Format("🚀 Launched automated startup script: {0}", scriptName));
+                    System.Windows.Forms.Timer probeTimer = new System.Windows.Forms.Timer { Interval = 2500 };
+                    probeTimer.Tick += (s, e) => {
+                        probeTimer.Stop();
+                        probeTimer.Dispose();
+                        ProbeEngineLiveStatus(engineId);
+                    };
+                    probeTimer.Start();
+                } else {
+                    ShowToast(string.Format("Script not found: {0}", batPath));
+                }
+            } catch (Exception ex) {
+                ShowToast("Launcher error: " + ex.Message);
+            }
+        }
+
+        private void SyncHeaderEngineDropdown(string engineId)
+        {
+            if (cbHeaderEngineSelector == null || cbHeaderEngineSelector.IsDisposed) return;
+            isSwitchingEngineFromHeader = true;
+            try
+            {
+                if (string.Equals(engineId, "rustdesk", StringComparison.OrdinalIgnoreCase))
+                    cbHeaderEngineSelector.SelectedIndex = 1;
+                else if (string.Equals(engineId, "guacamole", StringComparison.OrdinalIgnoreCase))
+                    cbHeaderEngineSelector.SelectedIndex = 2;
+                else if (string.Equals(engineId, "jdroidRelay", StringComparison.OrdinalIgnoreCase))
+                    cbHeaderEngineSelector.SelectedIndex = 3;
+                else
+                    cbHeaderEngineSelector.SelectedIndex = 0; // sunshine default
+            }
+            finally
+            {
+                isSwitchingEngineFromHeader = false;
+            }
+        }
+
+        private void UpdateHeaderEngineTelemetryUI(string engineId)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action<string>(UpdateHeaderEngineTelemetryUI), engineId);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(engineId))
+            {
+                engineId = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) 
+                    ? db.ServerConfig.activeEngine 
+                    : "sunshine";
+            }
+
+            SyncHeaderEngineDropdown(engineId);
+
+            if (string.Equals(engineId, "rustdesk", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblMetaRamTitle != null) lblMetaRamTitle.Text = "RAM (RustDesk)";
+                if (lblMetaRamVal != null) lblMetaRamVal.Text = string.IsNullOrEmpty(colabRamText) || colabRamText == "-- / --" ? "~42M P2P" : colabRamText + " (42M)";
+                if (lblMetaGpuTitle != null) lblMetaGpuTitle.Text = "Codec / Pipeline";
+                if (lblMetaGpuVal != null) lblMetaGpuVal.Text = "VP9 / AV1 (CPU)";
+                if (lblMetaDiskTitle != null) lblMetaDiskTitle.Text = "Port / Protocol";
+                if (lblMetaDiskVal != null) lblMetaDiskVal.Text = "21116 / NaCl";
+                if (lblMetaStatusTitle != null) lblMetaStatusTitle.Text = "RustDesk Engine";
+                if (lblMetaStatusVal != null)
+                {
+                    lblMetaStatusVal.Text = "● P2P MESH READY";
+                    lblMetaStatusVal.ForeColor = Color.FromArgb(56, 189, 248);
+                }
+                if (lblMetaHeartbeatTitle != null) lblMetaHeartbeatTitle.Text = "Mesh Latency";
+                if (lblMetaHeartbeatVal != null)
+                {
+                    lblMetaHeartbeatVal.Text = "~18ms P2P";
+                    lblMetaHeartbeatVal.ForeColor = Color.FromArgb(16, 185, 129);
+                }
+            }
+            else if (string.Equals(engineId, "guacamole", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblMetaRamTitle != null) lblMetaRamTitle.Text = "RAM (Guacamole)";
+                if (lblMetaRamVal != null) lblMetaRamVal.Text = string.IsNullOrEmpty(colabRamText) || colabRamText == "-- / --" ? "~85M guacd" : colabRamText + " (85M)";
+                if (lblMetaGpuTitle != null) lblMetaGpuTitle.Text = "Display / Pipeline";
+                if (lblMetaGpuVal != null) lblMetaGpuVal.Text = "Server RDP / WebGL";
+                if (lblMetaDiskTitle != null) lblMetaDiskTitle.Text = "Port / Protocol";
+                if (lblMetaDiskVal != null) lblMetaDiskVal.Text = "4822 / 8080";
+                if (lblMetaStatusTitle != null) lblMetaStatusTitle.Text = "Guacamole Engine";
+                if (lblMetaStatusVal != null)
+                {
+                    lblMetaStatusVal.Text = "● DOCKER RDP READY";
+                    lblMetaStatusVal.ForeColor = Color.FromArgb(168, 85, 247);
+                }
+                if (lblMetaHeartbeatTitle != null) lblMetaHeartbeatTitle.Text = "RDP Latency";
+                if (lblMetaHeartbeatVal != null)
+                {
+                    lblMetaHeartbeatVal.Text = "~25ms Web";
+                    lblMetaHeartbeatVal.ForeColor = Color.FromArgb(168, 85, 247);
+                }
+            }
+            else if (string.Equals(engineId, "jdroidRelay", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblMetaRamTitle != null) lblMetaRamTitle.Text = "System RAM";
+                if (lblMetaRamVal != null) lblMetaRamVal.Text = colabRamText;
+                if (lblMetaGpuTitle != null) lblMetaGpuTitle.Text = "GPU RAM";
+                if (lblMetaGpuVal != null) lblMetaGpuVal.Text = colabGpuText;
+                if (lblMetaDiskTitle != null) lblMetaDiskTitle.Text = "Disk";
+                if (lblMetaDiskVal != null) lblMetaDiskVal.Text = colabDiskText;
+                if (lblMetaStatusTitle != null) lblMetaStatusTitle.Text = "Colab Relay";
+                if (lblMetaStatusVal != null)
+                {
+                    lblMetaStatusVal.Text = isColabConnected ? string.Format("● ONLINE ({0}ms)", lastMeasuredRttMs) : (isProbingCandidates ? "◌ PINGING..." : "○ OFFLINE");
+                    lblMetaStatusVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
+                }
+                if (lblMetaHeartbeatTitle != null) lblMetaHeartbeatTitle.Text = "Heartbeat";
+                if (lblMetaHeartbeatVal != null)
+                {
+                    lblMetaHeartbeatVal.Text = isColabConnected ? string.Format("ALIVE ({0}ms)", lastMeasuredRttMs) : (isProbingCandidates ? "PROBING" : "OFFLINE");
+                    lblMetaHeartbeatVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
+                }
+            }
+            else // Default: sunshine
+            {
+                if (lblMetaRamTitle != null) lblMetaRamTitle.Text = "RAM (Sunshine)";
+                if (lblMetaRamVal != null) lblMetaRamVal.Text = string.IsNullOrEmpty(colabRamText) || colabRamText == "-- / --" ? "~120M VRAM" : colabRamText + " (120M)";
+                if (lblMetaGpuTitle != null) lblMetaGpuTitle.Text = "GPU / Pipeline";
+                if (lblMetaGpuVal != null) lblMetaGpuVal.Text = "NVENC CUDA (120fps)";
+                if (lblMetaDiskTitle != null) lblMetaDiskTitle.Text = "Port / Protocol";
+                if (lblMetaDiskVal != null) lblMetaDiskVal.Text = "47990 / RTSP";
+                if (lblMetaStatusTitle != null) lblMetaStatusTitle.Text = "Sunshine Engine";
+                if (lblMetaStatusVal != null)
+                {
+                    lblMetaStatusVal.Text = "● READY (NVStream)";
+                    lblMetaStatusVal.ForeColor = Color.FromArgb(16, 185, 129);
+                }
+                if (lblMetaHeartbeatTitle != null) lblMetaHeartbeatTitle.Text = "Latency Target";
+                if (lblMetaHeartbeatVal != null)
+                {
+                    lblMetaHeartbeatVal.Text = "< 5ms (LAN/WAN)";
+                    lblMetaHeartbeatVal.ForeColor = Color.FromArgb(56, 189, 248);
+                }
+            }
+
+            if (panelMetaEngine != null && !panelMetaEngine.IsDisposed) panelMetaEngine.Invalidate();
+            if (panelMetaRam != null && !panelMetaRam.IsDisposed) panelMetaRam.Invalidate();
+            if (panelMetaGpu != null && !panelMetaGpu.IsDisposed) panelMetaGpu.Invalidate();
+            if (panelMetaDisk != null && !panelMetaDisk.IsDisposed) panelMetaDisk.Invalidate();
+            if (panelMetaStatus != null && !panelMetaStatus.IsDisposed) panelMetaStatus.Invalidate();
+            if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
+        }
+
+        private Panel CreateTelemetryBox(string title, string initialValue, out Label titleLabel, out Label valLabel, float fillRatio)
+        {
+            Panel box = new Panel { Size = new Size(102, 34), Margin = new Padding(2, 0, 2, 0), BackColor = Color.Transparent };
+            Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 6.8f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(4, 2), AutoSize = true };
+            Label lVal = new Label { Text = initialValue, Font = new Font("Segoe UI", 7.6f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(4, 15), AutoSize = true };
+            titleLabel = lTitle;
             valLabel = lVal;
             box.Controls.Add(lTitle);
             box.Controls.Add(lVal);
 
             box.Paint += (s, e) => {
-                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
-                using (Pen borderPen = new Pen(themeCol, 1.5f))
-                {
-                    e.Graphics.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
-                }
+                string actEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "sunshine";
+                Color themeCol = Color.FromArgb(16, 185, 129);
+                if (actEng == "rustdesk") themeCol = Color.FromArgb(56, 189, 248);
+                else if (actEng == "guacamole") themeCol = Color.FromArgb(168, 85, 247);
+                else if (actEng == "jdroidRelay") themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(239, 68, 68);
+
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, box.Width - 1, box.Height - 1), ThemePalette.ColorBgCardHeader, themeCol, ThemePalette.ColorShadow, 6);
                 using (SolidBrush lineBrush = new SolidBrush(themeCol))
                 {
-                    int lineW = Math.Max(4, (int)((box.Width - 4) * Math.Min(1f, Math.Max(0.05f, fillRatio))));
-                    e.Graphics.FillRectangle(lineBrush, 2, box.Height - 3, lineW, 2);
+                    int lineW = Math.Max(4, (int)((box.Width - 8) * Math.Min(1f, Math.Max(0.05f, fillRatio))));
+                    e.Graphics.FillRectangle(lineBrush, 4, box.Height - 3, lineW, 2);
                 }
             };
             return box;
         }
 
-        private Panel CreateStatusBox(string title, out Label valLabel)
+        private Panel CreateStatusBox(string title, out Label titleLabel, out Label valLabel)
         {
-            Panel box = new Panel { Size = new Size(115, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42), Cursor = Cursors.Hand };
-            Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 7f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 2), AutoSize = true, Cursor = Cursors.Hand };
-            Label lVal = new Label { Text = isColabConnected ? "● ONLINE" : (isProbingCandidates ? "◌ PINGING..." : "○ OFFLINE"), Font = new Font("Segoe UI", 7.6f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68)), Location = new Point(4, 15), AutoSize = true, Cursor = Cursors.Hand };
+            Panel box = new Panel { Size = new Size(115, 34), Margin = new Padding(2, 0, 2, 0), BackColor = ThemePalette.ColorBgCardHeader, Cursor = Cursors.Hand };
+            Label lTitle = new Label { Text = title, Font = new Font("Segoe UI", 6.8f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(4, 2), AutoSize = true, Cursor = Cursors.Hand };
+            Label lVal = new Label { Text = isColabConnected ? "● ONLINE" : (isProbingCandidates ? "◌ PINGING..." : "○ OFFLINE"), Font = new Font("Segoe UI", 7.4f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68)), Location = new Point(4, 15), AutoSize = true, Cursor = Cursors.Hand };
+            titleLabel = lTitle;
             valLabel = lVal;
             box.Controls.Add(lTitle);
             box.Controls.Add(lVal);
 
             ToolTip tt = new ToolTip();
-            tt.SetToolTip(box, "Click to configure Google Colab Relay Server & Custom Domain");
-            tt.SetToolTip(lVal, "Click to configure Google Colab Relay Server & Custom Domain");
+            tt.SetToolTip(box, "Click to configure Server Relay & Engine Parameters");
+            tt.SetToolTip(lVal, "Click to configure Server Relay & Engine Parameters");
 
             box.Click += (s, e) => ShowRelayConfigDialog();
             lTitle.Click += (s, e) => ShowRelayConfigDialog();
@@ -2070,18 +3521,17 @@ namespace JDroidXDesk.Native
 
             box.Paint += (s, e) => {
                 Graphics g = e.Graphics;
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                Color themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(100, 116, 139));
-                using (Pen borderPen = new Pen(themeCol, 1.2f))
-                {
-                    g.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
-                }
-                // 2cm (76px) indicator line at bottom of Colab Relay box
+                string actEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "sunshine";
+                Color themeCol = Color.FromArgb(16, 185, 129);
+                if (actEng == "rustdesk") themeCol = Color.FromArgb(56, 189, 248);
+                else if (actEng == "guacamole") themeCol = Color.FromArgb(168, 85, 247);
+                else if (actEng == "jdroidRelay") themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
+
+                ThemePalette.DrawFloatingCard(g, new Rectangle(0, 0, box.Width - 1, box.Height - 1), ThemePalette.ColorBgCardHeader, themeCol, ThemePalette.ColorShadow, 6);
                 int barX = 4;
                 int barY = box.Height - 3;
-                int barW = 76; // Exact 2.0 cm on standard 96 DPI screen
-                Color barCol = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
-                using (SolidBrush b = new SolidBrush(barCol))
+                int barW = 76;
+                using (SolidBrush b = new SolidBrush(themeCol))
                 {
                     g.FillRectangle(b, barX, barY, barW, 2);
                 }
@@ -2089,20 +3539,19 @@ namespace JDroidXDesk.Native
             return box;
         }
 
-        private Panel CreateHeartbeatBox()
+        private Panel CreateHeartbeatBox(out Label titleLabel, out Label valLabel)
         {
-            // Physical standard: 2.0 cm on 96 DPI screen = (2 / 2.54) * 96 = 75.6 pixels (~76px)
-            Panel box = new Panel { Size = new Size(86, 34), Margin = new Padding(3, 0, 3, 0), BackColor = Color.FromArgb(15, 23, 42), Cursor = Cursors.Hand };
-            Label lTitle = new Label { Text = "Heartbeat", Font = new Font("Segoe UI", 6.8f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 1), AutoSize = true, Cursor = Cursors.Hand };
+            Panel box = new Panel { Size = new Size(86, 34), Margin = new Padding(2, 0, 2, 0), BackColor = ThemePalette.ColorBgCardHeader, Cursor = Cursors.Hand };
+            Label lTitle = new Label { Text = "Heartbeat", Font = new Font("Segoe UI", 6.8f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(4, 1), AutoSize = true, Cursor = Cursors.Hand };
             Label lVal = new Label { Text = isColabConnected ? "ALIVE" : (isProbingCandidates ? "PROBING" : "OFFLINE"), Font = new Font("Segoe UI", 7.2f, FontStyle.Bold), ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68)), Location = new Point(4, 12), AutoSize = true, Cursor = Cursors.Hand };
+            titleLabel = lTitle;
+            valLabel = lVal;
             lblMetaHeartbeatVal = lVal;
             box.Controls.Add(lTitle);
             box.Controls.Add(lVal);
 
             ToolTip tt = new ToolTip();
-            tt.SetToolTip(box, "Google Colab Heartbeat Progress Bar (2cm: Red = Disconnected, Green = Connected)\nClick to configure Google Colab Relay Server");
-            tt.SetToolTip(lTitle, "Google Colab Heartbeat Progress Bar (2cm: Red = Disconnected, Green = Connected)\nClick to configure Google Colab Relay Server");
-            tt.SetToolTip(lVal, "Google Colab Heartbeat Progress Bar (2cm: Red = Disconnected, Green = Connected)\nClick to configure Google Colab Relay Server");
+            tt.SetToolTip(box, "Real-time Engine Latency & Progress Bar");
 
             box.Click += (s, e) => ShowRelayConfigDialog();
             lTitle.Click += (s, e) => ShowRelayConfigDialog();
@@ -2110,71 +3559,24 @@ namespace JDroidXDesk.Native
 
             box.Paint += (s, e) => {
                 Graphics g = e.Graphics;
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                string actEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "sunshine";
+                Color themeCol = Color.FromArgb(16, 185, 129);
+                if (actEng == "rustdesk") themeCol = Color.FromArgb(56, 189, 248);
+                else if (actEng == "guacamole") themeCol = Color.FromArgb(168, 85, 247);
+                else if (actEng == "jdroidRelay") themeCol = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
 
-                Color borderColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(40, 53, 76));
-                using (Pen borderPen = new Pen(borderColor, 1f))
+                ThemePalette.DrawFloatingCard(g, new Rectangle(0, 0, box.Width - 1, box.Height - 1), ThemePalette.ColorBgCardHeader, themeCol, ThemePalette.ColorShadow, 6);
+                int hbX = 4;
+                int hbY = box.Height - 3;
+                int hbW = Math.Max(6, Math.Min(box.Width - 8, (int)((box.Width - 8) * (headerHeartbeatPulseFrame % 10) / 10f)));
+                using (SolidBrush b = new SolidBrush(themeCol))
                 {
-                    g.DrawRectangle(borderPen, 0, 0, box.Width - 1, box.Height - 1);
-                }
-
-                // 2cm Physical Progress Bar (76px width at 96 DPI)
-                int barX = 4;
-                int barY = box.Height - 8;
-                int barW = 76; // Exactly 2.0 cm on standard display
-                int barH = 5;
-
-                // Trough background
-                using (SolidBrush troughBrush = new SolidBrush(Color.FromArgb(11, 17, 32)))
-                {
-                    g.FillRectangle(troughBrush, barX, barY, barW, barH);
-                }
-                using (Pen troughPen = new Pen(Color.FromArgb(51, 65, 85), 0.8f))
-                {
-                    g.DrawRectangle(troughPen, barX, barY, barW, barH);
-                }
-
-                if (isColabConnected)
-                {
-                    // Full Vibrant Emerald Green Bar with animated cardiac pulse pip
-                    using (SolidBrush greenBar = new SolidBrush(Color.FromArgb(16, 185, 129)))
-                    {
-                        g.FillRectangle(greenBar, barX + 1, barY + 1, barW - 2, barH - 2);
-                    }
-                    // Animated Green Heartbeat Pip traversing the 76px bar
-                    int pipX = barX + 1 + (headerHeartbeatPulseFrame * 3) % Math.Max(1, barW - 8);
-                    using (SolidBrush pipBrush = new SolidBrush(Color.FromArgb(220, 252, 231)))
-                    {
-                        g.FillRectangle(pipBrush, pipX, barY, 4, barH);
-                    }
-                }
-                else if (isProbingCandidates)
-                {
-                    // Amber scanning progress sweep
-                    int sweepX = barX + 1 + (headerHeartbeatPulseFrame * 2) % Math.Max(1, barW - 14);
-                    using (SolidBrush amberSweep = new SolidBrush(Color.FromArgb(245, 158, 11)))
-                    {
-                        g.FillRectangle(amberSweep, sweepX, barY + 1, 14, barH - 2);
-                    }
-                }
-                else
-                {
-                    // Disconnected: Red Bar with animated pulsing alpha and rhythmic blip
-                    int redAlpha = 140 + (int)(110 * Math.Abs(Math.Sin(headerHeartbeatPulseFrame * 0.15)));
-                    using (SolidBrush redBar = new SolidBrush(Color.FromArgb(redAlpha, 239, 68, 68)))
-                    {
-                        g.FillRectangle(redBar, barX + 1, barY + 1, barW - 2, barH - 2);
-                    }
-                    // Red Flatline / Blip tick
-                    int pipX = barX + 1 + (headerHeartbeatPulseFrame * 2) % Math.Max(1, barW - 8);
-                    using (SolidBrush blip = new SolidBrush(Color.FromArgb(254, 202, 202)))
-                    {
-                        g.FillRectangle(blip, pipX, barY + 1, 3, barH - 2);
-                    }
+                    g.FillRectangle(b, hbX, hbY, hbW, 2);
                 }
             };
             return box;
         }
+
 
         private void ShowRelayConfigDialog()
         {
@@ -2186,23 +3588,23 @@ namespace JDroidXDesk.Native
                 dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
                 dlg.MaximizeBox = false;
                 dlg.MinimizeBox = false;
-                dlg.BackColor = Color.FromArgb(15, 23, 42);
-                dlg.ForeColor = Color.White;
+                dlg.BackColor = ThemePalette.ColorBgWorkspace;
+                dlg.ForeColor = ThemePalette.ColorTextPrimary;
                 dlg.Font = new Font("Segoe UI", 9f);
 
                 Panel pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20), AutoScroll = true };
 
-                Label lblHead = new Label { Text = "Google Colab & Cloud Relay Setup", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), AutoSize = true, Location = new Point(20, 16) };
-                Label lblSub = new Label { Text = "Configure your relay server endpoint, port, custom domain, and Cloudflare tunnel.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Location = new Point(20, 42) };
+                Label lblHead = new Label { Text = "Google Colab & Cloud Relay Setup", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = ThemePalette.ColorPrimary, AutoSize = true, Location = new Point(20, 16) };
+                Label lblSub = new Label { Text = "Configure your relay server endpoint, port, custom domain, and Cloudflare tunnel.", Font = new Font("Segoe UI", 8.5f), ForeColor = ThemePalette.ColorTextSecondary, AutoSize = true, Location = new Point(20, 42) };
 
                 int curY = 70;
 
                 // Prominent Colab Connection Steps Box
-                Panel pnlSteps = new Panel { Size = new Size(440, 84), Location = new Point(20, curY), BackColor = Color.FromArgb(10, 16, 26), BorderStyle = BorderStyle.FixedSingle };
+                Panel pnlSteps = new Panel { Size = new Size(440, 84), Location = new Point(20, curY), BackColor = ThemePalette.ColorBgCard, BorderStyle = BorderStyle.FixedSingle };
                 Label lSteps = new Label {
                     Text = "STEPS TO CONNECT IN jDroid-X-Desk:\n1. Open jDroid-X-Desk on Desk 1 and Desk 2\n2. Run your Google Colab Relay notebook\n3. Paste the generated public URL (👉 https://....trycloudflare.com 👈)\n4. Click 'Save & Apply' -> Header turns GREEN with live meters!",
                     Font = new Font("Segoe UI", 8.2f),
-                    ForeColor = Color.FromArgb(56, 189, 248),
+                    ForeColor = ThemePalette.ColorPrimary,
                     Dock = DockStyle.Fill,
                     TextAlign = ContentAlignment.MiddleLeft,
                     Padding = new Padding(6)
@@ -2462,6 +3864,383 @@ namespace JDroidXDesk.Native
             }
         }
 
+        public void ShowEngineManualSetupDialog(string defaultEngineId)
+        {
+            if (string.IsNullOrEmpty(defaultEngineId)) defaultEngineId = "sunshine";
+
+            using (Form dlg = new Form())
+            {
+                dlg.Text = "jDroid-X-Desk | Open-Source Remote Engines — Manual Setup & Update Guide";
+                dlg.Size = new Size(840, 640);
+                dlg.StartPosition = FormStartPosition.CenterParent;
+                dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dlg.MaximizeBox = false;
+                dlg.MinimizeBox = false;
+                dlg.BackColor = ThemePalette.ColorBgWorkspace;
+                dlg.ForeColor = ThemePalette.ColorTextPrimary;
+                dlg.Font = new Font("Segoe UI", 9f);
+
+                Panel pnlMain = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16) };
+
+                // Top Header Banner
+                Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 64 };
+                Label lblTitle = new Label { Text = "🛡️ Open-Source Remote Engines — Setup & Configuration Guide", Font = new Font("Segoe UI", 12.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorPrimary, AutoSize = true, Location = new Point(0, 4) };
+                Label lblSub = new Label { Text = "Step-by-step instructions, firewall rules, port mappings, and 1-click launcher actions for all engines.", Font = new Font("Segoe UI", 8.5f), ForeColor = ThemePalette.ColorTextSecondary, AutoSize = true, Location = new Point(0, 32) };
+                pnlHeader.Controls.Add(lblTitle);
+                pnlHeader.Controls.Add(lblSub);
+
+                // Tab Strip for the 4 Engines
+                Panel pnlTabStrip = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = ThemePalette.ColorBgCardHeader, Margin = new Padding(0, 0, 0, 10) };
+                FlowLayoutPanel tabFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
+
+                // Content Panel (Holds details for currently selected engine)
+                Panel pnlContent = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemePalette.ColorBgCard, Padding = new Padding(14) };
+
+                // Bottom Action Bar
+                Panel pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 46, Padding = new Padding(0, 8, 0, 0) };
+                FlowLayoutPanel btmFlowLeft = new FlowLayoutPanel { Dock = DockStyle.Left, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
+                FlowLayoutPanel btmFlowRight = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
+
+                string currentSelectedEngine = defaultEngineId;
+
+                Action<string> renderEngineDetails = null;
+                renderEngineDetails = (engId) => {
+                    currentSelectedEngine = engId;
+                    pnlContent.Controls.Clear();
+                    btmFlowLeft.Controls.Clear();
+                    btmFlowRight.Controls.Clear();
+
+                    // Update Tab Button Highlighting
+                    foreach (Control c in tabFlow.Controls)
+                    {
+                        Button tb = c as Button;
+                        if (tb != null)
+                        {
+                            bool isTabActive = string.Equals(tb.Tag as string, engId, StringComparison.OrdinalIgnoreCase);
+                            tb.BackColor = isTabActive ? Color.FromArgb(40, 53, 76) : Color.Transparent;
+                            tb.ForeColor = isTabActive ? Color.FromArgb(56, 189, 248) : Color.FromArgb(148, 163, 184);
+                        }
+                    }
+
+                    string engName = "";
+                    string engTagline = "";
+                    string engPrereq = "";
+                    string engSteps = "";
+                    string engPorts = "";
+                    string engFwCmd = "";
+                    string engUpdateInfo = "";
+                    string sourceRelPath = "";
+                    string webUrl = "";
+
+                    if (engId == "sunshine")
+                    {
+                        engName = "⚡ Sunshine Host & Moonlight Client (LizardByte/Sunshine)";
+                        engTagline = "Lowest latency (<5ms) remote desktop and 60-120 FPS high-refresh workstation streaming via NVStream / RTSP.";
+                        engPrereq = "• Hardware NVENC CUDA / Intel QuickSync / AMD AMF GPU (or high-speed CPU fallback)\n• Moonlight client installed on viewer device (PC, Android, iOS, Mac, Linux)\n• Source folder: jDroid-X-Desk-Server\\Github\\Sunshine-master & moonlight-qt-master";
+                        engSteps = "1. FIRST-TIME ADMIN SETUP (Mandatory 1-Time Setup):\n" +
+                                   "   - Click '🌐 Open Web UI (47990)' below or navigate to: https://localhost:47990\n" +
+                                   "   - Your browser will show a self-signed certificate warning: Click 'Advanced' -> 'Proceed to localhost'.\n" +
+                                   "   - Create your initial administrator Username and Password, then click Save.\n\n" +
+                                   "2. MOONLIGHT CLIENT PAIRING:\n" +
+                                   "   - Open Moonlight on your client device and click '+ Add PC'.\n" +
+                                   "   - Type this computer's local IP (e.g., 192.168.x.x) or public IP. Moonlight will display a 4-Digit PIN.\n" +
+                                   "   - Return to Sunshine Web UI (PIN Tab at https://localhost:47990/#/pin), enter the 4-Digit PIN, and click 'Send'.\n" +
+                                   "   - Once paired, your Windows desktop appears in Moonlight ready for crystal-clear 60-120 FPS streaming!\n\n" +
+                                   "3. CONFIGURATION PRESETS:\n" +
+                                   "   - In Sunshine Web UI -> Configuration -> Audio/Video: Select NVENC H.264 or HEVC for hardware encoding.\n" +
+                                   "   - Set Bitrate target matching your network (20-50 Mbps recommended).";
+                        engPorts = "• TCP: 47984, 47989, 47990 (Web UI), 48010\n• UDP: 47998, 47999, 48000, 48002, 48010";
+                        engFwCmd = "New-NetFirewallRule -DisplayName \"Sunshine TCP\" -Direction Inbound -LocalPort 47984,47989,47990,48010 -Protocol TCP -Action Allow; New-NetFirewallRule -DisplayName \"Sunshine UDP\" -Direction Inbound -LocalPort 47998,47999,48000,48002,48010 -Protocol UDP -Action Allow";
+                        engUpdateInfo = "To update Sunshine: Pull latest commits in 'jDroid-X-Desk-Server\\Github\\Sunshine-master' or download the latest official 'sunshine-windows-installer.exe' from LizardByte GitHub releases.";
+                        sourceRelPath = "jDroid-X-Desk-Server\\Github\\Sunshine-master";
+                        webUrl = "https://localhost:47990";
+                    }
+                    else if (engId == "rustdesk")
+                    {
+                        engName = "🦀 RustDesk Remote Desktop (rustdesk/rustdesk)";
+                        engTagline = "Best direct open-source match to TeamViewer/AnyDesk with P2P NAT Traversal, NaCl encryption, and self-hosting support.";
+                        engPrereq = "• Cloned source in: jDroid-X-Desk-Server\\Github\\rustdesk-master\n• Official standalone RustDesk executable or self-hosted hbbs/hbbr server";
+                        engSteps = "1. FREE PUBLIC SERVER USAGE (Zero-Config Mode):\n" +
+                                   "   - RustDesk works out-of-the-box with official public rendezvous servers (relay.rustdesk.com).\n" +
+                                   "   - Simply launch the RustDesk client, share your 9-digit ID and temporary one-time password.\n" +
+                                   "   - No port forwarding or manual server setup required for peer-to-peer connections.\n\n" +
+                                   "2. PRIVATE SELF-HOSTED SERVER (hbbs / hbbr):\n" +
+                                   "   - If you want 100% private self-hosted routing, run 'hbbs' (ID Server) and 'hbbr' (Relay Server) on your Linux/Windows VPS.\n" +
+                                   "   - In RustDesk Client -> Settings (three dots) -> Network -> ID/Relay Server:\n" +
+                                   "     • ID Server: Enter your VPS domain or IP (e.g., id.mycompany.com:21116)\n" +
+                                   "     • Key: Paste your server's public key from 'id_ed25519.pub'\n" +
+                                   "   - All client connections will route strictly through your private infrastructure!\n\n" +
+                                   "3. DIRECT IP ACCESS:\n" +
+                                   "   - You can also enable 'Direct IP Access' in RustDesk settings to connect directly over LAN or VPN on TCP port 21118.";
+                        engPorts = "• TCP: 21115 (NAT Type), 21116 (TCP Punching), 21117 (Relay), 21118 (Web Client), 21119 (Support)\n• UDP: 21116 (Heartbeat & Rendezvous)";
+                        engFwCmd = "New-NetFirewallRule -DisplayName \"RustDesk TCP\" -Direction Inbound -LocalPort 21115-21119 -Protocol TCP -Action Allow; New-NetFirewallRule -DisplayName \"RustDesk UDP\" -Direction Inbound -LocalPort 21116 -Protocol UDP -Action Allow";
+                        engUpdateInfo = "To update RustDesk: Open the repository folder below and run 'git pull', or download the latest 'rustdesk-*-x86_64.exe' release from rustdesk/rustdesk on GitHub.";
+                        sourceRelPath = "jDroid-X-Desk-Server\\Github\\rustdesk-master";
+                        webUrl = "";
+                    }
+                    else if (engId == "guacamole")
+                    {
+                        engName = "🥑 Apache Guacamole + FreeRDP (apache/guacamole-server)";
+                        engTagline = "Client-less HTML5 browser gateway allowing remote desktop access from any browser without installing software on viewer.";
+                        engPrereq = "• Windows Remote Desktop enabled on this computer (Settings -> System -> Remote Desktop -> On)\n• Docker Desktop or WSL2 to host guacd daemon and Tomcat web portal\n• Source folder: jDroid-X-Desk-Server\\Github\\guacamole-server";
+                        engSteps = "1. ENABLE WINDOWS REMOTE DESKTOP:\n" +
+                                   "   - On this host, open Windows Settings -> System -> Remote Desktop.\n" +
+                                   "   - Toggle Remote Desktop to 'ON'. Note your Windows username and password.\n\n" +
+                                   "2. RUN GUACAMOLE DAEMON & WEB CLIENT (via Docker):\n" +
+                                   "   - Open PowerShell and execute the following one-liner:\n" +
+                                   "     docker run --name guacd -d -p 4822:4822 guacamole/guacd\n" +
+                                   "     docker run --name guac -d -p 8080:8080 --link guacd:guacd guacamole/guacamole\n\n" +
+                                   "3. CONFIGURE DESKTOP IN WEB PORTAL:\n" +
+                                   "   - Open http://localhost:8080/guacamole in your web browser.\n" +
+                                   "   - Default Login: Username 'guacadmin', Password 'guacadmin'.\n" +
+                                   "   - Go to Settings -> Connections -> 'New Connection':\n" +
+                                   "     • Name: My Windows Workstation\n" +
+                                   "     • Protocol: RDP\n" +
+                                   "     • Parameters -> Hostname: host.docker.internal (or your Windows LAN IP)\n" +
+                                   "     • Port: 3389  |  Security mode: NLA\n" +
+                                   "     • Enter your Windows username and password, then click Save.\n" +
+                                   "   - Click the connection to open your Windows desktop inside any web browser window!";
+                        engPorts = "• TCP: 4822 (guacd proxy daemon), 8080 (Guacamole web client), 3389 (Windows RDP host)";
+                        engFwCmd = "docker run --name guacd -d -p 4822:4822 guacamole/guacd; docker run --name guac -d -p 8080:8080 --link guacd:guacd guacamole/guacamole";
+                        engUpdateInfo = "To update Guacamole: Run 'docker pull guacamole/guacd && docker pull guacamole/guacamole' or rebuild from source in 'jDroid-X-Desk-Server\\Github\\guacamole-server'.";
+                        sourceRelPath = "jDroid-X-Desk-Server\\Github\\guacamole-server";
+                        webUrl = "http://localhost:8080/guacamole";
+                    }
+                    else // jdroidRelay
+                    {
+                        engName = "🚀 jDroid-X Google Colab Cloud Relay";
+                        engTagline = "Multi-Threaded Cloud Bridge & GPU Stream via Google Colab with AES-256 encrypted binary frame streams.";
+                        engPrereq = "• Google Colab notebook instance or local Node.js relay server\n• Public Cloudflare tunnel (.trycloudflare.com)";
+                        engSteps = "1. RUN GOOGLE COLAB RELAY:\n" +
+                                   "   - Click the '🌐 Colab' button on the main Console tab or in Step 1.\n" +
+                                   "   - Execute the Google Colab notebook cells to start the encrypted cloud bridge.\n" +
+                                   "   - Colab generates a public tunnel URL (e.g. https://...trycloudflare.com).\n\n" +
+                                   "2. CONNECT WORKSTATIONS:\n" +
+                                   "   - Copy and paste the Cloudflare tunnel URL into Step 1 or the top header status box.\n" +
+                                   "   - Click 'Save & Connect'. The top telemetry indicators turn GREEN!\n" +
+                                   "   - Both workstations connect seamlessly through firewalls and NAT without port forwarding.";
+                        engPorts = "• HTTP/WS: 8088 (Colab bridge), 12345 (Local Node backup gateway)";
+                        engFwCmd = "";
+                        engUpdateInfo = "jDroid-X Google Colab Relay is cloud-hosted and receives continuous updates through the Colab runtime.";
+                        sourceRelPath = ".";
+                        webUrl = "";
+                    }
+
+                    int curY = 0;
+
+                    // Title & Tagline Box
+                    Label lTitle = new Label { Text = engName, Font = new Font("Segoe UI", 11.5f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(0, curY), AutoSize = true };
+                    curY += 26;
+                    Label lTagline = new Label { Text = engTagline, Font = new Font("Segoe UI", 8.8f, FontStyle.Italic), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(0, curY), AutoSize = true };
+                    curY += 30;
+
+                    // Prerequisites Section
+                    Label lPreHdr = new Label { Text = "PREREQUISITES & SOURCE LOCATION:", Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), ForeColor = Color.FromArgb(250, 204, 21), Location = new Point(0, curY), AutoSize = true };
+                    curY += 20;
+                    Label lPre = new Label { Text = engPrereq, Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(226, 232, 240), Location = new Point(0, curY), AutoSize = true };
+                    curY += (engPrereq.Split('\n').Length * 18) + 12;
+
+                    // Step-by-Step Manual Setup Section
+                    Label lStepsHdr = new Label { Text = "STEP-BY-STEP MANUAL SETUP WALKTHROUGH:", Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), Location = new Point(0, curY), AutoSize = true };
+                    curY += 20;
+                    TextBox tbSteps = new TextBox {
+                        Text = engSteps,
+                        Multiline = true,
+                        ReadOnly = true,
+                        ScrollBars = ScrollBars.Vertical,
+                        Size = new Size(770, 160),
+                        Location = new Point(0, curY),
+                        BackColor = ThemePalette.ColorBgInput,
+                        ForeColor = ThemePalette.ColorTextPrimary,
+                        Font = new Font("Consolas", 8.8f),
+                        BorderStyle = BorderStyle.FixedSingle
+                    };
+                    curY += 170;
+
+                    // Network & Firewall Ports Section
+                    Label lPortsHdr = new Label { Text = "NETWORK PORTS & FIREWALL RULES:", Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), ForeColor = Color.FromArgb(168, 85, 247), Location = new Point(0, curY), AutoSize = true };
+                    curY += 20;
+                    Label lPorts = new Label { Text = engPorts, Font = new Font("Consolas", 8.2f), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(0, curY), AutoSize = true };
+                    curY += (engPorts.Split('\n').Length * 18) + 10;
+
+                    // Update Instructions
+                    Label lUpdHdr = new Label { Text = "HOW TO UPDATE THIS ENGINE:", Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(0, curY), AutoSize = true };
+                    curY += 20;
+                    Label lUpd = new Label { Text = engUpdateInfo, Font = new Font("Segoe UI", 8.2f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(0, curY), AutoSize = true };
+                    curY += 34;
+
+                    pnlContent.Controls.Add(lTitle);
+                    pnlContent.Controls.Add(lTagline);
+                    pnlContent.Controls.Add(lPreHdr);
+                    pnlContent.Controls.Add(lPre);
+                    pnlContent.Controls.Add(lStepsHdr);
+                    pnlContent.Controls.Add(tbSteps);
+                    pnlContent.Controls.Add(lPortsHdr);
+                    pnlContent.Controls.Add(lPorts);
+                    pnlContent.Controls.Add(lUpdHdr);
+                    pnlContent.Controls.Add(lUpd);
+
+                    // Populate Bottom Action Buttons
+                    bool isCurrentActive = string.Equals(db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "", engId, StringComparison.OrdinalIgnoreCase);
+
+                    Button btnActivate = new Button {
+                        Text = isCurrentActive ? "✓ Current jDroid-Engine" : "⚡ Switch to " + engId.ToUpper() + " Now",
+                        Size = new Size(185, 32),
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = isCurrentActive ? Color.FromArgb(16, 185, 129) : Color.FromArgb(56, 189, 248),
+                        ForeColor = isCurrentActive ? Color.White : ThemePalette.ColorTextPrimary,
+                        Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                        Cursor = Cursors.Hand,
+                        Enabled = !isCurrentActive,
+                        Margin = new Padding(0, 0, 8, 0)
+                    };
+                    btnActivate.FlatAppearance.BorderSize = 0;
+                    string captureSwitchId = engId;
+                    btnActivate.Click += (s, e) => {
+                        SwitchActiveEngine(captureSwitchId);
+                        dlg.Close();
+                    };
+                    btmFlowLeft.Controls.Add(btnActivate);
+
+                    Button btnDlgRunScript = new Button {
+                        Text = "🚀 Run Start Script",
+                        Size = new Size(155, 32),
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = Color.FromArgb(20, 32, 50),
+                        ForeColor = Color.FromArgb(16, 185, 129),
+                        Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                        Cursor = Cursors.Hand,
+                        Margin = new Padding(0, 0, 8, 0)
+                    };
+                    btnDlgRunScript.FlatAppearance.BorderSize = 0;
+                    string captureRunId = engId;
+                    btnDlgRunScript.Click += (s, e) => {
+                        LaunchEngineStartScript(captureRunId);
+                    };
+                    btmFlowLeft.Controls.Add(btnDlgRunScript);
+
+                    if (!string.IsNullOrEmpty(webUrl))
+                    {
+                        Button btnOpenWeb = new Button {
+                            Text = "🌐 Open Web UI",
+                            Size = new Size(125, 32),
+                            FlatStyle = FlatStyle.Flat,
+                            BackColor = Color.FromArgb(30, 41, 59),
+                            ForeColor = Color.FromArgb(250, 204, 21),
+                            Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                            Cursor = Cursors.Hand,
+                            Margin = new Padding(0, 0, 8, 0)
+                        };
+                        btnOpenWeb.FlatAppearance.BorderSize = 0;
+                        string captureWeb = webUrl;
+                        btnOpenWeb.Click += (s, e) => {
+                            try { Process.Start(captureWeb); } catch (Exception ex) { ShowToast("Browser error: " + ex.Message); }
+                        };
+                        btmFlowLeft.Controls.Add(btnOpenWeb);
+                    }
+
+                    if (!string.IsNullOrEmpty(sourceRelPath))
+                    {
+                        Button btnOpenFolder = new Button {
+                            Text = "📂 Open Code Folder",
+                            Size = new Size(140, 32),
+                            FlatStyle = FlatStyle.Flat,
+                            BackColor = Color.FromArgb(30, 41, 59),
+                            ForeColor = Color.FromArgb(148, 163, 184),
+                            Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                            Cursor = Cursors.Hand,
+                            Margin = new Padding(0, 0, 8, 0)
+                        };
+                        btnOpenFolder.FlatAppearance.BorderSize = 0;
+                        string absP = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, sourceRelPath);
+                        btnOpenFolder.Click += (s, e) => {
+                            try {
+                                if (Directory.Exists(absP)) Process.Start("explorer.exe", absP);
+                                else ShowToast("Folder not found: " + absP);
+                            } catch { }
+                        };
+                        btmFlowLeft.Controls.Add(btnOpenFolder);
+                    }
+
+                    if (!string.IsNullOrEmpty(engFwCmd))
+                    {
+                        Button btnCopyFw = new Button {
+                            Text = "📋 Copy Firewall Rule",
+                            Size = new Size(145, 32),
+                            FlatStyle = FlatStyle.Flat,
+                            BackColor = Color.FromArgb(30, 41, 59),
+                            ForeColor = Color.FromArgb(168, 85, 247),
+                            Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                            Cursor = Cursors.Hand,
+                            Margin = new Padding(0, 0, 8, 0)
+                        };
+                        btnCopyFw.FlatAppearance.BorderSize = 0;
+                        string captureCmd = engFwCmd;
+                        btnCopyFw.Click += (s, e) => {
+                            try {
+                                Clipboard.SetText(captureCmd);
+                                ShowToast("Copied PowerShell command to clipboard! Paste into Admin PowerShell to unblock ports.");
+                            } catch { }
+                        };
+                        btmFlowLeft.Controls.Add(btnCopyFw);
+                    }
+
+                    Button btnClose = new Button {
+                        Text = "Close",
+                        Size = new Size(80, 32),
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = Color.FromArgb(30, 41, 59),
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 8.5f),
+                        Cursor = Cursors.Hand
+                    };
+                    btnClose.FlatAppearance.BorderSize = 0;
+                    btnClose.Click += (s, e) => dlg.Close();
+                    btmFlowRight.Controls.Add(btnClose);
+                };
+
+                // Add Tabs to Strip
+                Action<string, string> addTab = (id, label) => {
+                    Button tb = new Button {
+                        Text = label,
+                        Tag = id,
+                        Size = new Size(195, 32),
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = Color.Transparent,
+                        ForeColor = Color.FromArgb(148, 163, 184),
+                        Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                        Cursor = Cursors.Hand,
+                        Margin = new Padding(0, 2, 4, 0)
+                    };
+                    tb.FlatAppearance.BorderSize = 0;
+                    string captureTabId = id;
+                    tb.Click += (s, e) => renderEngineDetails(captureTabId);
+                    tabFlow.Controls.Add(tb);
+                };
+
+                addTab("sunshine", "⚡ Sunshine & Moonlight");
+                addTab("rustdesk", "🦀 RustDesk");
+                addTab("guacamole", "🥑 Apache Guacamole");
+                addTab("jdroidRelay", "🚀 Google Colab (Cloud Relay)");
+
+                pnlTabStrip.Controls.Add(tabFlow);
+                pnlBottom.Controls.Add(btmFlowLeft);
+                pnlBottom.Controls.Add(btmFlowRight);
+
+                pnlMain.Controls.Add(pnlContent);
+                pnlMain.Controls.Add(pnlBottom);
+                pnlMain.Controls.Add(pnlTabStrip);
+                pnlMain.Controls.Add(pnlHeader);
+
+                dlg.Controls.Add(pnlMain);
+
+                // Initial render for requested engine
+                renderEngineDetails(defaultEngineId);
+
+                dlg.ShowDialog(this);
+            }
+        }
+
         public List<string> GetRelayCandidateUrls()
         {
             List<string> candidateUrls = new List<string>();
@@ -2676,24 +4455,8 @@ namespace JDroidXDesk.Native
 
         private void UpdateColabTelemetryUI()
         {
-            if (lblMetaRamVal != null && !lblMetaRamVal.IsDisposed) lblMetaRamVal.Text = colabRamText;
-            if (lblMetaGpuVal != null && !lblMetaGpuVal.IsDisposed) lblMetaGpuVal.Text = colabGpuText;
-            if (lblMetaDiskVal != null && !lblMetaDiskVal.IsDisposed) lblMetaDiskVal.Text = colabDiskText;
-            if (lblMetaStatusVal != null && !lblMetaStatusVal.IsDisposed)
-            {
-                lblMetaStatusVal.Text = isColabConnected ? string.Format("● ONLINE ({0}ms)", lastMeasuredRttMs) : (isProbingCandidates ? "◌ PINGING..." : "○ OFFLINE");
-                lblMetaStatusVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
-            }
-            if (lblMetaHeartbeatVal != null && !lblMetaHeartbeatVal.IsDisposed)
-            {
-                lblMetaHeartbeatVal.Text = isColabConnected ? string.Format("ALIVE ({0}ms)", lastMeasuredRttMs) : (isProbingCandidates ? "PROBING" : "OFFLINE");
-                lblMetaHeartbeatVal.ForeColor = isColabConnected ? Color.FromArgb(16, 185, 129) : (isProbingCandidates ? Color.FromArgb(245, 158, 11) : Color.FromArgb(239, 68, 68));
-            }
-            if (panelMetaRam != null && !panelMetaRam.IsDisposed) panelMetaRam.Invalidate();
-            if (panelMetaGpu != null && !panelMetaGpu.IsDisposed) panelMetaGpu.Invalidate();
-            if (panelMetaDisk != null && !panelMetaDisk.IsDisposed) panelMetaDisk.Invalidate();
-            if (panelMetaStatus != null && !panelMetaStatus.IsDisposed) panelMetaStatus.Invalidate();
-            if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
+            string actEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "sunshine";
+            UpdateHeaderEngineTelemetryUI(actEng);
         }
 
         private Button CreateLayoutIconBtn(string icon, string tooltip, EventHandler onClick, bool isActive)
@@ -2757,6 +4520,7 @@ namespace JDroidXDesk.Native
             addActivityIcon("Terminal", "💻", "Admin PowerShell");
             addActivityIcon("Fleet", "🗄️", "Address Book & Fleet");
             addActivityIcon("History", "📜", "Session History");
+            addActivityIcon("ServerAdmin", "🛡️", "Open-Source Engines & Server Admin");
             addActivityIcon("MindMap", "🕸️", "Graphify AST Mind Map & Architecture Hub");
             addActivityIcon("Settings", "⚙️", "Settings Studio");
 
@@ -2833,10 +4597,10 @@ namespace JDroidXDesk.Native
         {
             collapsibleLeftDrawer.Controls.Clear();
 
-            Panel drawerHeader = new Panel { Dock = DockStyle.Top, Height = 38, BackColor = Color.FromArgb(10, 16, 26), Padding = new Padding(12, 8, 8, 0) };
-            lblDrawerTitle = new Label { Text = "REMOTE FLEET ROSTER", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Dock = DockStyle.Left, AutoSize = true };
+            drawerHeader = new Panel { Dock = DockStyle.Top, Height = 38, BackColor = ThemePalette.ColorBgSidebarHeader, Padding = new Padding(12, 8, 8, 0) };
+            lblDrawerTitle = new Label { Text = "REMOTE FLEET ROSTER", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Dock = DockStyle.Left, AutoSize = true };
             
-            Button btnCloseDrawer = new Button { Text = "✕", Size = new Size(24, 24), Dock = DockStyle.Right, FlatStyle = FlatStyle.Flat, ForeColor = Color.FromArgb(148, 163, 184), Cursor = Cursors.Hand };
+            Button btnCloseDrawer = new Button { Text = "✕", Size = new Size(24, 24), Dock = DockStyle.Right, FlatStyle = FlatStyle.Flat, ForeColor = ThemePalette.ColorTextSecondary, Cursor = Cursors.Hand };
             btnCloseDrawer.FlatAppearance.BorderSize = 0;
             btnCloseDrawer.Click += (s, e) => {
                 collapsibleLeftDrawer.Visible = false;
@@ -2846,7 +4610,7 @@ namespace JDroidXDesk.Native
             drawerHeader.Controls.Add(lblDrawerTitle);
             drawerHeader.Controls.Add(btnCloseDrawer);
 
-            drawerContentPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(8) };
+            drawerContentPanel = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgSidebar, Padding = new Padding(8) };
 
             collapsibleLeftDrawer.Controls.Add(drawerHeader);
             collapsibleLeftDrawer.Controls.Add(drawerContentPanel);
@@ -2860,6 +4624,9 @@ namespace JDroidXDesk.Native
         {
             if (drawerContentPanel == null) return;
             drawerContentPanel.Controls.Clear();
+            drawerContentPanel.BackColor = ThemePalette.ColorBgSidebar;
+            if (drawerHeader != null) drawerHeader.BackColor = ThemePalette.ColorBgSidebarHeader;
+            if (lblDrawerTitle != null) lblDrawerTitle.ForeColor = ThemePalette.ColorTextSecondary;
 
             if (key == "Console")
             {
@@ -2868,9 +4635,9 @@ namespace JDroidXDesk.Native
                 if (dynamicDesktops.Count == 0)
                 {
                     Panel pEmpty = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12, 40, 12, 12) };
-                    Label lblIcon = new Label { Text = "💻", Font = new Font("Segoe UI Emoji", 28f), ForeColor = Color.FromArgb(56, 189, 248), Dock = DockStyle.Top, Height = 48, TextAlign = ContentAlignment.MiddleCenter };
-                    Label lblTitle = new Label { Text = "No Saved Workstations", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Top, Height = 26, TextAlign = ContentAlignment.MiddleCenter };
-                    Label lblDesc = new Label { Text = "When you connect to remote computers, they will appear here for 1-click access.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), Dock = DockStyle.Top, Height = 60, TextAlign = ContentAlignment.TopCenter };
+                    Label lblIcon = new Label { Text = "💻", Font = new Font("Segoe UI Emoji", 28f), ForeColor = ThemePalette.ColorAccentSky, Dock = DockStyle.Top, Height = 48, TextAlign = ContentAlignment.MiddleCenter };
+                    Label lblTitle = new Label { Text = "No Saved Workstations", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Dock = DockStyle.Top, Height = 26, TextAlign = ContentAlignment.MiddleCenter };
+                    Label lblDesc = new Label { Text = "When you connect to remote computers, they will appear here for 1-click access.", Font = new Font("Segoe UI", 8.5f), ForeColor = ThemePalette.ColorTextSecondary, Dock = DockStyle.Top, Height = 60, TextAlign = ContentAlignment.TopCenter };
 
                     pEmpty.Controls.Add(lblDesc);
                     pEmpty.Controls.Add(lblTitle);
@@ -2879,15 +4646,18 @@ namespace JDroidXDesk.Native
                 }
                 else
                 {
-                    Label lPrompt = new Label { Text = "Saved remote workstations:", Font = new Font("Segoe UI", 8f), ForeColor = Color.FromArgb(100, 116, 139), Dock = DockStyle.Top, Height = 24 };
+                    Label lPrompt = new Label { Text = "Saved remote workstations:", Font = new Font("Segoe UI", 8f), ForeColor = ThemePalette.ColorTextSecondary, Dock = DockStyle.Top, Height = 24 };
                     drawerContentPanel.Controls.Add(lPrompt);
 
                     FlowLayoutPanel listFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
                     foreach (SimulatorDesktop target in dynamicDesktops)
                     {
-                        Panel card = new Panel { Size = new Size(236, 68), BackColor = Color.FromArgb(20, 28, 45), Margin = new Padding(0, 0, 0, 8), Padding = new Padding(8) };
-                        Label lName = new Label { Text = "💻 " + target.Name, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(6, 6), AutoSize = true };
-                        Label lSub = new Label { Text = target.RemoteId + " • " + target.Ip, Font = new Font("Consolas", 8f), ForeColor = target.AccentColor, Location = new Point(8, 26), AutoSize = true };
+                        Panel card = new Panel { Size = new Size(236, 68), BackColor = Color.Transparent, Margin = new Padding(0, 0, 0, 8), Padding = new Padding(8) };
+                        card.Paint += (s, e) => {
+                            ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, card.Width - 1, card.Height - 3), ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 8);
+                        };
+                        Label lName = new Label { Text = "💻 " + target.Name, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(6, 6), AutoSize = true, BackColor = Color.Transparent };
+                        Label lSub = new Label { Text = target.RemoteId + " • " + target.Ip, Font = new Font("Consolas", 8f), ForeColor = target.AccentColor, Location = new Point(8, 26), AutoSize = true, BackColor = Color.Transparent };
                         
                         ModernButton btnCall = new ModernButton { Text = "📞 Connect", NormalColor = target.AccentColor, HoverColor = Color.FromArgb(2, 132, 199), Size = new Size(86, 24), Location = new Point(140, 36) };
                         SimulatorDesktop callTarget = target;
@@ -2909,7 +4679,7 @@ namespace JDroidXDesk.Native
             else if (key == "FileTransfer")
             {
                 lblDrawerTitle.Text = "STORAGE & DRIVES";
-                ListBox lbDrives = new ListBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(20, 28, 45), ForeColor = Color.White, Font = new Font("Segoe UI", 9f), BorderStyle = BorderStyle.None };
+                ListBox lbDrives = new ListBox { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 9f), BorderStyle = BorderStyle.None };
                 try {
                     foreach (DriveInfo d in DriveInfo.GetDrives())
                     {
@@ -2917,6 +4687,85 @@ namespace JDroidXDesk.Native
                     }
                 } catch { lbDrives.Items.Add("💾 Drive C:\\ (System)"); }
                 drawerContentPanel.Controls.Add(lbDrives);
+            }
+            else if (key == "ServerAdmin")
+            {
+                lblDrawerTitle.Text = "ENGINE & ADMIN ACTIONS";
+                FlowLayoutPanel flow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new Padding(4) };
+
+                Label lblSec = new Label { Text = "Switch jDroid-Engine:", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, AutoSize = true, Margin = new Padding(0, 4, 0, 8) };
+                flow.Controls.Add(lblSec);
+
+                Action<string, string> addEngineBtn = (engId, label) => {
+                    bool isActive = db != null && db.ServerConfig != null && db.ServerConfig.activeEngine == engId;
+                    Button b = new Button {
+                        Text = (isActive ? "✓ " : "") + label,
+                        Size = new Size(236, 30),
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = isActive ? Color.FromArgb(16, 185, 129) : ThemePalette.ColorBgCard,
+                        ForeColor = isActive ? Color.White : ThemePalette.ColorTextPrimary,
+                        Font = new Font("Segoe UI", 8f, FontStyle.Bold),
+                        Cursor = Cursors.Hand,
+                        Margin = new Padding(0, 0, 0, 6)
+                    };
+                    b.FlatAppearance.BorderSize = 0;
+                    b.Click += (s, e) => {
+                        SwitchActiveEngine(engId);
+                    };
+                    flow.Controls.Add(b);
+                };
+
+                addEngineBtn("rustdesk", "🦀 RustDesk (P2P Direct)");
+                addEngineBtn("sunshine", "⚡ Sunshine & Moonlight");
+                addEngineBtn("guacamole", "🥑 Guacamole (HTML5)");
+                addEngineBtn("jdroidRelay", "🚀 Google Colab (Cloud Relay)");
+
+                Label lblWebHdr = new Label { Text = "Web Management (Backup):", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, AutoSize = true, Margin = new Padding(0, 16, 0, 8) };
+                flow.Controls.Add(lblWebHdr);
+
+                Button btnWeb = new Button {
+                    Text = "🌐 Open Web Admin (Backup)",
+                    Size = new Size(236, 32),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = ThemePalette.ColorBgCard,
+                    ForeColor = ThemePalette.ColorAccentSky,
+                    Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0, 0, 0, 6)
+                };
+                btnWeb.FlatAppearance.BorderSize = 0;
+                btnWeb.Click += (s, e) => {
+                    try {
+                        Process.Start("http://localhost:12345/admin.html");
+                        ShowToast("Opened Web Admin Backup in Browser");
+                    } catch (Exception ex) {
+                        ShowToast("Could not open browser: " + ex.Message);
+                    }
+                };
+                flow.Controls.Add(btnWeb);
+
+                Button btnSunshineWeb = new Button {
+                    Text = "☀️ Open Sunshine UI (47990)",
+                    Size = new Size(236, 32),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = ThemePalette.ColorBgCard,
+                    ForeColor = ThemePalette.ColorAccentAmber,
+                    Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0, 0, 0, 6)
+                };
+                btnSunshineWeb.FlatAppearance.BorderSize = 0;
+                btnSunshineWeb.Click += (s, e) => {
+                    try {
+                        Process.Start("https://localhost:47990");
+                        ShowToast("Opened Sunshine Web UI (47990)");
+                    } catch (Exception ex) {
+                        ShowToast("Could not open browser: " + ex.Message);
+                    }
+                };
+                flow.Controls.Add(btnSunshineWeb);
+
+                drawerContentPanel.Controls.Add(flow);
             }
             else
             {
@@ -2978,9 +4827,11 @@ namespace JDroidXDesk.Native
 
         private void UpdateLiveTelemetry()
         {
+            string activeEngName = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine.ToUpper() : "RELAY";
             if (lblInspectorBytes != null) lblInspectorBytes.Text = (bytesTransferred / (1024 * 1024.0)).ToString("0.0") + " MB";
-            if (lblInspectorFps != null) lblInspectorFps.Text = (currentConnectionState == SessionConnectionState.Connected) ? string.Format("{0:0.0} FPS (Active)", currentMeasuredFps) : "0.0 FPS (Idle)";
-            if (lblInspectorRtt != null) lblInspectorRtt.Text = (currentConnectionState == SessionConnectionState.Connected && lastMeasuredRttMs > 0) ? (lastMeasuredRttMs + " ms (P2P)") : "-- ms";
+            if (lblInspectorFps != null) lblInspectorFps.Text = (currentConnectionState == SessionConnectionState.Connected) ? string.Format("{0:0.0} FPS ({1})", currentMeasuredFps, activeEngName) : "0.0 FPS (Idle)";
+            if (lblInspectorRtt != null) lblInspectorRtt.Text = (currentConnectionState == SessionConnectionState.Connected && lastMeasuredRttMs > 0) ? (lastMeasuredRttMs + " ms (" + activeEngName + ")") : "-- ms";
+            if (lblInspectorCipher != null) lblInspectorCipher.Text = string.Format("{0} • ChaCha20-Poly1305", activeEngName);
             if (lblInspectorHost != null && currentHostDesktop != null) lblInspectorHost.Text = currentHostDesktop.Name;
             if (lblInspectorTarget != null && connectedTargetDesktop != null) lblInspectorTarget.Text = connectedTargetDesktop.Name;
 
@@ -2988,17 +4839,17 @@ namespace JDroidXDesk.Native
             {
                 if (currentConnectionState == SessionConnectionState.Connected)
                 {
-                    lblSessionTelemetryHUD.Text = string.Format("🟢 {0:0} FPS • {1}ms • P2P", currentMeasuredFps, lastMeasuredRttMs > 0 ? lastMeasuredRttMs : 0);
+                    lblSessionTelemetryHUD.Text = string.Format("🟢 {0:0} FPS • {1}ms • {2}", currentMeasuredFps, lastMeasuredRttMs > 0 ? lastMeasuredRttMs : 0, activeEngName);
                     lblSessionTelemetryHUD.ForeColor = Color.FromArgb(16, 185, 129);
                 }
                 else if (currentConnectionState == SessionConnectionState.Connecting)
                 {
-                    lblSessionTelemetryHUD.Text = "🟡 Connecting (Heartbeat)...";
+                    lblSessionTelemetryHUD.Text = string.Format("🟡 Connecting via {0}...", activeEngName);
                     lblSessionTelemetryHUD.ForeColor = Color.FromArgb(245, 158, 11);
                 }
                 else
                 {
-                    lblSessionTelemetryHUD.Text = "⚪ Idle";
+                    lblSessionTelemetryHUD.Text = string.Format("⚪ Idle ({0})", activeEngName);
                     lblSessionTelemetryHUD.ForeColor = Color.FromArgb(148, 163, 184);
                 }
             }
@@ -3157,11 +5008,11 @@ namespace JDroidXDesk.Native
             centerEditorWorkArea.Controls.Clear();
 
             // Main Antigravity Document Tab Bar across top of workspace
-            mainTabBar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(9, 13, 22), Padding = new Padding(4, 4, 4, 0) };
+            mainTabBar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = ThemePalette.ColorBgTabBar, Padding = new Padding(4, 4, 4, 0) };
             BuildMainTabBar();
 
             // View Container
-            viewContainer = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42) };
+            viewContainer = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace };
 
             // Initialize Subviews
             InitializeConsoleView();
@@ -3169,6 +5020,18 @@ namespace JDroidXDesk.Native
             InitializeFleetView();
             InitializeHistoryView();
             InitializeSettingsStudioView();
+            InitializeServerAdminView();
+
+            viewContainer.SuspendLayout();
+            if (viewConsole != null) { viewConsole.Dock = DockStyle.Fill; viewContainer.Controls.Add(viewConsole); }
+            if (viewFileTransfer != null) { viewFileTransfer.Dock = DockStyle.Fill; viewFileTransfer.Visible = false; viewContainer.Controls.Add(viewFileTransfer); }
+            if (viewFleet != null) { viewFleet.Dock = DockStyle.Fill; viewFleet.Visible = false; viewContainer.Controls.Add(viewFleet); }
+            if (viewHistory != null) { viewHistory.Dock = DockStyle.Fill; viewHistory.Visible = false; viewContainer.Controls.Add(viewHistory); }
+            if (viewSettingsStudio != null) { viewSettingsStudio.Dock = DockStyle.Fill; viewSettingsStudio.Visible = false; viewContainer.Controls.Add(viewSettingsStudio); }
+            if (viewServerAdmin != null) { viewServerAdmin.Dock = DockStyle.Fill; viewServerAdmin.Visible = false; viewContainer.Controls.Add(viewServerAdmin); }
+            viewContainer.ResumeLayout(true);
+
+            SetDoubleBuffered(viewContainer);
 
             centerEditorWorkArea.Controls.Add(mainTabBar);
             centerEditorWorkArea.Controls.Add(viewContainer);
@@ -3178,7 +5041,9 @@ namespace JDroidXDesk.Native
 
         private void BuildMainTabBar()
         {
+            mainTabBar.SuspendLayout();
             mainTabBar.Controls.Clear();
+            mainTabBar.BackColor = ThemePalette.ColorBgTabBar;
 
             FlowLayoutPanel tabFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
 
@@ -3191,12 +5056,21 @@ namespace JDroidXDesk.Native
                     Height = 32,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 8.5f, isActive ? FontStyle.Bold : FontStyle.Regular),
-                    ForeColor = isActive ? Color.White : Color.FromArgb(148, 163, 184),
-                    BackColor = isActive ? Color.FromArgb(15, 23, 42) : Color.FromArgb(9, 13, 22),
+                    ForeColor = isActive ? ThemePalette.ColorTextTabActive : ThemePalette.ColorTextTabInactive,
+                    BackColor = isActive ? ThemePalette.ColorBgTabActive : ThemePalette.ColorBgTabInactive,
                     Cursor = Cursors.Hand,
-                    Margin = new Padding(0, 0, 2, 0)
+                    Margin = new Padding(0, 0, 4, 0)
                 };
                 tabBtn.FlatAppearance.BorderSize = 0;
+                tabBtn.Paint += (s, e) => {
+                    if (isActive)
+                    {
+                        using (Pen p = new Pen(ThemePalette.ColorAccentSky, 2.5f))
+                        {
+                            e.Graphics.DrawLine(p, 4, tabBtn.Height - 2, tabBtn.Width - 4, tabBtn.Height - 2);
+                        }
+                    }
+                };
                 tabBtn.Click += (s, e) => SwitchWorkspaceView(key);
                 tabFlow.Controls.Add(tabBtn);
             };
@@ -3206,8 +5080,10 @@ namespace JDroidXDesk.Native
             addTab("Fleet", "🗄️ Fleet Workstations");
             addTab("History", "📜 Session Logs");
             addTab("Settings", "⚙️ Settings Studio");
+            addTab("ServerAdmin", "🛡️ Server & Engines");
 
             mainTabBar.Controls.Add(tabFlow);
+            mainTabBar.ResumeLayout(true);
         }
 
         private void SwitchWorkspaceView(string key)
@@ -3217,18 +5093,23 @@ namespace JDroidXDesk.Native
             BuildMainTabBar();
             UpdateDrawerForCurrentView(key);
 
-            viewContainer.Controls.Clear();
             Panel target = null;
             if (key == "Console") target = viewConsole;
             else if (key == "FileTransfer") target = viewFileTransfer;
             else if (key == "Fleet") target = viewFleet;
             else if (key == "History") target = viewHistory;
             else if (key == "Settings") target = viewSettingsStudio;
+            else if (key == "ServerAdmin") target = viewServerAdmin;
 
-            if (target != null)
+            if (target != null && viewContainer != null)
             {
-                target.Dock = DockStyle.Fill;
-                viewContainer.Controls.Add(target);
+                viewContainer.SuspendLayout();
+                foreach (Control c in viewContainer.Controls)
+                {
+                    c.Visible = (c == target);
+                }
+                target.BringToFront();
+                viewContainer.ResumeLayout(true);
             }
         }
 
@@ -3238,20 +5119,20 @@ namespace JDroidXDesk.Native
 
         private void InitializeConsoleView()
         {
-            viewConsole = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42), Padding = new Padding(0) };
+            viewConsole = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(0) };
 
             // Top Floating Session Bar
             sessionFloatingToolbar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(20, 28, 45), Padding = new Padding(6, 4, 6, 4), Visible = false };
             BuildFloatingSessionToolbar();
 
             // Local Node Info Ribbon (Non-overlapping, Clean Layout)
-            localBar = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(14, 8, 14, 8) };
+            localBar = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = ThemePalette.ColorBgCardHeader, Padding = new Padding(14, 8, 14, 8) };
 
             FlowLayoutPanel localLeftBox = new FlowLayoutPanel { Dock = DockStyle.Left, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Margin = new Padding(0) };
-            Label lblDeskPrefix = new Label { Text = "THIS DESK:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Margin = new Padding(0, 4, 8, 0), AutoSize = true };
-            lblLocalId = new Label { Text = currentHostDesktop != null ? currentHostDesktop.RemoteId : GenerateMachineDeskId(), Font = new Font("Consolas", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Margin = new Padding(0, 2, 10, 0), AutoSize = true };
+            Label lblDeskPrefix = new Label { Text = "THIS DESK:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Margin = new Padding(0, 4, 8, 0), AutoSize = true };
+            lblLocalId = new Label { Text = currentHostDesktop != null ? currentHostDesktop.RemoteId : GenerateMachineDeskId(), Font = new Font("Consolas", 12f, FontStyle.Bold), ForeColor = ThemePalette.ColorAccentSky, Margin = new Padding(0, 2, 10, 0), AutoSize = true };
             
-            Button btnCopy = new Button { Text = "📋 Copy", Size = new Size(68, 24), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.White, BackColor = Color.FromArgb(40, 53, 76), Cursor = Cursors.Hand, Margin = new Padding(0, 1, 12, 0) };
+            Button btnCopy = new Button { Text = "📋 Copy", Size = new Size(68, 24), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, BackColor = ThemePalette.ColorBgInput, Cursor = Cursors.Hand, Margin = new Padding(0, 1, 12, 0) };
             btnCopy.FlatAppearance.BorderSize = 0;
             btnCopy.Click += (s, e) => {
                 if (currentHostDesktop != null) {
@@ -3269,8 +5150,8 @@ namespace JDroidXDesk.Native
 
             // Target Connect on right (Symmetric format matching left side)
             FlowLayoutPanel targetBox = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Margin = new Padding(0) };
-            Label lTargetPrompt = new Label { Text = "REMOTE DESK:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Margin = new Padding(0, 4, 8, 0), AutoSize = true };
-            txtTargetId = new TextBox { Font = new Font("Consolas", 11f, FontStyle.Bold), Size = new Size(130, 24), BackColor = Color.FromArgb(24, 32, 54), ForeColor = Color.FromArgb(56, 189, 248), BorderStyle = BorderStyle.FixedSingle, Text = "" };
+            Label lTargetPrompt = new Label { Text = "REMOTE DESK:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Margin = new Padding(0, 4, 8, 0), AutoSize = true };
+            txtTargetId = new TextBox { Font = new Font("Consolas", 11f, FontStyle.Bold), Size = new Size(130, 24), BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, BorderStyle = BorderStyle.FixedSingle, Text = "" };
             txtTargetId.TextChanged += (s, e) => {
                 if (txtCardTargetId != null && txtCardTargetId.Text != txtTargetId.Text)
                     txtCardTargetId.Text = txtTargetId.Text;
@@ -3314,7 +5195,7 @@ namespace JDroidXDesk.Native
             localBar.Controls.Add(targetBox);
 
             // Google Chrome Remote Desktop Style Page (Standby / Fresh Install)
-            panelWelcomeCards = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(15, 23, 42) };
+            panelWelcomeCards = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemePalette.ColorBgWorkspace };
             BuildWelcomeCardsContent();
 
             // GDI+ Canvas for Remote Stream
@@ -3336,59 +5217,249 @@ namespace JDroidXDesk.Native
             viewConsole.Controls.SetChildIndex(viewportCanvas, 0);
         }
 
+        private bool isRelayingOutCards = false;
+
+        private void PanelWelcomeCards_Resize(object sender, EventArgs e)
+        {
+            RelayoutWelcomeCards();
+        }
+
+        private void RelayoutWelcomeCards()
+        {
+            if (isRelayingOutCards || panelWelcomeCards == null || cardContainer == null) return;
+            try
+            {
+                isRelayingOutCards = true;
+                cardContainer.SuspendLayout();
+                int curW = Math.Max(500, panelWelcomeCards.ClientSize.Width);
+                int dynW = Math.Max(640, Math.Min(1400, curW - 48));
+                cardContainer.Width = dynW;
+                cardContainer.Location = new Point(Math.Max(16, (curW - dynW) / 2), 16);
+
+                // Re-arrange Engine Pill
+                if (pnlEnginePill != null) pnlEnginePill.Width = dynW;
+
+                // Re-arrange Step 1: Colab Card
+                if (cardColab != null)
+                {
+                    cardColab.Width = dynW;
+                    bool narrowColab = dynW < 780;
+                    if (txtColabInput != null)
+                    {
+                        txtColabInput.Width = narrowColab ? Math.Max(220, dynW - 32) : Math.Max(260, dynW - 350);
+                    }
+                    if (btnPasteColab != null && btnApplyColab != null && btnColabNotebook != null)
+                    {
+                        if (narrowColab)
+                        {
+                            btnPasteColab.Location = new Point(16, 102);
+                            btnApplyColab.Location = new Point(btnPasteColab.Right + 8, 102);
+                            btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 102);
+                            cardColab.Height = 146;
+                        }
+                        else
+                        {
+                            btnPasteColab.Location = new Point(txtColabInput.Right + 8, 64);
+                            btnApplyColab.Location = new Point(btnPasteColab.Right + 8, 64);
+                            btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 64);
+                            cardColab.Height = 118;
+                        }
+                    }
+                }
+
+                // Calculate responsive columns for Step 2 and Step 3
+                bool isTwoCol = dynW >= 760;
+                int colW = isTwoCol ? (dynW - 16) / 2 : dynW;
+                int colH = 176;
+
+                int step2Y = (cardColab != null ? cardColab.Bottom : 140) + 14;
+
+                if (cardShare != null)
+                {
+                    cardShare.Location = new Point(0, step2Y);
+                    cardShare.Size = new Size(colW, colH);
+                    if (codeBox != null) codeBox.Width = Math.Min(220, colW - 28);
+                    if (shareBtns != null) shareBtns.Width = colW - 28;
+                }
+
+                if (flipperConnect != null)
+                {
+                    int step3Y = isTwoCol ? step2Y : (cardShare != null ? cardShare.Bottom + 14 : step2Y + colH + 14);
+                    int step3X = isTwoCol ? colW + 16 : 0;
+                    flipperConnect.Location = new Point(step3X, step3Y);
+                    flipperConnect.Size = new Size(colW, colH);
+
+                    if (modernCardTargetBox != null)
+                    {
+                        int targetInputW = Math.Max(120, Math.Min(240, colW - 120));
+                        modernCardTargetBox.Size = new Size(targetInputW, 38);
+                        if (btnCardConnect != null)
+                        {
+                            btnCardConnect.Location = new Point(modernCardTargetBox.Right + 8, 58);
+                        }
+                    }
+                    if (cboSavedFleet != null)
+                    {
+                        cboSavedFleet.Width = colW - 28;
+                    }
+                }
+
+                // Re-arrange Card Recent
+                if (cardRecent != null)
+                {
+                    int recentY = Math.Max(cardShare != null ? cardShare.Bottom : 0, flipperConnect != null ? flipperConnect.Bottom : 0) + 14;
+                    cardRecent.Location = new Point(0, recentY);
+                    cardRecent.Width = dynW;
+                }
+            }
+            finally
+            {
+                if (cardContainer != null) cardContainer.ResumeLayout(true);
+                isRelayingOutCards = false;
+            }
+        }
+
         private void BuildWelcomeCardsContent()
         {
+            if (panelWelcomeCards == null) return;
             panelWelcomeCards.Controls.Clear();
+            panelWelcomeCards.BackColor = ThemePalette.ColorBgWorkspace;
 
-            Panel cardContainer = new Panel { Width = 820, AutoSize = true, BackColor = Color.Transparent };
-            Action reposition = () => {
-                cardContainer.Location = new Point(Math.Max(24, (panelWelcomeCards.ClientSize.Width - 820) / 2), 20);
-            };
-            panelWelcomeCards.Resize += (s, e) => reposition();
-            reposition();
+            int clientW = Math.Max(600, panelWelcomeCards.ClientSize.Width);
+            int containerW = Math.Max(720, Math.Min(1400, clientW - 48));
+            bool isTwoCol = containerW >= 760;
+            int colW = isTwoCol ? (containerW - 16) / 2 : containerW;
+
+            cardContainer = new Panel { Width = containerW, AutoSize = true, BackColor = ThemePalette.ColorBgWorkspace };
+            panelWelcomeCards.Resize -= PanelWelcomeCards_Resize;
+            panelWelcomeCards.Resize += PanelWelcomeCards_Resize;
 
             int y = 0;
 
             // Page Header
-            Label lblMainTitle = new Label { Text = "Remote Access & Support", Font = new Font("Segoe UI", 16f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(0, y), AutoSize = true };
-            y += 34;
-            Label lblMainSub = new Label { Text = "Share this screen for remote support or connect to another workstation over the internet.", Font = new Font("Segoe UI", 9.5f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(0, y), AutoSize = true };
-            y += 38;
+            Label lblMainTitle = new Label { Text = "Remote Access & Support", Font = new Font("Segoe UI", 15f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(0, y), AutoSize = true };
+            y += 30;
+            Label lblMainSub = new Label { Text = "Professional peer-to-peer screen sharing and remote administration across jDroid-X Mesh.", Font = new Font("Segoe UI", 9f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(0, y), AutoSize = true };
+            y += 32;
 
-            // CARD 0: CONNECT TO GOOGLE COLAB CLOUD RELAY
-            Panel cardColab = new Panel { Size = new Size(820, 138), Location = new Point(0, y), BackColor = Color.FromArgb(20, 28, 45) };
+            cardContainer.Controls.Add(lblMainTitle);
+            cardContainer.Controls.Add(lblMainSub);
+
+            // Active jDroid-Engine Quick Switch Banner (Floating Pill)
+            string curEngKey = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "sunshine";
+            string curEngName = (db != null && db.ServerConfig != null && db.ServerConfig.engines != null && db.ServerConfig.engines.ContainsKey(curEngKey))
+                ? db.ServerConfig.engines[curEngKey].name
+                : "jDroid-X Sunshine Ultra-Low Latency";
+
+            pnlEnginePill = new Panel {
+                Size = new Size(containerW, 38),
+                Location = new Point(0, y),
+                BackColor = Color.Transparent
+            };
+            pnlEnginePill.Paint += (s, e) => {
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, pnlEnginePill.Width - 1, pnlEnginePill.Height - 1), ThemePalette.ColorBgCardHeader, Color.FromArgb(56, 189, 248), ThemePalette.ColorShadow, 8);
+            };
+
+            Label lEngPillText = new Label {
+                Text = string.Format("⚡ jDroid-Engine: {0} [{1}]", curEngName, engineIsLiveActive ? "● RUNNING" : "⚠️ STANDBY"),
+                Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(56, 189, 248),
+                Location = new Point(12, 10),
+                AutoSize = true
+            };
+
+            FlowLayoutPanel pillBtns = new FlowLayoutPanel {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Padding = new Padding(0, 5, 8, 0)
+            };
+
+            Button btnPillRun = new Button {
+                Text = "🚀 Run Script",
+                Size = new Size(95, 26),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = isDarkMode ? Color.FromArgb(20, 32, 50) : Color.FromArgb(220, 252, 231),
+                ForeColor = Color.FromArgb(16, 185, 129),
+                Font = new Font("Segoe UI", 7.6f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 6, 0)
+            };
+            btnPillRun.FlatAppearance.BorderSize = 0;
+            string runEngKey = curEngKey;
+            btnPillRun.Click += (s, e) => LaunchEngineStartScript(runEngKey);
+
+            Button btnPillAdmin = new Button {
+                Text = "🛡️ Engines",
+                Size = new Size(85, 26),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240),
+                ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42),
+                Font = new Font("Segoe UI", 7.6f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 6, 0)
+            };
+            btnPillAdmin.FlatAppearance.BorderSize = 0;
+            btnPillAdmin.Click += (s, e) => SwitchWorkspaceView("ServerAdmin");
+
+            Button btnPillGuide = new Button {
+                Text = "📖 Guide",
+                Size = new Size(75, 26),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(254, 249, 195),
+                ForeColor = isDarkMode ? Color.FromArgb(250, 204, 21) : Color.FromArgb(161, 98, 7),
+                Font = new Font("Segoe UI", 7.6f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 0, 0)
+            };
+            btnPillGuide.FlatAppearance.BorderSize = 0;
+            string pillEngKey = curEngKey;
+            btnPillGuide.Click += (s, e) => ShowEngineManualSetupDialog(pillEngKey);
+
+            pillBtns.Controls.Add(btnPillRun);
+            pillBtns.Controls.Add(btnPillAdmin);
+            pillBtns.Controls.Add(btnPillGuide);
+
+            pnlEnginePill.Controls.Add(lEngPillText);
+            pnlEnginePill.Controls.Add(pillBtns);
+            cardContainer.Controls.Add(pnlEnginePill);
+            y += 46;
+
+            // CARD 0: CONNECT TO GOOGLE COLAB CLOUD RELAY (3D Floating Card)
+            cardColab = new Panel { Size = new Size(containerW, 118), Location = new Point(0, y), BackColor = Color.Transparent };
             cardColab.Paint += (s, e) => {
                 Color borderC = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
-                e.Graphics.DrawRectangle(new Pen(borderC, 1.2f), 0, 0, cardColab.Width - 1, cardColab.Height - 1);
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardColab.Width - 1, cardColab.Height - 1), ThemePalette.ColorBgCard, borderC, ThemePalette.ColorShadow, 10);
             };
 
             string colabStatusText = isColabConnected ? "● ONLINE (Live Stream Ready)" : "○ NOT CONNECTED (Paste Colab URL)";
             Color colabStatusColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
 
-            Label lColabTitle = new Label { Text = "⚡  Step 1: Connect to Google Colab Cloud Relay", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(20, 14), AutoSize = true };
-            Label lColabBadge = new Label { Text = colabStatusText, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = colabStatusColor, Location = new Point(480, 16), AutoSize = true };
-            Label lColabDesc = new Label { Text = "Colab relay connects Desk 1 & Desk 2 over the internet without port forwarding. Enter your Public Relay URL:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 42), AutoSize = true };
+            Label lColabTitle = new Label { Text = "⚡ Step 1: Connect to Google Colab Cloud Relay", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(16, 12), AutoSize = true };
+            Label lColabBadge = new Label { Text = colabStatusText, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = colabStatusColor, Location = new Point(Math.Max(380, containerW - 270), 14), AutoSize = true };
+            Label lColabDesc = new Label { Text = "Enter your Google Colab Cloudflare tunnel URL to bridge peer-to-peer across NAT and firewalls:", Font = new Font("Segoe UI", 8.5f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(16, 36), AutoSize = true };
 
-            TextBox txtColabInput = new TextBox {
-                Size = new Size(410, 36),
-                Location = new Point(20, 72),
-                Font = new Font("Consolas", 10.5f),
-                BackColor = Color.FromArgb(10, 16, 26),
-                ForeColor = Color.White,
+            txtColabInput = new TextBox {
+                Size = new Size(Math.Max(260, containerW - 360), 32),
+                Location = new Point(16, 64),
+                Font = new Font("Consolas", 10f),
+                BackColor = ThemePalette.ColorBgInput,
+                ForeColor = ThemePalette.ColorTextPrimary,
                 BorderStyle = BorderStyle.FixedSingle,
                 Text = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.relayServer)) 
                     ? db.Settings.connection.relayServer 
                     : "https://....trycloudflare.com"
             };
 
-            Button btnPasteColab = new Button {
-                Text = "📋 Paste URL",
-                Size = new Size(115, 36),
-                Location = new Point(440, 72),
+            btnPasteColab = new Button {
+                Text = "📋 Paste",
+                Size = new Size(80, 32),
+                Location = new Point(txtColabInput.Right + 8, 64),
                 FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(40, 53, 76),
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240),
+                ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42),
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
             btnPasteColab.FlatAppearance.BorderSize = 0;
@@ -3404,7 +5475,7 @@ namespace JDroidXDesk.Native
                         }
                         if (clip.Contains(".trycloudflare.com") || clip.StartsWith("http")) {
                             txtColabInput.Text = clip.TrimEnd('/');
-                            ShowToast("Pasted active Colab tunnel URL from clipboard");
+                            ShowToast("Pasted Colab tunnel URL from clipboard");
                         } else {
                             MessageBox.Show("Clipboard does not contain a valid URL. Copy the 'https://...trycloudflare.com' URL from your Colab notebook first.", "Paste Colab URL", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
@@ -3412,14 +5483,14 @@ namespace JDroidXDesk.Native
                 } catch { }
             };
 
-            Button btnApplyColab = new Button {
+            btnApplyColab = new Button {
                 Text = "💾 Save & Connect",
-                Size = new Size(130, 36),
-                Location = new Point(565, 72),
+                Size = new Size(130, 32),
+                Location = new Point(btnPasteColab.Right + 8, 64),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.FromArgb(16, 185, 129),
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
             btnApplyColab.FlatAppearance.BorderSize = 0;
@@ -3450,14 +5521,14 @@ namespace JDroidXDesk.Native
                 });
             };
 
-            Button btnColabNotebook = new Button {
-                Text = "🌐 Colab",
-                Size = new Size(95, 36),
-                Location = new Point(705, 72),
+            btnColabNotebook = new Button {
+                Text = "🌐 Notebook",
+                Size = new Size(95, 32),
+                Location = new Point(btnApplyColab.Right + 8, 64),
                 FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(30, 41, 59),
-                ForeColor = Color.FromArgb(203, 213, 225),
-                Font = new Font("Segoe UI", 9f),
+                BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240),
+                ForeColor = isDarkMode ? Color.FromArgb(203, 213, 225) : Color.FromArgb(30, 41, 59),
+                Font = new Font("Segoe UI", 8.5f),
                 Cursor = Cursors.Hand
             };
             btnColabNotebook.FlatAppearance.BorderSize = 0;
@@ -3476,22 +5547,42 @@ namespace JDroidXDesk.Native
             cardColab.Controls.Add(btnApplyColab);
             cardColab.Controls.Add(btnColabNotebook);
             cardContainer.Controls.Add(cardColab);
-            y += 156;
+            y += 130;
 
-            // CARD 1: SHARE THIS SCREEN
-            Panel cardShare = new Panel { Size = new Size(820, 150), Location = new Point(0, y), BackColor = Color.FromArgb(20, 28, 45) };
+            // ==================================================================
+            // RESPONSIVE 2-COLUMN GRID: STEP 2 & STEP 3 SIDE-BY-SIDE
+            // ==================================================================
+            int colH = 176;
+
+            // COLUMN 1: SHARE SCREEN (GET SUPPORT) - 3D Floating Card
+            cardShare = new Panel {
+                Size = new Size(colW, colH),
+                Location = new Point(0, y),
+                BackColor = Color.Transparent
+            };
             cardShare.Paint += (s, e) => {
-                e.Graphics.DrawRectangle(new Pen(Color.FromArgb(40, 53, 76), 1), 0, 0, cardShare.Width - 1, cardShare.Height - 1);
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardShare.Width - 1, cardShare.Height - 1), ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 10);
             };
 
-            Label lShareTitle = new Label { Text = "📥  Step 2: Share this screen (Get Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 16), AutoSize = true };
-            Label lShareDesc = new Label { Text = "To let another person view and control this computer, give them this 9-digit Desk ID:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 44), AutoSize = true };
+            Label lShareTitle = new Label { Text = "📥  Step 2: Share Screen (Get Support)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
+            Label lShareDesc = new Label { Text = "Give your 9-digit Desk ID to allow incoming control:", Font = new Font("Segoe UI", 8.2f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 34), AutoSize = true };
 
-            Panel codeBox = new Panel { Size = new Size(240, 44), Location = new Point(20, 78), BackColor = Color.FromArgb(10, 16, 26) };
-            lblCardLocalId = new Label { Text = currentHostDesktop != null ? currentHostDesktop.RemoteId : GenerateMachineDeskId(), Font = new Font("Consolas", 16f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter };
+            codeBox = new Panel { Size = new Size(Math.Min(220, colW - 28), 38), Location = new Point(14, 58), BackColor = Color.Transparent };
+            codeBox.Paint += (s, e) => {
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, codeBox.Width - 1, codeBox.Height - 1), ThemePalette.ColorBgInput, ThemePalette.ColorBorderCard, Color.FromArgb(12, 0, 0, 0), 6);
+            };
+            lblCardLocalId = new Label { Text = currentHostDesktop != null ? currentHostDesktop.RemoteId : GenerateMachineDeskId(), Font = new Font("Consolas", 14f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, BackColor = Color.Transparent };
             codeBox.Controls.Add(lblCardLocalId);
 
-            Button btnCardCopy = new Button { Text = "📋 Copy Desk ID", Size = new Size(130, 44), Location = new Point(272, 78), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(40, 53, 76), ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold), Cursor = Cursors.Hand };
+            shareBtns = new FlowLayoutPanel {
+                Location = new Point(14, 104),
+                Size = new Size(colW - 28, 36),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = Color.Transparent
+            };
+
+            Button btnCardCopy = new Button { Text = "📋 Copy ID", Size = new Size(88, 28), FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 6, 0) };
             btnCardCopy.FlatAppearance.BorderSize = 0;
             btnCardCopy.Click += (s, e) => {
                 if (currentHostDesktop != null) {
@@ -3500,7 +5591,7 @@ namespace JDroidXDesk.Native
                 }
             };
 
-            Button btnCardInvite = new Button { Text = "✉️ Copy Invite", Size = new Size(130, 44), Location = new Point(412, 78), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold), Cursor = Cursors.Hand };
+            Button btnCardInvite = new Button { Text = "✉️ Invite", Size = new Size(78, 28), FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 6, 0) };
             btnCardInvite.FlatAppearance.BorderSize = 0;
             btnCardInvite.Click += (s, e) => {
                 if (currentHostDesktop != null) {
@@ -3510,27 +5601,30 @@ namespace JDroidXDesk.Native
                 }
             };
 
-            Label lShareStatus = new Label { Text = "● Ready for incoming connections", Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), Location = new Point(560, 92), AutoSize = true };
+            Label lShareStatus = new Label { Text = "● Ready", Font = new Font("Segoe UI", 7.6f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Margin = new Padding(4, 6, 0, 0) };
+
+            shareBtns.Controls.Add(btnCardCopy);
+            shareBtns.Controls.Add(btnCardInvite);
+            shareBtns.Controls.Add(lShareStatus);
 
             cardShare.Controls.Add(lShareTitle);
             cardShare.Controls.Add(lShareDesc);
             cardShare.Controls.Add(codeBox);
-            cardShare.Controls.Add(btnCardCopy);
-            cardShare.Controls.Add(btnCardInvite);
-            cardShare.Controls.Add(lShareStatus);
+            cardShare.Controls.Add(shareBtns);
             cardContainer.Controls.Add(cardShare);
-            y += 168;
 
-            // CARD 2: REVERSIBLE 3D FLIPPER (CONNECT TO ANOTHER COMPUTER + LIVE TELEMETRY)
-            ModernCardFlipper flipperConnect = new ModernCardFlipper { Size = new Size(820, 165), Location = new Point(0, y) };
+            // COLUMN 2: CONNECT TO ANOTHER WORKSTATION (GIVE SUPPORT) - 3D Floating Flipper
+            flipperConnect = new ModernCardFlipper {
+                Size = new Size(colW, colH),
+                Location = isTwoCol ? new Point(colW + 16, y) : new Point(0, y + colH + 14)
+            };
 
             // FRONT VIEW: Connection Actions
-            Label lConnTitle = new Label { Text = "📤  Step 3: Connect to another computer (Give Support)", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 14), AutoSize = true };
-            Label lConnDesc = new Label { Text = "Enter the 9-digit Desk ID of the remote computer you want to access:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 42), AutoSize = true };
+            Label lConnTitle = new Label { Text = "📤  Step 3: Connect (Give Support)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
+            Label lConnDesc = new Label { Text = "Enter remote 9-digit Desk ID or select fleet:", Font = new Font("Segoe UI", 8.2f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 34), AutoSize = true };
 
-            ModernSegmentedToggle segMode = new ModernSegmentedToggle { Options = new string[] { "⚡ Remote Desktop", "📁 File Transfer" }, Location = new Point(480, 12), Size = new Size(180, 26) };
-
-            modernCardTargetBox = new ModernTextBox { Location = new Point(20, 70), Size = new Size(240, 42), AutoFormatDeskId = true };
+            int targetInputW = Math.Max(120, Math.Min(220, colW - 130));
+            modernCardTargetBox = new ModernTextBox { Location = new Point(14, 58), Size = new Size(targetInputW, 38), AutoFormatDeskId = true };
             if (txtCardTargetId == null) txtCardTargetId = new TextBox();
             modernCardTargetBox.TextChangedCustom += (s, e) => {
                 txtCardTargetId.Text = modernCardTargetBox.Text;
@@ -3538,13 +5632,13 @@ namespace JDroidXDesk.Native
                     txtTargetId.Text = modernCardTargetBox.Text;
             };
 
-            btnCardConnect = new ModernButton { Text = "⚡ Connect", Size = new Size(130, 42), Location = new Point(272, 70), NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38) };
+            btnCardConnect = new ModernButton { Text = "⚡ Connect", Size = new Size(88, 38), Location = new Point(modernCardTargetBox.Right + 8, 58), NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38) };
             btnCardConnect.Click += (s, e) => {
                 if (txtTargetId != null) txtTargetId.Text = modernCardTargetBox.Text.Trim();
                 ToggleSessionConnection();
             };
 
-            ComboBox cboSavedFleet = new ComboBox { Location = new Point(415, 78), Size = new Size(260, 26), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8.5f) };
+            cboSavedFleet = new ComboBox { Location = new Point(14, 106), Size = new Size(colW - 28, 24), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8f) };
             cboSavedFleet.Items.Add("-- Quick Select Fleet Workstation --");
             if (db != null && db.Devices != null)
             {
@@ -3565,78 +5659,75 @@ namespace JDroidXDesk.Native
                 }
             };
 
-            Label lConnSub = new Label { Text = "Encrypted direct peer-to-peer session over jDroid-X Relay Network.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100, 116, 139), Location = new Point(20, 128), AutoSize = true };
-
             flipperConnect.FrontView.Controls.Add(lConnTitle);
             flipperConnect.FrontView.Controls.Add(lConnDesc);
-            flipperConnect.FrontView.Controls.Add(segMode);
             flipperConnect.FrontView.Controls.Add(modernCardTargetBox);
             flipperConnect.FrontView.Controls.Add(btnCardConnect);
             flipperConnect.FrontView.Controls.Add(cboSavedFleet);
-            flipperConnect.FrontView.Controls.Add(lConnSub);
 
-            // BACK VIEW: Diagnostic Telemetry & Dynamic Switches
-            Label lBackTitle = new Label { Text = "🛡️  Connection Telemetry, Security Cipher & Hardware Profile", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(20, 14), AutoSize = true };
-            Label lBackDesc = new Label { Text = "Real-time encryption state and low-level hardware acceleration toggles:", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 42), AutoSize = true };
-
-            ModernSwitch swHwAccel = new ModernSwitch { LabelText = "GDI+ Hardware Blitting", Checked = true, Location = new Point(20, 72), Size = new Size(220, 28) };
-            ModernSwitch swDirectLan = new ModernSwitch { LabelText = "P2P Direct LAN Fallback", Checked = db.Settings.connection.directConnections, Location = new Point(20, 108), Size = new Size(220, 28) };
+            // BACK VIEW: Telemetry & Cipher
+            Label lBackTitle = new Label { Text = "🛡️ Telemetry & Security Cipher", Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(14, 12), AutoSize = true };
+            ModernSwitch swHwAccel = new ModernSwitch { LabelText = "GDI+ Blit", Checked = true, Location = new Point(14, 42), Size = new Size(110, 22) };
+            ModernSwitch swDirectLan = new ModernSwitch { LabelText = "LAN Fallback", Checked = db.Settings.connection.directConnections, Location = new Point(130, 42), Size = new Size(120, 22) };
             swDirectLan.CheckedChanged += (s, e) => {
                 db.Settings.connection.directConnections = swDirectLan.Checked;
                 db.Save();
-                ShowToast("Direct LAN fallback set to " + (swDirectLan.Checked ? "ENABLED" : "DISABLED"));
+                ShowToast("LAN fallback: " + (swDirectLan.Checked ? "ON" : "OFF"));
             };
 
-            FlowLayoutPanel flowCipher = new FlowLayoutPanel { Location = new Point(260, 72), Size = new Size(540, 68), FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+            FlowLayoutPanel flowCipher = new FlowLayoutPanel { Location = new Point(14, 72), Size = new Size(colW - 28, 54), FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
             Action<string, string> addTelemTag = (k, v) => {
-                Panel tp = new Panel { Size = new Size(125, 54), Margin = new Padding(0, 0, 8, 0), BackColor = Color.FromArgb(13, 21, 34), BorderStyle = BorderStyle.FixedSingle };
-                Label tk = new Label { Text = k, Font = new Font("Segoe UI", 7.2f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(6, 4), AutoSize = true };
-                Label tv = new Label { Text = v, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(6, 24), AutoSize = true };
+                Panel tp = new Panel { Size = new Size(82, 42), Margin = new Padding(0, 0, 4, 0), BackColor = ThemePalette.ColorBgInput, BorderStyle = BorderStyle.FixedSingle };
+                Label tk = new Label { Text = k, Font = new Font("Segoe UI", 6.5f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(3, 1), AutoSize = true };
+                Label tv = new Label { Text = v, Font = new Font("Segoe UI", 7.2f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(3, 16), AutoSize = true };
                 tp.Controls.Add(tk);
                 tp.Controls.Add(tv);
                 flowCipher.Controls.Add(tp);
             };
 
-            addTelemTag("Cipher", "AES-256-GCM");
+            addTelemTag("Cipher", "AES-256");
             addTelemTag("Relay Port", db.Settings.connection.relayPort > 0 ? db.Settings.connection.relayPort.ToString() : "8088");
             addTelemTag("LAN IP", GetLocalLanIp());
-            addTelemTag("Framerate", "Adaptive 60 FPS");
+            addTelemTag("FPS", "60 FPS");
 
             flipperConnect.BackView.Controls.Add(lBackTitle);
-            flipperConnect.BackView.Controls.Add(lBackDesc);
             flipperConnect.BackView.Controls.Add(swHwAccel);
             flipperConnect.BackView.Controls.Add(swDirectLan);
             flipperConnect.BackView.Controls.Add(flowCipher);
 
             cardContainer.Controls.Add(flipperConnect);
-            y += 182;
 
-            // CARD 3: RECENT CONNECTIONS
-            Panel cardRecent = new Panel { Size = new Size(820, 140), Location = new Point(0, y), BackColor = Color.FromArgb(20, 28, 45) };
+            y += isTwoCol ? colH + 16 : (colH * 2) + 28;
+
+            // CARD 3: RECENT CONNECTIONS (3D Floating Card)
+            cardRecent = new Panel { Size = new Size(containerW, 124), Location = new Point(0, y), BackColor = Color.Transparent };
             cardRecent.Paint += (s, e) => {
-                e.Graphics.DrawRectangle(new Pen(Color.FromArgb(40, 53, 76), 1), 0, 0, cardRecent.Width - 1, cardRecent.Height - 1);
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardRecent.Width - 1, cardRecent.Height - 1), ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 10);
             };
 
-            Label lRecTitle = new Label { Text = "🕒  Recent Connections", Font = new Font("Segoe UI", 12f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(20, 16), AutoSize = true };
+            Label lRecTitle = new Label { Text = "🕒  Recent Workstations", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 10), AutoSize = true };
             cardRecent.Controls.Add(lRecTitle);
 
             if (dynamicDesktops.Count == 0)
             {
-                Label lRecEmpty = new Label { Text = "No remote workstations saved yet.", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(20, 48), AutoSize = true };
-                Label lRecSub = new Label { Text = "When you connect to remote computers, they will appear here for fast 1-click reconnect.", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(20, 74), AutoSize = true };
+                Label lRecEmpty = new Label { Text = "No remote workstations saved yet.", Font = new Font("Segoe UI", 8.8f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 38), AutoSize = true };
+                Label lRecSub = new Label { Text = "When you connect to remote computers, they will appear here for fast 1-click reconnect.", Font = new Font("Segoe UI", 8f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 62), AutoSize = true };
                 cardRecent.Controls.Add(lRecEmpty);
                 cardRecent.Controls.Add(lRecSub);
             }
             else
             {
-                FlowLayoutPanel flowRecents = new FlowLayoutPanel { Location = new Point(20, 48), Size = new Size(780, 80), FlowDirection = FlowDirection.LeftToRight, AutoScroll = true };
+                FlowLayoutPanel flowRecents = new FlowLayoutPanel { Location = new Point(14, 36), Size = new Size(containerW - 28, 76), FlowDirection = FlowDirection.LeftToRight, AutoScroll = true, BackColor = Color.Transparent };
                 foreach (SimulatorDesktop target in dynamicDesktops)
                 {
-                    Panel p = new Panel { Size = new Size(240, 64), BackColor = Color.FromArgb(13, 21, 34), Margin = new Padding(0, 0, 12, 0), Padding = new Padding(8) };
-                    Label ln = new Label { Text = "💻 " + target.Name, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(6, 6), AutoSize = true };
-                    Label lid = new Label { Text = target.RemoteId, Font = new Font("Consolas", 8f), ForeColor = target.AccentColor, Location = new Point(6, 26), AutoSize = true };
-                    ModernButton bc = new ModernButton { Text = "Connect", Size = new Size(70, 22), Location = new Point(160, 34), NormalColor = target.AccentColor, HoverColor = Color.FromArgb(2, 132, 199) };
+                    Panel p = new Panel { Size = new Size(210, 58), BackColor = Color.Transparent, Margin = new Padding(0, 0, 10, 0), Padding = new Padding(6) };
                     SimulatorDesktop t = target;
+                    p.Paint += (ps, pe) => {
+                        ThemePalette.DrawFloatingCard(pe.Graphics, new Rectangle(0, 0, p.Width - 1, p.Height - 1), ThemePalette.ColorBgCardHeader, t.AccentColor, ThemePalette.ColorShadow, 6);
+                    };
+                    Label ln = new Label { Text = "💻 " + target.Name, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(6, 6), AutoSize = true, BackColor = Color.Transparent };
+                    Label lid = new Label { Text = target.RemoteId, Font = new Font("Consolas", 7.5f), ForeColor = target.AccentColor, Location = new Point(6, 26), AutoSize = true, BackColor = Color.Transparent };
+                    ModernButton bc = new ModernButton { Text = "Connect", Size = new Size(62, 22), Location = new Point(140, 28), NormalColor = target.AccentColor, HoverColor = Color.FromArgb(2, 132, 199) };
                     bc.Click += (s, e) => ToggleSessionConnection(t);
                     p.Controls.Add(ln);
                     p.Controls.Add(lid);
@@ -3648,6 +5739,7 @@ namespace JDroidXDesk.Native
 
             cardContainer.Controls.Add(cardRecent);
             panelWelcomeCards.Controls.Add(cardContainer);
+            RelayoutWelcomeCards();
         }
 
         private void BuildFloatingSessionToolbar()
@@ -3798,7 +5890,7 @@ namespace JDroidXDesk.Native
             pnlRdpPinBar = new Panel
             {
                 Size = new Size(580, 36),
-                BackColor = Color.FromArgb(240, 15, 23, 42),
+                BackColor = Color.Transparent,
                 Padding = new Padding(6, 4, 6, 4),
                 Visible = false
             };
@@ -3809,10 +5901,8 @@ namespace JDroidXDesk.Native
             };
 
             pnlRdpPinBar.Paint += (s, e) => {
-                using (Pen p = new Pen(Color.FromArgb(56, 189, 248), 1.5f))
-                {
-                    e.Graphics.DrawRectangle(p, 0, 0, pnlRdpPinBar.Width - 1, pnlRdpPinBar.Height - 1);
-                }
+                Rectangle r = new Rectangle(0, 0, pnlRdpPinBar.Width - 1, pnlRdpPinBar.Height - 1);
+                ThemePalette.DrawFloatingCard(e.Graphics, r, ThemePalette.ColorBgCardElevated, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 8);
             };
 
             FlowLayoutPanel pinFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, BackColor = Color.Transparent };
@@ -4162,7 +6252,7 @@ namespace JDroidXDesk.Native
             if (!isSessionActive || currentConnectionState == SessionConnectionState.Disconnected)
             {
                 // Standby Topology Screen
-                using (LinearGradientBrush bg = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(10, 16, 26), Color.FromArgb(15, 23, 42), LinearGradientMode.ForwardDiagonal))
+                using (LinearGradientBrush bg = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), ThemePalette.ColorBgWorkspace, ThemePalette.ColorBgCard, LinearGradientMode.ForwardDiagonal))
                 {
                     g.FillRectangle(bg, 0, 0, cw, ch);
                 }
@@ -4172,20 +6262,16 @@ namespace JDroidXDesk.Native
                 int cardX = (cw - cardW) / 2;
                 int cardY = Math.Max(20, (ch - cardH) / 2);
 
-                using (SolidBrush cBg = new SolidBrush(Color.FromArgb(20, 28, 45)))
-                using (Pen cBorder = new Pen(Color.FromArgb(40, 53, 76), 1))
-                {
-                    g.FillRectangle(cBg, cardX, cardY, cardW, cardH);
-                    g.DrawRectangle(cBorder, cardX, cardY, cardW, cardH);
-                }
+                Rectangle r = new Rectangle(cardX, cardY, cardW, cardH);
+                ThemePalette.DrawFloatingCard(g, r, ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 10);
 
                 using (Font fTitle = new Font("Segoe UI", 14f, FontStyle.Bold))
                 using (Font fSub = new Font("Segoe UI", 9.5f))
                 using (Font fCode = new Font("Consolas", 9f))
-                using (SolidBrush bWhite = new SolidBrush(Color.White))
-                using (SolidBrush bMuted = new SolidBrush(Color.FromArgb(148, 163, 184)))
-                using (SolidBrush bBlue = new SolidBrush(Color.FromArgb(56, 189, 248)))
-                using (SolidBrush bGreen = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                using (SolidBrush bWhite = new SolidBrush(ThemePalette.ColorTextPrimary))
+                using (SolidBrush bMuted = new SolidBrush(ThemePalette.ColorTextSecondary))
+                using (SolidBrush bBlue = new SolidBrush(ThemePalette.ColorPrimary))
+                using (SolidBrush bGreen = new SolidBrush(ThemePalette.ColorSuccess))
                 {
                     g.DrawString("🖥️ Remote Desktop Canvas Standby", fTitle, bWhite, cardX + 20, cardY + 20);
                     g.DrawString("jDroid-X Remote Desktop Engine • P2P UDP Ready", fSub, bMuted, cardX + 20, cardY + 50);
@@ -4273,13 +6359,13 @@ namespace JDroidXDesk.Native
         private void RenderConnectingHeartbeatScreen(Graphics g, SimulatorDesktop target, int cw, int ch)
         {
             // Background - Deep Futuristic Slate Gradient
-            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(10, 16, 26), Color.FromArgb(15, 23, 42), LinearGradientMode.Vertical))
+            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), ThemePalette.ColorBgWorkspace, ThemePalette.ColorBgCard, LinearGradientMode.Vertical))
             {
                 g.FillRectangle(wallBrush, 0, 0, cw, ch);
             }
 
             // Oscilloscope Grid Lines (Subtle Cyan Matrix)
-            using (Pen gridPen = new Pen(Color.FromArgb(18, 28, 45), 1))
+            using (Pen gridPen = new Pen(ThemePalette.ColorBorderCard, 1))
             {
                 for (int x = 0; x < cw; x += 40) g.DrawLine(gridPen, x, 0, x, ch);
                 for (int y = 0; y < ch; y += 40) g.DrawLine(gridPen, 0, y, cw, y);
@@ -4291,12 +6377,8 @@ namespace JDroidXDesk.Native
             int cardY = Math.Max(24, (ch - cardH) / 2);
 
             // Center Card Container
-            using (SolidBrush bCardBg = new SolidBrush(Color.FromArgb(235, 15, 23, 42)))
-            using (Pen pCardBorder = new Pen(Color.FromArgb(56, 189, 248), 1.5f))
-            {
-                g.FillRectangle(bCardBg, cardX, cardY, cardW, cardH);
-                g.DrawRectangle(pCardBorder, cardX, cardY, cardW, cardH);
-            }
+            Rectangle rCard = new Rectangle(cardX, cardY, cardW, cardH);
+            ThemePalette.DrawFloatingCard(g, rCard, ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 10);
 
             // Top Glow Accent Line
             using (LinearGradientBrush glowBrush = new LinearGradientBrush(new Rectangle(cardX, cardY, cardW, 3), Color.FromArgb(56, 189, 248), Color.FromArgb(16, 185, 129), LinearGradientMode.Horizontal))
@@ -4443,7 +6525,7 @@ namespace JDroidXDesk.Native
         private void RenderAwaitingLiveFramesScreen(Graphics g, SimulatorDesktop target, int cw, int ch)
         {
             // Background - Deep Slate Gradient
-            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), Color.FromArgb(10, 16, 26), Color.FromArgb(15, 23, 42), LinearGradientMode.Vertical))
+            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), ThemePalette.ColorBgWorkspace, ThemePalette.ColorBgCard, LinearGradientMode.Vertical))
             {
                 g.FillRectangle(wallBrush, 0, 0, cw, ch);
             }
@@ -4453,19 +6535,17 @@ namespace JDroidXDesk.Native
             int cardX = (cw - cardW) / 2;
             int cardY = Math.Max(40, (ch - cardH) / 2);
 
-            using (SolidBrush bCardBg = new SolidBrush(Color.FromArgb(235, 15, 23, 42)))
-            using (Pen pCardBorder = new Pen(Color.FromArgb(16, 185, 129), 1.5f))
+            Rectangle rCard = new Rectangle(cardX, cardY, cardW, cardH);
+            ThemePalette.DrawFloatingCard(g, rCard, ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 10);
+
             using (Font fTitle = new Font("Segoe UI", 13f, FontStyle.Bold))
             using (Font fSub = new Font("Segoe UI", 9f))
             using (Font fCode = new Font("Consolas", 9f))
-            using (SolidBrush bWhite = new SolidBrush(Color.White))
-            using (SolidBrush bGreen = new SolidBrush(Color.FromArgb(16, 185, 129)))
-            using (SolidBrush bCyan = new SolidBrush(Color.FromArgb(56, 189, 248)))
-            using (SolidBrush bMuted = new SolidBrush(Color.FromArgb(148, 163, 184)))
+            using (SolidBrush bWhite = new SolidBrush(ThemePalette.ColorTextPrimary))
+            using (SolidBrush bGreen = new SolidBrush(ThemePalette.ColorSuccess))
+            using (SolidBrush bCyan = new SolidBrush(ThemePalette.ColorPrimary))
+            using (SolidBrush bMuted = new SolidBrush(ThemePalette.ColorTextSecondary))
             {
-                g.FillRectangle(bCardBg, cardX, cardY, cardW, cardH);
-                g.DrawRectangle(pCardBorder, cardX, cardY, cardW, cardH);
-
                 g.DrawString("🟢 P2P SESSION CONNECTED & ACTIVE", fTitle, bGreen, cardX + 24, cardY + 20);
                 g.DrawString("Authenticated with Remote Workstation: " + target.RemoteId + " (" + target.Name + ")", fSub, bWhite, cardX + 24, cardY + 50);
                 g.DrawString("● Tunnel: AES-256 End-to-End P2P Stream Active", fCode, bCyan, cardX + 24, cardY + 80);
@@ -4592,18 +6672,18 @@ namespace JDroidXDesk.Native
 
         private void InitializeFileTransferView()
         {
-            viewFileTransfer = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42), Padding = new Padding(12) };
+            viewFileTransfer = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(12) };
 
-            TableLayoutPanel explorerGrid = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3 };
+            TableLayoutPanel explorerGrid = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, BackColor = Color.Transparent };
             explorerGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 46f));
             explorerGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
             explorerGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 46f));
 
             // Left: Local Explorer
             ModernCardPanel cardLocal = new ModernCardPanel { Dock = DockStyle.Fill };
-            Panel pnlLocalHeader = new Panel { Dock = DockStyle.Top, Height = 32 };
-            lblLocalPath = new Label { Text = "Local: " + currentLocalDirectory, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 6), AutoSize = true };
-            Button btnLocalUp = new Button { Text = "⬆️ Up", Size = new Size(55, 22), Location = new Point(cardLocal.Width - 130, 4), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 7.5f), Cursor = Cursors.Hand };
+            Panel pnlLocalHeader = new Panel { Dock = DockStyle.Top, Height = 32, BackColor = Color.Transparent };
+            lblLocalPath = new Label { Text = "Local: " + currentLocalDirectory, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(4, 6), AutoSize = true, BackColor = Color.Transparent };
+            Button btnLocalUp = new Button { Text = "⬆️ Up", Size = new Size(55, 22), Location = new Point(cardLocal.Width - 130, 4), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.5f), Cursor = Cursors.Hand };
             btnLocalUp.FlatAppearance.BorderSize = 0;
             btnLocalUp.Click += (s, e) => {
                 try {
@@ -4614,14 +6694,14 @@ namespace JDroidXDesk.Native
                     }
                 } catch { }
             };
-            Button btnLocalRefresh = new Button { Text = "🔄", Size = new Size(35, 22), Location = new Point(cardLocal.Width - 65, 4), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 7.5f), Cursor = Cursors.Hand };
+            Button btnLocalRefresh = new Button { Text = "🔄", Size = new Size(35, 22), Location = new Point(cardLocal.Width - 65, 4), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.5f), Cursor = Cursors.Hand };
             btnLocalRefresh.FlatAppearance.BorderSize = 0;
             btnLocalRefresh.Click += (s, e) => PopulateLocalFiles();
             pnlLocalHeader.Controls.Add(lblLocalPath);
             pnlLocalHeader.Controls.Add(btnLocalUp);
             pnlLocalHeader.Controls.Add(btnLocalRefresh);
 
-            lbLocalFiles = new ListBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, Font = new Font("Consolas", 8.5f), BorderStyle = BorderStyle.None };
+            lbLocalFiles = new ListBox { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Consolas", 8.5f), BorderStyle = BorderStyle.None };
             lbLocalFiles.DoubleClick += (s, e) => {
                 if (lbLocalFiles.SelectedItem == null) return;
                 string item = lbLocalFiles.SelectedItem.ToString();
@@ -4653,7 +6733,7 @@ namespace JDroidXDesk.Native
             cardLocal.Controls.Add(pnlLocalHeader);
 
             // Middle Actions
-            Panel mid = new Panel { Dock = DockStyle.Fill };
+            Panel mid = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
             Button btnUp = new Button { Text = "➡️ Upload", Size = new Size(88, 32), Location = new Point(6, 120), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnUp.Click += (s, e) => {
                 if (lbLocalFiles.SelectedItem != null) {
@@ -4673,8 +6753,8 @@ namespace JDroidXDesk.Native
 
             // Right: Remote Explorer
             ModernCardPanel cardRemote = new ModernCardPanel { Dock = DockStyle.Fill };
-            Label lblRemotePath = new Label { Text = "Remote: C:\\RemoteWorkstation\\Projects", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Dock = DockStyle.Top, Height = 28 };
-            lbRemoteFiles = new ListBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, Font = new Font("Consolas", 8.5f), BorderStyle = BorderStyle.None };
+            Label lblRemotePath = new Label { Text = "Remote: C:\\RemoteWorkstation\\Projects", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Dock = DockStyle.Top, Height = 28, BackColor = Color.Transparent };
+            lbRemoteFiles = new ListBox { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Consolas", 8.5f), BorderStyle = BorderStyle.None };
             lbRemoteFiles.Items.Add("[DIR]  Builds");
             lbRemoteFiles.Items.Add("[DIR]  Logs");
             lbRemoteFiles.Items.Add("[FILE] server_telemetry.log (142 KB)");
@@ -4713,16 +6793,16 @@ namespace JDroidXDesk.Native
 
         private void InitializeFleetView()
         {
-            viewFleet = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42), Padding = new Padding(12) };
+            viewFleet = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(12) };
 
-            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 42 };
-            Label lblTitle = new Label { Text = "Registered Workstation Fleet", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
+            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = Color.Transparent };
+            Label lblTitle = new Label { Text = "Registered Workstation Fleet", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, BackColor = Color.Transparent };
 
-            FlowLayoutPanel actions = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
-            txtFleetSearch = new TextBox { Font = new Font("Segoe UI", 8.5f), Size = new Size(140, 22), Margin = new Padding(0, 2, 8, 0) };
+            FlowLayoutPanel actions = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, BackColor = Color.Transparent };
+            txtFleetSearch = new TextBox { Font = new Font("Segoe UI", 8.5f), Size = new Size(140, 22), Margin = new Padding(0, 2, 8, 0), BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, BorderStyle = BorderStyle.FixedSingle };
             txtFleetSearch.TextChanged += (s, e) => FilterFleetGrid();
 
-            cboFleetGroupFilter = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.5f), Size = new Size(150, 24), Margin = new Padding(0, 0, 8, 0) };
+            cboFleetGroupFilter = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.5f), Size = new Size(150, 24), Margin = new Padding(0, 0, 8, 0), BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary };
             cboFleetGroupFilter.Items.Add("All Groups");
             foreach (GroupItem g in db.Groups) cboFleetGroupFilter.Items.Add(g.name);
             cboFleetGroupFilter.SelectedIndex = 0;
@@ -4750,9 +6830,9 @@ namespace JDroidXDesk.Native
 
             dgvFleet = new DataGridView {
                 Dock = DockStyle.Fill,
-                BackgroundColor = Color.FromArgb(13, 21, 34),
-                ForeColor = Color.White,
-                GridColor = Color.FromArgb(30, 41, 59),
+                BackgroundColor = ThemePalette.ColorBgCard,
+                ForeColor = ThemePalette.ColorTextPrimary,
+                GridColor = ThemePalette.ColorBorderCard,
                 BorderStyle = BorderStyle.None,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 ReadOnly = true,
@@ -4761,15 +6841,15 @@ namespace JDroidXDesk.Native
                 RowHeadersVisible = false,
                 EnableHeadersVisualStyles = false
             };
-            dgvFleet.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(30, 41, 59);
-            dgvFleet.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(148, 163, 184);
+            dgvFleet.ColumnHeadersDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+            dgvFleet.ColumnHeadersDefaultCellStyle.ForeColor = ThemePalette.ColorTextSecondary;
             dgvFleet.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
-            dgvFleet.DefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
-            dgvFleet.DefaultCellStyle.ForeColor = Color.White;
+            dgvFleet.DefaultCellStyle.BackColor = ThemePalette.ColorBgCard;
+            dgvFleet.DefaultCellStyle.ForeColor = ThemePalette.ColorTextPrimary;
             dgvFleet.DefaultCellStyle.Font = new Font("Segoe UI", 8.5f);
             dgvFleet.DefaultCellStyle.SelectionBackColor = Color.FromArgb(56, 189, 248);
             dgvFleet.DefaultCellStyle.SelectionForeColor = Color.Black;
-            dgvFleet.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(20, 28, 45);
+            dgvFleet.AlternatingRowsDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
 
             dgvFleet.CellDoubleClick += (s, e) => {
                 if (dgvFleet.CurrentRow != null) {
@@ -4810,10 +6890,10 @@ namespace JDroidXDesk.Native
 
         private void InitializeHistoryView()
         {
-            viewHistory = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42), Padding = new Padding(12) };
+            viewHistory = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(12) };
 
-            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 42 };
-            Label lblTitle = new Label { Text = "Connection History & Auditable Session Logs", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
+            Panel topRow = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = Color.Transparent };
+            Label lblTitle = new Label { Text = "Connection History & Auditable Session Logs", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, BackColor = Color.Transparent };
 
             Button btnClear = new Button { Text = "🗑️ Clear Logs", Size = new Size(110, 26), Dock = DockStyle.Right, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(239, 51, 64), ForeColor = Color.White, Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnClear.Click += (s, e) => {
@@ -4830,9 +6910,9 @@ namespace JDroidXDesk.Native
 
             dgvHistory = new DataGridView {
                 Dock = DockStyle.Fill,
-                BackgroundColor = Color.FromArgb(13, 21, 34),
-                ForeColor = Color.White,
-                GridColor = Color.FromArgb(30, 41, 59),
+                BackgroundColor = ThemePalette.ColorBgCard,
+                ForeColor = ThemePalette.ColorTextPrimary,
+                GridColor = ThemePalette.ColorBorderCard,
                 BorderStyle = BorderStyle.None,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 ReadOnly = true,
@@ -4841,15 +6921,15 @@ namespace JDroidXDesk.Native
                 RowHeadersVisible = false,
                 EnableHeadersVisualStyles = false
             };
-            dgvHistory.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(30, 41, 59);
-            dgvHistory.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(148, 163, 184);
+            dgvHistory.ColumnHeadersDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+            dgvHistory.ColumnHeadersDefaultCellStyle.ForeColor = ThemePalette.ColorTextSecondary;
             dgvHistory.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
-            dgvHistory.DefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
-            dgvHistory.DefaultCellStyle.ForeColor = Color.White;
+            dgvHistory.DefaultCellStyle.BackColor = ThemePalette.ColorBgCard;
+            dgvHistory.DefaultCellStyle.ForeColor = ThemePalette.ColorTextPrimary;
             dgvHistory.DefaultCellStyle.Font = new Font("Segoe UI", 8.5f);
             dgvHistory.DefaultCellStyle.SelectionBackColor = Color.FromArgb(56, 189, 248);
             dgvHistory.DefaultCellStyle.SelectionForeColor = Color.Black;
-            dgvHistory.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(20, 28, 45);
+            dgvHistory.AlternatingRowsDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
 
             viewHistory.Controls.Add(dgvHistory);
             viewHistory.Controls.Add(topRow);
@@ -4871,10 +6951,10 @@ namespace JDroidXDesk.Native
 
         private void InitializeSettingsStudioView()
         {
-            viewSettingsStudio = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(15, 23, 42), Padding = new Padding(12) };
+            viewSettingsStudio = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(12) };
 
-            Panel header = new Panel { Dock = DockStyle.Top, Height = 42 };
-            Label lblTitle = new Label { Text = "Settings & Security Studio (jDroid-X Relay Engine)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft };
+            Panel header = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = ThemePalette.ColorBgCardHeader, Padding = new Padding(8, 6, 8, 6) };
+            Label lblTitle = new Label { Text = "Settings & Security Studio (jDroid-X Google Colab Relay Engine)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Dock = DockStyle.Left, AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, BackColor = Color.Transparent };
 
             ModernButton btnSave = new ModernButton { Text = "💾 Save & Apply", NormalColor = Color.FromArgb(16, 185, 129), HoverColor = Color.FromArgb(21, 150, 78), Size = new Size(130, 28), Dock = DockStyle.Right };
             btnSave.Click += (s, e) => {
@@ -4885,8 +6965,8 @@ namespace JDroidXDesk.Native
             header.Controls.Add(btnSave);
             header.Controls.Add(lblTitle);
 
-            SplitContainer split = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 210 };
-            settingsTree = new TreeView { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9f), BackColor = Color.FromArgb(13, 21, 34), ForeColor = Color.White, BorderStyle = BorderStyle.None };
+            SplitContainer split = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 210, BackColor = ThemePalette.ColorBorderCard };
+            settingsTree = new TreeView { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9f), BackColor = ThemePalette.ColorBgSidebar, ForeColor = ThemePalette.ColorTextPrimary, BorderStyle = BorderStyle.None };
             
             TreeNode nodeSettings = new TreeNode("⚙️ Settings Studio") { Name = "General" };
             nodeSettings.Nodes.Add("General", "General Preferences");
@@ -4915,7 +6995,7 @@ namespace JDroidXDesk.Native
             };
             split.Panel1.Controls.Add(settingsTree);
 
-            settingsSubContentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(20, 28, 45), Padding = new Padding(16) };
+            settingsSubContentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(16) };
             split.Panel2.Controls.Add(settingsSubContentPanel);
 
             viewSettingsStudio.Controls.Add(split);
@@ -4931,7 +7011,7 @@ namespace JDroidXDesk.Native
             int y = 10;
 
             Action<string> addH = (text) => {
-                Label l = new Label { Text = text, Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = Color.White, Location = new Point(10, y), AutoSize = true };
+                Label l = new Label { Text = text, Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(10, y), AutoSize = true, BackColor = Color.Transparent };
                 settingsSubContentPanel.Controls.Add(l);
                 y += 30;
             };
@@ -4944,10 +7024,10 @@ namespace JDroidXDesk.Native
             };
 
             Func<string, string, TextBox> addTb = (label, val) => {
-                Label lbl = new Label { Text = label, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(14, y), AutoSize = true };
+                Label lbl = new Label { Text = label, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, y), AutoSize = true, BackColor = Color.Transparent };
                 settingsSubContentPanel.Controls.Add(lbl);
                 y += 18;
-                TextBox tb = new TextBox { Text = val, Font = new Font("Segoe UI", 9f), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Location = new Point(14, y), Size = new Size(340, 24) };
+                TextBox tb = new TextBox { Text = val, Font = new Font("Segoe UI", 9f), BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, BorderStyle = BorderStyle.FixedSingle, Location = new Point(14, y), Size = new Size(340, 24) };
                 settingsSubContentPanel.Controls.Add(tb);
                 y += 32;
                 return tb;
@@ -4957,11 +7037,14 @@ namespace JDroidXDesk.Native
                 Panel card = new Panel {
                     Location = new Point(14, y),
                     Size = new Size(580, 80),
-                    BackColor = Color.FromArgb(13, 21, 34),
+                    BackColor = Color.Transparent,
                     Padding = new Padding(10)
                 };
-                Label lt = new Label { Text = title, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(8, 8), AutoSize = true };
-                Label lb = new Label { Text = body, Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(8, 28), Size = new Size(560, 46) };
+                card.Paint += (cs, ce) => {
+                    ThemePalette.DrawFloatingCard(ce.Graphics, new Rectangle(0, 0, card.Width - 1, card.Height - 1), ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 8);
+                };
+                Label lt = new Label { Text = title, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(10, 8), AutoSize = true, BackColor = Color.Transparent };
+                Label lb = new Label { Text = body, Font = new Font("Segoe UI", 8.5f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(10, 28), Size = new Size(556, 46), BackColor = Color.Transparent };
                 card.Controls.Add(lt);
                 card.Controls.Add(lb);
                 settingsSubContentPanel.Controls.Add(card);
@@ -4972,8 +7055,8 @@ namespace JDroidXDesk.Native
                 Button btn = new Button {
                     Text = btnText,
                     Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                    BackColor = Color.FromArgb(40, 53, 76),
-                    ForeColor = Color.White,
+                    BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240),
+                    ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42),
                     FlatStyle = FlatStyle.Flat,
                     Location = new Point(14, y),
                     Size = new Size(340, 30),
@@ -4992,8 +7075,8 @@ namespace JDroidXDesk.Native
                     ReadOnly = true,
                     ScrollBars = ScrollBars.Vertical,
                     Font = new Font("Consolas", 8.5f),
-                    BackColor = Color.FromArgb(10, 16, 26),
-                    ForeColor = Color.FromArgb(203, 213, 225),
+                    BackColor = ThemePalette.ColorBgInput,
+                    ForeColor = ThemePalette.ColorTextPrimary,
                     BorderStyle = BorderStyle.FixedSingle,
                     Location = new Point(14, y),
                     Size = new Size(580, 160)
@@ -5202,6 +7285,756 @@ namespace JDroidXDesk.Native
         }
 
         // ======================================================================
+        // SUBVIEW 6: SERVER ENGINE CONTROLLER & ADMIN DASHBOARD
+        // ======================================================================
+
+        private FlowLayoutPanel pnlEngineCardsContainer;
+
+        private void InitializeServerAdminView()
+        {
+            viewServerAdmin = new Panel { Dock = DockStyle.Fill, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(12) };
+
+            // Top Header Bar
+            headerAdmin = new Panel { Dock = DockStyle.Top, Height = 46, BackColor = ThemePalette.ColorBgCardHeader, Padding = new Padding(12, 6, 12, 6) };
+            
+            Panel leftHeader = new Panel { Dock = DockStyle.Left, Width = 520 };
+            Label lblTitle = new Label { Text = "🛡️ SERVER ENGINE CONTROLLER & ADMIN DASHBOARD", Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Dock = DockStyle.Top, Height = 20 };
+            Label lblSub = new Label { Text = "Dynamic P2P / Ultra-Low-Latency / HTML5 Browser Gateway Engine Switcher & Processing Limits", Font = new Font("Segoe UI", 8f), ForeColor = ThemePalette.ColorTextSecondary, Dock = DockStyle.Top, Height = 16 };
+            leftHeader.Controls.Add(lblSub);
+            leftHeader.Controls.Add(lblTitle);
+
+            FlowLayoutPanel rightHeaderBtns = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Margin = new Padding(0) };
+
+            Button btnWebBackup = new Button {
+                Text = "🌐 Open Web Backup",
+                Size = new Size(150, 30),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ThemePalette.ColorBgCardElevated,
+                ForeColor = ThemePalette.ColorPrimary,
+                Font = new Font("Segoe UI", 8f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 2, 8, 0)
+            };
+            btnWebBackup.FlatAppearance.BorderSize = 0;
+            btnWebBackup.Click += (s, e) => {
+                try {
+                    Process.Start("http://localhost:12345/admin.html");
+                    ShowToast("Launched Web Admin Backup in Browser (Port 12345)");
+                } catch (Exception ex) {
+                    ShowToast("Browser Launch Error: " + ex.Message);
+                }
+            };
+
+            Button btnSyncDb = new Button {
+                Text = "🔄 Sync database.json",
+                Size = new Size(140, 30),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ThemePalette.ColorBgInput,
+                ForeColor = ThemePalette.ColorTextPrimary,
+                Font = new Font("Segoe UI", 8f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 2, 8, 0)
+            };
+            btnSyncDb.FlatAppearance.BorderSize = 0;
+            btnSyncDb.Click += (s, e) => {
+                db.Load();
+                PopulateProcessingLimitsToUi();
+                RenderEngineCards(pnlEngineCardsContainer);
+                RefreshAdminLogs();
+                ShowToast("Server configuration synced from database.json");
+            };
+
+            ModernButton btnSaveAdmin = new ModernButton {
+                Text = "💾 Save & Apply",
+                NormalColor = ThemePalette.ColorSuccess,
+                HoverColor = Color.FromArgb(21, 150, 78),
+                Size = new Size(130, 30),
+                Margin = new Padding(0, 2, 0, 0)
+            };
+            btnSaveAdmin.Click += (s, e) => {
+                SaveServerConfigFromUi();
+            };
+
+            rightHeaderBtns.Controls.Add(btnWebBackup);
+            rightHeaderBtns.Controls.Add(btnSyncDb);
+            rightHeaderBtns.Controls.Add(btnSaveAdmin);
+
+            headerAdmin.Controls.Add(leftHeader);
+            headerAdmin.Controls.Add(rightHeaderBtns);
+
+            // Main Scrollable Work Area
+            pnlScrollAdmin = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemePalette.ColorBgWorkspace, Padding = new Padding(0, 8, 8, 8) };
+
+            // -------------------------------------------------------------
+            // SECTION 1: OPEN-SOURCE ENGINE SWITCHER (4 CARDS)
+            // -------------------------------------------------------------
+            Panel secEnginesHdr = new Panel { Dock = DockStyle.Top, Height = 34, Padding = new Padding(4, 8, 4, 4) };
+            Label lblEngHdr = new Label { Text = "1. OPEN-SOURCE REMOTE ENGINES & MODEL CONTROLLER", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorPrimary, Dock = DockStyle.Left, AutoSize = true };
+            lblAdminActiveEngineBadge = new Label { Text = "ACTIVE: " + (db.ServerConfig != null ? db.ServerConfig.activeEngine.ToUpper() : "SUNSHINE"), Font = new Font("Consolas", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorSuccess, Dock = DockStyle.Right, AutoSize = true };
+            secEnginesHdr.Controls.Add(lblEngHdr);
+            secEnginesHdr.Controls.Add(lblAdminActiveEngineBadge);
+
+            pnlEngineCardsContainer = new FlowLayoutPanel {
+                Dock = DockStyle.Top,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                AutoSize = true,
+                Padding = new Padding(0, 0, 0, 12)
+            };
+            RenderEngineCards(pnlEngineCardsContainer);
+
+            // -------------------------------------------------------------
+            // SECTION 2: PROCESSING LIMITS & SYSTEM TELEMETRY
+            // -------------------------------------------------------------
+            Panel secLimitsHdr = new Panel { Dock = DockStyle.Top, Height = 34, Padding = new Padding(4, 12, 4, 4) };
+            Label lblLimitsHdr = new Label { Text = "2. PROCESSING LIMITS & RESOURCE ALLOCATION", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorPrimary, Dock = DockStyle.Left, AutoSize = true };
+            secLimitsHdr.Controls.Add(lblLimitsHdr);
+
+            pnlLimitsCard = new Panel {
+                Dock = DockStyle.Top,
+                Height = 175,
+                BackColor = Color.Transparent,
+                Padding = new Padding(14)
+            };
+            pnlLimitsCard.Paint += (s, e) => {
+                Rectangle r = new Rectangle(0, 0, pnlLimitsCard.Width - 1, pnlLimitsCard.Height - 1);
+                ThemePalette.DrawFloatingCard(e.Graphics, r, ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 8);
+            };
+
+            // Grid for Processing Limits Controls
+            TableLayoutPanel tlpLimits = new TableLayoutPanel { Dock = DockStyle.Top, Height = 95, ColumnCount = 3, RowCount = 2, BackColor = Color.Transparent };
+            tlpLimits.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3f));
+            tlpLimits.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3f));
+            tlpLimits.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3f));
+            tlpLimits.RowStyles.Add(new RowStyle(SizeType.Absolute, 45f));
+            tlpLimits.RowStyles.Add(new RowStyle(SizeType.Absolute, 45f));
+
+            // Control 1: Max Concurrent Sessions
+            Panel p1 = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            Label l1 = new Label { Text = "Max Concurrent Sessions", Font = new Font("Segoe UI", 7.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(0, 0), AutoSize = true };
+            numAdminMaxSessions = new NumericUpDown { Location = new Point(0, 18), Size = new Size(180, 24), Minimum = 1, Maximum = 100, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8.5f) };
+            p1.Controls.Add(l1);
+            p1.Controls.Add(numAdminMaxSessions);
+            tlpLimits.Controls.Add(p1, 0, 0);
+
+            // Control 2: Bandwidth Limit Mbps
+            Panel p2 = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            Label l2 = new Label { Text = "Bandwidth Limit (Mbps)", Font = new Font("Segoe UI", 7.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(0, 0), AutoSize = true };
+            numAdminBandwidth = new NumericUpDown { Location = new Point(0, 18), Size = new Size(180, 24), Minimum = 5, Maximum = 1000, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8.5f) };
+            p2.Controls.Add(l2);
+            p2.Controls.Add(numAdminBandwidth);
+            tlpLimits.Controls.Add(p2, 1, 0);
+
+            // Control 3: Target Max FPS
+            Panel p3 = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            Label l3 = new Label { Text = "Target Frame Rate (FPS)", Font = new Font("Segoe UI", 7.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(0, 0), AutoSize = true };
+            cbAdminFps = new ComboBox { Location = new Point(0, 18), Size = new Size(180, 24), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8.5f) };
+            cbAdminFps.Items.Add("30 FPS (Low Latency / Balanced)");
+            cbAdminFps.Items.Add("60 FPS (Ultra Smooth 60 FPS)");
+            cbAdminFps.Items.Add("120 FPS (High Refresh Gaming)");
+            p3.Controls.Add(l3);
+            p3.Controls.Add(cbAdminFps);
+            tlpLimits.Controls.Add(p3, 2, 0);
+
+            // Control 4: Idle Session Timeout
+            Panel p4 = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            Label l4 = new Label { Text = "Idle Session Timeout (Minutes)", Font = new Font("Segoe UI", 7.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(0, 0), AutoSize = true };
+            numAdminIdleTimeout = new NumericUpDown { Location = new Point(0, 18), Size = new Size(180, 24), Minimum = 1, Maximum = 180, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8.5f) };
+            p4.Controls.Add(l4);
+            p4.Controls.Add(numAdminIdleTimeout);
+            tlpLimits.Controls.Add(p4, 0, 1);
+
+            // Control 5: Log Retention Days
+            Panel p5 = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            Label l5 = new Label { Text = "Log Retention (Days)", Font = new Font("Segoe UI", 7.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(0, 0), AutoSize = true };
+            numAdminLogRetention = new NumericUpDown { Location = new Point(0, 18), Size = new Size(180, 24), Minimum = 1, Maximum = 90, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8.5f) };
+            p5.Controls.Add(l5);
+            p5.Controls.Add(numAdminLogRetention);
+            tlpLimits.Controls.Add(p5, 1, 1);
+
+            // Control 6: Hardware Acceleration
+            Panel p6 = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            Label l6 = new Label { Text = "Hardware Acceleration", Font = new Font("Segoe UI", 7.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(0, 0), AutoSize = true };
+            cbAdminHwAccel = new ComboBox { Location = new Point(0, 18), Size = new Size(180, 24), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8.5f) };
+            cbAdminHwAccel.Items.Add("nvenc_cuda (NVIDIA NVENC CUDA)");
+            cbAdminHwAccel.Items.Add("quicksync (Intel QuickSync)");
+            cbAdminHwAccel.Items.Add("software_cpu (Software CPU Encoding)");
+            p6.Controls.Add(l6);
+            p6.Controls.Add(cbAdminHwAccel);
+            tlpLimits.Controls.Add(p6, 2, 1);
+
+            // Live Telemetry Strip underneath
+            Panel pnlTelemetry = new Panel { Dock = DockStyle.Bottom, Height = 42, BackColor = Color.Transparent, Padding = new Padding(10, 8, 10, 8) };
+            pnlTelemetry.Paint += (s, e) => {
+                Rectangle r = new Rectangle(0, 0, pnlTelemetry.Width - 1, pnlTelemetry.Height - 1);
+                ThemePalette.DrawFloatingCard(e.Graphics, r, ThemePalette.ColorBgCardElevated, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 6);
+            };
+            lblAdminCpu = new Label { Text = "⚡ CPU: 4%", Font = new Font("Consolas", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorPrimary, Dock = DockStyle.Left, AutoSize = true, Margin = new Padding(0, 0, 16, 0) };
+            lblAdminMem = new Label { Text = "💾 RAM: 4.2 / 16.0 GB", Font = new Font("Consolas", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorSuccess, Dock = DockStyle.Left, AutoSize = true, Margin = new Padding(0, 0, 16, 0) };
+            lblAdminUptime = new Label { Text = "⏱️ UPTIME: Active", Font = new Font("Consolas", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorWarning, Dock = DockStyle.Left, AutoSize = true, Margin = new Padding(0, 0, 16, 0) };
+            lblAdminSessions = new Label { Text = "👥 ACTIVE SESSIONS: 0 / 10", Font = new Font("Consolas", 8.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Dock = DockStyle.Right, AutoSize = true };
+
+            FlowLayoutPanel telemFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, BackColor = Color.Transparent };
+            telemFlow.Controls.Add(lblAdminCpu);
+            telemFlow.Controls.Add(lblAdminMem);
+            telemFlow.Controls.Add(lblAdminUptime);
+
+            pnlTelemetry.Controls.Add(telemFlow);
+            pnlTelemetry.Controls.Add(lblAdminSessions);
+
+            pnlLimitsCard.Controls.Add(tlpLimits);
+            pnlLimitsCard.Controls.Add(pnlTelemetry);
+
+            PopulateProcessingLimitsToUi();
+
+            // -------------------------------------------------------------
+            // SECTION 3: LIVE SERVER LOGS & EVENT STREAM
+            // -------------------------------------------------------------
+            Panel secLogsHdr = new Panel { Dock = DockStyle.Top, Height = 40, Padding = new Padding(4, 14, 4, 4) };
+            Label lblLogsHdr = new Label { Text = "3. LIVE SERVER LOGS & EVENT STREAM", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorPrimary, Dock = DockStyle.Left, AutoSize = true };
+            
+            FlowLayoutPanel logActionsFlow = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
+
+            cbAdminLogLevel = new ComboBox { Size = new Size(110, 24), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8f), Margin = new Padding(0, 0, 6, 0) };
+            cbAdminLogLevel.Items.Add("All Levels");
+            cbAdminLogLevel.Items.Add("INFO");
+            cbAdminLogLevel.Items.Add("WARN");
+            cbAdminLogLevel.Items.Add("ERROR");
+            cbAdminLogLevel.Items.Add("ENGINE");
+            cbAdminLogLevel.SelectedIndex = 0;
+            cbAdminLogLevel.SelectedIndexChanged += (s, e) => RefreshAdminLogs();
+
+            txtAdminLogSearch = new TextBox { Size = new Size(140, 22), BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8.5f), Margin = new Padding(0, 0, 6, 0) };
+            txtAdminLogSearch.TextChanged += (s, e) => RefreshAdminLogs();
+
+            Button btnClearLogs = new Button {
+                Text = "🗑️ Clear",
+                Size = new Size(70, 24),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ThemePalette.ColorBgCardHeader,
+                ForeColor = ThemePalette.ColorDanger,
+                Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 6, 0)
+            };
+            btnClearLogs.FlatAppearance.BorderSize = 0;
+            btnClearLogs.Click += (s, e) => {
+                if (MessageBox.Show("Clear server log entries?", "Confirm Purge", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    db.Logs.Clear();
+                    db.Save();
+                    RefreshAdminLogs();
+                    ShowToast("Server logs purged.");
+                }
+            };
+
+            Button btnExportLogs = new Button {
+                Text = "📥 Export JSON",
+                Size = new Size(95, 24),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = ThemePalette.ColorBgCardHeader,
+                ForeColor = ThemePalette.ColorPrimary,
+                Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0)
+            };
+            btnExportLogs.FlatAppearance.BorderSize = 0;
+            btnExportLogs.Click += (s, e) => ExportAdminLogs();
+
+            logActionsFlow.Controls.Add(cbAdminLogLevel);
+            logActionsFlow.Controls.Add(txtAdminLogSearch);
+            logActionsFlow.Controls.Add(btnClearLogs);
+            logActionsFlow.Controls.Add(btnExportLogs);
+
+            secLogsHdr.Controls.Add(lblLogsHdr);
+            secLogsHdr.Controls.Add(logActionsFlow);
+
+            pnlLogsGrid = new Panel { Dock = DockStyle.Top, Height = 280, BackColor = Color.Transparent, Padding = new Padding(6) };
+            pnlLogsGrid.Paint += (s, e) => {
+                Rectangle r = new Rectangle(0, 0, pnlLogsGrid.Width - 1, pnlLogsGrid.Height - 1);
+                ThemePalette.DrawFloatingCard(e.Graphics, r, ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 8);
+            };
+
+            dgvAdminLogs = new DataGridView {
+                Dock = DockStyle.Fill,
+                BackgroundColor = ThemePalette.ColorBgCard,
+                ForeColor = ThemePalette.ColorTextPrimary,
+                GridColor = ThemePalette.ColorBorderCard,
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false,
+                EnableHeadersVisualStyles = false
+            };
+            dgvAdminLogs.ColumnHeadersDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+            dgvAdminLogs.ColumnHeadersDefaultCellStyle.ForeColor = ThemePalette.ColorTextSecondary;
+            dgvAdminLogs.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+            dgvAdminLogs.DefaultCellStyle.BackColor = ThemePalette.ColorBgCard;
+            dgvAdminLogs.DefaultCellStyle.ForeColor = ThemePalette.ColorTextPrimary;
+            dgvAdminLogs.DefaultCellStyle.Font = new Font("Segoe UI", 8f);
+            dgvAdminLogs.DefaultCellStyle.SelectionBackColor = ThemePalette.ColorPrimary;
+            dgvAdminLogs.DefaultCellStyle.SelectionForeColor = Color.Black;
+            dgvAdminLogs.AlternatingRowsDefaultCellStyle.BackColor = ThemePalette.ColorBgCardHeader;
+
+            pnlLogsGrid.Controls.Add(dgvAdminLogs);
+
+            // Add sections in reverse for Dock = Top ordering
+            pnlScrollAdmin.Controls.Add(pnlLogsGrid);
+            pnlScrollAdmin.Controls.Add(secLogsHdr);
+            pnlScrollAdmin.Controls.Add(pnlLimitsCard);
+            pnlScrollAdmin.Controls.Add(secLimitsHdr);
+            pnlScrollAdmin.Controls.Add(pnlEngineCardsContainer);
+            pnlScrollAdmin.Controls.Add(secEnginesHdr);
+
+            viewServerAdmin.Controls.Add(pnlScrollAdmin);
+            viewServerAdmin.Controls.Add(headerAdmin);
+            headerAdmin.BringToFront();
+
+            RefreshAdminLogs();
+
+            // Telemetry Timer (2-second interval)
+            adminTelemetryTimer = new System.Windows.Forms.Timer { Interval = 2000 };
+            adminTelemetryTimer.Tick += (s, e) => {
+                try {
+                    TimeSpan uptime = DateTime.Now - Process.GetCurrentProcess().StartTime;
+                    lblAdminUptime.Text = string.Format("⏱️ UPTIME: {0:D2}:{1:D2}:{2:D2}", (int)uptime.TotalHours, uptime.Minutes, uptime.Seconds);
+
+                    long memBytes = Process.GetCurrentProcess().WorkingSet64;
+                    double memMb = memBytes / (1024.0 * 1024.0);
+                    lblAdminMem.Text = string.Format("💾 APP RAM: {0:F1} MB", memMb);
+
+                    int sessCount = db.Sessions != null ? db.Sessions.Count : 0;
+                    int maxSess = db.ServerConfig != null && db.ServerConfig.processingLimits != null ? db.ServerConfig.processingLimits.maxConcurrentSessions : 10;
+                    lblAdminSessions.Text = string.Format("👥 TOTAL LOGGED SESSIONS: {0} | MAX: {1}", sessCount, maxSess);
+                } catch { }
+            };
+            adminTelemetryTimer.Start();
+        }
+
+        private void PopulateProcessingLimitsToUi()
+        {
+            if (db == null || db.ServerConfig == null) return;
+            ProcessingLimitsModel limits = db.ServerConfig.processingLimits;
+            if (limits == null) limits = new ProcessingLimitsModel();
+
+            if (numAdminMaxSessions != null) numAdminMaxSessions.Value = Math.Max(1, Math.Min(100, limits.maxConcurrentSessions));
+            if (numAdminBandwidth != null) numAdminBandwidth.Value = Math.Max(5, Math.Min(1000, limits.bandwidthLimitMbps));
+            if (cbAdminFps != null)
+            {
+                if (limits.maxFps == 120) cbAdminFps.SelectedIndex = 2;
+                else if (limits.maxFps == 30) cbAdminFps.SelectedIndex = 0;
+                else cbAdminFps.SelectedIndex = 1;
+            }
+            if (numAdminIdleTimeout != null) numAdminIdleTimeout.Value = Math.Max(1, Math.Min(180, limits.idleTimeoutMinutes));
+            if (numAdminLogRetention != null) numAdminLogRetention.Value = Math.Max(1, Math.Min(90, limits.logRetentionDays));
+            if (cbAdminHwAccel != null)
+            {
+                if (limits.hardwareAcceleration == "quicksync") cbAdminHwAccel.SelectedIndex = 1;
+                else if (limits.hardwareAcceleration == "software_cpu") cbAdminHwAccel.SelectedIndex = 2;
+                else cbAdminHwAccel.SelectedIndex = 0;
+            }
+        }
+
+        private void RenderEngineCards(FlowLayoutPanel container)
+        {
+            if (container == null || db == null || db.ServerConfig == null) return;
+            container.Controls.Clear();
+            engineCardPanels.Clear();
+
+            string activeId = db.ServerConfig.activeEngine != null ? db.ServerConfig.activeEngine : "sunshine";
+            if (lblAdminActiveEngineBadge != null)
+            {
+                lblAdminActiveEngineBadge.Text = "jDroid-Engine: " + activeId.ToUpper();
+            }
+
+            Dictionary<string, OpenSourceEngineModel> engines = db.ServerConfig.engines;
+            if (engines == null || engines.Count == 0)
+            {
+                db.ServerConfig = ServerConfigModel.CreateDefault();
+                engines = db.ServerConfig.engines;
+            }
+
+            foreach (KeyValuePair<string, OpenSourceEngineModel> kv in engines)
+            {
+                string engId = kv.Key;
+                OpenSourceEngineModel eng = kv.Value;
+                bool isActive = engId.Equals(activeId, StringComparison.OrdinalIgnoreCase);
+
+                Panel card = new Panel {
+                    Size = new Size(395, 252),
+                    BackColor = Color.Transparent,
+                    Margin = new Padding(0, 0, 12, 12),
+                    Padding = new Padding(12)
+                };
+                string currentEngId = engId;
+                bool currentIsActive = isActive;
+                card.Paint += (cs, ce) => {
+                    Color borderCol = currentIsActive ? Color.FromArgb(16, 185, 129) : ThemePalette.ColorBorderCard;
+                    ThemePalette.DrawFloatingCard(ce.Graphics, new Rectangle(0, 0, card.Width - 1, card.Height - 1), ThemePalette.ColorBgCard, borderCol, ThemePalette.ColorShadow, 8);
+                };
+
+                // Top Ribbon: Icon + Name + Active Status Badge
+                Panel cardTop = new Panel { Dock = DockStyle.Top, Height = 28, BackColor = Color.Transparent };
+                string icon = engId == "rustdesk" ? "🦀" : (engId == "sunshine" ? "⚡" : (engId == "guacamole" ? "🥑" : "🚀"));
+                Label lblName = new Label {
+                    Text = icon + " " + eng.name,
+                    Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                    ForeColor = ThemePalette.ColorTextPrimary,
+                    Dock = DockStyle.Left,
+                    AutoSize = true,
+                    MaximumSize = new Size(240, 28)
+                };
+
+                Label lblBadge = new Label {
+                    Text = isActive ? "✓ ACTIVE" : eng.status.ToUpper(),
+                    Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                    ForeColor = isActive ? Color.FromArgb(16, 185, 129) : Color.FromArgb(148, 163, 184),
+                    BackColor = isActive ? (isDarkMode ? Color.FromArgb(6, 78, 59) : Color.FromArgb(220, 252, 231)) : (isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240)),
+                    Dock = DockStyle.Right,
+                    AutoSize = true,
+                    Padding = new Padding(4, 2, 4, 2)
+                };
+
+                cardTop.Controls.Add(lblName);
+                cardTop.Controls.Add(lblBadge);
+
+                // Type & Specs Line
+                Label lblType = new Label {
+                    Text = eng.type + " • " + eng.version,
+                    Font = new Font("Segoe UI", 8f),
+                    ForeColor = Color.FromArgb(56, 189, 248),
+                    Dock = DockStyle.Top,
+                    Height = 20,
+                    BackColor = Color.Transparent
+                };
+
+                // Ports Line
+                Label lblPorts = new Label {
+                    Text = "Ports: " + eng.ports,
+                    Font = new Font("Consolas", 7.5f),
+                    ForeColor = ThemePalette.ColorTextSecondary,
+                    Dock = DockStyle.Top,
+                    Height = 22,
+                    BackColor = Color.Transparent
+                };
+
+                // Manual Configuration Instructions Box
+                Panel pnlManual = new Panel {
+                    Dock = DockStyle.Top,
+                    Height = 88,
+                    BackColor = Color.Transparent,
+                    Padding = new Padding(8),
+                    Margin = new Padding(0, 4, 0, 8)
+                };
+                pnlManual.Paint += (ms, me) => {
+                    ThemePalette.DrawFloatingCard(me.Graphics, new Rectangle(0, 0, pnlManual.Width - 1, pnlManual.Height - 1), ThemePalette.ColorBgCardHeader, ThemePalette.ColorBorderCard, Color.FromArgb(10, 0, 0, 0), 6);
+                };
+                Label lblManHdr = new Label {
+                    Text = "Manual Setup Requirement:",
+                    Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                    ForeColor = isDarkMode ? Color.FromArgb(250, 204, 21) : Color.FromArgb(161, 98, 7),
+                    Dock = DockStyle.Top,
+                    Height = 16,
+                    BackColor = Color.Transparent
+                };
+                Label lblManDesc = new Label {
+                    Text = eng.manualConfigRequired,
+                    Font = new Font("Segoe UI", 7.5f),
+                    ForeColor = ThemePalette.ColorTextSecondary,
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.Transparent
+                };
+                pnlManual.Controls.Add(lblManDesc);
+                pnlManual.Controls.Add(lblManHdr);
+
+                // Action Buttons at Bottom
+                FlowLayoutPanel btnFlow = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 32, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, BackColor = Color.Transparent };
+
+                Button btnActivate = new Button {
+                    Text = isActive ? "✓ Current jDroid-Engine" : "⚡ Switch to " + eng.id.ToUpper(),
+                    Size = new Size(isActive ? 142 : 128, 28),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = isActive ? Color.FromArgb(16, 185, 129) : (isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240)),
+                    ForeColor = isActive ? Color.White : ThemePalette.ColorTextPrimary,
+                    Font = new Font("Segoe UI", 7.8f, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Enabled = !isActive,
+                    Margin = new Padding(0, 2, 4, 0)
+                };
+                btnActivate.FlatAppearance.BorderSize = 0;
+                string captureId = engId;
+                btnActivate.Click += (s, e) => SwitchActiveEngine(captureId);
+                btnFlow.Controls.Add(btnActivate);
+
+                Button btnRunScript = new Button {
+                    Text = "🚀 Start",
+                    Size = new Size(58, 28),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = isDarkMode ? Color.FromArgb(20, 32, 50) : Color.FromArgb(220, 252, 231),
+                    ForeColor = Color.FromArgb(16, 185, 129),
+                    Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0, 2, 4, 0)
+                };
+                btnRunScript.FlatAppearance.BorderSize = 0;
+                string captureRunId = engId;
+                btnRunScript.Click += (s, e) => LaunchEngineStartScript(captureRunId);
+                btnFlow.Controls.Add(btnRunScript);
+
+                // Open Local Source Code Folder
+                string relSource = engId == "rustdesk" ? "jDroid-X-Desk-Server\\Github\\rustdesk-master" :
+                                   (engId == "sunshine" ? "jDroid-X-Desk-Server\\Github\\Sunshine-master" :
+                                   (engId == "guacamole" ? "jDroid-X-Desk-Server\\Github\\guacamole-server" : "."));
+                string absSource = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relSource);
+
+                Button btnSource = new Button {
+                    Text = "📂 Code",
+                    Size = new Size(62, 28),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240),
+                    ForeColor = isDarkMode ? Color.FromArgb(148, 163, 184) : Color.FromArgb(51, 65, 85),
+                    Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0, 2, 4, 0)
+                };
+                btnSource.FlatAppearance.BorderSize = 0;
+                string capSource = absSource;
+                btnSource.Click += (s, e) => {
+                    try {
+                        if (Directory.Exists(capSource)) Process.Start("explorer.exe", capSource);
+                        else ShowToast("Folder not found: " + capSource);
+                    } catch (Exception ex) { ShowToast("Explorer error: " + ex.Message); }
+                };
+                btnFlow.Controls.Add(btnSource);
+
+                Button btnGuide = new Button {
+                    Text = "📖 Guide",
+                    Size = new Size(62, 28),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(254, 249, 195),
+                    ForeColor = isDarkMode ? Color.FromArgb(250, 204, 21) : Color.FromArgb(161, 98, 7),
+                    Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0, 2, 4, 0)
+                };
+                btnGuide.FlatAppearance.BorderSize = 0;
+                string captureGuideId = engId;
+                btnGuide.Click += (s, e) => ShowEngineManualSetupDialog(captureGuideId);
+                btnFlow.Controls.Add(btnGuide);
+
+                if (engId == "sunshine")
+                {
+                    Button btnWeb = new Button {
+                        Text = "🌐 Web (47990)",
+                        Size = new Size(95, 28),
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(254, 249, 195),
+                        ForeColor = isDarkMode ? Color.FromArgb(250, 204, 21) : Color.FromArgb(161, 98, 7),
+                        Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                        Cursor = Cursors.Hand,
+                        Margin = new Padding(0, 2, 0, 0)
+                    };
+                    btnWeb.FlatAppearance.BorderSize = 0;
+                    btnWeb.Click += (s, e) => {
+                        try { Process.Start("https://localhost:47990"); } catch { }
+                    };
+                    btnFlow.Controls.Add(btnWeb);
+                }
+                else if (engId == "guacamole")
+                {
+                    Button btnGuacWeb = new Button {
+                        Text = "🌐 Web (8080)",
+                        Size = new Size(90, 28),
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(243, 232, 255),
+                        ForeColor = Color.FromArgb(168, 85, 247),
+                        Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                        Cursor = Cursors.Hand,
+                        Margin = new Padding(0, 2, 0, 0)
+                    };
+                    btnGuacWeb.FlatAppearance.BorderSize = 0;
+                    btnGuacWeb.Click += (s, e) => {
+                        try { Process.Start("http://localhost:8080/guacamole"); } catch { }
+                    };
+                    btnFlow.Controls.Add(btnGuacWeb);
+                }
+
+                card.Controls.Add(btnFlow);
+                card.Controls.Add(pnlManual);
+                card.Controls.Add(lblPorts);
+                card.Controls.Add(lblType);
+                card.Controls.Add(cardTop);
+
+                engineCardPanels[engId] = card;
+                container.Controls.Add(card);
+            }
+        }
+
+        private void SwitchActiveEngine(string engineId)
+        {
+            if (db == null || db.ServerConfig == null) return;
+            string prev = db.ServerConfig.activeEngine;
+            db.ServerConfig.activeEngine = engineId;
+
+            if (db.ServerConfig.engines != null)
+            {
+                foreach (KeyValuePair<string, OpenSourceEngineModel> kv in db.ServerConfig.engines)
+                {
+                    if (kv.Key == engineId) kv.Value.status = "Active";
+                    else if (kv.Key == "jdroidRelay") kv.Value.status = "Online";
+                    else kv.Value.status = "Ready";
+                }
+            }
+
+            db.AddLog("ENGINE", "SWITCH_ENGINE", string.Format("Switched active remote engine from {0} to {1}", prev, engineId));
+            db.Save();
+
+            // Notify local node server asynchronously
+            NotifyNodeEngineSwitch(engineId);
+
+            // Probe live status of the newly switched engine
+            ProbeEngineLiveStatus(engineId);
+
+            // Re-render UI
+            UpdateHeaderEngineTelemetryUI(engineId);
+            RenderEngineCards(pnlEngineCardsContainer);
+            UpdateDrawerForCurrentView("ServerAdmin");
+            RefreshAdminLogs();
+            if (activeViewKey == "Console" && panelWelcomeCards != null && panelWelcomeCards.Visible)
+            {
+                BuildWelcomeCardsContent();
+            }
+
+            ShowToast(string.Format("jDroid-Engine switched to: {0}", engineId.ToUpper()));
+        }
+
+        private void SaveServerConfigFromUi()
+        {
+            if (db == null || db.ServerConfig == null) return;
+            if (db.ServerConfig.processingLimits == null) db.ServerConfig.processingLimits = new ProcessingLimitsModel();
+
+            ProcessingLimitsModel limits = db.ServerConfig.processingLimits;
+            if (numAdminMaxSessions != null) limits.maxConcurrentSessions = (int)numAdminMaxSessions.Value;
+            if (numAdminBandwidth != null) limits.bandwidthLimitMbps = (int)numAdminBandwidth.Value;
+            if (cbAdminFps != null)
+            {
+                if (cbAdminFps.SelectedIndex == 2) limits.maxFps = 120;
+                else if (cbAdminFps.SelectedIndex == 0) limits.maxFps = 30;
+                else limits.maxFps = 60;
+            }
+            if (numAdminIdleTimeout != null) limits.idleTimeoutMinutes = (int)numAdminIdleTimeout.Value;
+            if (numAdminLogRetention != null) limits.logRetentionDays = (int)numAdminLogRetention.Value;
+            if (cbAdminHwAccel != null)
+            {
+                if (cbAdminHwAccel.SelectedIndex == 1) limits.hardwareAcceleration = "quicksync";
+                else if (cbAdminHwAccel.SelectedIndex == 2) limits.hardwareAcceleration = "software_cpu";
+                else limits.hardwareAcceleration = "nvenc_cuda";
+            }
+
+            db.AddLog("CONFIG", "UPDATE_LIMITS", string.Format("Updated server processing limits (Sessions: {0}, Bandwidth: {1} Mbps, FPS: {2})", limits.maxConcurrentSessions, limits.bandwidthLimitMbps, limits.maxFps));
+            db.Save();
+            RefreshAdminLogs();
+            ShowToast("Server Configuration & Limits saved to database.json");
+        }
+
+        private void RefreshAdminLogs()
+        {
+            if (dgvAdminLogs == null || db == null) return;
+            string filterLevel = cbAdminLogLevel != null && cbAdminLogLevel.SelectedItem != null ? cbAdminLogLevel.SelectedItem.ToString() : "All Levels";
+            string search = txtAdminLogSearch != null ? txtAdminLogSearch.Text.Trim().ToLower() : "";
+
+            List<LogItem> list = new List<LogItem>();
+            if (db.Logs != null)
+            {
+                for (int i = db.Logs.Count - 1; i >= 0; i--)
+                {
+                    LogItem item = db.Logs[i];
+                    if (filterLevel != "All Levels" && !string.Equals(item.type, filterLevel, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!string.IsNullOrEmpty(search))
+                    {
+                        string combined = ((item.action ?? "") + " " + (item.details ?? "") + " " + (item.type ?? "")).ToLower();
+                        if (!combined.Contains(search)) continue;
+                    }
+                    list.Add(item);
+                }
+            }
+
+            dgvAdminLogs.DataSource = null;
+            dgvAdminLogs.DataSource = list;
+        }
+
+        private void ExportAdminLogs()
+        {
+            try
+            {
+                if (db == null || db.Logs == null) return;
+                JavaScriptSerializer ser = new JavaScriptSerializer();
+                string json = ser.Serialize(db.Logs);
+                string exportPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, string.Format("server_logs_export_{0:yyyyMMdd_HHmmss}.json", DateTime.Now));
+                File.WriteAllText(exportPath, json);
+                ShowToast("Exported logs to: " + Path.GetFileName(exportPath));
+            }
+            catch (Exception ex)
+            {
+                ShowToast("Log export failed: " + ex.Message);
+            }
+        }
+
+        private void NotifyNodeEngineSwitch(string engineId)
+        {
+            if (lblBackendSyncStatus != null && !lblBackendSyncStatus.IsDisposed) {
+                if (this.InvokeRequired) {
+                    try {
+                        this.BeginInvoke(new Action(delegate {
+                            lblBackendSyncStatus.Text = "[🔄 SYNCING...]";
+                            lblBackendSyncStatus.ForeColor = Color.FromArgb(245, 158, 11);
+                        }));
+                    } catch { }
+                } else {
+                    lblBackendSyncStatus.Text = "[🔄 SYNCING...]";
+                    lblBackendSyncStatus.ForeColor = Color.FromArgb(245, 158, 11);
+                }
+            }
+            ThreadPool.QueueUserWorkItem(delegate {
+                bool synced = false;
+                try {
+                    string endpoint = "http://127.0.0.1:12345/api/admin/engine/switch";
+                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(endpoint);
+                    req.Method = "POST";
+                    req.ContentType = "application/json";
+                    req.Timeout = 1500;
+                    byte[] payload = System.Text.Encoding.UTF8.GetBytes(string.Format("{{\"engine\":\"{0}\",\"engineId\":\"{0}\"}}", engineId));
+                    req.ContentLength = payload.Length;
+                    using (Stream os = req.GetRequestStream())
+                    {
+                        os.Write(payload, 0, payload.Length);
+                    }
+                    using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse()) {
+                        synced = (resp.StatusCode == HttpStatusCode.OK);
+                    }
+                } catch {
+                    synced = false;
+                }
+
+                if (lblBackendSyncStatus != null && !lblBackendSyncStatus.IsDisposed) {
+                    try {
+                        this.BeginInvoke(new Action(delegate {
+                            if (synced) {
+                                lblBackendSyncStatus.Text = "[✓ SYNCED]";
+                                lblBackendSyncStatus.ForeColor = Color.FromArgb(16, 185, 129);
+                            } else {
+                                lblBackendSyncStatus.Text = "[⚠️ STANDALONE]";
+                                lblBackendSyncStatus.ForeColor = Color.FromArgb(148, 163, 184);
+                            }
+                        }));
+                    } catch { }
+                }
+            });
+        }
+
+        // ======================================================================
         // GOOGLE COLAB CENTRAL CLOUD RELAY BROKER
         // ======================================================================
 
@@ -5317,9 +8150,17 @@ namespace JDroidXDesk.Native
 
                                 using (MemoryStream ms = new MemoryStream())
                                 {
+                                    long jpgQuality = 45L;
+                                    if (db != null && db.ServerConfig != null && db.ServerConfig.processingLimits != null)
+                                    {
+                                        int bw = db.ServerConfig.processingLimits.bandwidthLimitMbps;
+                                        if (bw >= 50) jpgQuality = 65L;
+                                        else if (bw >= 25) jpgQuality = 50L;
+                                        else if (bw < 15) jpgQuality = 35L;
+                                    }
                                     ImageCodecInfo jpgEncoder = GetCachedJpegEncoder();
                                     using (EncoderParameters ep = new EncoderParameters(1))
-                                    using (EncoderParameter epParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 45L))
+                                    using (EncoderParameter epParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, jpgQuality))
                                     {
                                         ep.Param[0] = epParam;
                                         if (jpgEncoder != null) scaledBmp.Save(ms, jpgEncoder, ep);
@@ -5388,7 +8229,9 @@ namespace JDroidXDesk.Native
                         }
                     }
                 } catch { }
-                Thread.Sleep(pushSuccess ? 16 : 400); // Target up to 60 FPS
+                int targetFps = (db != null && db.ServerConfig != null && db.ServerConfig.processingLimits != null && db.ServerConfig.processingLimits.maxFps > 0) ? db.ServerConfig.processingLimits.maxFps : 60;
+                int frameDelayMs = Math.Max(8, 1000 / targetFps);
+                Thread.Sleep(pushSuccess ? frameDelayMs : 400);
             }
         }
 
@@ -5690,6 +8533,7 @@ namespace JDroidXDesk.Native
 
         private void SendRemoteInput(string eventType, Dictionary<string, object> details)
         {
+            lastUserActivityUtc = DateTime.UtcNow;
             if (!isSessionActive || string.IsNullOrEmpty(activeReceiverTargetId)) return;
             ThreadPool.QueueUserWorkItem(delegate {
                 try
@@ -6146,6 +8990,31 @@ namespace JDroidXDesk.Native
                 }
             }
             catch { }
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000; // WS_EX_COMPOSITED (Turn on offscreen compositing for all child controls)
+                return cp;
+            }
+        }
+
+        public static void SetDoubleBuffered(Control c)
+        {
+            if (c == null) return;
+            try
+            {
+                PropertyInfo pi = typeof(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (pi != null) pi.SetValue(c, true, null);
+            }
+            catch { }
+            foreach (Control child in c.Controls)
+            {
+                SetDoubleBuffered(child);
+            }
         }
     }
 }

@@ -58,13 +58,15 @@ async function runTests() {
     assert(fs.existsSync('docs/headless/windowscmd.txt'), 'docs/headless/windowscmd.txt exists');
     assert(fs.existsSync('docs/headless/powershellcmd.txt'), 'docs/headless/powershellcmd.txt exists');
     assert(fs.existsSync('docs/headless/debianlinux.txt'), 'docs/headless/debianlinux.txt exists');
+    assert(fs.existsSync('admin.html'), 'admin.html (responsive standalone admin dashboard) exists');
+    assert(fs.existsSync('styles/themes/themes.css'), 'styles/themes/themes.css (Universal 15-Paradigm Master Theme tokens) exists');
 
 
     // 2. DATABASE SCHEMA INTEGRITY
     console.log('\n[2/4] Verifying Database Schema Tables...');
     try {
         const db = JSON.parse(fs.readFileSync('database.json', 'utf8'));
-        const requiredTables = ['safeZones', 'groups', 'sessions', 'devices', 'guardians', 'contacts', 'notifications', 'settings', 'logs'];
+        const requiredTables = ['safeZones', 'groups', 'sessions', 'devices', 'guardians', 'contacts', 'notifications', 'settings', 'serverConfig', 'logs'];
         for (const t of requiredTables) {
             assert(db[t] !== undefined, `Database schema contains table: "${t}"`);
         }
@@ -98,7 +100,12 @@ async function runTests() {
         'nav-live-map',
         'nav-safe-zones',
         'nav-guardians',
-        'nav-settings'
+        'nav-settings',
+        'nav-server-admin',
+        'view-server-admin',
+        'web-header-gateway-pill',
+        'global-theme-selector',
+        'theme-toggle-btn'
     ];
     for (const id of criticalDomIds) {
         assert(html.includes(`id="${id}"`), `DOM element exists: #${id}`);
@@ -106,6 +113,20 @@ async function runTests() {
 
     const navSettingsOccurrences = (html.match(/id="nav-settings"/g) || []).length;
     assert(navSettingsOccurrences === 1, 'Strictly ONE single unified #nav-settings icon exists in DOM');
+
+    // UI/UX Universal Design System Checks
+    assert(html.includes('class="light-theme"'), 'index.html defaults to Light-First discipline (body.light-theme)');
+    assert(html.includes('styles/themes/themes.css'), 'index.html imports master styles/themes/themes.css');
+
+    const adminHtml = fs.readFileSync('admin.html', 'utf8');
+    assert(adminHtml.includes('id="global-theme-selector"'), 'admin.html contains synchronized #global-theme-selector');
+    assert(adminHtml.includes('class="light-theme"'), 'admin.html defaults to Light-First discipline (body.light-theme)');
+    assert(adminHtml.includes('styles/themes/themes.css'), 'admin.html imports master styles/themes/themes.css');
+
+    const appJs = fs.readFileSync('app.js', 'utf8');
+    assert(appJs.includes("localStorage.setItem('jdroid_theme'"), 'app.js persists active theme to jdroid_theme storage key');
+    assert(appJs.includes("theme-tokyo-night"), 'app.js supports 15 universal design themes');
+
 
     // 4. BACKEND API INTEGRATION TEST (EPHEMERAL PORT)
     console.log('\n[4/4] Starting Server & Testing API Endpoints...');
@@ -328,6 +349,64 @@ async function runTests() {
             const msraCheck = await makeRequest('POST', '/api/remote/launch-msra');
             assert(msraCheck.statusCode === 200 && msraCheck.body.success, 'POST /api/remote/launch-msra launches Microsoft Remote Assistance');
         }
+
+        // Scenario 10: Server Admin & Engine Management APIs
+        const adminCfg = await makeRequest('GET', '/api/admin/config');
+        assert(adminCfg.statusCode === 200 && adminCfg.body.success && adminCfg.body.data.activeEngine, 'GET /api/admin/config returns server config and active engine');
+
+        const putCfg = await makeRequest('PUT', '/api/admin/config', {
+            processingLimits: { maxConcurrentSessions: 12, maxFps: 60 }
+        });
+        assert(putCfg.statusCode === 200 && putCfg.body.data.processingLimits?.maxConcurrentSessions === 12, 'PUT /api/admin/config updates processing limits');
+
+        const switchEngine = await makeRequest('POST', '/api/admin/engine/switch', { engine: 'sunshine' });
+        assert(switchEngine.statusCode === 200 && switchEngine.body.activeEngine === 'sunshine', 'POST /api/admin/engine/switch switches active streaming engine');
+
+        const switchEngineId = await makeRequest('POST', '/api/admin/engine/switch', { engineId: 'jdroidRelay' });
+        assert(switchEngineId.statusCode === 200 && switchEngineId.body.activeEngine === 'jdroidRelay', 'POST /api/admin/engine/switch accepts engineId payload format');
+
+        // Restore active engine to sunshine
+        await makeRequest('POST', '/api/admin/engine/switch', { engine: 'sunshine' });
+
+        const probeCheck = await makeRequest('GET', '/api/admin/engine/probe?engine=sunshine');
+        assert(probeCheck.statusCode === 200 && probeCheck.body.success && probeCheck.body.port === 47990, 'GET /api/admin/engine/probe verifies port accessibility');
+
+        const launchScriptCheck = await makeRequest('POST', '/api/admin/engine/launch-script', { engine: 'sunshine' });
+        assert(launchScriptCheck.statusCode === 200 && launchScriptCheck.body.success, 'POST /api/admin/engine/launch-script initiates startup script');
+
+        // Verify deep-merge settings persistence
+        const initialSettings = await makeRequest('GET', '/api/settings');
+        const originalPort = initialSettings.body.data?.connection?.localPort || 7070;
+        const putPartialSettings = await makeRequest('PUT', '/api/settings', {
+            connection: { customDomain: 'https://test.jdroid-x.net' }
+        });
+        assert(
+            putPartialSettings.statusCode === 200 &&
+            putPartialSettings.body.data?.connection?.customDomain === 'https://test.jdroid-x.net' &&
+            putPartialSettings.body.data?.connection?.localPort === originalPort,
+            'PUT /api/settings deep-merges nested properties without erasing sibling keys'
+        );
+
+        // Verify device registration with explicit IP address
+        const devWithIp = await makeRequest('POST', '/api/devices', {
+            name: 'TEST-DESK-IP-NODE',
+            ip: '192.168.1.99',
+            accessLevel: 'Admin',
+            groupId: 'grp-1'
+        });
+        assert(devWithIp.statusCode === 200 && devWithIp.body.data?.ip === '192.168.1.99', 'POST /api/devices stores explicit IP address');
+        if (devWithIp.body.data?.id) {
+            await makeRequest('DELETE', `/api/devices/${devWithIp.body.data.id}`);
+        }
+
+        const metrics = await makeRequest('GET', '/api/admin/metrics');
+        assert(metrics.statusCode === 200 && metrics.body.data?.cpuCores >= 1, 'GET /api/admin/metrics returns real-time hardware telemetry');
+
+        const adminLogs = await makeRequest('GET', '/api/admin/logs?limit=10');
+        assert(adminLogs.statusCode === 200 && Array.isArray(adminLogs.body.data), 'GET /api/admin/logs returns live processing logs array');
+
+        const purgeLogs = await makeRequest('DELETE', '/api/admin/logs');
+        assert(purgeLogs.statusCode === 200 && purgeLogs.body.success, 'DELETE /api/admin/logs successfully purges logs');
 
     } catch (err) {
         assert(false, `API integration error: ${err.message}`);

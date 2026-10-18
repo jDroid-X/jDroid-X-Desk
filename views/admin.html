@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jDroid-X Server Admin & Processing Monitor</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/themes/themes.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-page {
+            max-width: 1480px;
+            margin: 0 auto;
+            padding: 1.5rem 1.8rem;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid var(--border-bright);
+            margin-bottom: 1.5rem;
+        }
+        .admin-title-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .admin-logo {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 0 12px var(--accent-blue-glow));
+        }
+        .engine-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.8rem;
+        }
+        .engine-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.25s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        .engine-card.active-engine {
+            border: 2px solid var(--accent-emerald);
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.18);
+        }
+        .engine-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+        .telemetry-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.8rem;
+        }
+        .telemetry-stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-icon-box {
+            width: 46px;
+            height: 46px;
+            border-radius: var(--radius-md);
+            background: rgba(0, 242, 254, 0.1);
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: var(--text-main);
+        }
+        .limits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+            margin-top: 1rem;
+        }
+        .limit-input-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 0.9rem;
+        }
+        .limit-input-box label {
+            display: block;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+        }
+        .limit-input-box input, .limit-input-box select {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-bright);
+            border-radius: 6px;
+            padding: 0.45rem 0.65rem;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+        }
+        .log-table-wrap {
+            max-height: 420px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: #060911;
+        }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            text-align: left;
+        }
+        .log-table th {
+            padding: 0.6rem 0.8rem;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid var(--border-bright);
+            color: var(--text-muted);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .log-table td {
+            padding: 0.5rem 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .log-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .badge-engine-active {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+        }
+        .badge-engine-ready {
+            background: rgba(0, 242, 254, 0.12);
+            color: var(--accent-blue);
+            border: 1px solid rgba(0, 242, 254, 0.25);
+        }
+        .badge-engine-cloud {
+            background: rgba(124, 77, 255, 0.15);
+            color: var(--accent-purple);
+            border: 1px solid rgba(124, 77, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="light-theme">
+    <div id="toast-container" class="toast-overlay-container"></div>
+
+    <div class="admin-page">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="admin-title-group">
+                <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" class="admin-logo">
+                <div>
+                    <h1 style="margin: 0; font-size: 1.45rem; font-family: var(--font-heading); font-weight: 700;">
+                        jDroid-X Server Admin & Processing Dashboard
+                    </h1>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                        Multi-Engine Orchestration &middot; Hardware Processing Telemetry &middot; Dynamic Quotas &amp; Live Logs
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                <span class="badge badge-green" id="server-status-pill">
+                    <i class="fa-solid fa-server"></i> HTTP 200 Online (Port 12345)
+                </span>
+                <select id="global-theme-selector" class="theme-select-dropdown" aria-label="Universal Theme Selector" title="Select Theme Paradigm">
+                    <option value="light-theme">☀️ Light Enterprise</option>
+                    <option value="dark-theme">🌙 Dark Studio</option>
+                    <option value="theme-nord">❄️ Nord Arctic</option>
+                    <option value="theme-solarized-light">🌅 Solarized Light</option>
+                    <option value="theme-solarized-dark">🌌 Solarized Dark</option>
+                    <option value="theme-monokai">🎨 Monokai Pro</option>
+                    <option value="theme-dracula">🧛 Dracula Midnight</option>
+                    <option value="theme-tokyo-night">🗼 Tokyo Night</option>
+                    <option value="theme-cyberpunk">⚡ Cyberpunk Neon</option>
+                    <option value="theme-emerald">🌲 Matrix Emerald</option>
+                    <option value="theme-ocean">🌊 Deep Ocean</option>
+                    <option value="theme-sunset">🌇 Crimson Sunset</option>
+                    <option value="theme-gruvbox">📻 Gruvbox Retro</option>
+                    <option value="theme-slate">🛡️ Titanium Slate</option>
+                    <option value="theme-high-contrast">👁️ High Contrast</option>
+                </select>
+                <button id="btn-theme-toggle" class="btn btn-secondary btn-sm" title="Toggle Light/Dark Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <a href="/" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                    <i class="fa-solid fa-desktop"></i> Open User Console
+                </a>
+                <button id="btn-refresh-telemetry" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-arrows-rotate"></i> Refresh Telemetry
+                </button>
+            </div>
+        </header>
+
+        <!-- Live Server Telemetry Stat Strip -->
+        <section class="telemetry-row">
+            <div class="telemetry-stat-card">
+                <div class="stat-icon-box" style="color: var(--accent-blue); background: rgba(0,242,254,0.1);">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-cpu-cores">-- Cores</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);" id="stat-cpu-model">Detecting CPU...</div>
+                </div>
+            </div>
+
+            <div class="telemetry-stat-card">
+                <div class="stat-icon-box" style="color: var(--accent-emerald); background: rgba(0,230,118,0.1);">
+                    <i class="fa-solid fa-memory"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-mem-usage">--% RAM</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);" id="stat-mem-sub">Free: -- GB / Total: -- GB</div>
+                </div>
+            </div>
+
+            <div class="telemetry-stat-card">
+                <div class="stat-icon-box" style="color: var(--accent-purple); background: rgba(124,77,255,0.1);">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-active-engine">Sunshine</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Active jDroid-Engine</div>
+                </div>
+            </div>
+
+            <div class="telemetry-stat-card">
+                <div class="stat-icon-box" style="color: var(--accent-amber); background: rgba(255,171,0,0.1);">
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <div>
+                    <div class="stat-value" id="stat-active-sessions">0 Sessions</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);" id="stat-server-uptime">Uptime: --</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1: OPEN-SOURCE REMOTE ACCESS ENGINES -->
+        <section class="widget-box margin-top-md">
+            <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+                <div>
+                    <h3><i class="fa-solid fa-layer-group text-primary"></i> Open-Source Remote Access Engines &amp; Model Switcher</h3>
+                    <p>Integrate, monitor, and switch dynamically between the 3 world-class open-source engines in <code>jDroid-X-Desk-Server/Github/</code>.</p>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--accent-emerald); font-weight: 600;">
+                    <i class="fa-solid fa-shield-halved"></i> 100% Free &amp; Open Source — Zero License Fees
+                </div>
+            </div>
+
+            <div class="engine-grid margin-top-md">
+                <!-- ENGINE 1: Sunshine & Moonlight -->
+                <div class="engine-card" id="card-engine-sunshine">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                            <span class="badge badge-engine-active" id="badge-sunshine"><i class="fa-solid fa-circle-check"></i> ACTIVE jDroid-ENGINE</span>
+                            <span class="badge" style="background: rgba(255,171,0,0.15); color: var(--accent-amber); font-size: 0.7rem;"><i class="fa-solid fa-gauge-high"></i> Lowest Latency</span>
+                        </div>
+                        <h4 style="margin: 0.3rem 0 0.15rem 0; font-size: 1.1rem; color: var(--text-main);">
+                            <i class="fa-solid fa-sun" style="color: var(--accent-amber);"></i> Sunshine &amp; Moonlight
+                        </h4>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 0.75rem;">
+                            LizardByte/Sunshine &middot; Sub-5ms 60-120 FPS
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                            Direct GPU VRAM capture via DirectX Desktop Duplication + NVIDIA NVENC hardware encoder. Sub-2ms frame compression without CPU bottleneck.
+                        </p>
+                        
+                        <div style="background: var(--bg-tertiary); padding: 0.6rem 0.75rem; border-radius: 6px; font-size: 0.76rem; font-family: var(--font-mono); margin: 0.6rem 0;">
+                            <div><strong style="color: var(--accent-blue);">Ports:</strong> 47984 (HTTPS), 47989 (HTTP), 47990 (Web UI), 48010</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-emerald);">Encoder:</strong> NVENC / DXGI Direct3D 11</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-amber);">Manual Setup:</strong> 1-Time Web GUI admin user setup &amp; 4-digit PIN pairing.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.8rem;">
+                        <button class="btn btn-primary btn-sm switch-engine-btn" data-engine="sunshine" style="flex: 2;">
+                            <i class="fa-solid fa-check"></i> Active jDroid-Engine
+                        </button>
+                        <button class="btn btn-secondary btn-sm admin-run-script-btn" data-engine="sunshine" title="🚀 Run Start Script (scripts/start-sunshine.bat)" style="flex: 1;">
+                            <i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> Start
+                        </button>
+                        <a href="https://localhost:47990" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Open Sunshine Web GUI (https://localhost:47990)">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> GUI
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ENGINE 2: RustDesk -->
+                <div class="engine-card" id="card-engine-rustdesk">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                            <span class="badge badge-engine-ready" id="badge-rustdesk"><i class="fa-solid fa-check"></i> READY</span>
+                            <span class="badge" style="background: rgba(0,242,254,0.12); color: var(--accent-blue); font-size: 0.7rem;"><i class="fa-solid fa-network-wired"></i> NAT Traversal</span>
+                        </div>
+                        <h4 style="margin: 0.3rem 0 0.15rem 0; font-size: 1.1rem; color: var(--text-main);">
+                            <i class="fa-solid fa-shield-halved" style="color: var(--accent-blue);"></i> RustDesk
+                        </h4>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 0.75rem;">
+                            rustdesk/rustdesk &middot; Direct Match P2P
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                            Seamless peer-to-peer connection with STUN/TURN rendezvous mediation. Traverses corporate firewalls and symmetric NAT with ease.
+                        </p>
+                        
+                        <div style="background: var(--bg-tertiary); padding: 0.6rem 0.75rem; border-radius: 6px; font-size: 0.76rem; font-family: var(--font-mono); margin: 0.6rem 0;">
+                            <div><strong style="color: var(--accent-blue);">Ports:</strong> 21115 (Probe), 21116 (hbbs), 21117 (hbbr), 21118</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-emerald);">Encryption:</strong> Ed25519 &amp; ChaCha20-Poly1305</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-amber);">Manual Setup:</strong> 0-config with public servers; or self-host hbbs/hbbr with key for unlimited speed.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.8rem;">
+                        <button class="btn btn-secondary btn-sm switch-engine-btn" data-engine="rustdesk" style="flex: 2;">
+                            <i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine
+                        </button>
+                        <button class="btn btn-secondary btn-sm admin-run-script-btn" data-engine="rustdesk" title="🚀 Run Start Script (scripts/start-rustdesk.bat)" style="flex: 1;">
+                            <i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ENGINE 3: Apache Guacamole + FreeRDP -->
+                <div class="engine-card" id="card-engine-guacamole">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                            <span class="badge badge-engine-ready" id="badge-guacamole"><i class="fa-solid fa-check"></i> READY</span>
+                            <span class="badge" style="background: rgba(124,77,255,0.15); color: var(--accent-purple); font-size: 0.7rem;"><i class="fa-solid fa-globe"></i> Clientless HTML5</span>
+                        </div>
+                        <h4 style="margin: 0.3rem 0 0.15rem 0; font-size: 1.1rem; color: var(--text-main);">
+                            <i class="fa-solid fa-cubes" style="color: var(--accent-purple);"></i> Apache Guacamole + FreeRDP
+                        </h4>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 0.75rem;">
+                            apache/guacamole-server &middot; Zero Install
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                            Pure HTML5 browser-based remote desktop gateway. Directly bridges Windows RDP (port 3389), VNC, and SSH over WebSockets with zero client software needed.
+                        </p>
+                        
+                        <div style="background: var(--bg-tertiary); padding: 0.6rem 0.75rem; border-radius: 6px; font-size: 0.76rem; font-family: var(--font-mono); margin: 0.6rem 0;">
+                            <div><strong style="color: var(--accent-blue);">Ports:</strong> 8080 (Client), 4822 (guacd), 3389 (RDP)</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-emerald);">Protocol:</strong> Guacamole Protocol &amp; RDP Bitmap Tiles</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-amber);">Manual Setup:</strong> Run guacd (Docker/WSL) and point to target Windows IP &amp; RDP credentials.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.8rem;">
+                        <button class="btn btn-secondary btn-sm switch-engine-btn" data-engine="guacamole" style="flex: 2;">
+                            <i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine
+                        </button>
+                        <button class="btn btn-secondary btn-sm admin-run-script-btn" data-engine="guacamole" title="🚀 Run Start Script (scripts/start-guacamole.bat)" style="flex: 1;">
+                            <i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ENGINE 4: jDroid-X Google Colab Cloud Relay -->
+                <div class="engine-card" id="card-engine-jdroidRelay">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                            <span class="badge badge-engine-cloud" id="badge-jdroidRelay"><i class="fa-solid fa-cloud"></i> GOOGLE COLAB</span>
+                            <span class="badge" style="background: rgba(0,230,118,0.15); color: var(--accent-emerald); font-size: 0.7rem;"><i class="fa-solid fa-microchip"></i> CUDA + TPU</span>
+                        </div>
+                        <h4 style="margin: 0.3rem 0 0.15rem 0; font-size: 1.1rem; color: var(--text-main);">
+                            <i class="fa-solid fa-cloud" style="color: var(--accent-emerald);"></i> jDroid-X Google Colab Cloud Relay
+                        </h4>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 0.75rem;">
+                            Google Colab GPU Cloud Bridge &middot; 0ms Pub/Sub
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                            Multi-Threaded Asynchronous Binary Streaming engine. Hardware accelerated via NVIDIA CUDA Tensor Buffers and Google Cloud TPU XLA.
+                        </p>
+                        
+                        <div style="background: var(--bg-tertiary); padding: 0.6rem 0.75rem; border-radius: 6px; font-size: 0.76rem; font-family: var(--font-mono); margin: 0.6rem 0;">
+                            <div><strong style="color: var(--accent-blue);">Ports:</strong> 8088 (Binary Stream), 12345 (Console Web)</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-emerald);">Transport:</strong> Raw Octet-Stream (Zero Base64 JSON Bloat)</div>
+                            <div style="margin-top: 0.25rem;"><strong style="color: var(--accent-amber);">Manual Setup:</strong> Zero configuration required. Ready out-of-the-box.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.8rem;">
+                        <button class="btn btn-secondary btn-sm switch-engine-btn" data-engine="jdroidRelay" style="flex: 2;">
+                            <i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine
+                        </button>
+                        <button class="btn btn-secondary btn-sm admin-run-script-btn" data-engine="jdroidRelay" title="🚀 Run Start Script (scripts/start-google-colab.bat)" style="flex: 1;">
+                            <i class="fa-solid fa-rocket" style="color: var(--accent-emerald);"></i> Start
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: PROCESSING LIMITS & RESOURCE QUOTAS -->
+        <section class="widget-box margin-top-lg">
+            <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+                <div>
+                    <h3><i class="fa-solid fa-sliders text-warning"></i> Server Processing Limits &amp; Resource Quotas</h3>
+                    <p>Enforce compute constraints, bandwidth ceilings, frame pacing, and idle disconnect timeouts.</p>
+                </div>
+                <button id="btn-save-limits" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-floppy-disk"></i> Save &amp; Apply Limits
+                </button>
+            </div>
+
+            <div class="limits-grid">
+                <div class="limit-input-box">
+                    <label for="lim-max-sessions"><i class="fa-solid fa-users"></i> Max Concurrent Sessions</label>
+                    <input type="number" id="lim-max-sessions" min="1" max="50" value="10">
+                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">Default: 10 concurrent streams</div>
+                </div>
+
+                <div class="limit-input-box">
+                    <label for="lim-bandwidth"><i class="fa-solid fa-gauge"></i> Bandwidth Limit (Mbps)</label>
+                    <input type="number" id="lim-bandwidth" min="5" max="200" value="50">
+                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">Max network throughput throttle</div>
+                </div>
+
+                <div class="limit-input-box">
+                    <label for="lim-max-fps"><i class="fa-solid fa-film"></i> Maximum Target FPS</label>
+                    <select id="lim-max-fps">
+                        <option value="30">30 FPS (Low Latency / Low Bandwidth)</option>
+                        <option value="60" selected>60 FPS (Balanced Smooth HD)</option>
+                        <option value="120">120 FPS (Ultra-Fast Pro Gaming)</option>
+                    </select>
+                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">Target encoder pacing rate</div>
+                </div>
+
+                <div class="limit-input-box">
+                    <label for="lim-idle-timeout"><i class="fa-solid fa-clock"></i> Idle Session Timeout (Min)</label>
+                    <input type="number" id="lim-idle-timeout" min="1" max="180" value="15">
+                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">Auto-lock workstation on inactivity</div>
+                </div>
+
+                <div class="limit-input-box">
+                    <label for="lim-log-retention"><i class="fa-solid fa-calendar-days"></i> Log Retention (Days)</label>
+                    <input type="number" id="lim-log-retention" min="1" max="30" value="7">
+                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">Automated hourly log hygiene</div>
+                </div>
+
+                <div class="limit-input-box">
+                    <label for="lim-hw-accel"><i class="fa-solid fa-microchip"></i> Hardware Acceleration</label>
+                    <select id="lim-hw-accel">
+                        <option value="nvenc_cuda" selected>NVIDIA NVENC + CUDA (DirectX Direct)</option>
+                        <option value="direct3d">Direct3D 11 Surface Duplication</option>
+                        <option value="software">Software CPU Fallback (GDI)</option>
+                    </select>
+                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem;">GPU acceleration encoder target</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: SERVER PROCESSING LOGS & AUDIT STREAM -->
+        <section class="widget-box margin-top-lg">
+            <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+                <div>
+                    <h3><i class="fa-solid fa-terminal text-info"></i> Live Server Request &amp; Processing Logs</h3>
+                    <p>Real-time audit traceability of HTTP routes, binary stream events, engine transitions, and latencies.</p>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="log-search-input" placeholder="Search by IP, Route, ID..." class="search-bar-mini" style="padding: 0.35rem 0.6rem; font-size: 0.78rem; width: 200px;">
+                    <select id="log-level-filter" class="search-bar-mini" style="padding: 0.35rem 0.5rem; font-size: 0.78rem;">
+                        <option value="ALL">ALL LEVELS</option>
+                        <option value="INFO">INFO</option>
+                        <option value="AUDIT">AUDIT</option>
+                        <option value="WARN">WARN</option>
+                        <option value="ERROR">ERROR</option>
+                    </select>
+                    <button id="btn-export-logs-json" class="btn btn-secondary btn-sm" title="Export as JSON">
+                        <i class="fa-solid fa-download"></i> JSON
+                    </button>
+                    <button id="btn-purge-logs" class="btn btn-danger btn-sm" title="Purge Server Logs">
+                        <i class="fa-solid fa-trash"></i> Purge
+                    </button>
+                </div>
+            </div>
+
+            <div class="margin-top-md log-table-wrap">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 140px;">Packet ID</th>
+                            <th style="width: 140px;">Timestamp</th>
+                            <th style="width: 90px;">Level</th>
+                            <th style="width: 130px;">Stage / Method</th>
+                            <th style="width: 80px;">RTT</th>
+                            <th style="width: 120px;">Client IP</th>
+                            <th>Trace Log Payload Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-log-tbody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Fetching live server processing logs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Admin JavaScript Logic -->
+    <script>
+        class ServerAdminDashboard {
+            constructor() {
+                this.config = null;
+                this.telemetry = null;
+                this.logs = [];
+                this.autoRefreshInterval = null;
+                this.init();
+            }
+
+            async init() {
+                this.bindEvents();
+                await this.fetchConfig();
+                await this.fetchMetrics();
+                await this.fetchLogs();
+                this.startAutoRefresh();
+            }
+
+            bindEvents() {
+                // Universal Theme Manager (15 Paradigms)
+                const themeBtn = document.getElementById('btn-theme-toggle');
+                const themeSelector = document.getElementById('global-theme-selector');
+
+                const ALL_THEME_CLASSES = [
+                    'light-theme', 'dark-theme', 'theme-light', 'theme-dark', 'theme-nord',
+                    'theme-solarized-light', 'theme-solarized-dark', 'theme-monokai',
+                    'theme-dracula', 'theme-tokyo-night', 'theme-cyberpunk', 'theme-emerald',
+                    'theme-ocean', 'theme-sunset', 'theme-gruvbox', 'theme-slate', 'theme-high-contrast'
+                ];
+
+                const applyAdminTheme = (themeName) => {
+                    let targetClass = themeName;
+                    if (targetClass === 'light') targetClass = 'light-theme';
+                    if (targetClass === 'dark') targetClass = 'dark-theme';
+                    if (!targetClass || !ALL_THEME_CLASSES.includes(targetClass)) targetClass = 'light-theme';
+
+                    ALL_THEME_CLASSES.forEach(c => document.body.classList.remove(c));
+                    document.body.classList.add(targetClass);
+
+                    localStorage.setItem('jdroid_theme', targetClass);
+                    localStorage.setItem('jdx_theme', targetClass === 'light-theme' ? 'light' : (targetClass === 'dark-theme' ? 'dark' : targetClass));
+
+                    if (themeSelector && themeSelector.value !== targetClass) {
+                        themeSelector.value = targetClass;
+                    }
+
+                    if (themeBtn) {
+                        const icon = themeBtn.querySelector('i');
+                        if (icon) {
+                            const isLight = targetClass === 'light-theme' || targetClass === 'theme-solarized-light';
+                            icon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+                        }
+                    }
+                };
+
+                const savedTheme = localStorage.getItem('jdroid_theme') || localStorage.getItem('jdx_theme') || 'light-theme';
+                applyAdminTheme(savedTheme);
+
+                if (themeSelector) {
+                    themeSelector.onchange = (e) => applyAdminTheme(e.target.value);
+                }
+
+                if (themeBtn) {
+                    themeBtn.onclick = () => {
+                        const isLight = document.body.classList.contains('light-theme') || document.body.classList.contains('theme-solarized-light');
+                        const nextTheme = isLight ? 'dark-theme' : 'light-theme';
+                        applyAdminTheme(nextTheme);
+                    };
+                }
+
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'jdroid_theme' || e.key === 'jdx_theme') {
+                        if (e.newValue) applyAdminTheme(e.newValue);
+                    }
+                });
+
+                // Refresh Button
+                document.getElementById('btn-refresh-telemetry').onclick = async () => {
+                    await this.fetchMetrics();
+                    await this.fetchLogs();
+                    this.showToast('success', 'Telemetry Refreshed', 'Fetched latest server metrics and log audit.');
+                };
+
+                // Engine Switch Buttons
+                document.querySelectorAll('.switch-engine-btn').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        const engineId = btn.getAttribute('data-engine');
+                        await this.switchEngine(engineId);
+                    };
+                });
+
+                // Engine Launch Script Buttons
+                document.querySelectorAll('.admin-run-script-btn').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        const engineId = btn.getAttribute('data-engine');
+                        try {
+                            this.showToast('info', 'Launching Script', `Starting ${engineId} start script...`);
+                            const res = await fetch('/api/admin/engine/launch-script', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ engine: engineId })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                this.showToast('success', 'Script Launched', data.message || `Started ${engineId}`);
+                            } else {
+                                this.showToast('warning', 'Script Warning', data.error || 'Failed to start script');
+                            }
+                        } catch (err) {
+                            this.showToast('error', 'Launcher Error', err.message);
+                        }
+                    };
+                });
+
+                // Save Limits Button
+                document.getElementById('btn-save-limits').onclick = () => this.saveProcessingLimits();
+
+                // Log Filters
+                document.getElementById('log-level-filter').onchange = () => this.fetchLogs();
+                document.getElementById('log-search-input').oninput = () => this.renderLogs();
+
+                // Export Logs JSON
+                document.getElementById('btn-export-logs-json').onclick = () => {
+                    const blob = new Blob([JSON.stringify(this.logs, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `jdroid-x-server-logs-${Date.now()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    this.showToast('info', 'Logs Exported', 'Downloaded complete server logs audit file.');
+                };
+
+                // Purge Logs Button
+                document.getElementById('btn-purge-logs').onclick = async () => {
+                    if (confirm('Are you sure you want to purge all server logs? This cannot be undone.')) {
+                        try {
+                            const res = await fetch('/api/admin/logs', { method: 'DELETE' });
+                            const data = await res.json();
+                            if (data.success) {
+                                this.showToast('warning', 'Logs Purged', `Cleared ${data.cleared} log entries.`);
+                                await this.fetchLogs();
+                            }
+                        } catch (err) {
+                            this.showToast('error', 'Purge Failed', err.message);
+                        }
+                    }
+                };
+            }
+
+            async fetchConfig() {
+                try {
+                    const res = await fetch('/api/admin/config');
+                    const data = await res.json();
+                    if (data.success && data.data) {
+                        this.config = data.data;
+                        this.renderConfig();
+                    }
+                } catch (e) {
+                    console.error('Failed to load server config:', e);
+                }
+            }
+
+            async fetchMetrics() {
+                try {
+                    const res = await fetch('/api/admin/metrics');
+                    const data = await res.json();
+                    if (data.success && data.data) {
+                        this.telemetry = data.data;
+                        this.renderMetrics();
+                    }
+                } catch (e) {
+                    console.error('Failed to load metrics:', e);
+                }
+            }
+
+            async fetchLogs() {
+                try {
+                    const level = document.getElementById('log-level-filter').value;
+                    const res = await fetch(`/api/admin/logs?level=${level}&limit=150`);
+                    const data = await res.json();
+                    if (data.success && Array.isArray(data.data)) {
+                        this.logs = data.data;
+                        this.renderLogs();
+                    }
+                } catch (e) {
+                    console.error('Failed to load logs:', e);
+                }
+            }
+
+            renderConfig() {
+                if (!this.config) return;
+                const limits = this.config.processingLimits || {};
+                document.getElementById('lim-max-sessions').value = limits.maxConcurrentSessions || 10;
+                document.getElementById('lim-bandwidth').value = limits.bandwidthLimitMbps || 50;
+                document.getElementById('lim-max-fps').value = limits.maxFps || 60;
+                document.getElementById('lim-idle-timeout').value = limits.idleTimeoutMinutes || 15;
+                document.getElementById('lim-log-retention').value = limits.logRetentionDays || 7;
+                document.getElementById('lim-hw-accel').value = limits.hardwareAcceleration || 'nvenc_cuda';
+
+                this.highlightActiveEngine(this.config.activeEngine);
+            }
+
+            renderMetrics() {
+                if (!this.telemetry) return;
+                const t = this.telemetry;
+                document.getElementById('stat-cpu-cores').textContent = `${t.cpuCores} Cores (${t.cpuUsagePercent}%)`;
+                document.getElementById('stat-cpu-model').textContent = t.cpuModel || 'Standard Multi-Core CPU';
+                document.getElementById('stat-mem-usage').textContent = `${t.memoryUsagePercent}% RAM`;
+                document.getElementById('stat-mem-sub').textContent = `Free: ${Math.round(t.freeMemoryMB / 1024 * 10) / 10} GB / Total: ${Math.round(t.totalMemoryMB / 1024 * 10) / 10} GB`;
+                
+                const hrs = Math.floor(t.uptimeSeconds / 3600);
+                const mins = Math.floor((t.uptimeSeconds % 3600) / 60);
+                document.getElementById('stat-server-uptime').textContent = `Uptime: ${hrs}h ${mins}m`;
+                document.getElementById('stat-active-sessions').textContent = `${t.activeSessions} Active Sessions`;
+
+                if (t.activeEngine) {
+                    const names = {
+                        sunshine: 'jDroid-X Sunshine',
+                        rustdesk: 'jDroid-X RustDesk',
+                        guacamole: 'jDroid-X Guacamole',
+                        jdroidRelay: 'jDroid-X Google Colab Cloud Relay'
+                    };
+                    document.getElementById('stat-active-engine').textContent = names[t.activeEngine] || t.activeEngine;
+                    this.highlightActiveEngine(t.activeEngine);
+                }
+            }
+
+            highlightActiveEngine(engineId) {
+                const engineIds = ['sunshine', 'rustdesk', 'guacamole', 'jdroidRelay'];
+                engineIds.forEach(id => {
+                    const card = document.getElementById(`card-engine-${id}`);
+                    const badge = document.getElementById(`badge-${id}`);
+                    const btn = card?.querySelector('.switch-engine-btn');
+                    if (card && badge && btn) {
+                        if (id === engineId) {
+                            card.classList.add('active-engine');
+                            badge.className = 'badge badge-engine-active';
+                            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> ACTIVE jDroid-ENGINE';
+                            btn.className = 'btn btn-primary btn-sm switch-engine-btn';
+                            btn.style.flex = '2';
+                            btn.innerHTML = '<i class="fa-solid fa-check"></i> Active jDroid-Engine';
+                        } else {
+                            card.classList.remove('active-engine');
+                            badge.className = 'badge badge-engine-ready';
+                            badge.innerHTML = '<i class="fa-solid fa-circle"></i> READY';
+                            btn.className = 'btn btn-secondary btn-sm switch-engine-btn';
+                            btn.style.flex = '2';
+                            btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Switch to jDroid-Engine';
+                        }
+                    }
+                });
+            }
+
+            async switchEngine(engineId) {
+                try {
+                    this.showToast('info', 'Switching Engine', `Activating jDroid-Engine ${engineId}...`);
+                    const res = await fetch('/api/admin/engine/switch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ engine: engineId })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.highlightActiveEngine(engineId);
+                        this.showToast('success', 'Engine Switched', `jDroid-Engine updated to ${data.engineInfo?.name || engineId}`);
+                        await this.fetchMetrics();
+                        await this.fetchLogs();
+                    } else {
+                        this.showToast('error', 'Switch Failed', data.error || 'Failed to switch engine');
+                    }
+                } catch (err) {
+                    this.showToast('error', 'Error', err.message);
+                }
+            }
+
+            async saveProcessingLimits() {
+                const limits = {
+                    maxConcurrentSessions: parseInt(document.getElementById('lim-max-sessions').value, 10) || 10,
+                    bandwidthLimitMbps: parseInt(document.getElementById('lim-bandwidth').value, 10) || 50,
+                    maxFps: parseInt(document.getElementById('lim-max-fps').value, 10) || 60,
+                    idleTimeoutMinutes: parseInt(document.getElementById('lim-idle-timeout').value, 10) || 15,
+                    logRetentionDays: parseInt(document.getElementById('lim-log-retention').value, 10) || 7,
+                    hardwareAcceleration: document.getElementById('lim-hw-accel').value
+                };
+
+                try {
+                    const res = await fetch('/api/admin/config', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ processingLimits: limits })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.showToast('success', 'Limits Saved', 'Processing limits & quotas successfully updated and applied.');
+                    } else {
+                        this.showToast('error', 'Save Failed', data.error || 'Could not save limits.');
+                    }
+                } catch (err) {
+                    this.showToast('error', 'Error', err.message);
+                }
+            }
+
+            renderLogs() {
+                const tbody = document.getElementById('admin-log-tbody');
+                if (!tbody) return;
+
+                const q = (document.getElementById('log-search-input').value || '').toLowerCase();
+                let filtered = this.logs;
+                if (q) {
+                    filtered = filtered.filter(l => 
+                        (l.id || '').toLowerCase().includes(q) || 
+                        (l.msg || '').toLowerCase().includes(q) || 
+                        (l.stage || '').toLowerCase().includes(q) || 
+                        (l.ip || '').includes(q)
+                    );
+                }
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No matching server processing logs found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = filtered.map(l => {
+                    let lvlColor = 'var(--accent-blue)';
+                    if (l.level === 'WARN') lvlColor = 'var(--accent-amber)';
+                    if (l.level === 'ERROR') lvlColor = 'var(--accent-red)';
+                    if (l.level === 'AUDIT') lvlColor = 'var(--accent-purple)';
+                    if (l.level === 'TRACE') lvlColor = 'var(--accent-emerald)';
+
+                    const timeStr = l.timestamp ? (l.timestamp.includes('T') ? l.timestamp.split('T')[1].replace('Z','') : l.timestamp) : '--';
+                    const rttStr = l.rttMs !== undefined ? `${l.rttMs}ms` : '--';
+                    const ipStr = l.ip || '127.0.0.1';
+                    const stageStr = l.stage || l.method || 'SERVER';
+                    const msgStr = l.msg || l.message || l.details || JSON.stringify(l);
+
+                    return `
+                        <tr>
+                            <td style="color: var(--text-dim);">${l.id || '--'}</td>
+                            <td style="color: var(--text-muted);">${timeStr}</td>
+                            <td style="color: ${lvlColor}; font-weight: 700;">${l.level || 'INFO'}</td>
+                            <td style="color: var(--accent-blue);">${stageStr}</td>
+                            <td style="color: var(--accent-emerald); font-weight: 600;">${rttStr}</td>
+                            <td style="color: var(--text-muted);">${ipStr}</td>
+                            <td style="color: var(--text-main); word-break: break-word;">${msgStr}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            startAutoRefresh() {
+                this.autoRefreshInterval = setInterval(() => {
+                    this.fetchMetrics();
+                    this.fetchLogs();
+                }, 4000);
+            }
+
+            showToast(type, title, desc) {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = `toast-card toast-${type}`;
+                let iconClass = 'fa-circle-info';
+                if (type === 'success') iconClass = 'fa-circle-check';
+                if (type === 'error') iconClass = 'fa-circle-xmark';
+                if (type === 'warning') iconClass = 'fa-triangle-exclamation';
+
+                toast.innerHTML = `
+                    <i class="fa-solid ${iconClass}"></i>
+                    <div style="flex:1">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-desc">${desc}</div>
+                    </div>
+                `;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(110%)';
+                    toast.style.transition = 'all 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            window.adminDashboard = new ServerAdminDashboard();
+        });
+    </script>
+</body>
+</html>

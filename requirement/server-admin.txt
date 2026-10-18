@@ -1,0 +1,91 @@
+# SCREEN REQUIREMENT & CHANGELOG: Server Administration & Open-Source Engine Switcher
+Screen ID: server-admin
+Route URL: /admin & /#server-admin
+Date: 2026-10-18
+Author: jDroid-X / JEET
+Version: 1.0.0
+
+==============================================================================
+1. SCREEN PURPOSE & OBJECTIVES
+==============================================================================
+Provides central administrator supervision, open-source model switching, processing limits management, and live log auditing across:
+1. RustDesk (rustdesk/rustdesk) - Direct Match P2P Engine
+2. Sunshine & Moonlight (LizardByte/Sunshine) - Lowest Latency In The World
+3. Apache Guacamole + FreeRDP (apache/guacamole-server) - Clientless HTML5 Web Gateway
+4. jDroid-X Async Binary Relay - Multi-Threaded Colab Cloud Streaming Bridge
+
+==============================================================================
+2. USER AFFORDANCE MATRIX
+==============================================================================
+- [Actively Switch Engine]: 1-click active engine toggle between Sunshine, RustDesk, Guacamole, and jDroid-X Relay.
+- [Engine Quick Launchers]: Direct external links to Sunshine Web UI (https://localhost:47990), RustDesk rendezvous, and Guacamole.
+- [Hardware Telemetry Gauges]: Real-time live CPU Cores + %, RAM Total / Free / Usage %, Uptime, Active Sessions count.
+- [Processing Limits Controls]:
+  * Max Concurrent Sessions (1-50)
+  * Bandwidth Ceilings (Mbps)
+  * Maximum Target FPS (30 / 60 / 120 FPS)
+  * Idle Disconnect Timeout (Minutes)
+  * 7-Day Log Retention & Auto Purging
+  * Hardware Acceleration Mode Selector (NVENC + CUDA / Direct3D / Software)
+- [Live Log Audit Stream]:
+  * Live-updating table with Packet ID, UTC Timestamp, Level, Stage/Method, RTT (ms), Client IP, and Message.
+  * Filters: ALL, INFO, WARN, ERROR, AUDIT, HTTP_TRAFFIC, ENGINE_SWITCH.
+  * Real-time text search by IP, route, or keyword.
+  * 1-Click JSON export and purge actions.
+
+==============================================================================
+3. API CONTRACTS
+==============================================================================
+- GET    /admin or /admin.html    -> Serves responsive standalone Admin Page
+- GET    /api/admin/config        -> Returns serverConfig & processing limits
+- PUT    /api/admin/config        -> Updates limits, engines, or active engine
+- POST   /api/admin/engine/switch -> Switches active engine & records audit log
+- GET    /api/admin/metrics       -> Real-time hardware telemetry and session metrics
+- GET    /api/admin/logs          -> Filtered server processing and request logs
+- DELETE /api/admin/logs          -> Purges old logs
+
+==============================================================================
+4. VERIFICATION EVIDENCE & DUAL DEPLOYMENT SYNCHRONIZATION
+==============================================================================
+- Pure Windows Native Application (Primary):
+  * Source: JDroidXDeskNative.cs (C# .NET 4.0/4.8 WinForms with zero external dependencies)
+  * Binary: jDroid-X-Desk.exe (Compiled cleanly via csc.exe, 222,720 bytes)
+  * Views: SUBVIEW 6 (viewServerAdmin), Activity Bar ribbon icon ("🛡️"), Main Tab Bar ("🛡️ Server & Engines"), Primary Collapsible Drawer shortcuts.
+  * OOPS Models: ServerConfigModel, OpenSourceEngineModel, ProcessingLimitsModel integrated into DatabaseContext.
+  * Real-Time Telemetry: 2000ms timer tracking live App RAM, uptime, CPU, and session limits.
+  * Real-Time Logs: DataGridView with level filter, search text, JSON export, and instant purge.
+- Web & Gateway Application (Backup):
+  * Source: server.js, app.js, admin.html, index.html
+  * Sync: Shared database.json Single Source of Truth (SSOT), accessible via http://localhost:12345/admin.html
+  * API: /api/admin/config, /api/admin/engine/switch, /api/admin/metrics, /api/admin/logs (HTTP 200 pass)
+- Dual Sync Verification:
+  * Native 1-click button "🌐 Open Web Backup" connects Windows app to browser dashboard.
+  * Native 1-click button "🔄 Sync database.json" reloads active configurations instantly.
+
+==============================================================================
+5. TOP HEADER ENGINE SWITCHER & DYNAMIC TELEMETRY SYNCHRONIZATION
+==============================================================================
+- [Top Header Engine Selector]:
+  * Positioned permanently immediately before the "System RAM" box in the application header.
+  * Dropdown selector with 1-click instant switching between:
+    - ⚡ Sunshine (Low-Latency RTSP)
+    - ⚡ RustDesk (P2P NaCl Mesh)
+    - ⚡ Apache Guacamole (Web RDP)
+    - ⚡ jDroid-X Relay (Cloudflare Tunnel)
+  * Accessible globally across all tabs (Remote Desktop, File Transfer, Fleet, History, Settings, Server & Engines).
+- [Dynamic Telemetry Box Reconfiguration]:
+  * RAM Box: Dynamically reflects engine memory footprint (e.g. ~120M VRAM for Sunshine, ~42M for RustDesk, ~85M for Guacamole).
+  * GPU Box: Dynamically reflects active hardware pipeline (NVENC CUDA 120fps, VP9/AV1 CPU, Server RDP/WebGL).
+  * Disk / Port Box: Dynamically reflects active port & protocol (47990/RTSP, 21116/NaCl, 4822/8080 RDP, 8088/Tunnel).
+  * Status Box: Dynamically reflects engine health (NVStream Ready, P2P Mesh Ready, Docker RDP Ready, Online).
+  * Heartbeat Box: Dynamically reflects latency target (<5ms NVStream, ~18ms P2P, ~25ms Web RDP).
+  * Synchronized theme accent borders (Emerald for Sunshine, Cyan for RustDesk, Purple for Guacamole).
+- [Open-Source Engines Manual Setup & Update Guide Dialog]:
+  * Dedicated interactive native WinForms dialog accessible from header icon ("📖"), welcome cards, and engine cards.
+  * Step-by-step manual setup walkthrough for mandatory 1-time configurations:
+    - Sunshine: Admin credentials on https://localhost:47990 and 4-digit Moonlight PIN pairing.
+    - RustDesk: Public rendezvous servers vs private self-hosted hbbs/hbbr with encryption keys and ports 21115-21119.
+    - Guacamole: Windows RDP enablement and 1-click Docker run commands for guacd (4822) and web client (8080).
+    - jDroid-X Relay: Colab notebook setup and Cloudflare tunnel URL binding.
+  * 1-Click Clipboard copy for PowerShell firewall rules (`New-NetFirewallRule`).
+  * 1-Click launcher buttons: Open Web UI, Open Repository Folder, and Switch Engine Now.

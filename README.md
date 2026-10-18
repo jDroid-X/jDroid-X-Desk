@@ -10,7 +10,7 @@
 [![Web Engine: Node.js 16+](https://img.shields.io/badge/Web%20Gateway-Express%20%2B%20WebRTC%20(Port%2012345)-10B981?style=for-the-badge&logo=nodedotjs&logoColor=white)](http://localhost:12345)
 [![Security: AES-256 GCM + Argon2id](https://img.shields.io/badge/Security-AES--256%20GCM%20%2B%20Argon2id-10B981?style=for-the-badge&logo=shield&logoColor=white)](https://github.com/jDroid-X/jDroid-X-Desk)
 [![Architecture: Senior Dynamic OOPS MVC](https://img.shields.io/badge/Architecture-OOPS%20MVC%20Standard-F59E0B?style=for-the-badge)](https://github.com/jDroid-X/jDroid-X-Desk)
-[![Verification: 104/104 Passed](https://img.shields.io/badge/Verification-104%2F104%20Tests%20Passed-10B981?style=for-the-badge)](https://github.com/jDroid-X/jDroid-X-Desk)
+[![Verification: 114/114 Passed](https://img.shields.io/badge/Verification-114%2F114%20Tests%20Passed-10B981?style=for-the-badge)](https://github.com/jDroid-X/jDroid-X-Desk)
 
 </div>
 
@@ -41,8 +41,8 @@
 
 | Artifact | Type | Size | Direct Download Link | Security & Authority Specification |
 |---|---|---|---|---|
-| **jDroid-X-Desk.exe** | **Single Universal Windows Executable** | **230 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single Canonical Executable**: Universal AnyCPU architecture, embedded `app.manifest` (DPI-aware, Win 7/8/10/11), multi-target .NET 4.0–4.8.1 runtime fallback, Authenticode signed by **`jDroid-X Studio Enterprise`**. Zero runtime install required. |
-| **jDroid-X-Desk-Universal.zip** | **Portable Distribution Archive** | **86 KB** | [📥 **Download Universal ZIP**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Universal.zip) | Standalone package containing the unified executable, manifest, configs, root certificate, `LICENSE`, and 1-click `Install-Or-Run.bat` unblock launcher. |
+| **jDroid-X-Desk.exe** | **Single Universal Windows Executable** | **231 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single Canonical Executable**: Universal AnyCPU architecture, embedded `app.manifest` (DPI-aware, Win 7/8/10/11), multi-target .NET 4.0–4.8.1 runtime fallback, Authenticode signed by **`jDroid-X Studio Enterprise`**. Zero runtime install required. |
+| **jDroid-X-Desk-Universal.zip** | **Portable Distribution Archive** | **98 KB** | [📥 **Download Universal ZIP**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Universal.zip) | Standalone package containing the unified executable, manifest, configs, root certificate, `LICENSE`, and 1-click `Install-Or-Run.bat` unblock launcher. |
 | **Install-Or-Run.bat** | **1-Click SmartScreen Unblock Launcher** | **1 KB** | [📥 **Download Install-Or-Run.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/Install-Or-Run.bat) | 1-click script that automatically unblocks Windows SmartScreen Mark-of-the-Web and launches `jDroid-X-Desk.exe`. |
 | **Installation Guide** | **Markdown Guide** | **3.2 KB** | [📖 **INSTALL_GUIDE_WINDOWS.md**](INSTALL_GUIDE_WINDOWS.md) | Step-by-step Windows desktop setup, UAC elevation, AnyDesk mode, and GitHub deployment instructions. |
 | **Software License** | **Legal Specification** | **1 KB** | [⚖️ **MIT License**](LICENSE) | Official MIT Open Source License and Enterprise Commercial Terms. |
@@ -106,6 +106,16 @@ All secondary modules, configuration settings, documentation, and compliance mat
   - **Safe Zones & IP Rules (`#view-safe-zones`)**: CIDR-based perimeter firewall management.
   - **Security Guardians (`#view-guardians-list`)**: Designated emergency supervisor personnel roster.
 - **Zero-Refresh Reactive Sync**: Adding, updating, or deleting device groups instantly cascades updates to device registration modals and lists.
+
+### 🛡️ 8. Open-Source Engine Switcher & Server Admin
+- **4 Dynamically Switchable Engines**:
+  - **Sunshine & Moonlight (LizardByte/Sunshine)**: Lowest latency sub-5ms GPU stream with NVENC and DirectX Desktop Duplication.
+  - **RustDesk (rustdesk/rustdesk)**: Direct Match P2P engine with STUN/TURN NAT traversal.
+  - **Apache Guacamole + FreeRDP (apache/guacamole-server)**: Pure clientless HTML5 web browser gateway connecting to Windows RDP (port 3389).
+  - **jDroid-X Async Binary Relay**: High-throughput multi-threaded Colab/Cloudflare bridge (port 8088).
+- **Processing Limits & Hardware Quotas**: Configurable maximum concurrent sessions, bandwidth limit (Mbps), target frame rate (30/60/120 FPS), idle timeout, log retention, and GPU/NVENC acceleration.
+- **Auditable Live Processing Logs**: Filterable, searchable real-time audit trail of HTTP traffic, engine handshakes, and system exceptions with JSON export.
+- **Edge-to-Edge Immersive Zen Mode**: F11 / Escape toggle for full-bleed remote workspace with floating auto-hide RDP pin bar.
 
 ---
 
@@ -268,12 +278,12 @@ node test.js
 ====================================================
  jDroid-X-Desk Stage 5 Automated Verification Suite
 ====================================================
-[1/4] Verifying Code Integrity & Static Files... [PASS] (30 checks)
-[2/4] Verifying Database Schema Tables...         [PASS] (9 tables)
-[3/4] Verifying DOM Affordances & Element IDs...  [PASS] (24 critical IDs)
-[4/4] Starting Server & Testing API Endpoints...  [PASS] (41 REST endpoints)
+[1/4] Verifying Code Integrity & Static Files... [PASS] (31 checks)
+[2/4] Verifying Database Schema Tables...         [PASS] (10 tables)
+[3/4] Verifying DOM Affordances & Element IDs...  [PASS] (26 critical IDs)
+[4/4] Starting Server & Testing API Endpoints...  [PASS] (47 REST endpoints)
 ====================================================
- VERIFICATION RESULTS: 104 PASSED, 0 FAILED
+ VERIFICATION RESULTS: 114 PASSED, 0 FAILED
 ====================================================
 ```
 

@@ -213,7 +213,7 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
             }).encode('utf-8'))
             return
 
-        if self.path in ['/', '/status', '/api/settings', '/api/relay/settings']:
+        if self.path in ['/', '/status', '/api/settings', '/api/relay/settings', '/api/admin/metrics']:
             self.send_response(200)
             self._set_cors()
             self.send_header('Content-Type', 'application/json')
@@ -234,9 +234,34 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
                 'gpu_ram': telem['gpu_ram'],
                 'disk': telem['disk'],
                 'colab_host': 'Google Colab High-RAM Instance',
+                'active_engine': 'jdroidRelay',
+                'gpu_accel': GPU_ACCEL_STATUS,
                 'timestamp': time.time()
             }
             self.wfile.write(json.dumps(status).encode('utf-8'))
+            return
+
+        if self.path == '/api/admin/config':
+            self.send_response(200)
+            self._set_cors()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            cfg = {
+                'success': True,
+                'data': {
+                    'activeEngine': 'jdroidRelay',
+                    'gpu_accel': GPU_ACCEL_STATUS,
+                    'processingLimits': {
+                        'maxConcurrentSessions': 10,
+                        'bandwidthLimitMbps': 50,
+                        'maxFps': 60,
+                        'idleTimeoutMinutes': 15,
+                        'logRetentionDays': 7,
+                        'hardwareAcceleration': 'cuda' if GPU_ACCEL_STATUS['cuda_active'] else 'software'
+                    }
+                }
+            }
+            self.wfile.write(json.dumps(cfg).encode('utf-8'))
             return
 
         # List all registered desktop nodes
