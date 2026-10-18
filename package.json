@@ -11,7 +11,7 @@
     "unix-start": "nohup node server.js > server_unix.log 2>&1 &",
     "unix-stop": "bash stop_jdroid_app.sh",
     "app-mode": "start msedge --app=http://localhost:12345",
-    "sync-git": "git add . && git commit -m 'v2.0 Streamlined Remote Desktop App & Continuous Traceability Engine' && git push -u origin main"
+    "sync-git": "git add . && git commit -m \\\"v2.0 Streamlined Remote Desktop App & Continuous Traceability Engine\\\" && git push -u origin main"
   },
   "keywords": [
     "remote-desktop",
