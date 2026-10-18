@@ -126,8 +126,8 @@ namespace JDroidXDesk.Native
             colabCloudRelay = true;
             proxyServer = "";
             idServer = "relay.jdroid-x.net:21116";
-            relayServer = "https://prefix-dean-theft-bytes.trycloudflare.com";
-            customDomain = "https://prefix-dean-theft-bytes.trycloudflare.com";
+            relayServer = "http://127.0.0.1:8088";
+            customDomain = "https://www.jdroid-x.com";
             webRepoUrl = "https://github.com/jDroid-X/jDroid-X-Web";
             colabNotebookUrl = "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
             githubBackendUrl = "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main";
@@ -330,6 +330,24 @@ namespace JDroidXDesk.Native
                     Contacts = DeserializeList<ContactItem>(dict, "contacts");
                     Notifications = DeserializeList<NotificationItem>(dict, "notifications");
                     Logs = DeserializeList<LogItem>(dict, "logs");
+
+                    // Relational OOPS MVC Resolution: populate device group name dynamically from groups table
+                    if (Devices != null && Groups != null)
+                    {
+                        foreach (DeviceItem d in Devices)
+                        {
+                            if (string.IsNullOrEmpty(d.group) && !string.IsNullOrEmpty(d.groupId))
+                            {
+                                GroupItem g = Groups.Find(x => x.id == d.groupId);
+                                if (g != null) d.group = g.name;
+                            }
+                            else if (string.IsNullOrEmpty(d.groupId) && !string.IsNullOrEmpty(d.group))
+                            {
+                                GroupItem g = Groups.Find(x => x.name == d.group);
+                                if (g != null) d.groupId = g.id;
+                            }
+                        }
+                    }
                     return;
                 }
                 catch (Exception ex)
@@ -1413,7 +1431,9 @@ namespace JDroidXDesk.Native
         private ModernButton btnCardConnect;
         private Label lblCardLocalId;
         private Panel sessionFloatingToolbar;
+        private Panel localBar;
         private Label lblSessionTelemetryHUD;
+
 
         // ======================================================================
         // DYNAMIC SESSION CONNECTION STATE MACHINE (NO DUMMY / SIMULATED DATA)
@@ -1429,10 +1449,16 @@ namespace JDroidXDesk.Native
         private SessionConnectionState currentConnectionState = SessionConnectionState.Disconnected;
         private bool isSessionActive = false;
         private bool isLiveScreenMirror = false;
-        private string smartFitMode = "SmartFit"; // "SmartFit", "Original 1:1", "Stretch"
+        private string smartFitMode = "Stretch"; // Default: Stretch / Fill Viewport (Zero black side borders)
+        private bool isImmersiveZenMode = false;
+        private Panel pnlRdpPinBar = null;
+        private Label lblRdpPinStatus = null;
+        private Button btnRdpPinToggle = null;
+        private bool isRdpPinBarPinned = true;
         private DateTime sessionStartTime;
         private DateTime connectionAttemptStartTime;
         private System.Windows.Forms.Timer sessionTelemetryTimer;
+
         private System.Windows.Forms.Timer connectingAnimationTimer;
         private int connectingPulseFrame = 0;
         private string connectionStageMessage = "Initializing Connection...";
@@ -1528,6 +1554,13 @@ namespace JDroidXDesk.Native
             {
                 UnblockSelf();
                 try { SetProcessDPIAware(); } catch { }
+                try {
+                    ServicePointManager.DefaultConnectionLimit = 256;
+                    ServicePointManager.UseNagleAlgorithm = false;
+                    ServicePointManager.Expect100Continue = false;
+                    ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls;
+                    WebRequest.DefaultWebProxy = null;
+                } catch { }
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new MainForm());
@@ -1569,6 +1602,21 @@ namespace JDroidXDesk.Native
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(15, 23, 42);
             this.Icon = SystemIcons.Shield;
+            this.KeyPreview = true;
+            this.KeyDown += (s, e) => {
+                if (e.KeyCode == Keys.F11)
+                {
+                    ToggleImmersiveZenMode();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Escape && isImmersiveZenMode)
+                {
+                    ToggleImmersiveZenMode();
+                    e.Handled = true;
+                }
+            };
+            this.Deactivate += (s, e) => ReleaseAllModifierKeys();
+
 
             sessionTelemetryTimer = new System.Windows.Forms.Timer();
             sessionTelemetryTimer.Interval = 1000;
@@ -2454,21 +2502,22 @@ namespace JDroidXDesk.Native
             }
             catch { }
 
-            // 4. Configured relay server if it contains a cloudflare tunnel
+            // 4. Configured relay server & custom domain from settings (any valid HTTP/HTTPS endpoint)
             if (db != null && db.Settings != null && db.Settings.connection != null)
             {
                 string configuredRelay = db.Settings.connection.relayServer;
-                if (!string.IsNullOrEmpty(configuredRelay) && configuredRelay.Contains(".trycloudflare.com"))
+                if (!string.IsNullOrEmpty(configuredRelay) && configuredRelay.StartsWith("http"))
                 {
                     configuredRelay = configuredRelay.TrimEnd('/');
-                    if (!configuredRelay.StartsWith("http")) configuredRelay = "https://" + configuredRelay;
                     if (!candidateUrls.Contains(configuredRelay)) candidateUrls.Add(configuredRelay);
                 }
+                string cd = db.Settings.connection.customDomain;
+                if (!string.IsNullOrEmpty(cd) && cd.StartsWith("http"))
+                {
+                    cd = cd.TrimEnd('/');
+                    if (!candidateUrls.Contains(cd)) candidateUrls.Add(cd);
+                }
             }
-
-            // 4b. Active Colab Public Cloudflare Relay
-            string activeColabTunnel = "https://prefix-dean-theft-bytes.trycloudflare.com";
-            if (!candidateUrls.Contains(activeColabTunnel)) candidateUrls.Add(activeColabTunnel);
 
             // 5. Local ports (8088 is official Colab relay port) - Instant loopback
             if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
@@ -3196,7 +3245,7 @@ namespace JDroidXDesk.Native
             BuildFloatingSessionToolbar();
 
             // Local Node Info Ribbon (Non-overlapping, Clean Layout)
-            Panel localBar = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(14, 8, 14, 8) };
+            localBar = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = Color.FromArgb(13, 21, 34), Padding = new Padding(14, 8, 14, 8) };
 
             FlowLayoutPanel localLeftBox = new FlowLayoutPanel { Dock = DockStyle.Left, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Margin = new Padding(0) };
             Label lblDeskPrefix = new Label { Text = "THIS DESK:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Margin = new Padding(0, 4, 8, 0), AutoSize = true };
@@ -3645,15 +3694,18 @@ namespace JDroidXDesk.Native
                 SendRemoteAdminCommand("lock");
                 ShowToast("Locked Remote Workstation.");
             });
+            Button btnImmersive = CreateToolbarBtn("⛶ Immersive (F11)", (s, e) => ToggleImmersiveZenMode());
 
             leftTools.Controls.Add(btnDisplay);
             leftTools.Controls.Add(btnSmartFit);
+            leftTools.Controls.Add(btnImmersive);
             leftTools.Controls.Add(btnMirror);
             leftTools.Controls.Add(btnCad);
             leftTools.Controls.Add(btnTaskMgr);
             leftTools.Controls.Add(btnCmd);
             leftTools.Controls.Add(btnExplorer);
             leftTools.Controls.Add(btnLock);
+
 
             FlowLayoutPanel rightHUD = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
             lblSessionTelemetryHUD = new Label { Text = "⏳ Awaiting Stream...", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Margin = new Padding(0, 6, 8, 0) };
@@ -3689,6 +3741,134 @@ namespace JDroidXDesk.Native
             btn.Click += onClick;
             return btn;
         }
+
+        private void ReleaseAllModifierKeys()
+        {
+            try {
+                // INP-05: Release stuck Ctrl, Alt, Shift, and Windows keys on focus loss or disconnect
+                keybd_event(0x11, 0, KEYEVENTF_KEYUP, 0); // VK_CONTROL
+                keybd_event(0x12, 0, KEYEVENTF_KEYUP, 0); // VK_MENU (Alt)
+                keybd_event(0x10, 0, KEYEVENTF_KEYUP, 0); // VK_SHIFT
+                keybd_event(0x5B, 0, KEYEVENTF_KEYUP, 0); // VK_LWIN
+                keybd_event(0x5C, 0, KEYEVENTF_KEYUP, 0); // VK_RWIN
+            } catch { }
+        }
+
+        private void ToggleImmersiveZenMode()
+        {
+            isImmersiveZenMode = !isImmersiveZenMode;
+            if (topHeaderBar != null) topHeaderBar.Visible = !isImmersiveZenMode;
+            if (activityBar != null) activityBar.Visible = !isImmersiveZenMode;
+            if (mainTabBar != null) mainTabBar.Visible = !isImmersiveZenMode;
+            if (localBar != null) localBar.Visible = !isImmersiveZenMode;
+            if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = !isImmersiveZenMode;
+            if (collapsibleLeftDrawer != null) collapsibleLeftDrawer.Visible = !isImmersiveZenMode;
+            if (collapsibleRightInspector != null) collapsibleRightInspector.Visible = !isImmersiveZenMode;
+            if (collapsibleBottomDock != null) collapsibleBottomDock.Visible = !isImmersiveZenMode;
+
+            if (isImmersiveZenMode)
+            {
+                smartFitMode = "Stretch"; // Edge-to-edge canvas with zero wasted pillarbox borders
+                if (pnlRdpPinBar == null) BuildRdpFloatingPinBar();
+                if (pnlRdpPinBar != null)
+                {
+                    pnlRdpPinBar.Visible = true;
+                    pnlRdpPinBar.BringToFront();
+                    UpdateRdpPinBarStatus();
+                }
+                ShowToast("Entered Immersive Fullscreen Mode (Press F11 or Esc to exit)");
+            }
+            else
+            {
+                if (pnlRdpPinBar != null) pnlRdpPinBar.Visible = false;
+                if (currentConnectionState == SessionConnectionState.Connected)
+                {
+                    if (sessionFloatingToolbar != null) sessionFloatingToolbar.Visible = true;
+                    if (localBar != null) localBar.Visible = true;
+                }
+                ShowToast("Exited Immersive Mode");
+            }
+            this.PerformLayout();
+            if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
+        }
+
+        private void BuildRdpFloatingPinBar()
+        {
+            if (pnlRdpPinBar != null) return;
+            pnlRdpPinBar = new Panel
+            {
+                Size = new Size(580, 36),
+                BackColor = Color.FromArgb(240, 15, 23, 42),
+                Padding = new Padding(6, 4, 6, 4),
+                Visible = false
+            };
+            pnlRdpPinBar.Location = new Point(Math.Max(10, (this.ClientSize.Width - pnlRdpPinBar.Width) / 2), 0);
+            this.Resize += (s, e) => {
+                if (pnlRdpPinBar != null)
+                    pnlRdpPinBar.Location = new Point(Math.Max(10, (this.ClientSize.Width - pnlRdpPinBar.Width) / 2), 0);
+            };
+
+            pnlRdpPinBar.Paint += (s, e) => {
+                using (Pen p = new Pen(Color.FromArgb(56, 189, 248), 1.5f))
+                {
+                    e.Graphics.DrawRectangle(p, 0, 0, pnlRdpPinBar.Width - 1, pnlRdpPinBar.Height - 1);
+                }
+            };
+
+            FlowLayoutPanel pinFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, BackColor = Color.Transparent };
+
+            btnRdpPinToggle = CreateToolbarBtn(isRdpPinBarPinned ? "📌 Pinned" : "📍 Auto-Hide", (s, e) => {
+                isRdpPinBarPinned = !isRdpPinBarPinned;
+                btnRdpPinToggle.Text = isRdpPinBarPinned ? "📌 Pinned" : "📍 Auto-Hide";
+                ShowToast(isRdpPinBarPinned ? "Pin Bar Locked at Top" : "Pin Bar will auto-hide");
+            });
+
+            lblRdpPinStatus = new Label
+            {
+                Text = "🟢 Live Remote Desktop",
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(56, 189, 248),
+                AutoSize = true,
+                Margin = new Padding(8, 6, 8, 0)
+            };
+
+            Button btnToggleFit = CreateToolbarBtn("📐 " + smartFitMode, (s, e) => {
+                if (smartFitMode == "Stretch") smartFitMode = "SmartFit";
+                else if (smartFitMode == "SmartFit") smartFitMode = "Original 1:1";
+                else smartFitMode = "Stretch";
+                ((Button)s).Text = "📐 " + smartFitMode;
+                if (viewportCanvas != null) viewportCanvas.Invalidate();
+                ShowToast("Scaling Mode: " + smartFitMode);
+            });
+
+            Button btnExitImmersive = CreateToolbarBtn("⛶ Exit Zen", (s, e) => ToggleImmersiveZenMode());
+
+            Button btnPinDisconnect = CreateToolbarBtn("✕ Disconnect", (s, e) => {
+                if (isImmersiveZenMode) ToggleImmersiveZenMode();
+                if (isSessionActive) ToggleSessionConnection();
+            });
+            btnPinDisconnect.BackColor = Color.FromArgb(239, 68, 68);
+
+            pinFlow.Controls.Add(btnRdpPinToggle);
+            pinFlow.Controls.Add(lblRdpPinStatus);
+            pinFlow.Controls.Add(btnToggleFit);
+            pinFlow.Controls.Add(btnExitImmersive);
+            pinFlow.Controls.Add(btnPinDisconnect);
+
+            pnlRdpPinBar.Controls.Add(pinFlow);
+            this.Controls.Add(pnlRdpPinBar);
+            this.Controls.SetChildIndex(pnlRdpPinBar, 0);
+        }
+
+        private void UpdateRdpPinBarStatus()
+        {
+            if (lblRdpPinStatus != null && !lblRdpPinStatus.IsDisposed)
+            {
+                string rId = connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : activeReceiverTargetId;
+                lblRdpPinStatus.Text = string.Format("🟢 {0} | {1:0.0} FPS | {2}ms", rId, currentMeasuredFps, lastMeasuredRttMs);
+            }
+        }
+
 
         private void SwitchHostDesktop(SimulatorDesktop newHost)
         {
@@ -4421,11 +4601,56 @@ namespace JDroidXDesk.Native
 
             // Left: Local Explorer
             ModernCardPanel cardLocal = new ModernCardPanel { Dock = DockStyle.Fill };
-            lblLocalPath = new Label { Text = "Local: " + currentLocalDirectory, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Dock = DockStyle.Top, Height = 28 };
+            Panel pnlLocalHeader = new Panel { Dock = DockStyle.Top, Height = 32 };
+            lblLocalPath = new Label { Text = "Local: " + currentLocalDirectory, Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(4, 6), AutoSize = true };
+            Button btnLocalUp = new Button { Text = "⬆️ Up", Size = new Size(55, 22), Location = new Point(cardLocal.Width - 130, 4), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 7.5f), Cursor = Cursors.Hand };
+            btnLocalUp.FlatAppearance.BorderSize = 0;
+            btnLocalUp.Click += (s, e) => {
+                try {
+                    DirectoryInfo di = new DirectoryInfo(currentLocalDirectory);
+                    if (di.Parent != null) {
+                        currentLocalDirectory = di.Parent.FullName;
+                        PopulateLocalFiles();
+                    }
+                } catch { }
+            };
+            Button btnLocalRefresh = new Button { Text = "🔄", Size = new Size(35, 22), Location = new Point(cardLocal.Width - 65, 4), Anchor = AnchorStyles.Top | AnchorStyles.Right, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 7.5f), Cursor = Cursors.Hand };
+            btnLocalRefresh.FlatAppearance.BorderSize = 0;
+            btnLocalRefresh.Click += (s, e) => PopulateLocalFiles();
+            pnlLocalHeader.Controls.Add(lblLocalPath);
+            pnlLocalHeader.Controls.Add(btnLocalUp);
+            pnlLocalHeader.Controls.Add(btnLocalRefresh);
+
             lbLocalFiles = new ListBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, Font = new Font("Consolas", 8.5f), BorderStyle = BorderStyle.None };
+            lbLocalFiles.DoubleClick += (s, e) => {
+                if (lbLocalFiles.SelectedItem == null) return;
+                string item = lbLocalFiles.SelectedItem.ToString();
+                if (item.StartsWith("[..]"))
+                {
+                    try {
+                        DirectoryInfo di = new DirectoryInfo(currentLocalDirectory);
+                        if (di.Parent != null) {
+                            currentLocalDirectory = di.Parent.FullName;
+                            PopulateLocalFiles();
+                        }
+                    } catch { }
+                }
+                else if (item.StartsWith("[DIR]"))
+                {
+                    try {
+                        string dirName = item.Substring(6).Trim();
+                        string target = Path.Combine(currentLocalDirectory, dirName);
+                        if (Directory.Exists(target)) {
+                            currentLocalDirectory = target;
+                            PopulateLocalFiles();
+                        }
+                    } catch { }
+                }
+            };
+
             PopulateLocalFiles();
             cardLocal.Controls.Add(lbLocalFiles);
-            cardLocal.Controls.Add(lblLocalPath);
+            cardLocal.Controls.Add(pnlLocalHeader);
 
             // Middle Actions
             Panel mid = new Panel { Dock = DockStyle.Fill };
@@ -4468,7 +4693,12 @@ namespace JDroidXDesk.Native
         {
             if (lbLocalFiles == null) return;
             lbLocalFiles.Items.Clear();
+            if (lblLocalPath != null) lblLocalPath.Text = "Local: " + currentLocalDirectory;
             try {
+                DirectoryInfo di = new DirectoryInfo(currentLocalDirectory);
+                if (di.Parent != null) {
+                    lbLocalFiles.Items.Add("[..]  (Parent Directory)");
+                }
                 foreach (string d in Directory.GetDirectories(currentLocalDirectory)) lbLocalFiles.Items.Add("[DIR]  " + Path.GetFileName(d));
                 foreach (string f in Directory.GetFiles(currentLocalDirectory)) {
                     FileInfo fi = new FileInfo(f);
@@ -4518,7 +4748,40 @@ namespace JDroidXDesk.Native
             topRow.Controls.Add(lblTitle);
             topRow.Controls.Add(actions);
 
-            dgvFleet = new DataGridView { Dock = DockStyle.Fill, BackgroundColor = Color.FromArgb(13, 21, 34), ForeColor = Color.Black, BorderStyle = BorderStyle.None, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, ReadOnly = true, AllowUserToAddRows = false, SelectionMode = DataGridViewSelectionMode.FullRowSelect };
+            dgvFleet = new DataGridView {
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.FromArgb(13, 21, 34),
+                ForeColor = Color.White,
+                GridColor = Color.FromArgb(30, 41, 59),
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false,
+                EnableHeadersVisualStyles = false
+            };
+            dgvFleet.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(30, 41, 59);
+            dgvFleet.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(148, 163, 184);
+            dgvFleet.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
+            dgvFleet.DefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
+            dgvFleet.DefaultCellStyle.ForeColor = Color.White;
+            dgvFleet.DefaultCellStyle.Font = new Font("Segoe UI", 8.5f);
+            dgvFleet.DefaultCellStyle.SelectionBackColor = Color.FromArgb(56, 189, 248);
+            dgvFleet.DefaultCellStyle.SelectionForeColor = Color.Black;
+            dgvFleet.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(20, 28, 45);
+
+            dgvFleet.CellDoubleClick += (s, e) => {
+                if (dgvFleet.CurrentRow != null) {
+                    DeviceItem d = dgvFleet.CurrentRow.DataBoundItem as DeviceItem;
+                    if (d != null) {
+                        SimulatorDesktop matched = dynamicDesktops.Find(desk => desk.Name == d.name || desk.Ip == d.ip);
+                        SwitchWorkspaceView("Console");
+                        if (isSessionActive) ToggleSessionConnection();
+                        ToggleSessionConnection(matched);
+                    }
+                }
+            };
 
             viewFleet.Controls.Add(dgvFleet);
             viewFleet.Controls.Add(topRow);
@@ -4565,7 +4828,28 @@ namespace JDroidXDesk.Native
             topRow.Controls.Add(lblTitle);
             topRow.Controls.Add(btnClear);
 
-            dgvHistory = new DataGridView { Dock = DockStyle.Fill, BackgroundColor = Color.FromArgb(13, 21, 34), ForeColor = Color.Black, BorderStyle = BorderStyle.None, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, ReadOnly = true, AllowUserToAddRows = false, SelectionMode = DataGridViewSelectionMode.FullRowSelect };
+            dgvHistory = new DataGridView {
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.FromArgb(13, 21, 34),
+                ForeColor = Color.White,
+                GridColor = Color.FromArgb(30, 41, 59),
+                BorderStyle = BorderStyle.None,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                RowHeadersVisible = false,
+                EnableHeadersVisualStyles = false
+            };
+            dgvHistory.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(30, 41, 59);
+            dgvHistory.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(148, 163, 184);
+            dgvHistory.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
+            dgvHistory.DefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
+            dgvHistory.DefaultCellStyle.ForeColor = Color.White;
+            dgvHistory.DefaultCellStyle.Font = new Font("Segoe UI", 8.5f);
+            dgvHistory.DefaultCellStyle.SelectionBackColor = Color.FromArgb(56, 189, 248);
+            dgvHistory.DefaultCellStyle.SelectionForeColor = Color.Black;
+            dgvHistory.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(20, 28, 45);
 
             viewHistory.Controls.Add(dgvHistory);
             viewHistory.Controls.Add(topRow);
@@ -4794,8 +5078,40 @@ namespace JDroidXDesk.Native
             }
             else if (category == "Display")
             {
-                addH("Display & Smart Fit Scaling");
-                addTb("Active Scaling Mode", smartFitMode);
+                addH("Display & Smart Fit Scaling (Edge-to-Edge)");
+                Label lblMode = new Label { Text = "Viewer Scaling Mode (Default: Stretch - Zero Black Borders)", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(14, y), AutoSize = true };
+                settingsSubContentPanel.Controls.Add(lblMode);
+                y += 20;
+
+                ComboBox cboScale = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, Location = new Point(14, y), Size = new Size(340, 26) };
+                cboScale.Items.Add("Stretch (Zero Black Borders - 100% Screen Fill)");
+                cboScale.Items.Add("AspectFit (Maintain Aspect Ratio with Letterbox)");
+                cboScale.Items.Add("Original (1:1 Native Screen Resolution)");
+                if (smartFitMode == "AspectFit") cboScale.SelectedIndex = 1;
+                else if (smartFitMode == "Original") cboScale.SelectedIndex = 2;
+                else cboScale.SelectedIndex = 0;
+                cboScale.SelectedIndexChanged += (s, e) => {
+                    if (cboScale.SelectedIndex == 1) smartFitMode = "AspectFit";
+                    else if (cboScale.SelectedIndex == 2) smartFitMode = "Original";
+                    else smartFitMode = "Stretch";
+                    db.Settings.display.viewMode = smartFitMode.ToLower();
+                    if (viewportCanvas != null) viewportCanvas.Invalidate();
+                };
+                settingsSubContentPanel.Controls.Add(cboScale);
+                y += 34;
+
+                Label lblFps = new Label { Text = "Target Streaming Frame Rate", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Location = new Point(14, y), AutoSize = true };
+                settingsSubContentPanel.Controls.Add(lblFps);
+                y += 20;
+
+                ComboBox cboFps = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f), BackColor = Color.FromArgb(10, 16, 26), ForeColor = Color.White, Location = new Point(14, y), Size = new Size(340, 26) };
+                cboFps.Items.Add("60 FPS (Ultra Smooth - Low Latency Stream)");
+                cboFps.Items.Add("30 FPS (Standard Balanced Streaming)");
+                cboFps.Items.Add("15 FPS (Bandwidth Saver / Mobile Tether)");
+                cboFps.SelectedIndex = 0;
+                settingsSubContentPanel.Controls.Add(cboFps);
+                y += 34;
+
                 ModernSwitch swHw = addSw("Enable Hardware Acceleration (DirectX/GPU)", db.Settings.display.hardwareAcceleration);
                 swHw.CheckedChanged += (s, e) => db.Settings.display.hardwareAcceleration = swHw.Checked;
             }
@@ -5010,42 +5326,72 @@ namespace JDroidXDesk.Native
                                         else scaledBmp.Save(ms, ImageFormat.Jpeg);
                                     }
                                     b64 = Convert.ToBase64String(ms.ToArray());
+                                    byte[] rawJpgBytes = ms.ToArray();
+
+                                    foreach (string rUrl in candidateUrls)
+                                    {
+                                        // 1. Try High-Speed RAW Binary Stream Push (0 Base64, 0 JSON overhead - 60 FPS)
+                                        try {
+                                            HttpWebRequest reqBin = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_bin?targetId=" + currentHostDesktop.RemoteId);
+                                            reqBin.Method = "POST";
+                                            reqBin.ContentType = "image/jpeg";
+                                            reqBin.Headers["X-Target-Id"] = currentHostDesktop.RemoteId;
+                                            reqBin.Timeout = 1200;
+                                            reqBin.Proxy = null;
+                                            reqBin.KeepAlive = true;
+                                            reqBin.ServicePoint.UseNagleAlgorithm = false;
+                                            reqBin.ServicePoint.Expect100Continue = false;
+                                            reqBin.ContentLength = rawJpgBytes.Length;
+                                            using (Stream os = reqBin.GetRequestStream())
+                                            {
+                                                os.Write(rawJpgBytes, 0, rawJpgBytes.Length);
+                                            }
+                                            using (HttpWebResponse resp = (HttpWebResponse)reqBin.GetResponse())
+                                            {
+                                                pushSuccess = true;
+                                                bytesTransferred += rawJpgBytes.Length;
+                                                break;
+                                            }
+                                        } catch { }
+
+                                        // 2. Fallback to JSON Base64 push
+                                        if (!pushSuccess && !string.IsNullOrEmpty(b64))
+                                        {
+                                            try {
+                                                string postJson = string.Format("{{\"targetId\":\"{0}\",\"frame\":\"data:image/jpeg;base64,{1}\"}}",
+                                                    currentHostDesktop.RemoteId, b64);
+                                                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(postJson);
+                                                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_frame");
+                                                req.Method = "POST";
+                                                req.ContentType = "application/json";
+                                                req.Timeout = 1500;
+                                                req.Proxy = null;
+                                                req.KeepAlive = true;
+                                                req.ServicePoint.UseNagleAlgorithm = false;
+                                                req.ServicePoint.Expect100Continue = false;
+                                                req.ContentLength = bytes.Length;
+                                                using (Stream os = req.GetRequestStream())
+                                                {
+                                                    os.Write(bytes, 0, bytes.Length);
+                                                }
+                                                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                                                {
+                                                    pushSuccess = true;
+                                                    bytesTransferred += bytes.Length;
+                                                    break;
+                                                }
+                                            } catch { }
+                                        }
+                                    }
                                 }
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(b64))
-                        {
-                            string postJson = string.Format("{{\"targetId\":\"{0}\",\"frame\":\"data:image/jpeg;base64,{1}\"}}",
-                                currentHostDesktop.RemoteId, b64);
-                            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(postJson);
-
-                            foreach (string rUrl in candidateUrls)
-                            {
-                                try {
-                                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_frame");
-                                    req.Method = "POST";
-                                    req.ContentType = "application/json";
-                                    req.Timeout = 1200;
-                                    req.ContentLength = bytes.Length;
-                                    using (Stream os = req.GetRequestStream())
-                                    {
-                                        os.Write(bytes, 0, bytes.Length);
-                                    }
-                                    using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
-                                    {
-                                        pushSuccess = true;
-                                        bytesTransferred += bytes.Length;
-                                        break;
-                                    }
-                                } catch { }
                             }
                         }
                     }
                 } catch { }
-                Thread.Sleep(pushSuccess ? 300 : 1500);
+                Thread.Sleep(pushSuccess ? 16 : 400); // Target up to 60 FPS
             }
         }
+
 
         // ======================================================================
         // HOST DAEMON & BIDIRECTIONAL REMOTE ADMIN INPUT ENGINE
@@ -5409,6 +5755,87 @@ namespace JDroidXDesk.Native
             frameReceiverThread = null;
         }
 
+        private static int ReadExactBytes(Stream stream, byte[] buffer, int offset, int count)
+        {
+            int totalRead = 0;
+            while (totalRead < count)
+            {
+                int read = stream.Read(buffer, offset + totalRead, count - totalRead);
+                if (read <= 0) break;
+                totalRead += read;
+            }
+            return totalRead;
+        }
+
+        private void ProcessAndRenderFrame(byte[] imgBytes, int rttMs)
+        {
+            if (imgBytes == null || imgBytes.Length == 0) return;
+            try
+            {
+                Bitmap independentBmp = null;
+                using (MemoryStream ms = new MemoryStream(imgBytes))
+                using (Image temp = Image.FromStream(ms))
+                {
+                    independentBmp = new Bitmap(temp.Width, temp.Height, PixelFormat.Format32bppPArgb);
+                    using (Graphics gCopy = Graphics.FromImage(independentBmp))
+                    {
+                        gCopy.DrawImage(temp, 0, 0, temp.Width, temp.Height);
+                    }
+                }
+
+                lock (frameLock)
+                {
+                    Image oldFrame = latestRemoteFrame;
+                    latestRemoteFrame = independentBmp;
+                    if (oldFrame != null)
+                    {
+                        try { oldFrame.Dispose(); } catch { }
+                    }
+                    framesReceivedCount++;
+                    bytesTransferred += imgBytes.Length;
+                    lastMeasuredRttMs = Math.Max(1, rttMs);
+                }
+
+                if (currentConnectionState == SessionConnectionState.Connecting)
+                {
+                    if (this.IsHandleCreated && !this.IsDisposed)
+                    {
+                        this.BeginInvoke(new Action(() => {
+                            currentConnectionState = SessionConnectionState.Connected;
+                            if (connectingAnimationTimer != null) connectingAnimationTimer.Stop();
+                            sessionStartTime = DateTime.Now;
+                            sessionTelemetryTimer.Start();
+
+                            if (btnDisconnect != null)
+                            {
+                                btnDisconnect.Text = "✕ Disconnect";
+                                btnDisconnect.NormalColor = Color.FromArgb(239, 68, 68);
+                            }
+                            if (lblRemoteStatus != null)
+                            {
+                                lblRemoteStatus.Text = "● Connected";
+                                lblRemoteStatus.ForeColor = Color.FromArgb(16, 185, 129);
+                            }
+                            if (btnCardConnect != null)
+                            {
+                                btnCardConnect.Text = "✕ Disconnect";
+                                btnCardConnect.NormalColor = Color.FromArgb(239, 68, 68);
+                            }
+
+                            db.AddLog("SESSION_START", "P2P_CONNECT", "Live stream established with " + (connectedTargetDesktop != null ? connectedTargetDesktop.Name : activeReceiverTargetId));
+                            ShowToast("P2P Session Live: " + (connectedTargetDesktop != null ? connectedTargetDesktop.Name : activeReceiverTargetId));
+                        }));
+                    }
+                }
+
+                if (viewportCanvas != null && !viewportCanvas.IsDisposed)
+                {
+                    viewportCanvas.BeginInvoke(new Action(() => viewportCanvas.Invalidate()));
+                }
+            }
+            catch { }
+        }
+
         private void FrameReceiverWorker()
         {
             DateTime workerStart = DateTime.Now;
@@ -5449,100 +5876,130 @@ namespace JDroidXDesk.Native
                         foreach (string rUrl in candidateUrls)
                         {
                             try {
-                                Stopwatch sw = Stopwatch.StartNew();
-                                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/pull_frame/" + activeReceiverTargetId);
-                                req.Method = "GET";
-                                req.Timeout = 3500;
-                                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
-                                using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
-                                {
-                                    sw.Stop();
-                                    string jsonStr = reader.ReadToEnd();
-                                    JavaScriptSerializer ser = new JavaScriptSerializer();
-                                    Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
-                                    if (dict != null && dict.ContainsKey("success") && Convert.ToBoolean(dict["success"]) && dict.ContainsKey("frame"))
+                                // 0. Try High-Speed Persistent Asynchronous Binary Stream (Zero RTT / 60 FPS Engine)
+                                try {
+                                    HttpWebRequest reqStream = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/stream_bin/" + activeReceiverTargetId);
+                                    reqStream.Method = "GET";
+                                    reqStream.Proxy = null;
+                                    reqStream.Timeout = 6000;
+                                    reqStream.ReadWriteTimeout = 6000;
+                                    using (HttpWebResponse respStream = (HttpWebResponse)reqStream.GetResponse())
                                     {
-                                        string frameVal = dict["frame"] as string;
-                                        if (!string.IsNullOrEmpty(frameVal))
+                                        if (respStream.StatusCode == HttpStatusCode.OK && respStream.ContentType != null && respStream.ContentType.Contains("octet-stream"))
                                         {
-                                            int commaIdx = frameVal.IndexOf(',');
-                                            string rawB64 = commaIdx >= 0 ? frameVal.Substring(commaIdx + 1) : frameVal;
-                                            byte[] imgBytes = Convert.FromBase64String(rawB64);
-
-                                            Bitmap independentBmp = null;
-                                            using (MemoryStream ms = new MemoryStream(imgBytes))
-                                            using (Image temp = Image.FromStream(ms))
+                                            cachedWinningRelayUrl = rUrl;
+                                            using (Stream ns = respStream.GetResponseStream())
                                             {
-                                                independentBmp = new Bitmap(temp.Width, temp.Height, PixelFormat.Format32bppPArgb);
-                                                using (Graphics gCopy = Graphics.FromImage(independentBmp))
+                                                byte[] headerBuf = new byte[8];
+                                                while (isFrameReceiverActive && isSessionActive)
                                                 {
-                                                    gCopy.DrawImage(temp, 0, 0, temp.Width, temp.Height);
+                                                    Stopwatch swStream = Stopwatch.StartNew();
+                                                    int hRead = ReadExactBytes(ns, headerBuf, 0, 8);
+                                                    if (hRead < 8) break; // Stream ended or disconnected
+
+                                                    // Keepalive heartbeat ping
+                                                    if (headerBuf[0] == 'P' && headerBuf[1] == 'I' && headerBuf[2] == 'N' && headerBuf[3] == 'G')
+                                                    {
+                                                        continue;
+                                                    }
+
+                                                    if (headerBuf[0] == 'J' && headerBuf[1] == 'D' && headerBuf[2] == 'X' && headerBuf[3] == 'D')
+                                                    {
+                                                        int fLen = (headerBuf[4] << 24) | (headerBuf[5] << 16) | (headerBuf[6] << 8) | headerBuf[7];
+                                                        if (fLen <= 0 || fLen > 10 * 1024 * 1024) break;
+
+                                                        byte[] fBytes = new byte[fLen];
+                                                        int bRead = ReadExactBytes(ns, fBytes, 0, fLen);
+                                                        if (bRead < fLen) break;
+
+                                                        swStream.Stop();
+                                                        ProcessAndRenderFrame(fBytes, (int)swStream.ElapsedMilliseconds);
+                                                        successFrame = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        break; // Out of sync, reconnect
+                                                    }
                                                 }
+                                                if (successFrame) break;
                                             }
-
-                                            lock (frameLock)
-                                            {
-                                                Image oldFrame = latestRemoteFrame;
-                                                latestRemoteFrame = independentBmp;
-                                                if (oldFrame != null)
-                                                {
-                                                    try { oldFrame.Dispose(); } catch { }
-                                                }
-                                                framesReceivedCount++;
-                                                bytesTransferred += imgBytes.Length;
-                                                lastMeasuredRttMs = (int)sw.ElapsedMilliseconds;
-                                            }
-
-                                            successFrame = true;
-
-                                            // Transition to Connected once first genuine frame arrives
-                                            if (currentConnectionState == SessionConnectionState.Connecting)
-                                            {
-                                                if (this.IsHandleCreated && !this.IsDisposed)
-                                                {
-                                                    this.BeginInvoke(new Action(() => {
-                                                        currentConnectionState = SessionConnectionState.Connected;
-                                                        if (connectingAnimationTimer != null) connectingAnimationTimer.Stop();
-                                                        sessionStartTime = DateTime.Now;
-                                                        sessionTelemetryTimer.Start();
-
-                                                        if (btnDisconnect != null)
-                                                        {
-                                                            btnDisconnect.Text = "✕ Disconnect";
-                                                            btnDisconnect.NormalColor = Color.FromArgb(239, 68, 68);
-                                                        }
-                                                        if (lblRemoteStatus != null)
-                                                        {
-                                                            lblRemoteStatus.Text = "● Connected";
-                                                            lblRemoteStatus.ForeColor = Color.FromArgb(16, 185, 129);
-                                                        }
-                                                        if (btnCardConnect != null)
-                                                        {
-                                                            btnCardConnect.Text = "✕ Disconnect";
-                                                            btnCardConnect.NormalColor = Color.FromArgb(239, 68, 68);
-                                                        }
-
-                                                        db.AddLog("SESSION_START", "P2P_CONNECT", "Live stream established with " + (connectedTargetDesktop != null ? connectedTargetDesktop.Name : activeReceiverTargetId));
-                                                        ShowToast("P2P Session Live: " + (connectedTargetDesktop != null ? connectedTargetDesktop.Name : activeReceiverTargetId));
-                                                    }));
-                                                }
-                                            }
-
-                                            if (viewportCanvas != null && !viewportCanvas.IsDisposed)
-                                            {
-                                                viewportCanvas.BeginInvoke(new Action(() => viewportCanvas.Invalidate()));
-                                            }
-                                            break;
                                         }
                                     }
+                                } catch { }
+
+                                if (successFrame) break;
+
+                                Stopwatch sw = Stopwatch.StartNew();
+                                byte[] imgBytes = null;
+
+                                // 1. Try High-Speed RAW Binary Stream Pull (0 Base64, 0 JSON overhead - 60 FPS)
+                                try {
+                                    HttpWebRequest reqBin = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/pull_bin/" + activeReceiverTargetId);
+                                    reqBin.Method = "GET";
+                                    reqBin.Timeout = 1200;
+                                    reqBin.Proxy = null;
+                                    reqBin.KeepAlive = true;
+                                    reqBin.ServicePoint.UseNagleAlgorithm = false;
+                                    using (HttpWebResponse respBin = (HttpWebResponse)reqBin.GetResponse())
+                                    {
+                                        if (respBin.StatusCode == HttpStatusCode.OK && respBin.ContentType != null && respBin.ContentType.StartsWith("image/"))
+                                        {
+                                            using (Stream s = respBin.GetResponseStream())
+                                            using (MemoryStream ms = new MemoryStream())
+                                            {
+                                                s.CopyTo(ms);
+                                                byte[] b = ms.ToArray();
+                                                if (b != null && b.Length > 100) imgBytes = b;
+                                            }
+                                        }
+                                    }
+                                } catch { }
+
+                                // 2. Fallback to JSON Base64 pull
+                                if (imgBytes == null)
+                                {
+                                    try {
+                                        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/pull_frame/" + activeReceiverTargetId);
+                                        req.Method = "GET";
+                                        req.Timeout = 1800;
+                                        req.Proxy = null;
+                                        req.KeepAlive = true;
+                                        req.ServicePoint.UseNagleAlgorithm = false;
+                                        using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                                        using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
+                                        {
+                                            string jsonStr = reader.ReadToEnd();
+                                            JavaScriptSerializer ser = new JavaScriptSerializer();
+                                            Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
+                                            if (dict != null && dict.ContainsKey("success") && Convert.ToBoolean(dict["success"]) && dict.ContainsKey("frame"))
+                                            {
+                                                string frameVal = dict["frame"] as string;
+                                                if (!string.IsNullOrEmpty(frameVal))
+                                                {
+                                                    int commaIdx = frameVal.IndexOf(',');
+                                                    string rawB64 = commaIdx >= 0 ? frameVal.Substring(commaIdx + 1) : frameVal;
+                                                    imgBytes = Convert.FromBase64String(rawB64);
+                                                }
+                                            }
+                                        }
+                                    } catch { }
+                                }
+
+                                if (imgBytes != null && imgBytes.Length > 0)
+                                {
+                                    sw.Stop();
+                                    ProcessAndRenderFrame(imgBytes, (int)sw.ElapsedMilliseconds);
+                                    successFrame = true;
+                                    break;
                                 }
                             } catch { }
                         }
                     }
                 } catch { }
-                Thread.Sleep(successFrame ? 150 : 800);
+                Thread.Sleep(successFrame ? 4 : 200);
             }
         }
+
 
         private void SyncFromGitHubBackend()
         {

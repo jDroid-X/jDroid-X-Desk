@@ -179,3 +179,20 @@ Before ANY code change, refactor, or new file creation, the responsible agent MU
 | **Portable Admin Client** | Executable Tool | [jDroid-Client.bat](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-Client.bat) | `/api/download-client` | Remote Technician / Host machine |
 | **Colab Cloud Relay Bridge** | Network Relay | Google Colab Notebook | WebSocket `/relay` | WebRTC P2P ICE Traversal across NAT |
 
+---
+
+## 6. Open-Source Remote Desktop Integration & Master Issue Mapping
+
+### 6.1 Upstream Open-Source Code Repositories (`jDroid-X-Desk-Server/Github/`)
+| Source Project | Path Location | Architecture Focus | Enterprise Agent Owner | Targeted Master Issues (P0-P3) |
+| :--- | :--- | :--- | :--- | :--- |
+| **RustDesk** | [`jDroid-X-Desk-Server/Github/rustdesk-master`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-X-Desk-Server/Github/rustdesk-master) | Rust/C++ Rendezvous (`hbbs`), Relay (`hbbr`), DXGI screen capture, KCP UDP stream, Virtual displays | Agent 01 (Orchestrator), Agent 09 (Integration), Agent 11 (Security) | CON-01..12, SEC-01..10, DSP-05, INP-03..05 |
+| **Sunshine & Moonlight** | [`jDroid-X-Desk-Server/Github/Sunshine-master`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-X-Desk-Server/Github/Sunshine-master) & [`moonlight-qt-master`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-X-Desk-Server/Github/moonlight-qt-master) | Ultra-low latency (<15ms, 60-120 FPS), NVENC GPU acceleration, WebRTC/NVStream, IDR keyframes | Agent 15 (Optimization), Agent 06 (Backend), Agent 19 (Integration) | PERF-01..12, DSP-01..03, AV-01..08 |
+| **Apache Guacamole + FreeRDP** | [`jDroid-X-Desk-Server/Github/guacamole-server`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-X-Desk-Server/Github/guacamole-server) | WebSockets binary protocol, RDP/FreeRDP dirty rect tile caching, input synchronization, audit recording | Agent 06 (Backend), Agent 03 (Frontend), Agent 17 (Audit) | SEC-09, PERF-03, DSP-04, INP-01..02, FILE-01..12 |
+
+### 6.2 Master Issue Registry & Traceability Matrix
+- **Master Specification**: [`requirement/remote_access_master_issue_registry.md`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/requirement/remote_access_master_issue_registry.md)
+- **Activity 1 (UI Space & Viewport)**: Immersive Zen Mode (auto-collapsing chrome, floating MS RDP pin-bar, zero-margin canvas fit, DPI coordinate mapping).
+- **Activity 2 (Lag Elimination & Colab Compute)**: Multi-threaded binary relay, NVENC GPU hooks, AVX-512 CPU SIMD encoding, adaptive 60 FPS pacing.
+
+

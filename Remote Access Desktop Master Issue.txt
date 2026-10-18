@@ -1,0 +1,366 @@
+Remote Access Desktop: Master Issue Taxonomy and Priority Matrix
+For your jDroid-X-Desk project, I would build the issue register as a production-grade engineering backlog covering remote viewing, remote control, unattended access, connectivity, security, performance, and recovery.
+The categories below are based on recurring problem patterns documented in public GitHub issue trackers for open-source remote access projects, including RustDesk, MeshCentral and xrdp. These are representative examples, not a claim that every issue occurs in every product.
+For example, public reports describe black screens after connecting, sessions freezing after inactivity, logout leaving unusable sessions, resolution changes breaking layout, and devices appearing offline despite a running agent. 
+
+GitHub
++5
+
+
+
+1. Priority definitions
+P0
+Critical: security or system-wide failure
+Unauthorized remote access, authentication bypass, remote session takeover, credential exposure, or a severe vulnerability with credible exploitation risk.
+Response: contain immediately, disable affected functionality if necessary, investigate and patch urgently.
+
+
+
+P1
+High: core functionality unusable
+Cannot connect, persistent black screen, remote input failure, repeated crashes, widespread disconnections, or unrecoverable sessions.
+Response: prioritize for the next emergency fix or release.
+
+
+
+P2
+Medium: degraded experience or feature failure
+Lag, scaling errors, clipboard or file-transfer failures, audio problems, reconnect issues, or unreliable multi-monitor support.
+Response: schedule a fix with a reproducible test case.
+
+
+
+ P3 
+Low: usability, polish or minor defects
+Confusing labels, minor alignment issues, missing shortcuts, incomplete diagnostics or cosmetic defects that do not block work.
+Response: batch into regular maintenance releases.
+
+
+
+Important: Priority is based on impact, not on how annoying the symptom sounds. A display bug that leaks confidential content can be P0; a display bug affecting only a minor toolbar alignment is P3. A logout problem is P1 if it locks out many users, but P0 if it exposes another user's session.
+2. Complete issue register, grouped by category and priority
+This register is intended as a master backlog for jDroid-X-Desk. It includes confirmed examples from public issue reports as well as additional engineering risks that a production remote desktop product should test for.
+A. Security, authentication and access control
+Priority: P0 first, followed by P1 and P2.
+ID	Issue / symptom	Priority	Recommended solution
+SEC-01	Unauthorized user can control a device	P0	Enforce server-side authorization on every session and control operation.
+SEC-02	Authentication or session-token bypass	P0	Use short-lived, scoped tokens, validate every request, rotate credentials and revoke sessions on logout.
+SEC-03	Session hijacking or token leakage	P0	Use TLS, secure cookies, token redaction in logs, CSRF protections where applicable and session binding where appropriate.
+SEC-04	Remote access remains available after logout	P0/P1	Revoke server-side session state and terminate associated control channels. Test browser Back, refresh and reused URLs.
+SEC-05	Weak passwords or brute-force attacks	P1	Rate-limit attempts, apply exponential backoff, alert on suspicious login activity and support MFA.
+SEC-06	MFA failure or remembered-device state breaks	P1/P2	Test MFA enrollment, recovery, token expiry, server restarts and persistent-cookie encryption keys.
+SEC-07	Permission escalation between users or devices	P0	Apply least-privilege authorization to device groups, files, terminals, clipboard and administrative operations.
+SEC-08	Unattended access enabled without clear consent	P0/P1	Require explicit provisioning, authenticated enrollment, visible access policy and auditable revocation.
+SEC-09	Remote-control session has no audit trail	P1	Log actor, target device, start/end, authorization result and sensitive actions. Restrict log access.
+SEC-10	Credentials, clipboard contents or secrets leak into logs	P0/P1	Redact secrets by default, sanitize input and enforce retention and access controls.
+Public examples include a reported idle-timeout configuration that allowed a user to return to an apparently logged-out session, and authentication failures involving two-factor authentication. These illustrate why authentication, timeout and revocation must be tested as a complete lifecycle, not as isolated screens. 
+
+GitHub
++2
+
+
+
+B. Connection, network and session reliability
+ID	Issue / symptom	Priority	Recommended solution
+CON-01	Cannot connect to remote device	P1	Show separate diagnostic states for DNS, TLS, authentication, signaling, NAT traversal and agent availability.
+CON-02	Device shows offline while agent is running	P1	Implement heartbeats, server-side connection leases, stale-state expiry and agent reconnect with backoff.
+CON-03	Connected but screen is black	P1	Check capture initialization, desktop/session selection, permissions, codec startup and first-frame delivery.
+CON-04	Session freezes after inactivity	P1	Add heartbeat and idle diagnostics, test power management and recover the capture/transport pipeline without losing session state.
+CON-05	Unexpected disconnections	P1	Detect transport loss, preserve session identity and reconnect automatically with bounded exponential backoff.
+CON-06	Reconnect creates a new session instead of resuming	P1/P2	Separate persistent remote-session identity from temporary transport connections.
+CON-07	Relay works but direct P2P fails	P2	Diagnose NAT type, firewall rules, ICE/STUN/TURN or equivalent traversal failures; fall back to relay.
+CON-08	Works on LAN but fails over the internet	P1	Test reverse proxies, TLS termination, IPv4/IPv6, firewall rules, port mappings and WebSocket upgrades.
+CON-09	Authentication succeeds but desktop channel fails	P1	Use independent, observable states for authentication, signaling, control and video transport.
+CON-10	Agent reconnect loop or stale connection	P1	Use jittered backoff, connection leases, health checks and bounded restart policies.
+CON-11	Network switching breaks an active session	P2	Detect network changes and re-establish transport without duplicating sessions.
+CON-12	Proxy or server restart disconnects every user	P1	Add reconnect support, graceful server draining, session resumption and health checks.
+Examples: MeshCentral has reports of agents appearing offline despite connectivity, while xrdp reports describe sessions freezing after inactivity and black screens on reconnect. 
+
+GitHub
++2
+
+
+
+C. Display, screen capture and rendering
+ID	Issue / symptom	Priority	Recommended solution
+DSP-01	Entire remote screen is black	P1	Verify desktop capture permissions, active display/session, frame acquisition and renderer initialization.
+DSP-02	Black screen until mouse moves	P1	Send an initial full-frame refresh after connection and after returning from suspension.
+DSP-03	Frozen or stale image while input still works	P1	Monitor frame age, restart stalled capture/decoder components and request a keyframe/full refresh.
+DSP-04	Black rectangles, ghosting or partial refresh	P1/P2	Validate dirty-region updates, buffer lifetime, frame ordering and full-frame fallback.
+DSP-05	Resolution change crops desktop or taskbar	P2	Recalculate remote dimensions and viewport bounds after each resize; verify all edges.
+DSP-06	Scaling is blurry or stretched	P2	Separate source resolution from viewer scaling, preserve aspect ratio and use appropriate resampling.
+DSP-07	High-DPI scaling causes incorrect mouse position	P1/P2	Convert coordinates consistently across physical pixels, logical pixels, scaling and remote desktop coordinates.
+DSP-08	Multiple monitors show the wrong screen	P1/P2	Maintain stable monitor IDs, explicit monitor selection and topology-change detection.
+DSP-09	Multi-monitor layout has gaps or overlaps	P2	Validate monitor rectangles, origins, scaling factors and supported display arrangements.
+DSP-10	Display breaks after sleep, lock or unlock	P1	Re-detect displays, reacquire capture resources and test locked versus unlocked desktop sessions.
+DSP-11	Screen capture fails under a different session or service mode	P1	Test interactive-agent and service modes separately; select the appropriate OS capture mechanism.
+DSP-12	Video corrupts on high-resolution screens	P1/P2	Test codec compatibility, GPU/CPU paths, buffer sizes and adaptive quality.
+These are grounded in reports of black screens, reconnect rendering defects, resolution changes and multi-monitor scaling issues across MeshCentral, xrdp, RustDesk and FreeRDP. 
+
+GitHub
++4
+
+
+
+D. Input, keyboard, mouse and clipboard
+ID	Issue / symptom	Priority	Recommended solution
+INP-01	Mouse moves but clicks do nothing	P1	Verify input permissions, coordinate mapping, event delivery and OS input injection.
+INP-02	Mouse clicks land in the wrong location	P1	Apply a single tested transform for resolution, DPI, scaling and monitor offsets.
+INP-03	Keyboard keys are missing or duplicated	P1/P2	Validate key-down/key-up pairing, input buffering, focus transitions and disconnect cleanup.
+INP-04	Keyboard layout or special characters are wrong	P2	Negotiate keyboard layout and test language, IME, dead keys and modifier combinations.
+INP-05	Ctrl, Alt, Shift or Windows key remains stuck	P1	Release all pressed keys on focus loss, disconnect and session recovery.
+INP-06	Long pasted text freezes the remote session	P1/P2	Chunk input, bound message sizes, avoid synchronous UI blocking and implement cancellation.
+INP-07	Clipboard synchronization stops working	P2	Track clipboard state, retry failed synchronization and provide a manual fallback.
+INP-08	Clipboard causes repeated or infinite paste	P1	Prevent feedback loops using content/version tracking, origin metadata and deduplication.
+INP-09	Clipboard changes the local host unexpectedly	P1/P2	Use explicit clipboard permissions, avoid unsolicited writes and isolate session clipboard state.
+INP-10	Drag-and-drop does not work	P2/P3	Define supported payloads and destinations, validate permissions and provide an alternative file-transfer workflow.
+Public reports describe clipboard stalls and repeated-paste behaviour in MeshCentral, along with clipboard interference in FreeRDP's Android client. 
+
+GitHub
++2
+
+
+
+E. Performance, speed and response time
+ID	Issue / symptom	Priority	Recommended solution
+PERF-01	Slow connection establishment	P2	Measure DNS, TLS, authentication, signaling and first-frame latency separately.
+PERF-02	High mouse or keyboard response time	P1/P2	Reduce input queueing, prioritize control messages and measure round-trip latency.
+PERF-03	Video lag or low frame rate	P2	Use adaptive frame rate, bandwidth-aware encoding and efficient dirty-region updates.
+PERF-04	CPU usage stays high when screen is idle	P2	Use change detection, event-driven capture and adaptive frame polling.
+PERF-05	Memory usage increases over time	P1/P2	Profile long sessions, dispose frames and buffers, bound queues and detect leaks.
+PERF-06	Network bandwidth is excessive	P2	Adapt resolution, frame rate and codec quality to available bandwidth.
+PERF-07	Relay server becomes a bottleneck	P1/P2	Monitor relay capacity, queue depth, CPU, bandwidth and connection distribution; scale horizontally.
+PERF-08	Poor performance on older computers	P2	Provide a low-bandwidth mode, CPU-efficient codecs and adjustable visual effects.
+PERF-09	High-resolution or multi-monitor sessions overload the device	P2	Adapt per-monitor capture quality and limit unnecessary frame encoding.
+PERF-10	File transfer slows or blocks remote control	P2	Separate data and control queues, apply backpressure and cap concurrent transfer resources.
+PERF-11	Delayed screen updates despite low ping	P2	Measure capture-to-encode, network, decode-to-render and queueing time separately.
+PERF-12	Application becomes unresponsive under load	P1	Keep UI and control loops non-blocking, use bounded queues and implement overload recovery.
+Engineering target: measure p50, p95 and p99 input-to-visible-response latency, time to first frame, reconnect duration, frame age, CPU, memory and bandwidth. Set numeric acceptance targets after measuring representative LAN, WAN and low-bandwidth environments rather than choosing arbitrary figures.
+F. File transfer and remote file management
+ID	Issue / symptom	Priority	Recommended solution
+FILE-01	File upload or download fails	P1/P2	Report transfer stage, preserve error details and support safe retries.
+FILE-02	Transfer appears stuck at 0% or 99%	P2	Track acknowledged bytes, completion state and final file verification separately.
+FILE-03	Progress indicator stops updating	P2/P3	Drive progress from authoritative transfer events and handle cancellation/error transitions.
+FILE-04	Large files exhaust memory	P1/P2	Stream in bounded chunks instead of loading entire files into memory.
+FILE-05	Interrupted transfer must restart from zero	P2	Support resumable, integrity-checked transfers with expiring transfer identifiers.
+FILE-06	File is corrupted or incomplete	P1/P2	Verify byte count and cryptographic hash before marking success.
+FILE-07	Duplicate filenames overwrite existing files	P1/P2	Show overwrite confirmation and offer rename, skip or versioned replacement.
+FILE-08	Permissions prevent reading or writing files	P2	Report access-denied errors clearly and respect the remote user's permissions.
+FILE-09	File transfer requires leaving the desktop screen	P3	Offer integrated drag-and-drop or contextual transfer where platform APIs permit.
+FILE-10	Path traversal or unsafe file destinations	P0	Canonicalize paths, restrict destination roots and reject traversal or unauthorized paths.
+FILE-11	Interrupted transfer leaves temporary files	P2	Clean up abandoned partial files safely and expose recovery or resume options.
+FILE-12	File transfer consumes all available bandwidth	P2	Apply rate limits, concurrency controls and prioritization for interactive traffic.
+A useful example is MeshCentral's public request for desktop-integrated drag-and-drop file transfer. It also documents a browser API limitation around arbitrary files copied from the operating system file manager. This illustrates why the UI should distinguish a missing feature from a genuine defect. 
+
+GitHub
++1
+
+
+
+G. Logout, locked screen, screen off and power states
+This deserves its own category because a remote desktop can be connected successfully while the actual computer is no longer in a state that can be captured or controlled.
+ID	Issue / symptom	Priority	Recommended solution
+LIFE-01	User logs out and remote session becomes a black screen	P1	Detect session termination and return to a clear disconnected or login-screen state.
+LIFE-02	Logout leaves orphaned background processes	P1	Clean up session resources and verify the OS session actually terminates.
+LIFE-03	Session cannot reconnect after logout	P1	Separate authentication state from desktop-session state and support a clean new session.
+LIFE-04	Client laptop screen turns off	P2	Determine whether the OS suspended, locked or merely blanked the display; adapt capture and reconnection behavior.
+LIFE-05	Remote computer screen turns off	P1/P2	Handle capture-source loss explicitly; do not assume screen-off means the network or agent is offline.
+LIFE-06	Remote computer enters sleep	P1	Detect unreachable/suspended states and support Wake-on-LAN where hardware and network allow it.
+LIFE-07	Screen lock prevents viewing or control	P1/P2	Support only the authorized lock-screen capture and input paths permitted by the OS and security policy.
+LIFE-08	Switching Windows users disconnects control	P1/P2	Detect active-console and session changes, then reacquire the authorized desktop.
+LIFE-09	Remote restart causes permanent offline status	P1	Use a persistent service, startup recovery, health checks and bounded reconnect retries.
+LIFE-10	App is closed on the client but remote session remains active	P2	Detect client disconnect, apply configurable grace periods and release resources safely.
+LIFE-11	Client browser refresh loses the session	P2	Restore authorized session state safely or provide an explicit resume/reconnect action.
+LIFE-12	Idle timeout is confusing or inconsistent	P1/P2	Distinguish account logout, remote-control disconnect, OS lock and session termination.
+There are documented xrdp reports of logout producing a black screen and a lingering session, as well as inactivity-related freezes. The correct solution is not simply to disable every screen saver or timeout: it is to model power, display and login states correctly. 
+
+neutrinolabs/xrdp
++2
+
+
+
+H. Audio, video and multimedia
+ID	Issue / symptom	Priority	Recommended solution
+AV-01	Remote audio is silent	P2	Validate device selection, capture permissions, audio transport and mute state.
+AV-02	Audio is delayed or out of sync	P2	Use timestamps, bounded jitter buffers and clock synchronization.
+AV-03	Audio crackles or drops on poor networks	P2	Adapt bitrate, buffer appropriately and recover gracefully from packet loss.
+AV-04	Microphone forwarding fails	P2	Negotiate capabilities, request consent and test device permissions.
+AV-05	Remote video playback stutters	P2	Optimize capture and encoding, prioritize frames appropriately and test hardware acceleration.
+AV-06	Audio devices change during a session	P2	Detect device changes and renegotiate streams.
+AV-07	Unsupported codec causes a blank or broken stream	P1/P2	Negotiate compatible codecs and fall back to a supported format.
+AV-08	Audio continues after disconnect	P1/P2	Terminate media streams and release capture resources on session teardown.
+I. User interface, usability and accessibility
+ID	Issue / symptom	Priority	Recommended solution
+UX-01	Connection status says connected when screen is unusable	P1	Show separate transport, authentication, capture and rendering statuses.
+UX-02	Generic "connection failed" message	P2	Map errors to actionable categories and offer a diagnostic reference ID.
+UX-03	Reconnect button does nothing	P1/P2	Disable duplicate requests, show progress and surface failure reasons.
+UX-04	Toolbar covers important remote content	P3	Make the toolbar collapsible, movable or auto-hiding.
+UX-05	Full-screen mode traps the user	P2	Provide a discoverable exit shortcut and accessible control.
+UX-06	Mobile controls are too small or overlap	P2	Use responsive layouts, touch targets and virtual keyboard controls.
+UX-07	Dark mode or high-contrast mode breaks controls	P3	Test contrast, focus indicators, icons and selected states across themes.
+UX-08	User cannot tell whether keyboard input is local or remote	P2	Show focus and control-state indicators.
+UX-09	Screen-off, locked and offline states look identical	P2	Provide distinct status messages with appropriate next actions.
+UX-10	Confirmation dialogs disappear or hang	P1/P2	Handle consent-dialog lifecycle, timeout and cancellation states explicitly.
+UX-11	No indication that a remote user can see or control the machine	P1/P2	Show an appropriate session indicator and consent/notification policy.
+UX-12	No easy way to copy diagnostic details	P3	Provide a privacy-safe diagnostic bundle with a session ID and error code.
+MeshCentral's public tracker includes examples of a consent dialog hanging and mobile keyboard behavior needing fixes. These are real-world reasons to test interface behavior across browsers, input methods and device sizes. 
+
+GitHub
++1
+
+
+
+J. Compatibility, installation, updates and lifecycle
+ID	Issue / symptom	Priority	Recommended solution
+COMP-01	Update breaks previously working remote access	P1	Maintain regression suites, staged rollout and a tested rollback path.
+COMP-02	OS update causes black screen or disconnect	P1	Test supported OS builds, display APIs, security changes and capture permissions.
+COMP-03	Agent service works differently from interactive mode	P1/P2	Test both execution modes and explicitly handle session permissions and desktop capture.
+COMP-04	Installation or service registration fails	P1/P2	Validate prerequisites, report exact failure stages and make installation idempotent.
+COMP-05	Agent and server versions are incompatible	P1/P2	Implement protocol-version negotiation and a clear compatibility policy.
+COMP-06	Update leaves old background processes running	P1/P2	Gracefully stop, upgrade, verify and restart services.
+COMP-07	Portable build behaves differently from installed build	P2	Include portable and installed modes in release qualification.
+COMP-08	Unsupported OS or architecture is accepted	P2	Perform capability checks before connection and explain unsupported features.
+COMP-09	Proxy or certificate changes break the client	P1/P2	Validate TLS configuration, certificate expiry and proxy compatibility.
+COMP-10	Configuration upgrade silently changes behavior	P1/P2	Version configuration schemas, validate migrations and preserve known defaults.
+The MeshCentral tracker includes a documented report of a desktop that stopped displaying following a version update, and another report where interactive and service modes produced different rendering behavior. 
+
+GitHub
++1
+
+
+
+K. Logging, diagnostics and error handling
+ID	Issue / symptom	Priority	Recommended solution
+LOG-01	No useful logs when connection fails	P1/P2	Add structured, correlated logs for authentication, signaling, capture, transport and rendering.
+LOG-02	Logs expose credentials or private data	P0/P1	Redact secrets and restrict log access and retention.
+LOG-03	Errors are swallowed or mislabeled	P2	Use typed error categories and preserve the underlying cause.
+LOG-04	Client and server timestamps cannot be correlated	P2	Use UTC timestamps, clock-drift awareness and a shared session/correlation ID.
+LOG-05	Logs grow until disk space runs out	P1/P2	Rotate, cap, compress and expire logs; alert on disk pressure.
+LOG-06	Debug mode harms performance or exposes data	P2	Make verbose logging opt-in, time-limited and privacy-aware.
+LOG-07	No crash diagnostics	P2	Capture sanitized crash reports and provide opt-in submission.
+LOG-08	Reconnect attempts produce duplicate errors	P3	Deduplicate repeated events and summarize recovery attempts.
+LOG-09	Health dashboard misses degraded sessions	P1/P2	Track last heartbeat, last frame, last input acknowledgement and transport state.
+LOG-10	No way to reproduce a customer issue	P2	Provide a support bundle with versions, OS details, feature flags and redacted diagnostics.
+L. Testing, reliability and operational gaps
+ID	Issue / symptom	Priority	Recommended solution
+TEST-01	Reconnection works only in simple cases	P1	Test network drops, refresh, sleep, lock, logout, reboot and server restart.
+TEST-02	Bugs appear only after long sessions	P1/P2	Run soak tests and track memory, threads, frame queues and stale resources.
+TEST-03	Multiple users interfere with one another	P0/P1	Test strict session isolation and concurrent access permissions.
+TEST-04	Feature works on one OS but fails on another	P1/P2	Maintain a platform-by-feature compatibility matrix.
+TEST-05	Performance degrades with many devices	P1/P2	Load-test signaling, relay capacity, database queries and concurrent sessions.
+TEST-06	No regression test for old bugs	P1/P2	Convert every confirmed defect into a repeatable automated test.
+TEST-07	Failure recovery is not tested	P1	Inject transport failures, agent crashes, capture failures and expired credentials.
+TEST-08	Accessibility is not tested	P2/P3	Test keyboard-only operation, screen readers, scaling and contrast.
+TEST-09	No backup or disaster recovery plan	P1	Test configuration/database backup, key recovery and service restoration.
+TEST-10	No release rollback or canary deployment	P1/P2	Stage releases, monitor health metrics and support safe rollback.
+
+3. Cross-category priority summary
+The same underlying failure can affect several modules. Use this table to decide which engineering team should investigate first.
+Priority	Issue groups to address first	Exit criteria
+P0	Security, authorization, session isolation, credential leakage	No known critical access-control defect; security tests pass.
+P1	Connect/disconnect, black screens, input, session recovery, agent health	Core remote-control workflows pass reliability tests.
+P2	Latency, display scaling, clipboard, file transfer, audio, multi-monitor	Feature-specific acceptance tests pass and performance is measured.
+P3	Cosmetic defects, toolbar polish, convenience improvements	Usability review passes and no core workflow regresses.
+The numbers above are recommended engineering priorities for your product, not the official severity labels assigned by the projects cited.
+4. Recommended issue-management workflow for jDroid-X-Desk
+Use one standard record for every defect, feature gap or performance complaint. That makes the backlog actionable instead of becoming a long list of symptoms.
+Standard issue record
+Required fields for every issue
+1. Issue ID and category: for example, DSP-03, display rendering.
+2. Priority and impact: P0 to P3, number of users affected and security impact.
+3. Environment: client OS, remote OS, app/agent/server versions, browser, network type and monitor setup.
+4. Reproduction steps: exact steps, expected result and actual result.
+5. Diagnostics: timestamps, correlated logs, CPU/memory usage, network statistics and relevant screenshots.
+6. Root cause: confirmed cause, suspected cause or unknown. Keep these separate.
+7. Solution: proposed fix, owner, dependencies, regression test and rollback plan.
+8. Acceptance criteria: measurable conditions required before marking the issue resolved.
+
+5. Example of a complete issue with a solution
+DSP-03: Connected but frozen screen
+P1 · High
+
+Problem: The client connects successfully and mouse input reaches the remote machine, but the displayed screen remains black or frozen.
+Possible causes to investigate
+- Screen capture has stopped producing frames.
+- The encoder or decoder has stalled.
+- The renderer is not refreshing the screen.
+- A reconnect failed to request a full frame.
+- A desktop-session or permission change invalidated capture.
+Implementation and recovery plan
+1. Record the time of the last captured frame, encoded frame, received frame and rendered frame.
+2. Detect stale frames independently of the transport connection state.
+3. Attempt a bounded full-frame refresh and capture-pipeline recovery.
+4. If recovery fails, restart only the failed component when safe, or reconnect the session with a clear status message.
+5. Preserve session identity and avoid repeatedly creating duplicate sessions.
+6. Add a regression test covering initial connection, idle periods, resolution changes, screen lock and reconnect.
+Acceptance criteria
+- The client never reports a healthy visual session when no new frames are arriving.
+- A recoverable capture failure restores the display within the agreed recovery target.
+- An unrecoverable failure produces an actionable error rather than an indefinite black screen.
+- Repeated recovery attempts do not leak memory or create duplicate sessions.
+
+6. Public issue trackers to use as your ongoing research sources
+These are useful starting points for discovering additional reports, reproductions and maintainer responses.
+
+
+
+
+
+
+
+
+
+RustDesk
+Cross-platform remote access, rendering, connectivity and input issues.
+Browse RustDesk issues
+
+
+
+
+
+
+
+
+
+
+
+
+MeshCentral
+Agent health, web-based remote desktop, session lifecycle, clipboard and authentication.
+Browse MeshCentral issues
+
+
+
+
+
+
+
+
+
+
+
+
+xrdp
+Linux session creation, black screens, idle freezes, logout and resolution changes.
+Browse xrdp issues
+
+
+
+
+
+
+
+
+
+
+
+
+FreeRDP
+RDP client behavior, keyboard and clipboard, scaling, multi-monitor and compatibility.
+Browse FreeRDP issues
+
+
+
+The trackers contain a mix of bugs, feature requests, duplicates and environment-specific problems. Before adopting any reported workaround, check the issue's current status, affected versions, maintainer comments and any linked fix.
+7. Final recommendation
+For jDroid-X-Desk, treat this as a master issue taxonomy and test-planning baseline, not yet as a verified, exhaustive scrape of every open-source forum. The next step is to convert the categories into a traceable backlog with individual source links, affected versions, reproduction instructions, proposed fixes and regression tests.

@@ -41,6 +41,14 @@ Build responsive, high-performance, component-driven client user interfaces impl
 - Client routing configurations with guarded navigation.
 - Interactive UI state management routines.
 
+### Remote Access Screen & Viewport Standards (jDroid-X-Desk)
+- **Zero Wasted Space Standard**: Enforce Immersive Fullscreen Mode (F11 / Esc) that auto-collapses window chrome when a session connects.
+- **Auto-Hiding MS RDP Floating Pin Bar**: Render hovering connection ribbon (`pnlRdpPinBar`) at top center with auto-hide on canvas interaction.
+- **Edge-to-Edge Canvas Fitting**: Default scaling to `Stretch` / `Dynamic Resolution Match`, eliminating black pillarbox borders.
+- **Input Sanitization**: Release stuck modifier keys on focus loss (`INP-05`) and normalize canvas mouse coordinate scaling (`INP-02`).
+- **Master Issue Registry**: [`requirement/remote_access_master_issue_registry.md`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/requirement/remote_access_master_issue_registry.md)
+
+
 ---
 
 ## 4. Operating Constraints & Enterprise Rules

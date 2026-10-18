@@ -41,6 +41,13 @@ Develop enterprise-grade, OOPS-based backend controllers, business services, and
 - API route registrations and controller implementations.
 - Standardized error responses and service documentation.
 
+### High-Speed Streaming Relay & Colab Compute Standards (jDroid-X-Desk)
+- **Multi-Threaded Async Streaming**: Implement `ThreadingHTTPServer` / WebSocket handlers to process concurrent frames without queuing delays (`PERF-07`).
+- **Raw Binary Stream Transmission**: Eliminate Base64 ASCII and JSON wrapping; route raw JPEG/WebP bytes via `/api/relay/push_bin` and `/api/relay/pull_bin` (`PERF-03`).
+- **Colab GPU/TPU Telemetry Hooks**: Query and log NVIDIA NVENC encoder availability and Google Cloud TPU XLA readiness (`PERF-01..12`).
+- **Master Issue Registry**: [`requirement/remote_access_master_issue_registry.md`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/requirement/remote_access_master_issue_registry.md)
+
+
 ---
 
 ## 4. Operating Constraints & Enterprise Rules

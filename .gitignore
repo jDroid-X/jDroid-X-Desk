@@ -13,4 +13,6 @@ Thumbs.db
 *.tmp
 *.old
 *.old*
+*.bak.exe
+__pycache__/
 scratch/

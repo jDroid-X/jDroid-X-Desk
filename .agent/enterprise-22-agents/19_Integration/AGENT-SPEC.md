@@ -41,6 +41,13 @@ Build robust adapters, API connectors, webhooks, and third-party service binding
 - Webhook ingestion controllers with signature verification.
 - Integration health check endpoints.
 
+### Open-Source Remote Desktop Engine Adapters (`jDroid-X-Desk-Server/Github/`)
+- **RustDesk Integration**: [`jDroid-X-Desk-Server/Github/rustdesk-master`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-X-Desk-Server/Github/rustdesk-master) (Rendezvous mediator, KCP UDP stream, desktop switch handling).
+- **Sunshine / Moonlight Integration**: [`jDroid-X-Desk-Server/Github/Sunshine-master`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-X-Desk-Server/Github/Sunshine-master) (DXGI desktop duplication, NVENC GPU encoder, sub-15ms streaming).
+- **Apache Guacamole + FreeRDP**: [`jDroid-X-Desk-Server/Github/guacamole-server`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/jDroid-X-Desk-Server/Github/guacamole-server) (WebSocket binary transport, dirty rect updates).
+- **Master Issue Registry**: [`requirement/remote_access_master_issue_registry.md`](file:///c:/Users/jiten/jAnitGravity/jDroid-X-Desk/requirement/remote_access_master_issue_registry.md)
+
+
 ---
 
 ## 4. Operating Constraints & Enterprise Rules

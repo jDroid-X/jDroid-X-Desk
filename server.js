@@ -430,7 +430,7 @@ app.get('/api/settings', (req, res) => {
     } catch (_) {}
     res.json({ success: true, data: db.settings });
 });
-app.put('/api/settings', (req, res) => {
+const saveSettingsHandler = (req, res) => {
     const db = readDB();
     db.settings = { ...db.settings, ...req.body, updatedAt: new Date().toISOString() };
     if (req.body && req.body.connection && req.body.connection.relayServer) {
@@ -443,7 +443,9 @@ app.put('/api/settings', (req, res) => {
     }
     writeDB(db);
     res.json({ success: true, data: db.settings, message: 'System Settings Saved Successfully' });
-});
+};
+app.put('/api/settings', saveSettingsHandler);
+app.post('/api/settings', saveSettingsHandler);
 
 // ==========================================
 // 7. SYSTEM LOGS & TELEMETRY AUDIT API

@@ -9,7 +9,8 @@ echo ========================================================
 echo.
 
 if not exist "jDroid-X-Desk.exe" (
-    echo [INFO] Compiling single canonical native binary (Universal AnyCPU + jDroid-X Studio Assembly + Manifest)...
+    echo [INFO] Compiling single canonical native binary Universal AnyCPU jDroid-X Studio Assembly Manifest
+
     C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /platform:anycpu /optimize+ /debug- /win32manifest:app.manifest /r:System.Windows.Forms.dll,System.Drawing.dll,System.Web.Extensions.dll,System.Core.dll /out:jDroid-X-Desk.exe JDroidXDeskNative.cs
     if %ERRORLEVEL% NEQ 0 (
         echo [ERROR] Native compilation failed.
