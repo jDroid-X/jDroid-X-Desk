@@ -494,6 +494,8 @@ namespace JDroidXDesk.Native
         public string webRepoUrl { get; set; }
         public string colabNotebookUrl { get; set; }
         public string githubBackendUrl { get; set; }
+        public string localInstalledFolder { get; set; }
+        public string localRelayScriptPath { get; set; }
         public ConnectionSettings()
         {
             localPort = 7070;
@@ -508,6 +510,8 @@ namespace JDroidXDesk.Native
             webRepoUrl = "https://github.com/jDroid-X/jDroid-X-Web";
             colabNotebookUrl = "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
             githubBackendUrl = "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main";
+            localInstalledFolder = AppDomain.CurrentDomain.BaseDirectory;
+            localRelayScriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_relay_server.py");
         }
     }
 
@@ -849,6 +853,15 @@ namespace JDroidXDesk.Native
                         Settings = serializer.Deserialize<AppSettings>(sJson);
                     }
                     else Settings = new AppSettings();
+
+                    if (Settings == null) Settings = new AppSettings();
+                    if (Settings.connection == null) Settings.connection = new ConnectionSettings();
+                    string curBase = AppDomain.CurrentDomain.BaseDirectory;
+                    if (Settings.connection.localInstalledFolder != curBase)
+                    {
+                        Settings.connection.localInstalledFolder = curBase;
+                        Settings.connection.localRelayScriptPath = Path.Combine(curBase, "colab_relay_server.py");
+                    }
 
                     if (dict.ContainsKey("serverConfig") && dict["serverConfig"] != null)
                     {
@@ -1933,6 +1946,411 @@ namespace JDroidXDesk.Native
     }
 
     // ==========================================================================
+    // 2.5 DYNAMIC ENGINE SCRIPT PROVISIONER (AUTOMATIC FRESH DESK INSTALLATION)
+    // ==========================================================================
+
+    public static class EngineScriptProvisioner
+    {
+        public static void EnsureAllEngineScripts(string baseDir)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(baseDir)) baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string scriptsDir = Path.Combine(baseDir, "scripts");
+                if (!Directory.Exists(scriptsDir)) Directory.CreateDirectory(scriptsDir);
+
+                // 1. colab_relay_server.py
+                string colabPy = Path.Combine(baseDir, "colab_relay_server.py");
+                if (!File.Exists(colabPy))
+                {
+                    File.WriteAllText(colabPy, GetColabRelayServerSource());
+                }
+
+                // 2. start-google-colab.bat
+                string startColabBat = Path.Combine(scriptsDir, "start-google-colab.bat");
+                if (!File.Exists(startColabBat))
+                {
+                    File.WriteAllText(startColabBat, GetStartGoogleColabBatSource());
+                }
+
+                // 3. start-sunshine.bat
+                string startSunshineBat = Path.Combine(scriptsDir, "start-sunshine.bat");
+                if (!File.Exists(startSunshineBat))
+                {
+                    File.WriteAllText(startSunshineBat, GetStartSunshineBatSource());
+                }
+
+                // 4. start-rustdesk.bat
+                string startRustdeskBat = Path.Combine(scriptsDir, "start-rustdesk.bat");
+                if (!File.Exists(startRustdeskBat))
+                {
+                    File.WriteAllText(startRustdeskBat, GetStartRustdeskBatSource());
+                }
+
+                // 5. start-guacamole.bat
+                string startGuacBat = Path.Combine(scriptsDir, "start-guacamole.bat");
+                if (!File.Exists(startGuacBat))
+                {
+                    File.WriteAllText(startGuacBat, GetStartGuacamoleBatSource());
+                }
+
+                // 6. launch-native.bat
+                string launchNativeBat = Path.Combine(scriptsDir, "launch-native.bat");
+                if (!File.Exists(launchNativeBat))
+                {
+                    File.WriteAllText(launchNativeBat, "@echo off\r\ncd /d \"%~dp0..\"\r\nstart \"\" \"jDroid-X-Desk.exe\"\r\n");
+                }
+
+                // 7. stop-jdroid-app.bat
+                string stopBat = Path.Combine(scriptsDir, "stop-jdroid-app.bat");
+                if (!File.Exists(stopBat))
+                {
+                    File.WriteAllText(stopBat, GetStopJdroidAppBatSource());
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("EngineScriptProvisioner error: " + ex.Message);
+            }
+        }
+
+        public static string GetColabRelayServerSource()
+        {
+            return @"# ==============================================================================
+# jDroid-X-Desk | High-Speed Binary Relay Server v3.5
+# Supports Local LAN, Tailscale P2P, and Google Colab Cloudflare Tunnels
+# ==============================================================================
+
+import os
+import sys
+import json
+import time
+import base64
+import threading
+import queue
+try:
+    from http.server import ThreadingHTTPServer as ServerBase, BaseHTTPRequestHandler
+except ImportError:
+    from http.server import HTTPServer as ServerBase, BaseHTTPRequestHandler
+
+DEVICES = {}
+FRAME_BUFFERS = {}
+BINARY_FRAME_BUFFERS = {}
+INPUT_BUFFERS = {}
+ACTIVE_SESSIONS = {}
+
+class RelayHandler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
+
+    def send_cors_headers(self, content_type='application/json'):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Target-Id')
+        self.send_header('Content-Type', content_type)
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_cors_headers()
+        self.end_headers()
+
+    def do_GET(self):
+        path = self.path.split('?')[0]
+        params = {}
+        if '?' in self.path:
+            for p in self.path.split('?')[1].split('&'):
+                if '=' in p:
+                    k, v = p.split('=', 1)
+                    params[k] = v
+
+        if path in ['/', '/ping', '/api/relay/status']:
+            self.send_response(200)
+            self.send_cors_headers('application/json')
+            self.end_headers()
+            status = {
+                'success': True,
+                'status': 'ONLINE',
+                'engine': 'jDroid-X Python Local Relay Server',
+                'activeDevices': len(DEVICES),
+                'activeSessions': len(ACTIVE_SESSIONS),
+                'timestamp': time.time()
+            }
+            self.wfile.write(json.dumps(status).encode('utf-8'))
+            return
+
+        if path == '/api/relay/frame_bin':
+            tid = params.get('targetId', '')
+            frame_data = BINARY_FRAME_BUFFERS.get(tid)
+            if frame_data:
+                self.send_response(200)
+                self.send_cors_headers('image/jpeg')
+                self.send_header('Content-Length', str(len(frame_data)))
+                self.end_headers()
+                self.wfile.write(frame_data)
+            else:
+                self.send_response(204)
+                self.send_cors_headers()
+                self.end_headers()
+            return
+
+        if path == '/api/relay/frame':
+            tid = params.get('targetId', '')
+            b64 = FRAME_BUFFERS.get(tid, '')
+            self.send_response(200)
+            self.send_cors_headers('application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'frame': b64}).encode('utf-8'))
+            return
+
+        if path == '/api/relay/input':
+            tid = params.get('targetId', '')
+            inputs = INPUT_BUFFERS.get(tid, [])
+            INPUT_BUFFERS[tid] = []
+            self.send_response(200)
+            self.send_cors_headers('application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'events': inputs}).encode('utf-8'))
+            return
+
+        self.send_response(404)
+        self.send_cors_headers()
+        self.end_headers()
+
+    def do_POST(self):
+        path = self.path.split('?')[0]
+        params = {}
+        if '?' in self.path:
+            for p in self.path.split('?')[1].split('&'):
+                if '=' in p:
+                    k, v = p.split('=', 1)
+                    params[k] = v
+
+        tid = params.get('targetId', '') or self.headers.get('X-Target-Id', '')
+        content_len = int(self.headers.get('Content-Length', 0))
+
+        if path == '/api/relay/push_bin':
+            if tid and content_len > 0:
+                raw_bytes = self.rfile.read(content_len)
+                BINARY_FRAME_BUFFERS[tid] = raw_bytes
+                self.send_response(200)
+                self.send_cors_headers('application/json')
+                self.end_headers()
+                self.wfile.write(b'{\""success\"":true,\""bytes\"":' + str(len(raw_bytes)).encode('utf-8') + b'}')
+                return
+
+        body = self.rfile.read(content_len).decode('utf-8') if content_len > 0 else '{}'
+        try:
+            payload = json.loads(body)
+        except:
+            payload = {}
+
+        if path == '/api/relay/push':
+            target = payload.get('targetId', tid)
+            frame = payload.get('frame', '')
+            if target and frame:
+                FRAME_BUFFERS[target] = frame
+            self.send_response(200)
+            self.send_cors_headers('application/json')
+            self.end_headers()
+            self.wfile.write(b'{\""success\"":true}')
+            return
+
+        if path == '/api/relay/input':
+            target = payload.get('targetId', tid)
+            if target:
+                if target not in INPUT_BUFFERS:
+                    INPUT_BUFFERS[target] = []
+                INPUT_BUFFERS[target].append(payload)
+            self.send_response(200)
+            self.send_cors_headers('application/json')
+            self.end_headers()
+            self.wfile.write(b'{\""success\"":true}')
+            return
+
+        if path == '/api/relay/register':
+            dev_id = payload.get('id', tid)
+            if dev_id:
+                DEVICES[dev_id] = payload
+            self.send_response(200)
+            self.send_cors_headers('application/json')
+            self.end_headers()
+            self.wfile.write(b'{\""success\"":true,\""registered\"":true}')
+            return
+
+        self.send_response(200)
+        self.send_cors_headers('application/json')
+        self.end_headers()
+        self.wfile.write(b'{\""success\"":true}')
+
+if __name__ == '__main__':
+    port = 8088
+    server = ServerBase(('0.0.0.0', port), RelayHandler)
+    print('jDroid-X Local Python Relay Server listening on port %d (0.0.0.0)...' % port)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        server.server_close()
+";
+        }
+
+        public static string GetStartGoogleColabBatSource()
+        {
+            return @"@echo off
+TITLE jDroid-X Engine Launcher: Google Colab & Local Python Relay
+echo ========================================================
+echo   jDroid-X Engine: Google Colab & Local Python Relay (Port 8088)
+echo ========================================================
+echo.
+
+set ""COLAB_SCRIPT=""
+if exist ""%~dp0..\colab_relay_server.py"" set ""COLAB_SCRIPT=%~dp0..\colab_relay_server.py""
+if exist ""%~dp0..\services\colab-relay-service.py"" set ""COLAB_SCRIPT=%~dp0..\services\colab-relay-service.py""
+if exist ""%~dp0..\jDroid-X-Colab Server\colab_relay_server.py"" set ""COLAB_SCRIPT=%~dp0..\jDroid-X-Colab Server\colab_relay_server.py""
+
+if defined COLAB_SCRIPT (
+    echo [LAUNCH] Starting local Python Relay Server: %COLAB_SCRIPT%
+    start ""jDroid-X Local Relay"" python ""%COLAB_SCRIPT%""
+    echo [PASS] Local Python Relay Server started on port 8088!
+) else (
+    echo [INFO] Opening Google Colab Relay Console in default browser...
+    start https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai
+)
+exit /b 0
+";
+        }
+
+        public static string GetStartSunshineBatSource()
+        {
+            return @"@echo off
+TITLE jDroid-X Engine Launcher: Sunshine & Moonlight
+echo ========================================================
+echo   jDroid-X Engine: Sunshine & Moonlight (Ultra-Low Latency)
+echo ========================================================
+echo.
+
+tasklist /FI ""IMAGENAME eq sunshine.exe"" 2>NUL | find /I /N ""sunshine.exe"">NUL
+if ""%ERRORLEVEL%""==""0"" (
+    echo [✓ ACTIVE] Sunshine process is already running on port 47990.
+    echo Opening Web UI Configuration Portal...
+    start """" ""https://localhost:47990""
+    exit /b 0
+)
+
+echo [INFO] Searching for Sunshine installation...
+set ""SUNSHINE_PATH=""
+if exist ""%ProgramFiles%\LizardByte\Sunshine\sunshine.exe"" set ""SUNSHINE_PATH=%ProgramFiles%\LizardByte\Sunshine\sunshine.exe""
+if exist ""%LocalAppData%\LizardByte\Sunshine\sunshine.exe"" set ""SUNSHINE_PATH=%LocalAppData%\LizardByte\Sunshine\sunshine.exe""
+if exist ""%~dp0..\jDroid-X-Desk-Server\Github\Sunshine-master\build\sunshine.exe"" set ""SUNSHINE_PATH=%~dp0..\jDroid-X-Desk-Server\Github\Sunshine-master\build\sunshine.exe""
+
+if defined SUNSHINE_PATH (
+    echo [LAUNCH] Starting Sunshine from: %SUNSHINE_PATH%
+    start """" ""%SUNSHINE_PATH%""
+    timeout /t 2 >NUL
+    start """" ""https://localhost:47990""
+    echo [PASS] Sunshine started successfully!
+    exit /b 0
+) else (
+    echo [WARN] Sunshine binary not found in standard paths.
+    echo Attempting Windows Service start...
+    net start Sunshine 2>NUL
+    if ""%ERRORLEVEL%""==""0"" (
+        echo [PASS] Sunshine Windows Service started.
+        start """" ""https://localhost:47990""
+        exit /b 0
+    )
+    echo [NOTICE] Opening Sunshine Web Configuration / Setup Guide...
+    start """" ""https://localhost:47990""
+    exit /b 0
+)
+";
+        }
+
+        public static string GetStartRustdeskBatSource()
+        {
+            return @"@echo off
+TITLE jDroid-X Engine Launcher: RustDesk
+echo ========================================================
+echo   jDroid-X Engine: RustDesk (P2P NAT Traversal)
+echo ========================================================
+echo.
+
+tasklist /FI ""IMAGENAME eq rustdesk.exe"" 2>NUL | find /I /N ""rustdesk.exe"">NUL
+if ""%ERRORLEVEL%""==""0"" (
+    echo [✓ ACTIVE] RustDesk is already running!
+    exit /b 0
+)
+
+echo [INFO] Searching for RustDesk executable...
+set ""RUSTDESK_PATH=""
+if exist ""%ProgramFiles%\RustDesk\rustdesk.exe"" set ""RUSTDESK_PATH=%ProgramFiles%\RustDesk\rustdesk.exe""
+if exist ""%LocalAppData%\RustDesk\rustdesk.exe"" set ""RUSTDESK_PATH=%LocalAppData%\RustDesk\rustdesk.exe""
+if exist ""%~dp0..\rustdesk.exe"" set ""RUSTDESK_PATH=%~dp0..\rustdesk.exe""
+
+if defined RUSTDESK_PATH (
+    echo [LAUNCH] Starting RustDesk from: %RUSTDESK_PATH%
+    start """" ""%RUSTDESK_PATH%""
+    echo [PASS] RustDesk launched successfully.
+    exit /b 0
+) else (
+    echo [INFO] Opening RustDesk source folder in Explorer...
+    start explorer.exe ""%~dp0..\jDroid-X-Desk-Server\Github\rustdesk-master""
+    exit /b 0
+)
+";
+        }
+
+        public static string GetStartGuacamoleBatSource()
+        {
+            return @"@echo off
+TITLE jDroid-X Engine Launcher: Apache Guacamole
+echo ========================================================
+echo   jDroid-X Engine: Apache Guacamole + FreeRDP
+echo ========================================================
+echo.
+
+echo [INFO] Checking Docker daemon for guacamole-server (guacd)...
+docker ps 2>NUL | find /I ""guacamole"" >NUL
+if ""%ERRORLEVEL%""==""0"" (
+    echo [✓ ACTIVE] Apache Guacamole container is running on port 8080/4822!
+    start http://localhost:8080/guacamole
+    exit /b 0
+)
+
+echo [INFO] Attempting to start Guacamole Docker stack or inspect local source...
+if exist ""%~dp0..\docker-compose.guacamole.yml"" (
+    echo [LAUNCH] Starting Guacamole via docker-compose...
+    docker-compose -f ""%~dp0..\docker-compose.guacamole.yml"" up -d
+    exit /b 0
+)
+
+echo [INFO] Guacamole container not active. Opening Guacamole Server source directory...
+if exist ""%~dp0..\jDroid-X-Desk-Server\Github\guacamole-server-master"" (
+    start explorer.exe ""%~dp0..\jDroid-X-Desk-Server\Github\guacamole-server-master""
+)
+exit /b 0
+";
+        }
+
+        public static string GetStopJdroidAppBatSource()
+        {
+            return @"@echo off
+TITLE Stop jDroid-X-Desk Server
+cd /d ""%~dp0..""
+ECHO Stopping jDroid-X-Desk background server on port 12345...
+
+FOR /F ""tokens=5"" %%P IN ('netstat -aon ^| findstr :12345') DO (
+    IF NOT ""%%P""==""0"" (
+        ECHO Killing server process PID: %%P
+        taskkill /F /PID %%P >nul 2>&1
+    )
+)
+
+ECHO Server stopped successfully.
+";
+        }
+    }
+
+    // ==========================================================================
     // 3. MAIN FORM & ANTIGRAVITY WORKSPACE LAYOUT (OOPS CONTROLLER LAYER)
     // ==========================================================================
 
@@ -2015,7 +2433,9 @@ namespace JDroidXDesk.Native
         private TextBox txtColabInput;
         private Button btnPasteColab;
         private Button btnApplyColab;
+        private Button btnStartLocalRelay;
         private Button btnColabNotebook;
+        private Process localPythonRelayProcess = null;
         private ComboBox cboSavedFleet;
         private Panel cardRecent;
 
@@ -2229,6 +2649,7 @@ namespace JDroidXDesk.Native
 
         public MainForm()
         {
+            EngineScriptProvisioner.EnsureAllEngineScripts(AppDomain.CurrentDomain.BaseDirectory);
             db = new DatabaseContext();
 
             // Local Node Identity dynamically derived from machine hardware key
@@ -3319,10 +3740,17 @@ namespace JDroidXDesk.Native
         private void LaunchEngineStartScript(string engineId)
         {
             try {
+                EngineScriptProvisioner.EnsureAllEngineScripts(AppDomain.CurrentDomain.BaseDirectory);
+
+                if (engineId == "jdroidRelay" || engineId == "googleColab" || engineId == "colab" || engineId == "pythonRelay")
+                {
+                    StartLocalPythonRelay();
+                    return;
+                }
+
                 string scriptName = "start-sunshine.bat";
                 if (engineId == "rustdesk") scriptName = "start-rustdesk.bat";
                 else if (engineId == "guacamole") scriptName = "start-guacamole.bat";
-                else if (engineId == "jdroidRelay" || engineId == "googleColab" || engineId == "colab") scriptName = "start-google-colab.bat";
 
                 string batPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "scripts", scriptName);
                 if (File.Exists(batPath)) {
@@ -3341,6 +3769,95 @@ namespace JDroidXDesk.Native
             } catch (Exception ex) {
                 ShowToast("Launcher error: " + ex.Message);
             }
+        }
+
+        private void StartLocalPythonRelay()
+        {
+            try
+            {
+                EngineScriptProvisioner.EnsureAllEngineScripts(AppDomain.CurrentDomain.BaseDirectory);
+                StopLocalPythonRelay();
+
+                string pyScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_relay_server.py");
+                if (!File.Exists(pyScript))
+                {
+                    string alt = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "services", "colab-relay-service.py");
+                    if (File.Exists(alt)) pyScript = alt;
+                }
+
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = "python",
+                    Arguments = "\"" + pyScript + "\"",
+                    WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                try
+                {
+                    localPythonRelayProcess = Process.Start(psi);
+                }
+                catch
+                {
+                    psi.FileName = "py";
+                    try { localPythonRelayProcess = Process.Start(psi); }
+                    catch
+                    {
+                        ProcessStartInfo psiShell = new ProcessStartInfo("cmd.exe", "/c python \"" + pyScript + "\"")
+                        {
+                            WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
+                            UseShellExecute = true,
+                            WindowStyle = ProcessWindowStyle.Minimized
+                        };
+                        localPythonRelayProcess = Process.Start(psiShell);
+                    }
+                }
+
+                string localUrl = "http://127.0.0.1:8088";
+                string lanIp = GetLocalLanIp();
+
+                if (db != null && db.Settings != null && db.Settings.connection != null)
+                {
+                    db.Settings.connection.relayServer = localUrl;
+                    db.Settings.connection.customDomain = localUrl;
+                    db.Settings.connection.localInstalledFolder = AppDomain.CurrentDomain.BaseDirectory;
+                    db.Settings.connection.localRelayScriptPath = pyScript;
+                    db.Save();
+                    db.SyncYaml();
+                }
+
+                cachedWinningRelayUrl = localUrl;
+                lastWinningCheckTime = DateTime.MinValue;
+
+                if (txtColabInput != null) txtColabInput.Text = localUrl;
+
+                ShowToast(string.Format("⚡ Local Relay active on 8088! Desk 2 connects via: http://{0}:8088", lanIp));
+
+                ThreadPool.QueueUserWorkItem(delegate {
+                    Thread.Sleep(800);
+                    PingColabServer();
+                    RegisterWithColabRelay();
+                });
+            }
+            catch (Exception ex)
+            {
+                ShowToast("Failed to start local relay: " + ex.Message);
+            }
+        }
+
+        private void StopLocalPythonRelay()
+        {
+            try
+            {
+                if (localPythonRelayProcess != null && !localPythonRelayProcess.HasExited)
+                {
+                    localPythonRelayProcess.Kill();
+                    localPythonRelayProcess.Dispose();
+                }
+            }
+            catch { }
+            localPythonRelayProcess = null;
         }
 
         private void SyncHeaderEngineDropdown(string engineId)
@@ -5254,14 +5771,30 @@ namespace JDroidXDesk.Native
                         {
                             btnPasteColab.Location = new Point(16, 102);
                             btnApplyColab.Location = new Point(btnPasteColab.Right + 8, 102);
-                            btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 102);
+                            if (btnStartLocalRelay != null)
+                            {
+                                btnStartLocalRelay.Location = new Point(btnApplyColab.Right + 8, 102);
+                                btnColabNotebook.Location = new Point(btnStartLocalRelay.Right + 8, 102);
+                            }
+                            else
+                            {
+                                btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 102);
+                            }
                             cardColab.Height = 146;
                         }
                         else
                         {
                             btnPasteColab.Location = new Point(txtColabInput.Right + 8, 64);
                             btnApplyColab.Location = new Point(btnPasteColab.Right + 8, 64);
-                            btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 64);
+                            if (btnStartLocalRelay != null)
+                            {
+                                btnStartLocalRelay.Location = new Point(btnApplyColab.Right + 8, 64);
+                                btnColabNotebook.Location = new Point(btnStartLocalRelay.Right + 8, 64);
+                            }
+                            else
+                            {
+                                btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 64);
+                            }
                             cardColab.Height = 118;
                         }
                     }
@@ -5521,10 +6054,23 @@ namespace JDroidXDesk.Native
                 });
             };
 
+            btnStartLocalRelay = new Button {
+                Text = "⚡ Local Relay (8088)",
+                Size = new Size(140, 32),
+                Location = new Point(btnApplyColab.Right + 8, 64),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(14, 165, 233),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnStartLocalRelay.FlatAppearance.BorderSize = 0;
+            btnStartLocalRelay.Click += (s, e) => StartLocalPythonRelay();
+
             btnColabNotebook = new Button {
                 Text = "🌐 Notebook",
                 Size = new Size(95, 32),
-                Location = new Point(btnApplyColab.Right + 8, 64),
+                Location = new Point(btnStartLocalRelay.Right + 8, 64),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240),
                 ForeColor = isDarkMode ? Color.FromArgb(203, 213, 225) : Color.FromArgb(30, 41, 59),
@@ -5545,6 +6091,7 @@ namespace JDroidXDesk.Native
             cardColab.Controls.Add(txtColabInput);
             cardColab.Controls.Add(btnPasteColab);
             cardColab.Controls.Add(btnApplyColab);
+            cardColab.Controls.Add(btnStartLocalRelay);
             cardColab.Controls.Add(btnColabNotebook);
             cardContainer.Controls.Add(cardColab);
             y += 130;
@@ -8882,6 +9429,7 @@ namespace JDroidXDesk.Native
                 StopHostDaemon();
                 StopScreenStreamer();
                 StopFrameReceiver();
+                StopLocalPythonRelay();
                 trayIcon.Visible = false;
                 Application.Exit();
             });
@@ -8918,6 +9466,7 @@ namespace JDroidXDesk.Native
                 StopHostDaemon();
                 StopScreenStreamer();
                 StopFrameReceiver();
+                StopLocalPythonRelay();
                 base.OnFormClosing(e);
             }
         }

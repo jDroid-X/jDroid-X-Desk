@@ -53,7 +53,7 @@
       "licenseType": "Enterprise Platinum (Unlimited)",
       "enterpriseTenant": "jDroid-X Workstation"
     },
-    "updatedAt": "2026-10-18T15:57:32.884Z"
+    "updatedAt": "2026-10-18T17:54:50.029Z"
   },
   "serverConfig": {
     "activeEngine": "sunshine",
@@ -277,19 +277,19 @@
   "notifications": [],
   "logs": [
     {
-      "id": "REQ-1792339053047-462",
+      "id": "REQ-1792346090189-963",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "DELETE",
       "url": "/api/admin/logs",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 16,
-      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (16ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:33.047Z"
+      "rttMs": 11,
+      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (11ms) from 127.0.0.1",
+      "timestamp": "2026-10-18T17:54:50.189Z"
     },
     {
-      "id": "REQ-1792339056056-463",
+      "id": "REQ-1792346147022-964",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -298,22 +298,22 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:36.056Z"
+      "timestamp": "2026-10-18T17:55:47.022Z"
     },
     {
-      "id": "REQ-1792339056080-464",
+      "id": "REQ-1792346147026-965",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/admin/logs?level=ALL&limit=150",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:36.080Z"
+      "rttMs": 0,
+      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (0ms) from 127.0.0.1",
+      "timestamp": "2026-10-18T17:55:47.026Z"
     },
     {
-      "id": "REQ-1792339060051-465",
+      "id": "REQ-1792346207012-966",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -322,10 +322,10 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:40.051Z"
+      "timestamp": "2026-10-18T17:56:47.012Z"
     },
     {
-      "id": "REQ-1792339060059-466",
+      "id": "REQ-1792346207016-967",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -334,346 +334,10 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:40.059Z"
+      "timestamp": "2026-10-18T17:56:47.016Z"
     },
     {
-      "id": "REQ-1792339064051-467",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:44.052Z"
-    },
-    {
-      "id": "REQ-1792339064070-468",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:44.070Z"
-    },
-    {
-      "id": "REQ-1792339068064-469",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:48.064Z"
-    },
-    {
-      "id": "REQ-1792339068099-470",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:48.099Z"
-    },
-    {
-      "id": "REQ-1792339072049-471",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:52.049Z"
-    },
-    {
-      "id": "REQ-1792339072092-472",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:52.092Z"
-    },
-    {
-      "id": "REQ-1792339076050-473",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:56.050Z"
-    },
-    {
-      "id": "REQ-1792339076062-474",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:57:56.062Z"
-    },
-    {
-      "id": "REQ-1792339080057-475",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:00.057Z"
-    },
-    {
-      "id": "REQ-1792339080074-476",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:00.074Z"
-    },
-    {
-      "id": "REQ-1792339084061-477",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:04.061Z"
-    },
-    {
-      "id": "REQ-1792339084097-478",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:04.097Z"
-    },
-    {
-      "id": "REQ-1792339088057-479",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:08.057Z"
-    },
-    {
-      "id": "REQ-1792339088068-480",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:08.068Z"
-    },
-    {
-      "id": "REQ-1792339092054-481",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:12.054Z"
-    },
-    {
-      "id": "REQ-1792339092072-482",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:12.072Z"
-    },
-    {
-      "id": "REQ-1792339096062-483",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:16.062Z"
-    },
-    {
-      "id": "REQ-1792339096092-484",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:16.092Z"
-    },
-    {
-      "id": "REQ-1792339100055-485",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:20.055Z"
-    },
-    {
-      "id": "REQ-1792339100063-486",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:20.063Z"
-    },
-    {
-      "id": "REQ-1792339104044-487",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:24.044Z"
-    },
-    {
-      "id": "REQ-1792339104054-488",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:24.054Z"
-    },
-    {
-      "id": "REQ-1792339108046-489",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:28.046Z"
-    },
-    {
-      "id": "REQ-1792339108055-490",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:28.055Z"
-    },
-    {
-      "id": "REQ-1792339112062-491",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:32.062Z"
-    },
-    {
-      "id": "REQ-1792339112131-492",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:32.131Z"
-    },
-    {
-      "id": "REQ-1792339117023-493",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:37.023Z"
-    },
-    {
-      "id": "REQ-1792339117029-494",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:37.029Z"
-    },
-    {
-      "id": "REQ-1792339121009-495",
+      "id": "REQ-1792346267017-968",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -682,10 +346,10 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:41.009Z"
+      "timestamp": "2026-10-18T17:57:47.017Z"
     },
     {
-      "id": "REQ-1792339121014-496",
+      "id": "REQ-1792346267021-969",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -694,34 +358,10 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:41.014Z"
+      "timestamp": "2026-10-18T17:57:47.021Z"
     },
     {
-      "id": "REQ-1792339125120-497",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:45.120Z"
-    },
-    {
-      "id": "REQ-1792339125130-498",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:45.130Z"
-    },
-    {
-      "id": "REQ-1792339129013-499",
+      "id": "REQ-1792346327018-970",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -730,34 +370,10 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:49.013Z"
+      "timestamp": "2026-10-18T17:58:47.018Z"
     },
     {
-      "id": "REQ-1792339129020-500",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:49.020Z"
-    },
-    {
-      "id": "REQ-1792339133015-501",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:53.015Z"
-    },
-    {
-      "id": "REQ-1792339133020-502",
+      "id": "REQ-1792346327022-971",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -766,10 +382,10 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:53.020Z"
+      "timestamp": "2026-10-18T17:58:47.022Z"
     },
     {
-      "id": "REQ-1792339137025-503",
+      "id": "REQ-1792346387029-972",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -778,58 +394,10 @@
       "statusCode": 200,
       "rttMs": 2,
       "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:57.025Z"
+      "timestamp": "2026-10-18T17:59:47.029Z"
     },
     {
-      "id": "REQ-1792339137032-504",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:58:57.032Z"
-    },
-    {
-      "id": "REQ-1792339141259-505",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:01.259Z"
-    },
-    {
-      "id": "REQ-1792339141266-506",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:01.266Z"
-    },
-    {
-      "id": "REQ-1792339145017-507",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:05.017Z"
-    },
-    {
-      "id": "REQ-1792339145024-508",
+      "id": "REQ-1792346387037-973",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -838,259 +406,22 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:05.024Z"
-    },
+      "timestamp": "2026-10-18T17:59:47.037Z"
+    }
+  ],
+  "invites": [
     {
-      "id": "REQ-1792339149025-509",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:09.025Z"
-    },
-    {
-      "id": "REQ-1792339149033-510",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:09.033Z"
-    },
-    {
-      "id": "REQ-1792339153017-511",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:13.017Z"
-    },
-    {
-      "id": "REQ-1792339153023-512",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:13.023Z"
-    },
-    {
-      "id": "REQ-1792339157018-513",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:17.018Z"
-    },
-    {
-      "id": "REQ-1792339157024-514",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:17.024Z"
-    },
-    {
-      "id": "REQ-1792339161024-515",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:21.024Z"
-    },
-    {
-      "id": "REQ-1792339161029-516",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:21.029Z"
-    },
-    {
-      "id": "REQ-1792339165017-517",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:25.017Z"
-    },
-    {
-      "id": "REQ-1792339165022-518",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:25.022Z"
-    },
-    {
-      "id": "REQ-1792339169013-519",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:29.013Z"
-    },
-    {
-      "id": "REQ-1792339169018-520",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:29.018Z"
-    },
-    {
-      "id": "REQ-1792339173020-521",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:33.020Z"
-    },
-    {
-      "id": "REQ-1792339173024-522",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:33.024Z"
-    },
-    {
-      "id": "REQ-1792339187026-523",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:47.027Z"
-    },
-    {
-      "id": "REQ-1792339187033-524",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T15:59:47.033Z"
-    },
-    {
-      "id": "REQ-1792339247026-525",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T16:00:47.026Z"
-    },
-    {
-      "id": "REQ-1792339247032-526",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T16:00:47.032Z"
-    },
-    {
-      "id": "REQ-1792339307027-527",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T16:01:47.027Z"
-    },
-    {
-      "id": "REQ-1792339307033-528",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T16:01:47.033Z"
-    },
-    {
-      "id": "REQ-1792339367029-529",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T16:02:47.029Z"
-    },
-    {
-      "id
+      "id": "INV-1792346089303-986",
+      "targetId": "JDX-TEST-TGT",
+      "sourceId": "JDX-TEST-SRC",
+      "permissions": {
+        "screen": true,
+        "keyboard": true,
+        "clipboard": true
+      },
+      "status": "ACCEPTED",
+      "createdAt": "2026-10-18T17:54:49.303Z",
+      "respondedAt": "2026-10-18T17:54:49.326Z"
+    }
+  ]
+}
