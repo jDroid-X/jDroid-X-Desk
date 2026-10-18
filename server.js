@@ -15,6 +15,9 @@ process.on('unhandledRejection', (reason) => { console.error('[SERVER ERROR] Unh
 app.use(express.json());
 app.use(express.static(__dirname));
 
+const defaultUserProfile = process.env.USERPROFILE || 'C:\\Users\\Public';
+const defaultAppData = process.env.APPDATA || path.join(defaultUserProfile, 'AppData', 'Roaming');
+
 const DEFAULT_SETTINGS = {
     pingThresholdMs: 100,
     downloadThresholdMBs: 1.0,
@@ -33,8 +36,8 @@ const DEFAULT_SETTINGS = {
         showPopupsForInvites: true,
         soundOnIncoming: false,
         transmitHotkeys: true,
-        screenshotPath: 'C:\\Users\\jiten\\Pictures\\AnyDesk',
-        chatLogPath: 'C:\\Users\\jiten\\AppData\\Roaming\\AnyDesk\\chat',
+        screenshotPath: path.join(defaultUserProfile, 'Pictures', 'jDroid-X'),
+        chatLogPath: path.join(defaultAppData, 'jDroid-X', 'chat'),
         onlineStatusVisibility: true,
         allowDataCollection: false
     },
@@ -55,7 +58,7 @@ const DEFAULT_SETTINGS = {
     },
     screenRecording: {
         enabled: true,
-        recordingPath: 'C:\\Users\\jiten\\Videos\\AnyDesk\\screen recordings',
+        recordingPath: path.join(defaultUserProfile, 'Videos', 'jDroid-X', 'recordings'),
         audioInput: 'default',
         micInput: 'default'
     },
@@ -104,7 +107,7 @@ const DEFAULT_SETTINGS = {
     recording: {
         autoRecordIncoming: false,
         autoRecordOutgoing: false,
-        sessionRecordPath: 'C:\\Users\\jiten\\Videos\\AnyDesk'
+        sessionRecordPath: path.join(defaultUserProfile, 'Videos', 'jDroid-X')
     },
     printer: {
         incomingPrintJobs: 'default_printer',
@@ -317,9 +320,22 @@ app.delete('/api/groups/:id', (req, res) => {
 });
 
 // ==========================================
-// 3. DEVICES FLEET API
+// 3. DEVICES FLEET API (Relational Group By & Dynamic Name Resolution)
 // ==========================================
-app.get('/api/devices', (req, res) => { const db = readDB(); res.json({ success: true, data: db.devices }); });
+app.get('/api/devices', (req, res) => {
+    const db = readDB();
+    const groupMap = {};
+    (db.groups || []).forEach(g => { groupMap[g.id] = g.name; });
+    let devices = db.devices || [];
+    if (req.query.groupId && req.query.groupId !== 'ALL') {
+        devices = devices.filter(d => d.groupId === req.query.groupId);
+    }
+    const result = devices.map(d => ({
+        ...d,
+        groupName: d.groupId ? (groupMap[d.groupId] || 'Unassigned') : 'Unassigned'
+    }));
+    res.json({ success: true, data: result });
+});
 app.post('/api/devices', validateBody(['name', 'accessLevel']), (req, res) => {
     const db = readDB();
     if (!/^[a-zA-Z0-9 _.-]+$/.test(req.body.name)) return res.status(400).json({ success: false, error: 'Device Name contains invalid characters.' });

@@ -91,30 +91,59 @@ async function runTests() {
         'settings-fb-app',
         'settings-fb-api',
         'custom-domain-url',
-        'colab-relay-url'
+        'colab-relay-url',
+        'nav-remote-console',
+        'nav-device-fleet',
+        'nav-remote-contacts',
+        'nav-live-map',
+        'nav-safe-zones',
+        'nav-guardians',
+        'nav-settings'
     ];
     for (const id of criticalDomIds) {
         assert(html.includes(`id="${id}"`), `DOM element exists: #${id}`);
     }
 
+    const navSettingsOccurrences = (html.match(/id="nav-settings"/g) || []).length;
+    assert(navSettingsOccurrences === 1, 'Strictly ONE single unified #nav-settings icon exists in DOM');
+
     // 4. BACKEND API INTEGRATION TEST (EPHEMERAL PORT)
     console.log('\n[4/4] Starting Server & Testing API Endpoints...');
-    const TEST_PORT = 12399;
-    const serverProc = spawn('node', ['server.js'], {
-        env: { ...process.env, PORT: String(TEST_PORT) },
-        stdio: 'pipe'
+    let TEST_PORT = 12345;
+    let serverProc = null;
+
+    const isLive = await new Promise(res => {
+        const pingReq = http.get('http://127.0.0.1:12345/api/settings', (r) => {
+            res(r.statusCode === 200);
+        });
+        pingReq.on('error', () => res(false));
+        pingReq.setTimeout(1000, () => { pingReq.destroy(); res(false); });
     });
 
-    // Wait for server to boot reliably
-    await new Promise(res => {
-        let booted = false;
-        serverProc.stdout.on('data', d => {
-            if (d.toString().includes('running on http')) {
-                if (!booted) { booted = true; res(); }
-            }
+    if (!isLive) {
+        TEST_PORT = 12399;
+        serverProc = spawn(process.execPath, [path.join(__dirname, 'server.js')], {
+            cwd: __dirname,
+            env: { ...process.env, PORT: String(TEST_PORT) },
+            stdio: 'pipe'
         });
-        setTimeout(() => { if (!booted) res(); }, 4000);
-    });
+
+        serverProc.on('error', err => {
+            console.error('  [FAIL] Failed to start test server process:', err.message);
+        });
+
+        await new Promise(res => {
+            let booted = false;
+            serverProc.stdout.on('data', d => {
+                if (d.toString().includes('running on http')) {
+                    if (!booted) { booted = true; res(); }
+                }
+            });
+            setTimeout(() => { if (!booted) res(); }, 4000);
+        });
+    } else {
+        console.log('  [INFO] Connected to active jDroid-X-Desk server on port ' + TEST_PORT);
+    }
 
     function makeRequest(method, pathName, body = null) {
         return new Promise((resolve, reject) => {
@@ -193,6 +222,10 @@ async function runTests() {
         // Scenario 2: Device Fleet Full CRUD Cycle
         const getDevices = await makeRequest('GET', '/api/devices');
         assert(getDevices.statusCode === 200 && Array.isArray(getDevices.body.data), 'GET /api/devices returns device fleet with relational groupId');
+        assert(getDevices.body.data.length > 0 && typeof getDevices.body.data[0].groupName === 'string', 'GET /api/devices resolves relational groupName dynamically');
+
+        const getFilteredDevices = await makeRequest('GET', '/api/devices?groupId=grp-1');
+        assert(getFilteredDevices.statusCode === 200 && Array.isArray(getFilteredDevices.body.data), 'GET /api/devices?groupId=... filters fleet by relational group');
 
         const postDevice = await makeRequest('POST', '/api/devices', { name: 'Test-Workstation-99', accessLevel: 'Admin', groupId: testGroupId });
         assert(postDevice.statusCode === 200 && postDevice.body.data.id, 'POST /api/devices registers new machine with groupId');
@@ -299,7 +332,9 @@ async function runTests() {
     } catch (err) {
         assert(false, `API integration error: ${err.message}`);
     } finally {
-        serverProc.kill();
+        if (serverProc) {
+            serverProc.kill();
+        }
     }
 
     console.log('\n====================================================');

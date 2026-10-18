@@ -95,12 +95,10 @@ class SystemSettingsModel {
         } catch (e) { console.warn('Failed to fetch settings from API:', e); }
 
         try {
-            const fbRes = await fetch('/api/firebase-config');
-            const fbData = await fbRes.json();
-            if (fbData.success && fbData.config) {
-                if (fbData.config.apiKey) this.firebaseApiKey = fbData.config.apiKey;
-                if (fbData.config.projectId) this.firebaseProjectId = fbData.config.projectId;
-                if (fbData.config.databaseURL) this.firebaseDbUrl = fbData.config.databaseURL;
+            const telemRes = await fetch('/api/system-telemetry');
+            const telemData = await telemRes.json();
+            if (telemData.success && telemData.data && Array.isArray(telemData.data.interfaces) && telemData.data.interfaces[0]) {
+                this.ipAddress = telemData.data.interfaces[0].address || window.location.hostname || '127.0.0.1';
             }
         } catch (_) {}
     }
@@ -935,6 +933,7 @@ class AppController {
                         proxyType: document.getElementById('ad-proxy-type')?.value || 'HTTP(S)',
                         proxyAddress: document.getElementById('ad-proxy-addr')?.value || '',
                         proxyPort: document.getElementById('ad-proxy-port')?.value || '',
+                        customDomain: document.getElementById('custom-domain-url')?.value.trim() || 'https://www.jdroid-x.com',
                         colabRelayUrl: document.getElementById('colab-relay-url')?.value.trim() || '',
                         colabRelayEnabled: document.getElementById('ad-colab-relay-enabled')?.checked !== false
                     },
@@ -990,10 +989,10 @@ class AppController {
             }
         };
 
-        bindPathBrowse('btn-browse-ss-path', 'ad-ss-path-display', 'ad-ss-custom', 'C:\\Users\\jiten\\Pictures\\AnyDesk');
-        bindPathBrowse('btn-browse-chat-path', 'ad-chat-path-display', 'ad-chat-custom', 'C:\\Users\\jiten\\AppData\\Roaming\\AnyDesk\\chat');
-        bindPathBrowse('btn-rec-path-browse', 'ad-sess-rec-path-display', 'ad-sess-rec-path', 'C:\\Users\\jiten\\Videos\\AnyDesk');
-        bindPathBrowse('btn-rec-browse', 'ad-sess-rec-path-display', 'ad-rec-path-mode', 'C:\\Users\\jiten\\Videos\\AnyDesk\\screen recordings');
+        bindPathBrowse('btn-browse-ss-path', 'ad-ss-path-display', 'ad-ss-custom', 'C:\\Users\\Public\\Pictures\\jDroid-X');
+        bindPathBrowse('btn-browse-chat-path', 'ad-chat-path-display', 'ad-chat-custom', 'C:\\Users\\Public\\Documents\\jDroid-X\\chat');
+        bindPathBrowse('btn-rec-path-browse', 'ad-sess-rec-path-display', 'ad-sess-rec-path', 'C:\\Users\\Public\\Videos\\jDroid-X');
+        bindPathBrowse('btn-rec-browse', 'ad-sess-rec-path-display', 'ad-rec-path-mode', 'C:\\Users\\Public\\Videos\\jDroid-X\\recordings');
 
         // Wake-on-LAN Client Whitelist List Box
         const wolAddBtn = document.getElementById('btn-wol-add');
@@ -1964,6 +1963,36 @@ class AppController {
             this.promptLogout();
             return;
         }
+        if (viewId === 'help-support') {
+            this.switchView('system-settings');
+            this.activateAnydeskTab('ad-tab-help');
+            return;
+        }
+        if (viewId === 'user-manual') {
+            this.switchView('system-settings');
+            this.activateAnydeskTab('ad-tab-manual');
+            return;
+        }
+        if (viewId === 'about-app') {
+            this.switchView('system-settings');
+            this.activateAnydeskTab('ad-tab-about');
+            return;
+        }
+        if (viewId === 'readme') {
+            this.switchView('system-settings');
+            this.activateAnydeskTab('ad-tab-readme');
+            return;
+        }
+        if (viewId === 'license' || viewId === 'software-license') {
+            this.switchView('system-settings');
+            this.activateAnydeskTab('ad-tab-license');
+            return;
+        }
+        if (viewId === 'copyright') {
+            this.switchView('system-settings');
+            this.activateAnydeskTab('ad-tab-copyright');
+            return;
+        }
 
         this.currentView = viewId;
 
@@ -1991,6 +2020,19 @@ class AppController {
         }
 
         this.renderCurrentView();
+    }
+
+    activateAnydeskTab(tabId) {
+        const adMenuItems = document.querySelectorAll('.anydesk-menu-item[data-ad-tab]');
+        const adPanels = document.querySelectorAll('.anydesk-content-panel');
+        adMenuItems.forEach(m => {
+            if (m.getAttribute('data-ad-tab') === tabId) m.classList.add('active');
+            else m.classList.remove('active');
+        });
+        adPanels.forEach(p => {
+            if (p.id === tabId) p.classList.add('active');
+            else p.classList.remove('active');
+        });
     }
 
     promptLogout() {
@@ -2481,6 +2523,7 @@ class AppController {
                 setVal('ad-proxy-type', s.connection.proxyType || 'HTTP(S)');
                 setVal('ad-proxy-addr', s.connection.proxyAddress || '');
                 setVal('ad-proxy-port', s.connection.proxyPort || '');
+                setVal('custom-domain-url', s.connection.customDomain || s.connection.relayServer || 'https://www.jdroid-x.com');
                 setVal('colab-relay-url', s.connection.colabRelayUrl || '');
                 setCheck('ad-colab-relay-enabled', s.connection.colabRelayEnabled !== false);
             }
@@ -2626,12 +2669,16 @@ class AppController {
             };
         }
 
-        // Add Device Modal
+        // Add Device Modal (Delegates to DeviceController MVC to populate groups)
         const addDevBtn = document.getElementById('btn-open-add-device');
         if (addDevBtn) {
             addDevBtn.onclick = () => {
-                const modal = document.getElementById('add-device-modal');
-                if (modal) modal.classList.add('active');
+                if (window.deviceController) {
+                    window.deviceController.openAddModal();
+                } else {
+                    const modal = document.getElementById('add-device-modal');
+                    if (modal) modal.classList.add('active');
+                }
             };
         }
 
@@ -3152,7 +3199,14 @@ class GroupController {
             const name = document.getElementById('grp-name').value;
             const desc = document.getElementById('grp-desc').value;
             if (!ValidationUtil.isNotEmpty(name)) { window.appController.view.showToast('error', 'Validation Failed', 'Group name cannot be empty.'); return false; }
-            this.model.add(name, desc).then(() => { window.appController.view.showToast('success', 'Group Created', `Group ${name} created successfully.`); this.renderList(); });
+            this.model.add(name, desc).then(() => {
+                window.appController.view.showToast('success', 'Group Created', `Group ${name} created successfully.`);
+                this.renderList();
+                if (window.deviceController) {
+                    window.deviceController.populateGroupDropdowns();
+                    window.deviceController.renderList();
+                }
+            });
             return true;
         });
     }
@@ -3174,7 +3228,14 @@ class GroupController {
             const desc = document.getElementById('grp-desc').value;
             if (!ValidationUtil.isNotEmpty(name)) { window.appController.view.showToast('error', 'Validation Failed', 'Group name cannot be empty.'); return false; }
             fetch(`/api/groups/${group.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, description: desc }) })
-                .then(r => r.json()).then(() => { window.appController.view.showToast('success', 'Group Updated', `Group ${name} updated successfully.`); this.renderList(); });
+                .then(r => r.json()).then(() => {
+                    window.appController.view.showToast('success', 'Group Updated', `Group ${name} updated successfully.`);
+                    this.renderList();
+                    if (window.deviceController) {
+                        window.deviceController.populateGroupDropdowns();
+                        window.deviceController.renderList();
+                    }
+                });
             return true;
         });
     }
@@ -3188,6 +3249,10 @@ class GroupController {
                 await this.model.remove(id);
                 window.appController.view.showToast('info', 'Group Deleted', 'The group was removed.');
                 this.renderList();
+                if (window.deviceController) {
+                    window.deviceController.populateGroupDropdowns();
+                    window.deviceController.renderList();
+                }
                 return true;
             }
         );

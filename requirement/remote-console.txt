@@ -60,3 +60,30 @@ Viewport Screen:
 - Fix 5 (Smart Clipboard Ingestion & Auto-Connect): JDroidXDeskNative.cs OnActivated window focus event automatically checks clipboard for *.trycloudflare.com URLs and offers instant connection, saving to database.json, windows_rdp.yaml, and colab_tunnel.txt.
 - Fix 6 (Relay Dialog 4-Step Instructions): Updated ShowRelayConfigDialog() with the exact 4-step instructions from Colab output, pre-detecting clipboard URLs and turning the header and meter pills GREEN upon successful connection.
 
+[CHANGE LOG: 2026-10-18 - Unified System Studio Icon Grouping & Comprehensive Content]
+- Requirement: Group all secondary/documentation files (Readme & Presentation, Settings, Help & Support, User Manual, About, License, Copyright) under ONE icon, with all relevant, respective, and corresponding information fully and comprehensively updated in detail.
+- Fix 1 (Web Dashboard Sidebar Unification): Consolidated scattered sidebar navigation items in index.html into a single master 'System Studio' icon (#nav-settings under data-view="system-settings"). Removed redundant settings and documentation items from the main sidebar.
+- Fix 2 (AnyDesk Studio Sub-Navigation Categorization): Structured the internal left sidebar in index.html with distinct groups for Application Settings, Security, Session, Documentation (Readme, Help & Support, User Manual), and About & Legal (About, License, Copyright, Account, Cloud Signaling).
+- Fix 3 (Comprehensive Web Content Panels): Created rich, fully grounded panels in index.html:
+  * ad-tab-readme: Presentation showcase image (Fig 1), universal artifact download table, 5 key architectural pillars, repository file map, and 3-option quick start guide.
+  * ad-tab-help: System prerequisites, network port matrix (TCP 12345/7070, UDP 21116, TCP 8088, TCP 21117), cross-platform operational procedures (Windows, macOS/Linux, Mobile), and 4 RCA troubleshooting scenarios.
+  * ad-tab-manual: 6-step human-in-the-loop (HITL) operational workflow and 10-field continuous telemetry log audit specification.
+  * ad-tab-about: jDroid-X branding banner, version 2.0.0 enterprise specifications, operator circuit (JEET / jDroid-X), and SHA-256 / Ed25519 security fingerprints.
+  * ad-tab-license: Official MIT License full legal text and commercial enterprise authorization terms.
+  * ad-tab-copyright: Official copyright statement (Copyright © 2026 JEET / jDroid-X Studio), trademark assertions, and architectural governance attribution.
+- Fix 4 (Controller Legacy Route Redirection): Updated app.js switchView() to intercept legacy hash routes (#help-support, #user-manual, #about-app, #readme) and smoothly activate the corresponding tab in System Studio. Added activateAnydeskTab() helper.
+- Fix 5 (Native C# WinForms Parity in JDroidXDeskNative.cs): Grouped the Settings Studio Activity Bar icon (⚙️) with an enriched TreeView containing Settings, Readme (Presentation), Help & Operations Guide, About jDroid-X-Desk, Software License, and Copyright & Trademarks. Implemented rich subpanels with action buttons, diagnostic telemetry clipboard copying, and direct README opening. Recompiled jDroid-X-Desk.exe cleanly with csc.exe.
+- Verification: 94/94 automated regression assertions passed in test.js. csc.exe compiled with exit code 0. Zero unresolved references.
+
+[CHANGE LOG: 2026-10-18 - Deep-Dive Due Diligence: Hardcode Removal, Sub-Screen Linking & Relational Group-By]
+- Reverse-Engineering Audit & Root Cause Analysis:
+  1. Identified leftover duplicate id="nav-settings" in index.html (lines 157 & 173). Removed duplicate to enforce strictly ONE single unified icon.
+  2. Identified orphaned sub-views in index.html with no sidebar navigation entry: #view-remote-contacts (Partners & Groups), #view-safe-zones (Safe Zones), #view-guardians-list (Guardians), and #view-live-map (Peer Mesh Map). Integrated all 4 into structured sidebar navigation sections.
+  3. Identified hardcoded user path 'C:\Users\jiten\...' across server.js, index.html, app.js, and JDroidXDeskNative.cs. Replaced all occurrences with dynamic OS environment variables (process.env.USERPROFILE, Environment.GetFolderPath(SpecialFolder.UserProfile)) and generic public fallbacks.
+  4. Identified subtle bug in app.js where Add Device modal button bypassed DeviceController.openAddModal(), failing to populate group dropdowns. Delegated modal launch directly to DeviceController.
+  5. Implemented reactive two-way synchronization in GroupController: creating, updating, or deleting a group automatically re-hydrates DeviceController dropdowns and re-filters the fleet list without requiring a page refresh.
+  6. Added relational group-by resolution to /api/devices in server.js: attaches resolved groupName to every device record and supports REST query filtering (?groupId=...). Added initial relational sample devices to database.json.
+  7. Updated C# native WinForms client (JDroidXDeskNative.cs) to dynamically resolve PowerShell terminal prompt via GetPowerShellPrompt() instead of static hardcode. Recompiled cleanly to jDroid-X-Desk.exe.
+  8. Synchronized jDroid-X-Desk-Universal.zip with fresh binary, manifests, and documentation.
+  9. Automated Verification: Expanded test suite in test.js to 104 assertions (104 PASSED, 0 FAILED). Zero broken links, zero duplicate DOM IDs, zero compiler warnings.
+

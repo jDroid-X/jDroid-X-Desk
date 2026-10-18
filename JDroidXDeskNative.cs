@@ -2959,6 +2959,17 @@ namespace JDroidXDesk.Native
         // COLLAPSIBLE BOTTOM DOCK (TERMINAL / OUTPUT / DIAGNOSTICS)
         // ======================================================================
 
+        private string GetPowerShellPrompt()
+        {
+            try
+            {
+                string up = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                if (!string.IsNullOrEmpty(up)) return "PS " + up + "> ";
+            }
+            catch { }
+            return "PS C:\\Users\\" + Environment.UserName + "> ";
+        }
+
         private void BuildBottomDockContent()
         {
             collapsibleBottomDock.Controls.Clear();
@@ -2969,7 +2980,7 @@ namespace JDroidXDesk.Native
             TabPage tabTerm = new TabPage("💻 PowerShell Terminal");
             tabTerm.BackColor = Color.FromArgb(9, 13, 22);
 
-            terminalBox = new RichTextBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(12, 16, 28), ForeColor = Color.FromArgb(16, 185, 129), Font = new Font("Consolas", 9.5f), ReadOnly = true, Text = "Windows PowerShell [jDroid-X Elevated Diagnostic Console]\nPS C:\\Users\\jiten> " };
+            terminalBox = new RichTextBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(12, 16, 28), ForeColor = Color.FromArgb(16, 185, 129), Font = new Font("Consolas", 9.5f), ReadOnly = true, Text = "Windows PowerShell [jDroid-X Elevated Diagnostic Console]\n" + GetPowerShellPrompt() };
             Panel termBottom = new Panel { Dock = DockStyle.Bottom, Height = 32, BackColor = Color.FromArgb(20, 27, 45) };
             terminalInput = new TextBox { Dock = DockStyle.Fill, BackColor = Color.FromArgb(20, 27, 45), ForeColor = Color.White, Font = new Font("Consolas", 10f, FontStyle.Bold), BorderStyle = BorderStyle.FixedSingle };
             terminalInput.KeyDown += (s, e) => {
@@ -3053,7 +3064,7 @@ namespace JDroidXDesk.Native
 
             if (cmd.ToLower() == "clear" || cmd.ToLower() == "cls")
             {
-                terminalBox.Text = "Windows PowerShell [jDroid-X Elevated Diagnostic Console]\nPS C:\\Users\\jiten> ";
+                terminalBox.Text = "Windows PowerShell [jDroid-X Elevated Diagnostic Console]\n" + GetPowerShellPrompt();
                 return;
             }
 
@@ -3074,7 +3085,7 @@ namespace JDroidXDesk.Native
                     this.Invoke((MethodInvoker)delegate {
                         if (!string.IsNullOrEmpty(output)) terminalBox.AppendText(output + "\n");
                         if (!string.IsNullOrEmpty(error)) terminalBox.AppendText("[Error] " + error + "\n");
-                        terminalBox.AppendText("PS C:\\Users\\jiten> ");
+                        terminalBox.AppendText(GetPowerShellPrompt());
                         terminalBox.SelectionStart = terminalBox.Text.Length;
                         terminalBox.ScrollToCaret();
                     });
@@ -3082,7 +3093,7 @@ namespace JDroidXDesk.Native
                 catch (Exception ex)
                 {
                     this.Invoke((MethodInvoker)delegate {
-                        terminalBox.AppendText("[Exec Exception] " + ex.Message + "\nPS C:\\Users\\jiten> ");
+                        terminalBox.AppendText("[Exec Exception] " + ex.Message + "\n" + GetPowerShellPrompt());
                     });
                 }
             });
@@ -4590,15 +4601,34 @@ namespace JDroidXDesk.Native
             header.Controls.Add(btnSave);
             header.Controls.Add(lblTitle);
 
-            SplitContainer split = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 200 };
+            SplitContainer split = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 210 };
             settingsTree = new TreeView { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9f), BackColor = Color.FromArgb(13, 21, 34), ForeColor = Color.White, BorderStyle = BorderStyle.None };
-            settingsTree.Nodes.Add("General", "General (Startup & Channel)");
-            settingsTree.Nodes.Add("Connection", "Connection & Relays (hbbs/hbbr)");
-            settingsTree.Nodes.Add("Security", "Security & IP Whitelist");
-            settingsTree.Nodes.Add("Display", "Display & Scaling");
-            settingsTree.Nodes.Add("Account", "Operator Credentials");
+            
+            TreeNode nodeSettings = new TreeNode("⚙️ Settings Studio") { Name = "General" };
+            nodeSettings.Nodes.Add("General", "General Preferences");
+            nodeSettings.Nodes.Add("Connection", "Connection & Relays (hbbs/hbbr)");
+            nodeSettings.Nodes.Add("Security", "Security & IP Whitelist");
+            nodeSettings.Nodes.Add("Display", "Display & Scaling");
+            nodeSettings.Nodes.Add("Account", "Operator Credentials");
 
-            settingsTree.AfterSelect += (s, e) => RenderSettingsSubPanel(e.Node.Name);
+            TreeNode nodeReadme = new TreeNode("📖 Readme (Presentation)") { Name = "Readme" };
+            TreeNode nodeHelp = new TreeNode("❓ Help & Operations Guide") { Name = "Help" };
+            TreeNode nodeAbout = new TreeNode("ℹ️ About jDroid-X-Desk") { Name = "About" };
+            TreeNode nodeLicense = new TreeNode("⚖️ Software License") { Name = "License" };
+            TreeNode nodeCopyright = new TreeNode("© Copyright & Trademarks") { Name = "Copyright" };
+
+            settingsTree.Nodes.Add(nodeSettings);
+            settingsTree.Nodes.Add(nodeReadme);
+            settingsTree.Nodes.Add(nodeHelp);
+            settingsTree.Nodes.Add(nodeAbout);
+            settingsTree.Nodes.Add(nodeLicense);
+            settingsTree.Nodes.Add(nodeCopyright);
+            settingsTree.ExpandAll();
+
+            settingsTree.AfterSelect += (s, e) => {
+                string cat = !string.IsNullOrEmpty(e.Node.Name) ? e.Node.Name : "General";
+                RenderSettingsSubPanel(cat);
+            };
             split.Panel1.Controls.Add(settingsTree);
 
             settingsSubContentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(20, 28, 45), Padding = new Padding(16) };
@@ -4608,7 +4638,7 @@ namespace JDroidXDesk.Native
             viewSettingsStudio.Controls.Add(header);
             header.BringToFront();
 
-            settingsTree.SelectedNode = settingsTree.Nodes[0];
+            settingsTree.SelectedNode = nodeSettings.Nodes[0];
         }
 
         private void RenderSettingsSubPanel(string category)
@@ -4637,6 +4667,55 @@ namespace JDroidXDesk.Native
                 settingsSubContentPanel.Controls.Add(tb);
                 y += 32;
                 return tb;
+            };
+
+            Action<string, string> addCard = (title, body) => {
+                Panel card = new Panel {
+                    Location = new Point(14, y),
+                    Size = new Size(580, 80),
+                    BackColor = Color.FromArgb(13, 21, 34),
+                    Padding = new Padding(10)
+                };
+                Label lt = new Label { Text = title, Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(8, 8), AutoSize = true };
+                Label lb = new Label { Text = body, Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(203, 213, 225), Location = new Point(8, 28), Size = new Size(560, 46) };
+                card.Controls.Add(lt);
+                card.Controls.Add(lb);
+                settingsSubContentPanel.Controls.Add(card);
+                y += 88;
+            };
+
+            Action<string, Action> addBtn = (btnText, onClick) => {
+                Button btn = new Button {
+                    Text = btnText,
+                    Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                    BackColor = Color.FromArgb(40, 53, 76),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Location = new Point(14, y),
+                    Size = new Size(340, 30),
+                    Cursor = Cursors.Hand
+                };
+                btn.FlatAppearance.BorderSize = 0;
+                if (onClick != null) btn.Click += (s, e) => onClick();
+                settingsSubContentPanel.Controls.Add(btn);
+                y += 38;
+            };
+
+            Action<string> addText = (text) => {
+                TextBox tb = new TextBox {
+                    Text = text,
+                    Multiline = true,
+                    ReadOnly = true,
+                    ScrollBars = ScrollBars.Vertical,
+                    Font = new Font("Consolas", 8.5f),
+                    BackColor = Color.FromArgb(10, 16, 26),
+                    ForeColor = Color.FromArgb(203, 213, 225),
+                    BorderStyle = BorderStyle.FixedSingle,
+                    Location = new Point(14, y),
+                    Size = new Size(580, 160)
+                };
+                settingsSubContentPanel.Controls.Add(tb);
+                y += 170;
             };
 
             if (category == "General")
@@ -4725,6 +4804,84 @@ namespace JDroidXDesk.Native
                 addH("Cluster & Operator Credentials");
                 addTb("Licensed Operator", db.Settings.account.username);
                 addTb("Cluster Tenant", db.Settings.account.enterpriseTenant);
+            }
+            else if (category == "Readme")
+            {
+                addH("📖 Readme: Architecture & Presentation Showcase");
+                addCard("jDroid-X-Desk Enterprise Remote Desktop", "Enterprise-grade remote desktop and machine administration workspace built with Senior Dynamic OOPS-based MVC standards. Single 117 KB universal Windows executable, zero external runtimes.");
+                addCard("1. Dynamic SHA-256 System Hardware Key", "Hardware-grounded 9-digit Desk ID (XXX-XXX-XXX) combining Windows MachineGuid, physical NIC MAC address, machine name, and CPU count. Permanent and unique across reboots.");
+                addCard("2. Google Remote Desktop 3-Card Interface", "1. Share this screen (Get Support), 2. Connect to another computer (Give Support), and 3. Recent Connections for 1-click reconnect.");
+                addCard("3. Dual Architecture & Distribution", "Standalone Native Portable Client (jDroid-X-Desk.exe pure C# .NET WinForms) alongside Full-Stack Web Gateway (Express.js + WebRTC on port 12345/7070).");
+                addCard("4. Universal Installation Artifacts", "jDroid-X-Desk.exe (117 KB), jDroid-X-Desk-Universal.zip (125 KB), Install-Or-Run.bat (SmartScreen unblocker), jDroid-X-Client.bat (technician runner).");
+
+                addBtn("📂 Open README.md in System Viewer", () => {
+                    try {
+                        string rPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "README.md");
+                        if (File.Exists(rPath)) Process.Start(rPath);
+                        else ShowToast("README.md not found in " + AppDomain.CurrentDomain.BaseDirectory);
+                    } catch (Exception ex) { ShowToast("Could not open file: " + ex.Message); }
+                });
+                addBtn("🌐 Open Web Presentation (localhost:12345)", () => {
+                    try { Process.Start("http://localhost:12345/#system-settings"); } catch {}
+                });
+                addBtn("📁 Open App Installation Folder", () => {
+                    try { Process.Start("explorer.exe", AppDomain.CurrentDomain.BaseDirectory); } catch {}
+                });
+            }
+            else if (category == "Help")
+            {
+                addH("❓ Help & Multi-OS Operations Guide");
+                addCard("Cross-Platform Operational Procedures", "Windows 7/8/10/11: Native jDroid-X-Desk.exe or Install-Or-Run.bat.\nmacOS & Linux: npm install && node server.js -> http://localhost:12345.\nMobile (iOS/Android): Open Safari/Chrome to http://<HOST-IP>:12345.");
+                addCard("Network Ports & Firewall Matrix", "TCP 12345/7070: Local Web Interface & Express REST API\nUDP 21116: STUN/TURN Encrypted P2P UDP Handshake (hbbs)\nTCP 8088: Cloud Relay Server (Google Colab / Cloudflare)\nTCP 21117: Relay Data Stream (hbbr)");
+                addCard("Root Cause Analysis (RCA) Troubleshooting", "Scenario 1: STUN Handshake error -> Whitelist UDP 21116 in firewall.\nScenario 2: RTT > 120ms input lag -> Switch to Turbo 480p mode.\nScenario 3: SmartScreen block -> Run Install-Or-Run.bat.");
+
+                addBtn("📋 Copy Diagnostic System Telemetry to Clipboard", () => {
+                    try {
+                        string telem = string.Format("jDroid-X-Desk v2.0.0 Diagnostic Report\nHost: {0}\nDesk ID: {1}\nOS: {2}\nIP: {3}\nColab Relay: {4}\nTimestamp: {5}",
+                            currentHostDesktop != null ? currentHostDesktop.Name : Environment.MachineName,
+                            currentHostDesktop != null ? currentHostDesktop.RemoteId : "Unknown",
+                            Environment.OSVersion.ToString(),
+                            currentHostDesktop != null ? currentHostDesktop.Ip : "127.0.0.1",
+                            db.Settings.connection.relayServer,
+                            DateTime.UtcNow.ToString("o"));
+                        Clipboard.SetText(telem);
+                        ShowToast("Diagnostic report copied to clipboard!");
+                    } catch (Exception ex) { ShowToast("Failed to copy report: " + ex.Message); }
+                });
+                addBtn("🌐 Open Online Help & RCA Guide", () => {
+                    try { Process.Start("http://localhost:12345/#system-settings"); } catch {}
+                });
+            }
+            else if (category == "About")
+            {
+                addH("ℹ️ About jDroid-X-Desk Universal");
+                addTb("Product Name", "jDroid-X-Desk Enterprise Universal");
+                addTb("Version", "2.0.0 (Enterprise Release)");
+                addTb("Runtime Engine", "Native .NET Framework 4.0 / 4.8 (x64/AnyCPU WinForms)");
+                addTb("Architecture Standard", "Senior Dynamic OOPS-based MVC Standard");
+                addTb("Operator Closed Circuit", "Operator: JEET | Assistant: jDroid-X");
+                addTb("Primary Hardware Security Fingerprint", "d9cc 1547 bb14 9c3c 5696 49ad 81c6 201e f3ba b02b 78a9 4e21 f1e0 83cd");
+                addTb("Authenticode Digital Authority", "jDroid-X Studio Enterprise Root CA (2026-2036)");
+
+                addBtn("🌐 Open Official Portal (www.jdroid-x.com)", () => {
+                    try { Process.Start("https://www.jdroid-x.com"); } catch {}
+                });
+                addBtn("⭐ View Source Repository on GitHub", () => {
+                    try { Process.Start("https://github.com/jDroid-X/jDroid-X-Desk"); } catch {}
+                });
+            }
+            else if (category == "License")
+            {
+                addH("⚖️ Software License Agreement");
+                addCard("Dual-Licensing Model", "Released under the permissive MIT License for open-source evaluation and community tooling, alongside Enterprise Commercial terms for mission-critical IT infrastructure deployments.");
+                addText("The MIT License (MIT)\n\nCopyright (c) 2026 JEET / jDroid-X Studio\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.");
+            }
+            else if (category == "Copyright")
+            {
+                addH("© Copyright & Trademark Declarations");
+                addCard("Official Copyright Ownership", "Copyright © 2026 JEET / jDroid-X Studio. All rights reserved.\nAll binary assemblies, source code, UI designs, and documentation are proprietary assets of JEET and jDroid-X Studio.");
+                addCard("Registered Brand Trademarks", "• jDroid-X Studio™ is an enterprise software engineering trademark.\n• jDroid-X-Desk™ is a trademark for remote desktop systems.\n• Dynamic OOPS MVC Architecture™ is an enterprise development governance standard.");
+                addCard("Architectural Governance & Attribution", "Developed in adherence to Chesterton's Fence governance: foundational system structures and verified operational layers are preserved and merged safely. Closed-circuit pair-programming (Operator: JEET | Assistant: jDroid-X).");
             }
         }
 

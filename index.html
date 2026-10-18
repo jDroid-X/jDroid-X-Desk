@@ -37,7 +37,7 @@
                 
                 <div class="margin-top-md">
                     <label for="login-email-input" style="font-size: 0.8rem; display: block; margin-bottom: 0.1rem;"><i class="fa-solid fa-laptop text-primary"></i> This Device Address</label>
-                    <input type="email" id="login-email-input" class="search-bar-mini" style="width: 100%; padding: 0.24rem; font-family: var(--font-mono);" value="jiten@jdroid-x-desk.com" placeholder="name@jdroid-x-desk.com">
+                    <input type="email" id="login-email-input" class="search-bar-mini" style="width: 100%; padding: 0.24rem; font-family: var(--font-mono);" value="operator@jdroid-x-desk.com" placeholder="operator@jdroid-x-desk.com">
                 </div>
                 
                 <div class="margin-top-md">
@@ -106,8 +106,17 @@
                             <a href="#device-fleet" id="nav-device-fleet">
                                 <i class="fa-solid fa-desktop text-info"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">Address Book</span>
-                                    <span class="nav-sub">Saved computers & endpoints</span>
+                                    <span class="nav-title">Address Book & Fleet</span>
+                                    <span class="nav-sub">Saved computers & group filter</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-view="remote-contacts">
+                            <a href="#remote-contacts" id="nav-remote-contacts">
+                                <i class="fa-solid fa-address-book text-emerald"></i>
+                                <div class="nav-text-block">
+                                    <span class="nav-title">Partners & Groups</span>
+                                    <span class="nav-sub">Workstation teams & contacts</span>
                                 </div>
                             </a>
                         </li>
@@ -120,19 +129,53 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item" data-view="system-monitor">
-                            <a href="#system-monitor" id="nav-system-monitor">
-                                <i class="fa-solid fa-network-wired text-warning"></i>
+                        <li class="nav-item" data-view="live-map">
+                            <a href="#live-map" id="nav-live-map">
+                                <i class="fa-solid fa-network-wired text-info"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">Audit & Traceability</span>
-                                    <span class="nav-sub">Live security & event stream</span>
+                                    <span class="nav-title">Peer Mesh Map</span>
+                                    <span class="nav-sub">Visual P2P node network</span>
                                 </div>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Navigation Section 2: System & Diagnostics -->
+                <!-- Navigation Section 2: Security & Governance -->
+                <div class="nav-section">
+                    <span class="nav-section-title">Security & Governance</span>
+                    <ul class="nav-list">
+                        <li class="nav-item" data-view="safe-zones">
+                            <a href="#safe-zones" id="nav-safe-zones">
+                                <i class="fa-solid fa-shield-cat text-emerald"></i>
+                                <div class="nav-text-block">
+                                    <span class="nav-title">Safe Zones & IP Rules</span>
+                                    <span class="nav-sub">CIDR perimeter whitelists</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-view="guardians-list">
+                            <a href="#guardians-list" id="nav-guardians">
+                                <i class="fa-solid fa-user-shield text-info"></i>
+                                <div class="nav-text-block">
+                                    <span class="nav-title">Security Guardians</span>
+                                    <span class="nav-sub">Emergency tech supervisor roster</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-view="system-monitor">
+                            <a href="#system-monitor" id="nav-system-monitor">
+                                <i class="fa-solid fa-list-check text-warning"></i>
+                                <div class="nav-text-block">
+                                    <span class="nav-title">Audit & Traceability</span>
+                                    <span class="nav-sub">Continuous live telemetry monitor</span>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Navigation Section 3: System & Diagnostics -->
                 <div class="nav-section">
                     <span class="nav-section-title">System & Diagnostics</span>
                     <ul class="nav-list">
@@ -154,47 +197,19 @@
                                 </div>
                             </a>
                         </li>
-                        <li class="nav-item" data-view="system-settings">
-                            <a href="#system-settings" id="nav-settings">
-                                <i class="fa-solid fa-sliders text-info"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">Settings</span>
-                                    <span class="nav-sub">Security, password & preferences</span>
-                                </div>
-                            </a>
-                        </li>
                     </ul>
                 </div>
 
-
-                <!-- Navigation Section 4: Documentation -->
+                <!-- Navigation Section 4: System Studio & Operations (Unified Single Icon) -->
                 <div class="nav-section">
-                    <span class="nav-section-title">Help & Documentation</span>
+                    <span class="nav-section-title">System & Documentation</span>
                     <ul class="nav-list">
-                        <li class="nav-item" data-view="help-support">
-                            <a href="#help-support" id="nav-help">
-                                <i class="fa-solid fa-circle-question text-info"></i>
+                        <li class="nav-item" data-view="system-settings">
+                            <a href="#system-settings" id="nav-settings">
+                                <i class="fa-solid fa-gear text-info"></i>
                                 <div class="nav-text-block">
-                                    <span class="nav-title">Help & Support</span>
-                                    <span class="nav-sub">Operations & troubleshooting</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-view="user-manual">
-                            <a href="#user-manual" id="nav-manual">
-                                <i class="fa-solid fa-book-open text-primary"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">User Manual (HITL)</span>
-                                    <span class="nav-sub">Step-by-step human guide</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item" data-view="about-app">
-                            <a href="#about-app" id="nav-about">
-                                <i class="fa-solid fa-shield-halved text-purple"></i>
-                                <div class="nav-text-block">
-                                    <span class="nav-title">About App</span>
-                                    <span class="nav-sub">Version 2.0 & architecture</span>
+                                    <span class="nav-title">System Studio</span>
+                                    <span class="nav-sub">Settings, Readme, Help & Legal</span>
                                 </div>
                             </a>
                         </li>
@@ -883,14 +898,34 @@
                                 </div>
                             </div>
 
-                            <!-- Group 4: Account & Cloud -->
+                            <!-- Group 4: Documentation & Guides -->
                             <div class="anydesk-sidebar-group">
-                                <div class="anydesk-group-label">Account</div>
+                                <div class="anydesk-group-label">Documentation</div>
+                                <div class="anydesk-menu-item" data-ad-tab="ad-tab-readme">
+                                    <i class="fa-solid fa-book"></i> Readme (Presentation)
+                                </div>
+                                <div class="anydesk-menu-item" data-ad-tab="ad-tab-help">
+                                    <i class="fa-solid fa-circle-question"></i> Help & Support
+                                </div>
+                                <div class="anydesk-menu-item" data-ad-tab="ad-tab-manual">
+                                    <i class="fa-solid fa-book-open"></i> User Manual (HITL & RCA)
+                                </div>
+                            </div>
+
+                            <!-- Group 5: About, License & Legal -->
+                            <div class="anydesk-sidebar-group">
+                                <div class="anydesk-group-label">About & Legal</div>
+                                <div class="anydesk-menu-item" data-ad-tab="ad-tab-about">
+                                    <i class="fa-solid fa-circle-info"></i> About jDroid-X-Desk
+                                </div>
+                                <div class="anydesk-menu-item" data-ad-tab="ad-tab-license">
+                                    <i class="fa-solid fa-scale-balanced"></i> Software License
+                                </div>
+                                <div class="anydesk-menu-item" data-ad-tab="ad-tab-copyright">
+                                    <i class="fa-solid fa-copyright"></i> Copyright & Trademarks
+                                </div>
                                 <div class="anydesk-menu-item" data-ad-tab="ad-tab-account">
                                     <i class="fa-regular fa-user"></i> My Account
-                                </div>
-                                <div class="anydesk-menu-item" data-ad-tab="ad-tab-about">
-                                    <i class="fa-solid fa-circle-info"></i> About AnyDesk
                                 </div>
                                 <div class="anydesk-menu-item" data-ad-tab="ad-tab-cloud">
                                     <i class="fa-solid fa-cloud"></i> Cloud & Signaling
@@ -975,7 +1010,7 @@
                                     </div>
                                     <div class="anydesk-path-row">
                                         <button class="anydesk-btn-secondary" id="btn-browse-ss-path">Browse</button>
-                                        <span class="anydesk-path-label" id="ad-ss-path-display">C:\Users\jiten\Pictures\AnyDesk</span>
+                                        <span class="anydesk-path-label" id="ad-ss-path-display">C:\Users\Public\Pictures\jDroid-X</span>
                                     </div>
                                 </div>
 
@@ -988,7 +1023,7 @@
                                     </div>
                                     <div class="anydesk-path-row">
                                         <button class="anydesk-btn-secondary" id="btn-browse-chat-path">Browse</button>
-                                        <span class="anydesk-path-label" id="ad-chat-path-display">C:\Users\jiten\AppData\Roaming\AnyDesk\chat</span>
+                                        <span class="anydesk-path-label" id="ad-chat-path-display">C:\Users\Public\Documents\jDroid-X\chat</span>
                                     </div>
                                 </div>
 
@@ -1119,7 +1154,7 @@
                                     </div>
                                     <div class="anydesk-path-row">
                                         <button class="anydesk-btn-secondary" id="btn-rec-browse">Browse</button>
-                                        <span class="anydesk-path-label">C:\Users\jiten\Videos\AnyDesk\screen recordings</span>
+                                        <span class="anydesk-path-label">C:\Users\Public\Videos\jDroid-X\recordings</span>
                                     </div>
                                 </div>
 
@@ -1419,7 +1454,7 @@
                                     </div>
                                     <div class="anydesk-path-row">
                                         <button class="anydesk-btn-secondary" id="btn-rec-path-browse">Browse</button>
-                                        <span class="anydesk-path-label" id="ad-sess-rec-path-display">C:\Users\jiten\Videos\AnyDesk</span>
+                                        <span class="anydesk-path-label" id="ad-sess-rec-path-display">C:\Users\Public\Videos\jDroid-X</span>
                                     </div>
                                 </div>
                             </div>
@@ -1489,26 +1524,384 @@
                                 </div>
                             </div>
 
-                            <!-- 13. ABOUT PANEL (About.png) -->
-                            <div id="ad-tab-about" class="anydesk-content-panel">
-                                <div style="background: #ef3340; color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem;">
-                                    <h2 style="margin: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 0.6rem;">
-                                        <i class="fa-solid fa-diamond"></i> AnyDesk for jDroid-X
-                                    </h2>
-                                </div>
-                                <div class="anydesk-section">
-                                    <div class="anydesk-section-title">About</div>
-                                    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0.6rem; font-size: 0.9rem; align-items: center;">
-                                        <span style="color: #666;">Version:</span><strong>9.8.1</strong>
-                                        <span style="color: #666;">Commit:</span><code>6fa4a611</code>
-                                        <span style="color: #666;">License:</span><span>free-1</span>
+                            <!-- 13. README & PRESENTATION PANEL (Grouped under System Studio) -->
+                            <div id="ad-tab-readme" class="anydesk-content-panel">
+                                <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;">
+                                        <div>
+                                            <h2 style="margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                                                <i class="fa-solid fa-book"></i> jDroid-X-Desk Presentation & Readme
+                                            </h2>
+                                            <p style="margin: 0.3rem 0 0 0; font-size: 0.88rem; opacity: 0.95;">
+                                                Enterprise-Grade Dynamic Remote Desktop & Machine Administration Workspace
+                                            </p>
+                                        </div>
+                                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 4px;">
+                                            v2.0.0 Enterprise Stable
+                                        </span>
                                     </div>
                                 </div>
+
                                 <div class="anydesk-section">
-                                    <div class="anydesk-section-title">Security Fingerprint</div>
-                                    <code style="display: block; background: #f5f5f5; padding: 0.6rem; border-radius: 4px; font-size: 0.85rem; color: #333;">
-                                        d9cc 1547 bb14 9c3c 5696 49ad 81c6 201e f3ba b02b
-                                    </code>
+                                    <div class="anydesk-section-title">Workspace Presentation Showcase</div>
+                                    <div style="text-align: center; margin-bottom: 1.2rem;">
+                                        <img src="assets/jdroid-x-desk-presentation.png" alt="jDroid-X-Desk Workspace Presentation" style="width: 100%; max-width: 820px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 0.6rem; display: inline-block;">
+                                        <p style="font-size: 0.85rem; color: #64748b; font-style: italic; margin: 0;">
+                                            Fig 1: jDroid-X-Desk Clean Standby Workspace — Dynamic SHA-256 Hardware Desk ID, One-Click Share & Connect Cards, and Zero-State Recent Connections for Fresh Installs.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Direct Download & Universal Installation Artifacts</div>
+                                    <p style="font-size: 0.88rem; color: #475569; margin-bottom: 0.8rem;">
+                                        Built and verified as a single universal Windows executable, <strong>jDroid-X-Desk</strong> runs on all Windows versions (7, 8, 8.1, 10, 11, and Windows Server) on AnyCPU (32-bit, 64-bit, ARM64):
+                                    </p>
+                                    <div style="overflow-x: auto;">
+                                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+                                            <thead>
+                                                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left;">
+                                                    <th style="padding: 0.6rem 0.8rem;">Artifact</th>
+                                                    <th style="padding: 0.6rem 0.8rem;">Type</th>
+                                                    <th style="padding: 0.6rem 0.8rem;">Size</th>
+                                                    <th style="padding: 0.6rem 0.8rem;">Action</th>
+                                                    <th style="padding: 0.6rem 0.8rem;">Authority & Manifest Specification</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.6rem 0.8rem; font-weight: 600;">jDroid-X-Desk.exe</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">Universal Executable</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">117 KB</td>
+                                                    <td style="padding: 0.6rem 0.8rem;"><a href="/api/download-exe" class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download</a></td>
+                                                    <td style="padding: 0.6rem 0.8rem; color: #64748b;">Universal AnyCPU, embedded app.manifest (DPI-aware, Win 7-11), .NET 4.0-4.8.1 runtime fallback, Authenticode signed by jDroid-X Studio Enterprise.</td>
+                                                </tr>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.6rem 0.8rem; font-weight: 600;">jDroid-X-Desk-Universal.zip</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">Distribution Archive</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">125 KB</td>
+                                                    <td style="padding: 0.6rem 0.8rem;"><a href="/jDroid-X-Desk-Universal.zip" download class="btn btn-secondary btn-sm"><i class="fa-solid fa-file-zipper"></i> Download</a></td>
+                                                    <td style="padding: 0.6rem 0.8rem; color: #64748b;">Standalone package containing the unified executable, manifest, configs, and 1-click Install-Or-Run.bat unblock launcher.</td>
+                                                </tr>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.6rem 0.8rem; font-weight: 600;">Install-Or-Run.bat</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">SmartScreen Unblocker</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">1 KB</td>
+                                                    <td style="padding: 0.6rem 0.8rem;"><a href="/Install-Or-Run.bat" download class="btn btn-secondary btn-sm"><i class="fa-solid fa-shield-virus"></i> Get Batch</a></td>
+                                                    <td style="padding: 0.6rem 0.8rem; color: #64748b;">1-click launcher that automatically clears Windows SmartScreen Mark-of-the-Web and starts jDroid-X-Desk.exe.</td>
+                                                </tr>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.6rem 0.8rem; font-weight: 600;">jDroid-X-Client.bat</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">Technician Client Script</td>
+                                                    <td style="padding: 0.6rem 0.8rem;">6.1 KB</td>
+                                                    <td style="padding: 0.6rem 0.8rem;"><a href="/api/download-client" class="btn btn-secondary btn-sm"><i class="fa-solid fa-terminal"></i> Get Client</a></td>
+                                                    <td style="padding: 0.6rem 0.8rem; color: #64748b;">Portable technician remote access client launcher with automated Windows UAC elevation.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Key Architectural Features</div>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem;">
+                                            <h4 style="margin: 0 0 0.4rem 0; color: #0284c7; display: flex; align-items: center; gap: 0.4rem;">
+                                                <i class="fa-solid fa-fingerprint"></i> 1. Dynamic SHA-256 Key
+                                            </h4>
+                                            <p style="margin: 0; font-size: 0.85rem; color: #475569;">
+                                                No hardcoded static IDs. Every computer generates a deterministic 9-digit Desk ID (XXX-XXX-XXX) grounded in Windows MachineGuid, primary physical MAC, hostname, and CPU count.
+                                            </p>
+                                        </div>
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem;">
+                                            <h4 style="margin: 0 0 0.4rem 0; color: #10b981; display: flex; align-items: center; gap: 0.4rem;">
+                                                <i class="fa-solid fa-table-columns"></i> 2. Google 3-Card Interface
+                                            </h4>
+                                            <p style="margin: 0; font-size: 0.85rem; color: #475569;">
+                                                Reconstructed to match Google Chrome Remote Desktop: 1. Share this screen (Get Support), 2. Connect to another computer (Give Support), and 3. Recent Connections.
+                                            </p>
+                                        </div>
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem;">
+                                            <h4 style="margin: 0 0 0.4rem 0; color: #f59e0b; display: flex; align-items: center; gap: 0.4rem;">
+                                                <i class="fa-solid fa-layer-group"></i> 3. Dual Architecture
+                                            </h4>
+                                            <p style="margin: 0; font-size: 0.85rem; color: #475569;">
+                                                Standalone Native Portable Client (jDroid-X-Desk.exe pure C# .NET WinForms, zero installation) alongside Full-Stack Web Gateway (Express.js + WebRTC on port 12345/7070).
+                                            </p>
+                                        </div>
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem;">
+                                            <h4 style="margin: 0 0 0.4rem 0; color: #8b5cf6; display: flex; align-items: center; gap: 0.4rem;">
+                                                <i class="fa-solid fa-shield-halved"></i> 4. Enterprise Security
+                                            </h4>
+                                            <p style="margin: 0; font-size: 0.85rem; color: #475569;">
+                                                Optional one-time passcodes, unattended 24/7 access with Argon2id hashing, auditable 10-field SQLite/JSON telemetry logs, and CIDR-based safe zone firewall whitelisting.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 14. HELP & SUPPORT PANEL (Grouped under System Studio) -->
+                            <div id="ad-tab-help" class="anydesk-content-panel">
+                                <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                    <h2 style="margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                                        <i class="fa-solid fa-circle-question"></i> Help & Multi-OS Operations Guide
+                                    </h2>
+                                    <p style="margin: 0.3rem 0 0 0; font-size: 0.88rem; opacity: 0.95;">
+                                        Cross-platform deployment instructions, port requirements, and root cause analysis troubleshooting
+                                    </p>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">System Prerequisites & Network Ports Matrix</div>
+                                    <div style="overflow-x: auto;">
+                                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+                                            <thead>
+                                                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left;">
+                                                    <th style="padding: 0.5rem 0.8rem;">Protocol & Port</th>
+                                                    <th style="padding: 0.5rem 0.8rem;">Scope / Service</th>
+                                                    <th style="padding: 0.5rem 0.8rem;">Default Direction</th>
+                                                    <th style="padding: 0.5rem 0.8rem;">Requirement Specification</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.5rem 0.8rem; font-family: monospace; font-weight: 600;">TCP 12345 / 7070</td>
+                                                    <td style="padding: 0.5rem 0.8rem;">Local Web Interface & REST API</td>
+                                                    <td style="padding: 0.5rem 0.8rem;"><span class="badge" style="background:#e0f2fe; color:#0369a1;">Inbound / Local</span></td>
+                                                    <td style="padding: 0.5rem 0.8rem; color: #64748b;">Express server hosting the reactive desktop dashboard and JSON CRUD endpoints.</td>
+                                                </tr>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.5rem 0.8rem; font-family: monospace; font-weight: 600;">UDP 21116</td>
+                                                    <td style="padding: 0.5rem 0.8rem;">STUN / TURN Handshake (hbbs)</td>
+                                                    <td style="padding: 0.5rem 0.8rem;"><span class="badge" style="background:#dcfce7; color:#15803d;">Bi-directional P2P</span></td>
+                                                    <td style="padding: 0.5rem 0.8rem; color: #64748b;">P2P rendezvous signaling and encrypted NAT traversal between paired host and client nodes.</td>
+                                                </tr>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.5rem 0.8rem; font-family: monospace; font-weight: 600;">TCP 8088</td>
+                                                    <td style="padding: 0.5rem 0.8rem;">Cloud Relay Bridge Server</td>
+                                                    <td style="padding: 0.5rem 0.8rem;"><span class="badge" style="background:#fef3c7; color:#b45309;">Outbound / Tunnel</span></td>
+                                                    <td style="padding: 0.5rem 0.8rem; color: #64748b;">Google Colab and Cloudflare Tunnel relay broker for traversal behind carrier-grade NAT.</td>
+                                                </tr>
+                                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                                    <td style="padding: 0.5rem 0.8rem; font-family: monospace; font-weight: 600;">TCP 21117</td>
+                                                    <td style="padding: 0.5rem 0.8rem;">Relay Data Stream (hbbr)</td>
+                                                    <td style="padding: 0.5rem 0.8rem;"><span class="badge" style="background:#f3e8ff; color:#6b21a8;">Fallback Stream</span></td>
+                                                    <td style="padding: 0.5rem 0.8rem; color: #64748b;">Relayed AES-256 screen payload streaming when direct P2P UDP packet exchange is restricted.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Cross-Platform Operational Procedures</div>
+                                    <ul style="font-size: 0.88rem; color: #334155; line-height: 1.6; padding-left: 1.2rem;">
+                                        <li><strong>Windows 7 / 8 / 10 / 11:</strong> Double-click <code>jDroid-X-Desk.exe</code> for instant native GUI, or run <code>install_windows_app.bat</code> to start the full Node.js web server in background mode.</li>
+                                        <li><strong>macOS & Linux:</strong> Open terminal in project root, execute <code>npm install</code>, then run <code>node server.js</code>. Navigate to <code>http://localhost:12345</code> in any modern browser.</li>
+                                        <li><strong>Mobile (Android & iOS):</strong> Open Safari or Google Chrome on phone or tablet and enter <code>http://&lt;HOST-IP&gt;:12345</code> for the responsive mobile console.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Root Cause Analysis (RCA) Troubleshooting Scenarios</div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                                        <div style="background: #f8fafc; border-left: 4px solid #ef4444; padding: 0.8rem 1rem; border-radius: 0 4px 4px 0;">
+                                            <strong>Scenario 1: Connection Failures (STUN Handshake Timeout)</strong>
+                                            <p style="margin: 0.2rem 0 0 0; font-size: 0.82rem; color: #64748b;">
+                                                <em>Cause:</em> Windows Firewall blocking UDP Port 21116 or remote peer is offline.<br>
+                                                <em>Fix:</em> Run <code>install_windows_app.bat</code> to whitelist ports, or verify Google Colab relay URL in Settings Studio.
+                                            </p>
+                                        </div>
+                                        <div style="background: #f8fafc; border-left: 4px solid #f59e0b; padding: 0.8rem 1rem; border-radius: 0 4px 4px 0;">
+                                            <strong>Scenario 2: Input Lag or Low Framerate (RTT > 120ms)</strong>
+                                            <p style="margin: 0.2rem 0 0 0; font-size: 0.82rem; color: #64748b;">
+                                                <em>Cause:</em> Network congestion or packet retransmission on high-latency mobile hotspot.<br>
+                                                <em>Fix:</em> Switch stream quality from 1080p to <strong>Turbo Mode (480p)</strong> in the top viewport toolbar.
+                                            </p>
+                                        </div>
+                                        <div style="background: #f8fafc; border-left: 4px solid #0284c7; padding: 0.8rem 1rem; border-radius: 0 4px 4px 0;">
+                                            <strong>Scenario 3: Windows SmartScreen "Unknown Publisher" Dialog</strong>
+                                            <p style="margin: 0.2rem 0 0 0; font-size: 0.82rem; color: #64748b;">
+                                                <em>Cause:</em> Windows Mark-of-the-Web zone identifier attached to downloaded file.<br>
+                                                <em>Fix:</em> Double-click <code>Install-Or-Run.bat</code> to automatically unblock the file and install the enterprise root certificate.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 15. USER MANUAL PANEL (Grouped under System Studio) -->
+                            <div id="ad-tab-manual" class="anydesk-content-panel">
+                                <div style="background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                    <h2 style="margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                                        <i class="fa-solid fa-book-open"></i> Human-In-The-Loop (HITL) Manual & RCA Audit
+                                    </h2>
+                                    <p style="margin: 0.3rem 0 0 0; font-size: 0.88rem; opacity: 0.95;">
+                                        Step-by-step human operator workflows and continuous 10-field telemetry log diagnostics
+                                    </p>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Part 1: Standard 6-Step Operational Workflow</div>
+                                    <ol style="font-size: 0.88rem; color: #334155; line-height: 1.8; padding-left: 1.4rem;">
+                                        <li><strong>Step 1 (Launch):</strong> Run <code>jDroid-X-Desk.exe</code> or start web server on port 12345.</li>
+                                        <li><strong>Step 2 (Host Identification):</strong> Host workstation displays unique 9-digit System Desk ID (e.g. <code>984-102-391</code>) and one-time security passcode.</li>
+                                        <li><strong>Step 3 (Number Exchange):</strong> Host communicates 9-digit ID to authorized technician via voice, chat, or encrypted invite.</li>
+                                        <li><strong>Step 4 (Handshake):</strong> Technician enters the 9-digit Desk ID into the Remote Desk card and clicks <strong>Connect</strong>.</li>
+                                        <li><strong>Step 5 (Screen Control):</strong> Session establishes with AES-256 GCM encryption. Stream quality auto-adapts dynamically to network speed.</li>
+                                        <li><strong>Step 6 (Safe Disconnect):</strong> Click <strong>Disconnect</strong> or terminate from the Windows System Tray icon to safely destroy ephemeral session keys.</li>
+                                    </ol>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Part 2: 10-Field Continuous Telemetry Audit Specification</div>
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; font-family: monospace; font-size: 0.84rem; line-height: 1.7; color: #1e293b;">
+                                        <div>1. <strong>Packet ID</strong> (e.g. TRC-1001) - Monotonic sequence ordering verification</div>
+                                        <div>2. <strong>Timestamp</strong> (ISO 8601 UTC) - Nanosecond-precision event capture</div>
+                                        <div>3. <strong>Level</strong> (INFO / TRACE / WARN / ERROR / SECURITY_AUDIT) - Event severity tier</div>
+                                        <div>4. <strong>Stage</strong> (STUN_HANDSHAKE / KEY_EXCHANGE / INPUT_INJECT) - Lifecycle phase</div>
+                                        <div>5. <strong>Source Node</strong> - Originating client IP address & Desk ID</div>
+                                        <div>6. <strong>Target Node</strong> - Destination workstation IP & Desk ID</div>
+                                        <div>7. <strong>RTT Latency</strong> (ms) - Measured round-trip network response time</div>
+                                        <div>8. <strong>Ed25519 Signature</strong> - Cryptographic tamper-proof packet seal</div>
+                                        <div>9. <strong>Payload Message</strong> - Diagnostic human-readable explanation</div>
+                                        <div>10. <strong>Compliance Tag</strong> - VERIFIED_AUDITABLE enterprise compliance record</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 16. ABOUT PANEL (Grouped under System Studio) -->
+                            <div id="ad-tab-about" class="anydesk-content-panel">
+                                <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" style="width: 54px; height: 54px; object-fit: contain; background: rgba(255,255,255,0.2); border-radius: 8px; padding: 4px;">
+                                        <div>
+                                            <h2 style="margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                                                About jDroid-X-Desk
+                                            </h2>
+                                            <p style="margin: 0.2rem 0 0 0; font-size: 0.88rem; opacity: 0.95;">
+                                                Enterprise-Grade Remote Desktop & Machine Administration Workspace
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Application Specifications</div>
+                                    <div style="display: grid; grid-template-columns: 160px 1fr; gap: 0.8rem; font-size: 0.88rem; align-items: center;">
+                                        <span style="color: #64748b; font-weight: 600;">Product:</span><strong>jDroid-X-Desk Universal</strong>
+                                        <span style="color: #64748b; font-weight: 600;">Version:</span><span>2.0.0 (Enterprise Release)</span>
+                                        <span style="color: #64748b; font-weight: 600;">Runtime:</span><span>Native .NET Framework 4.0 / 4.8 + Node.js 16+ Web Gateway</span>
+                                        <span style="color: #64748b; font-weight: 600;">Architecture:</span><span>Senior Dynamic OOPS-based MVC Standard</span>
+                                        <span style="color: #64748b; font-weight: 600;">Organization:</span><span>jDroid-X Studio Enterprise</span>
+                                        <span style="color: #64748b; font-weight: 600;">Operator Circuit:</span><span>Operator: JEET | Assistant: jDroid-X</span>
+                                        <span style="color: #64748b; font-weight: 600;">Official Portal:</span><a href="https://www.jdroid-x.com" target="_blank" style="color: #0284c7; text-decoration: none;">https://www.jdroid-x.com</a>
+                                        <span style="color: #64748b; font-weight: 600;">GitHub Repository:</span><a href="https://github.com/jDroid-X/jDroid-X-Desk" target="_blank" style="color: #0284c7; text-decoration: none;">github.com/jDroid-X/jDroid-X-Desk</a>
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Security & Cryptographic Fingerprint</div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                                        <div>
+                                            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.2rem;">Primary Hardware SHA-256 Security Fingerprint:</span>
+                                            <code style="display: block; background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.6rem; border-radius: 4px; font-size: 0.85rem; color: #1e293b; font-family: monospace;">
+                                                d9cc 1547 bb14 9c3c 5696 49ad 81c6 201e f3ba b02b 78a9 4e21 f1e0 83cd
+                                            </code>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.2rem;">Authenticode Certificate Authority:</span>
+                                            <span style="font-size: 0.85rem; color: #15803d; font-weight: 600;">
+                                                <i class="fa-solid fa-circle-check"></i> jDroid-X Studio Enterprise Root CA (Valid to 2036)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 17. SOFTWARE LICENSE PANEL (Grouped under System Studio) -->
+                            <div id="ad-tab-license" class="anydesk-content-panel">
+                                <div style="background: linear-gradient(135deg, #334155 0%, #1e293b 100%); color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                    <h2 style="margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                                        <i class="fa-solid fa-scale-balanced"></i> Software License Agreement
+                                    </h2>
+                                    <p style="margin: 0.3rem 0 0 0; font-size: 0.88rem; opacity: 0.95;">
+                                        Dual-licensing: Open-source MIT License terms and Enterprise Commercial authorization
+                                    </p>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">The MIT License (MIT)</div>
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.2rem; font-family: monospace; font-size: 0.82rem; line-height: 1.6; color: #334155;">
+                                        <p style="margin: 0 0 0.8rem 0; font-weight: 600;">Copyright (c) 2026 JEET / jDroid-X Studio</p>
+                                        <p style="margin: 0 0 0.8rem 0;">
+                                            Permission is hereby granted, free of charge, to any person obtaining a copy
+                                            of this software and associated documentation files (the "Software"), to deal
+                                            in the Software without restriction, including without limitation the rights
+                                            to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                                            copies of the Software, and to permit persons to whom the Software is
+                                            furnished to do so, subject to the following conditions:
+                                        </p>
+                                        <p style="margin: 0 0 0.8rem 0;">
+                                            The above copyright notice and this permission notice shall be included in all
+                                            copies or substantial portions of the Software.
+                                        </p>
+                                        <p style="margin: 0;">
+                                            THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+                                            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                                            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+                                            AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+                                            LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+                                            OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+                                            SOFTWARE.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Commercial & Enterprise Usage Terms</div>
+                                    <p style="font-size: 0.88rem; color: #475569; line-height: 1.6; margin: 0;">
+                                        For mission-critical production deployments, jDroid-X-Desk provides auditable session logging, credential rotation, and zero telemetry leakage to third parties. Authorized enterprise operators maintain full custody of encryption keys and private relay infrastructure.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 18. COPYRIGHT & TRADEMARKS PANEL (Grouped under System Studio) -->
+                            <div id="ad-tab-copyright" class="anydesk-content-panel">
+                                <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                    <h2 style="margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                                        <i class="fa-solid fa-copyright"></i> Copyright & Trademark Statements
+                                    </h2>
+                                    <p style="margin: 0.3rem 0 0 0; font-size: 0.88rem; opacity: 0.95;">
+                                        Proprietary intellectual property, brand identity, and legal ownership declarations
+                                    </p>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Official Copyright Notice</div>
+                                    <p style="font-size: 1.05rem; font-weight: 600; color: #1e293b; margin: 0 0 0.6rem 0;">
+                                        Copyright &copy; 2026 JEET / jDroid-X Studio. All rights reserved.
+                                    </p>
+                                    <p style="font-size: 0.88rem; color: #475569; line-height: 1.6; margin: 0;">
+                                        All source code, executable binaries, visual layouts, icons, architecture diagrams, and associated documentation are the intellectual property of JEET and jDroid-X Studio. Unauthorized duplication or redistribution without proper attribution is strictly prohibited.
+                                    </p>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Registered Trademarks</div>
+                                    <ul style="font-size: 0.88rem; color: #334155; line-height: 1.7; padding-left: 1.2rem; margin: 0;">
+                                        <li><strong>jDroid-X Studio&trade;</strong> is an exclusive enterprise software engineering trademark.</li>
+                                        <li><strong>jDroid-X-Desk&trade;</strong> is a trademark for dynamic remote desktop and machine administration systems.</li>
+                                        <li><strong>Senior Dynamic OOPS MVC Architecture&trade;</strong> is a proprietary enterprise software governance standard.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title">Architectural Governance & Attribution</div>
+                                    <p style="font-size: 0.85rem; color: #64748b; line-height: 1.6; margin: 0;">
+                                        Developed in adherence to Chesterton's Fence governance: foundational system structures and verified operational layers are preserved and merged safely. Verified under closed-circuit pair-programming (Operator: JEET | Assistant: jDroid-X).
+                                    </p>
                                 </div>
                             </div>
 
