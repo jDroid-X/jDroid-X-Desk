@@ -17,7 +17,7 @@
       "colabCloudRelay": true,
       "proxyServer": "",
       "idServer": "relay.jdroid-x.net:21116",
-      "relayServer": "https://arrival-propecia-talked-cruz.trycloudflare.com",
+      "relayServer": "",
       "customDomain": "https://test.jdroid-x.net",
       "webRepoUrl": "https://github.com/jDroid-X/jDroid-X-Web",
       "colabNotebookUrl": "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai",
@@ -53,7 +53,7 @@
       "licenseType": "Enterprise Platinum (Unlimited)",
       "enterpriseTenant": "jDroid-X Workstation"
     },
-    "updatedAt": "2026-10-18T17:54:50.029Z"
+    "updatedAt": "2026-10-19T14:34:21.083Z"
   },
   "serverConfig": {
     "activeEngine": "sunshine",
@@ -277,19 +277,19 @@
   "notifications": [],
   "logs": [
     {
-      "id": "REQ-1792346090189-963",
+      "id": "REQ-1792420461149-2263",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "DELETE",
       "url": "/api/admin/logs",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 11,
-      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (11ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:54:50.189Z"
+      "rttMs": 4,
+      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (4ms) from 127.0.0.1",
+      "timestamp": "2026-10-19T14:34:21.149Z"
     },
     {
-      "id": "REQ-1792346147022-964",
+      "id": "REQ-1792420489529-2264",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -298,34 +298,10 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:55:47.022Z"
+      "timestamp": "2026-10-19T14:34:49.529Z"
     },
     {
-      "id": "REQ-1792346147026-965",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 0,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (0ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:55:47.026Z"
-    },
-    {
-      "id": "REQ-1792346207012-966",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:56:47.012Z"
-    },
-    {
-      "id": "REQ-1792346207016-967",
+      "id": "REQ-1792420489532-2265",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -334,79 +310,7 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:56:47.016Z"
-    },
-    {
-      "id": "REQ-1792346267017-968",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:57:47.017Z"
-    },
-    {
-      "id": "REQ-1792346267021-969",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:57:47.021Z"
-    },
-    {
-      "id": "REQ-1792346327018-970",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:58:47.018Z"
-    },
-    {
-      "id": "REQ-1792346327022-971",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:58:47.022Z"
-    },
-    {
-      "id": "REQ-1792346387029-972",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:59:47.029Z"
-    },
-    {
-      "id": "REQ-1792346387037-973",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-18T17:59:47.037Z"
+      "timestamp": "2026-10-19T14:34:49.532Z"
     }
   ],
   "invites": [
@@ -422,6 +326,32 @@
       "status": "ACCEPTED",
       "createdAt": "2026-10-18T17:54:49.303Z",
       "respondedAt": "2026-10-18T17:54:49.326Z"
+    },
+    {
+      "id": "INV-1792420075246-52",
+      "targetId": "JDX-TEST-TGT",
+      "sourceId": "JDX-TEST-SRC",
+      "permissions": {
+        "screen": true,
+        "keyboard": true,
+        "clipboard": true
+      },
+      "status": "ACCEPTED",
+      "createdAt": "2026-10-19T14:27:55.246Z",
+      "respondedAt": "2026-10-19T14:27:55.261Z"
+    },
+    {
+      "id": "INV-1792420460644-164",
+      "targetId": "JDX-TEST-TGT",
+      "sourceId": "JDX-TEST-SRC",
+      "permissions": {
+        "screen": true,
+        "keyboard": true,
+        "clipboard": true
+      },
+      "status": "ACCEPTED",
+      "createdAt": "2026-10-19T14:34:20.644Z",
+      "respondedAt": "2026-10-19T14:34:20.657Z"
     }
   ]
 }
