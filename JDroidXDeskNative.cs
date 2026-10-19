@@ -2943,8 +2943,9 @@ namespace JDroidXDesk.Native
                     if (!string.IsNullOrEmpty(_localDeskId) && _udpBroadcastSender != null)
                     {
                         string localIp = GetPrimaryLocalIp();
-                        string beaconMsg = string.Format("JDX_BEACON|{0}|{1}|{2}|{3}",
-                            _localDeskId, localIp, _localHttpPort, Environment.MachineName);
+                        string activeTun = (CloudflareTunnelEngine.IsRunning && !string.IsNullOrEmpty(CloudflareTunnelEngine.ActiveTunnelUrl)) ? CloudflareTunnelEngine.ActiveTunnelUrl : "";
+                        string beaconMsg = string.Format("JDX_BEACON|{0}|{1}|{2}|{3}|{4}",
+                            _localDeskId, localIp, _localHttpPort, Environment.MachineName, activeTun);
                         byte[] data = System.Text.Encoding.UTF8.GetBytes(beaconMsg);
                         IPEndPoint ep = new IPEndPoint(IPAddress.Broadcast, DISCOVERY_PORT);
                         _udpBroadcastSender.Send(data, data.Length, ep);
@@ -2976,6 +2977,7 @@ namespace JDroidXDesk.Native
                                 string senderDeskId = parts[1];
                                 string senderIp = parts[2];
                                 string senderPort = parts[3];
+                                string senderTun = (parts.Length >= 5) ? parts[4] : "";
 
                                 if (!string.IsNullOrEmpty(_localDeskId) && senderDeskId.Replace("-", "") == _localDeskId.Replace("-", ""))
                                     continue;
@@ -2987,6 +2989,10 @@ namespace JDroidXDesk.Native
 
                                 string endpoint = string.Format("http://{0}:{1}", senderIp, senderPort);
                                 RegisterDiscoveredDesk(senderDeskId, endpoint);
+                                if (!string.IsNullOrEmpty(senderTun))
+                                {
+                                    RegisterDiscoveredDesk(senderDeskId + "_tunnel", senderTun);
+                                }
                             }
                         }
                         else if (msg.StartsWith("JDX_QUERY|"))
@@ -2999,8 +3005,9 @@ namespace JDroidXDesk.Native
                                 if (!string.IsNullOrEmpty(myCleanId) && (queryDeskId == myCleanId || queryDeskId == "*"))
                                 {
                                     string localIp = GetPrimaryLocalIp();
-                                    string replyMsg = string.Format("JDX_REPLY|{0}|{1}|{2}|{3}",
-                                        _localDeskId, localIp, _localHttpPort, Environment.MachineName);
+                                    string activeTun = (CloudflareTunnelEngine.IsRunning && !string.IsNullOrEmpty(CloudflareTunnelEngine.ActiveTunnelUrl)) ? CloudflareTunnelEngine.ActiveTunnelUrl : "";
+                                    string replyMsg = string.Format("JDX_REPLY|{0}|{1}|{2}|{3}|{4}",
+                                        _localDeskId, localIp, _localHttpPort, Environment.MachineName, activeTun);
                                     byte[] replyData = System.Text.Encoding.UTF8.GetBytes(replyMsg);
                                     if (_udpBroadcastSender != null)
                                     {
@@ -5542,6 +5549,17 @@ namespace JDroidXDesk.Native
                 else
                 {
                     LanDiscoveryEngine.Instance.BroadcastQuery(targetId);
+                    Thread.Sleep(50);
+                    if (LanDiscoveryEngine.Instance.TryGetDeskEndpoint(targetId, out lanEp))
+                    {
+                        if (!candidateUrls.Contains(lanEp)) candidateUrls.Add(lanEp);
+                    }
+                }
+
+                string tunEp;
+                if (LanDiscoveryEngine.Instance.TryGetDeskEndpoint(targetId + "_tunnel", out tunEp))
+                {
+                    if (!candidateUrls.Contains(tunEp)) candidateUrls.Add(tunEp);
                 }
             }
 
@@ -7208,34 +7226,38 @@ namespace JDroidXDesk.Native
                         return;
                     }
 
-                    // Auto-normalize Desk ID (e.g. "729 928 576" or "729928576" -> "729-928-576")
-                    string digitsOnly = System.Text.RegularExpressions.Regex.Replace(targetId, @"[^\d]", "");
-                    if (digitsOnly.Length == 9)
+                    bool isDirectEndpoint = targetId.Contains(".");
+                    if (!isDirectEndpoint)
                     {
-                        targetId = string.Format("{0}-{1}-{2}", digitsOnly.Substring(0, 3), digitsOnly.Substring(3, 3), digitsOnly.Substring(6, 3));
-                        txtTargetId.Text = targetId;
-                        if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
-                        if (modernCardTargetBox != null) modernCardTargetBox.Text = targetId;
-                    }
-
-                    // Intelligent Fuzzy Typo & Candidate Detection
-                    string fuzzyCandidate = FindFuzzyMatch(digitsOnly);
-                    if (!string.IsNullOrEmpty(fuzzyCandidate) && fuzzyCandidate != targetId)
-                    {
-                        int opt = ModernMultiOptionDialog.Show(this, "Target Device Typo Detected",
-                            string.Format("Target device '{0}' appears to be a typo.\n\nActive registered workstation '{1}' was found.\nWould you like to auto-correct?", targetId, fuzzyCandidate),
-                            new string[] { "⚡ Auto-Correct & Connect", "Connect As-Is", "Cancel" });
-
-                        if (opt == 0)
+                        // Auto-normalize Desk ID (e.g. "729 928 576" or "729928576" -> "729-928-576")
+                        string digitsOnly = System.Text.RegularExpressions.Regex.Replace(targetId, @"[^\d]", "");
+                        if (digitsOnly.Length == 9)
                         {
-                            targetId = fuzzyCandidate;
+                            targetId = string.Format("{0}-{1}-{2}", digitsOnly.Substring(0, 3), digitsOnly.Substring(3, 3), digitsOnly.Substring(6, 3));
                             txtTargetId.Text = targetId;
                             if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
                             if (modernCardTargetBox != null) modernCardTargetBox.Text = targetId;
                         }
-                        else if (opt == 2 || opt == -1)
+
+                        // Intelligent Fuzzy Typo & Candidate Detection
+                        string fuzzyCandidate = FindFuzzyMatch(digitsOnly);
+                        if (!string.IsNullOrEmpty(fuzzyCandidate) && fuzzyCandidate != targetId)
                         {
-                            return; // User canceled
+                            int opt = ModernMultiOptionDialog.Show(this, "Target Device Typo Detected",
+                                string.Format("Target device '{0}' appears to be a typo.\n\nActive registered workstation '{1}' was found.\nWould you like to auto-correct?", targetId, fuzzyCandidate),
+                                new string[] { "⚡ Auto-Correct & Connect", "Connect As-Is", "Cancel" });
+
+                            if (opt == 0)
+                            {
+                                targetId = fuzzyCandidate;
+                                txtTargetId.Text = targetId;
+                                if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
+                                if (modernCardTargetBox != null) modernCardTargetBox.Text = targetId;
+                            }
+                            else if (opt == 2 || opt == -1)
+                            {
+                                return; // User canceled
+                            }
                         }
                     }
 

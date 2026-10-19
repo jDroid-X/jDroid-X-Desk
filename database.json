@@ -53,7 +53,7 @@
       "licenseType": "Enterprise Platinum (Unlimited)",
       "enterpriseTenant": "jDroid-X Workstation"
     },
-    "updatedAt": "2026-10-19T14:34:21.083Z"
+    "updatedAt": "2026-10-19T16:09:12.356Z"
   },
   "serverConfig": {
     "activeEngine": "sunshine",
@@ -277,40 +277,16 @@
   "notifications": [],
   "logs": [
     {
-      "id": "REQ-1792420461149-2263",
+      "id": "REQ-1792426152423-2559",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "DELETE",
       "url": "/api/admin/logs",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-19T14:34:21.149Z"
-    },
-    {
-      "id": "REQ-1792420489529-2264",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/metrics",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/metrics -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-19T14:34:49.529Z"
-    },
-    {
-      "id": "REQ-1792420489532-2265",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/admin/logs?level=ALL&limit=150",
-      "ip": "127.0.0.1",
-      "statusCode": 200,
-      "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/admin/logs?level=ALL&limit=150 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-19T14:34:49.532Z"
+      "rttMs": 5,
+      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (5ms) from 127.0.0.1",
+      "timestamp": "2026-10-19T16:09:12.423Z"
     }
   ],
   "invites": [
@@ -352,6 +328,32 @@
       "status": "ACCEPTED",
       "createdAt": "2026-10-19T14:34:20.644Z",
       "respondedAt": "2026-10-19T14:34:20.657Z"
+    },
+    {
+      "id": "INV-1792424700111-977",
+      "targetId": "JDX-TEST-TGT",
+      "sourceId": "JDX-TEST-SRC",
+      "permissions": {
+        "screen": true,
+        "keyboard": true,
+        "clipboard": true
+      },
+      "status": "ACCEPTED",
+      "createdAt": "2026-10-19T15:45:00.111Z",
+      "respondedAt": "2026-10-19T15:45:00.128Z"
+    },
+    {
+      "id": "INV-1792426151896-299",
+      "targetId": "JDX-TEST-TGT",
+      "sourceId": "JDX-TEST-SRC",
+      "permissions": {
+        "screen": true,
+        "keyboard": true,
+        "clipboard": true
+      },
+      "status": "ACCEPTED",
+      "createdAt": "2026-10-19T16:09:11.896Z",
+      "respondedAt": "2026-10-19T16:09:11.912Z"
     }
   ]
 }
