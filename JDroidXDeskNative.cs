@@ -6225,56 +6225,12 @@ namespace JDroidXDesk.Native
                 // Re-arrange Engine Pill
                 if (pnlEnginePill != null) pnlEnginePill.Width = dynW;
 
-                // Re-arrange Step 1: Colab Card
-                if (cardColab != null)
-                {
-                    cardColab.Width = dynW;
-                    bool narrowColab = dynW < 780;
-                    if (txtColabInput != null)
-                    {
-                        txtColabInput.Width = narrowColab ? Math.Max(220, dynW - 32) : Math.Max(260, dynW - 350);
-                    }
-                    if (btnPasteColab != null && btnApplyColab != null && btnColabNotebook != null)
-                    {
-                        if (narrowColab)
-                        {
-                            btnPasteColab.Location = new Point(16, 102);
-                            btnApplyColab.Location = new Point(btnPasteColab.Right + 8, 102);
-                            if (btnStartLocalRelay != null)
-                            {
-                                btnStartLocalRelay.Location = new Point(btnApplyColab.Right + 8, 102);
-                                btnColabNotebook.Location = new Point(btnStartLocalRelay.Right + 8, 102);
-                            }
-                            else
-                            {
-                                btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 102);
-                            }
-                            cardColab.Height = 146;
-                        }
-                        else
-                        {
-                            btnPasteColab.Location = new Point(txtColabInput.Right + 8, 64);
-                            btnApplyColab.Location = new Point(btnPasteColab.Right + 8, 64);
-                            if (btnStartLocalRelay != null)
-                            {
-                                btnStartLocalRelay.Location = new Point(btnApplyColab.Right + 8, 64);
-                                btnColabNotebook.Location = new Point(btnStartLocalRelay.Right + 8, 64);
-                            }
-                            else
-                            {
-                                btnColabNotebook.Location = new Point(btnApplyColab.Right + 8, 64);
-                            }
-                            cardColab.Height = 118;
-                        }
-                    }
-                }
-
-                // Calculate responsive columns for Step 2 and Step 3
+                // Calculate responsive columns for Step 1 and Step 2
                 bool isTwoCol = dynW >= 760;
                 int colW = isTwoCol ? (dynW - 16) / 2 : dynW;
                 int colH = 176;
 
-                int step2Y = (cardColab != null ? cardColab.Bottom : 140) + 14;
+                int step2Y = (pnlEnginePill != null ? pnlEnginePill.Bottom : 0) + 12;
 
                 if (cardShare != null)
                 {
@@ -6428,145 +6384,8 @@ namespace JDroidXDesk.Native
             cardContainer.Controls.Add(pnlEnginePill);
             y += 46;
 
-            // CARD 0: CONNECT TO GOOGLE COLAB CLOUD RELAY (3D Floating Card)
-            cardColab = new Panel { Size = new Size(containerW, 118), Location = new Point(0, y), BackColor = Color.Transparent };
-            cardColab.Paint += (s, e) => {
-                Color borderC = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
-                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardColab.Width - 1, cardColab.Height - 1), ThemePalette.ColorBgCard, borderC, ThemePalette.ColorShadow, 10);
-            };
-
-            string colabStatusText = isColabConnected ? "● ONLINE (Live Stream Ready)" : "○ NOT CONNECTED (Paste Colab URL)";
-            Color colabStatusColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
-
-            Label lColabTitle = new Label { Text = "⚡ Step 1: Connect to Google Colab Cloud Relay", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(16, 12), AutoSize = true };
-            Label lColabBadge = new Label { Text = colabStatusText, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = colabStatusColor, Location = new Point(Math.Max(380, containerW - 270), 14), AutoSize = true };
-            Label lColabDesc = new Label { Text = "Enter your Google Colab Cloudflare tunnel URL to bridge peer-to-peer across NAT and firewalls:", Font = new Font("Segoe UI", 8.5f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(16, 36), AutoSize = true };
-
-            txtColabInput = new TextBox {
-                Size = new Size(Math.Max(260, containerW - 360), 32),
-                Location = new Point(16, 64),
-                Font = new Font("Consolas", 10f),
-                BackColor = ThemePalette.ColorBgInput,
-                ForeColor = ThemePalette.ColorTextPrimary,
-                BorderStyle = BorderStyle.FixedSingle,
-                Text = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.relayServer)) 
-                    ? db.Settings.connection.relayServer 
-                    : "https://....trycloudflare.com"
-            };
-
-            btnPasteColab = new Button {
-                Text = "📋 Paste",
-                Size = new Size(80, 32),
-                Location = new Point(txtColabInput.Right + 8, 64),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240),
-                ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42),
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnPasteColab.FlatAppearance.BorderSize = 0;
-            btnPasteColab.Click += (s, e) => {
-                try {
-                    if (Clipboard.ContainsText()) {
-                        string clip = Clipboard.GetText().Trim();
-                        int startIdx = clip.IndexOf("https://");
-                        if (startIdx < 0) startIdx = clip.IndexOf("http://");
-                        if (startIdx >= 0) {
-                            int endIdx = clip.IndexOfAny(new char[] { ' ', '\r', '\n', '\t' }, startIdx);
-                            clip = endIdx > startIdx ? clip.Substring(startIdx, endIdx - startIdx) : clip.Substring(startIdx);
-                        }
-                        if (clip.Contains(".trycloudflare.com") || clip.StartsWith("http")) {
-                            txtColabInput.Text = clip.TrimEnd('/');
-                            ShowToast("Pasted Colab tunnel URL from clipboard");
-                        } else {
-                            MessageBox.Show("Clipboard does not contain a valid URL. Copy the 'https://...trycloudflare.com' URL from your Colab notebook first.", "Paste Colab URL", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                    }
-                } catch { }
-            };
-
-            btnApplyColab = new Button {
-                Text = "💾 Save & Connect",
-                Size = new Size(130, 32),
-                Location = new Point(btnPasteColab.Right + 8, 64),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(16, 185, 129),
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnApplyColab.FlatAppearance.BorderSize = 0;
-            btnApplyColab.Click += (s, e) => {
-                string entered = txtColabInput.Text.Trim();
-                if (!entered.StartsWith("http://") && !entered.StartsWith("https://")) entered = "https://" + entered;
-                entered = entered.TrimEnd('/');
-
-                if (db != null && db.Settings != null && db.Settings.connection != null) {
-                    db.Settings.connection.relayServer = entered;
-                    db.Settings.connection.customDomain = entered;
-                    db.Save();
-                    db.SyncYaml();
-                }
-
-                cachedWinningRelayUrl = entered;
-                lastWinningCheckTime = DateTime.MinValue;
-
-                try {
-                    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_tunnel.txt"), entered);
-                } catch { }
-
-                ShowToast("Colab Relay set to: " + entered + ". Probing server...");
-                ThreadPool.QueueUserWorkItem(delegate { 
-                    PingColabServer(); 
-                    RegisterWithColabRelay();
-                    PushLocalHostFrame();
-                });
-            };
-
-            btnStartLocalRelay = new Button {
-                Text = "⚡ Local Relay (8088)",
-                Size = new Size(140, 32),
-                Location = new Point(btnApplyColab.Right + 8, 64),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(14, 165, 233),
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnStartLocalRelay.FlatAppearance.BorderSize = 0;
-            btnStartLocalRelay.Click += (s, e) => StartLocalPythonRelay();
-
-            btnColabNotebook = new Button {
-                Text = "🌐 Notebook",
-                Size = new Size(95, 32),
-                Location = new Point(btnStartLocalRelay.Right + 8, 64),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240),
-                ForeColor = isDarkMode ? Color.FromArgb(203, 213, 225) : Color.FromArgb(30, 41, 59),
-                Font = new Font("Segoe UI", 8.5f),
-                Cursor = Cursors.Hand
-            };
-            btnColabNotebook.FlatAppearance.BorderSize = 0;
-            btnColabNotebook.Click += (s, e) => {
-                try {
-                    string nb = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.colabNotebookUrl)) ? db.Settings.connection.colabNotebookUrl : "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
-                    Process.Start(new ProcessStartInfo(nb) { UseShellExecute = true });
-                } catch { }
-            };
-
-            cardColab.Controls.Add(lColabTitle);
-            cardColab.Controls.Add(lColabBadge);
-            cardColab.Controls.Add(lColabDesc);
-            cardColab.Controls.Add(txtColabInput);
-            cardColab.Controls.Add(btnPasteColab);
-            cardColab.Controls.Add(btnApplyColab);
-            cardColab.Controls.Add(btnStartLocalRelay);
-            cardColab.Controls.Add(btnColabNotebook);
-            cardContainer.Controls.Add(cardColab);
-            y += 130;
-
             // ==================================================================
-            // RESPONSIVE 2-COLUMN GRID: STEP 2 & STEP 3 SIDE-BY-SIDE
+            // RESPONSIVE 2-COLUMN GRID: STEP 1 & STEP 2 SIDE-BY-SIDE
             // ==================================================================
             int colH = 176;
 
@@ -6580,7 +6399,7 @@ namespace JDroidXDesk.Native
                 ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardShare.Width - 1, cardShare.Height - 1), ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 10);
             };
 
-            Label lShareTitle = new Label { Text = "📥  Step 2: Share Screen (Get Support)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
+            Label lShareTitle = new Label { Text = "📥  Step 1: Share Screen (This Desk)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
             Label lShareDesc = new Label { Text = "Give your 9-digit Desk ID to allow incoming control:", Font = new Font("Segoe UI", 8.2f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 34), AutoSize = true };
 
             codeBox = new Panel { Size = new Size(Math.Min(220, colW - 28), 38), Location = new Point(14, 58), BackColor = Color.Transparent };
@@ -6636,7 +6455,7 @@ namespace JDroidXDesk.Native
             };
 
             // FRONT VIEW: Connection Actions
-            Label lConnTitle = new Label { Text = "📤  Step 3: Connect (Give Support)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
+            Label lConnTitle = new Label { Text = "📤  Step 2: Connect (Remote Desk)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
             Label lConnDesc = new Label { Text = "Enter remote 9-digit Desk ID or select fleet:", Font = new Font("Segoe UI", 8.2f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 34), AutoSize = true };
 
             int targetInputW = Math.Max(120, Math.Min(220, colW - 130));
@@ -8596,11 +8415,21 @@ namespace JDroidXDesk.Native
 
             pnlLogsGrid.Controls.Add(dgvAdminLogs);
 
+            // -------------------------------------------------------------
+            // SECTION 1.5: GOOGLE COLAB & CLOUD RELAY BROKER (OPTIONAL WAN)
+            // -------------------------------------------------------------
+            Panel secColabHdr = new Panel { Dock = DockStyle.Top, Height = 34, Padding = new Padding(4, 12, 4, 4) };
+            Label lblColabHdr = new Label { Text = "2. GOOGLE COLAB & CLOUDFLARE WAN TUNNEL (OPTIONAL CLOUD RELAY)", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorPrimary, Dock = DockStyle.Left, AutoSize = true };
+            secColabHdr.Controls.Add(lblColabHdr);
+            Panel pnlColabCard = CreateColabRelayCard();
+
             // Add sections in reverse for Dock = Top ordering
             pnlScrollAdmin.Controls.Add(pnlLogsGrid);
             pnlScrollAdmin.Controls.Add(secLogsHdr);
             pnlScrollAdmin.Controls.Add(pnlLimitsCard);
             pnlScrollAdmin.Controls.Add(secLimitsHdr);
+            pnlScrollAdmin.Controls.Add(pnlColabCard);
+            pnlScrollAdmin.Controls.Add(secColabHdr);
             pnlScrollAdmin.Controls.Add(pnlEngineCardsContainer);
             pnlScrollAdmin.Controls.Add(secEnginesHdr);
 
@@ -8627,6 +8456,146 @@ namespace JDroidXDesk.Native
                 } catch { }
             };
             adminTelemetryTimer.Start();
+        }
+
+        private Panel CreateColabRelayCard()
+        {
+            Panel card = new Panel { Dock = DockStyle.Top, Height = 126, BackColor = Color.Transparent, Padding = new Padding(12) };
+            card.Paint += (s, e) => {
+                Color borderC = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, card.Width - 1, card.Height - 1), ThemePalette.ColorBgCard, borderC, ThemePalette.ColorShadow, 8);
+            };
+
+            string colabStatusText = isColabConnected ? "● ONLINE (Live Stream Ready)" : "○ NOT CONNECTED (Paste Colab URL)";
+            Color colabStatusColor = isColabConnected ? Color.FromArgb(16, 185, 129) : Color.FromArgb(245, 158, 11);
+
+            Label lColabTitle = new Label { Text = "⚡ Google Colab Cloud Relay & Public Cloudflare Tunnel (Optional WAN Bridge)", Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(16, 10), AutoSize = true };
+            Label lColabBadge = new Label { Text = colabStatusText, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), ForeColor = colabStatusColor, Location = new Point(560, 12), AutoSize = true };
+            Label lColabDesc = new Label { Text = "Connect over the Internet across different networks using your Google Colab Cloudflare tunnel URL (Local P2P works automatically without this):", Font = new Font("Segoe UI", 8.2f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(16, 34), AutoSize = true };
+
+            txtColabInput = new TextBox {
+                Size = new Size(380, 28),
+                Location = new Point(16, 62),
+                Font = new Font("Consolas", 10f),
+                BackColor = ThemePalette.ColorBgInput,
+                ForeColor = ThemePalette.ColorTextPrimary,
+                BorderStyle = BorderStyle.FixedSingle,
+                Text = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.relayServer)) 
+                    ? db.Settings.connection.relayServer 
+                    : "https://....trycloudflare.com"
+            };
+
+            btnPasteColab = new Button {
+                Text = "📋 Paste",
+                Size = new Size(80, 28),
+                Location = new Point(txtColabInput.Right + 8, 62),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240),
+                ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42),
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnPasteColab.FlatAppearance.BorderSize = 0;
+            btnPasteColab.Click += (s, e) => {
+                try {
+                    if (Clipboard.ContainsText()) {
+                        string clip = Clipboard.GetText().Trim();
+                        int startIdx = clip.IndexOf("https://");
+                        if (startIdx < 0) startIdx = clip.IndexOf("http://");
+                        if (startIdx >= 0) {
+                            int endIdx = clip.IndexOfAny(new char[] { ' ', '\r', '\n', '\t' }, startIdx);
+                            clip = endIdx > startIdx ? clip.Substring(startIdx, endIdx - startIdx) : clip.Substring(startIdx);
+                        }
+                        if (clip.Contains(".trycloudflare.com") || clip.StartsWith("http")) {
+                            txtColabInput.Text = clip.TrimEnd('/');
+                            ShowToast("Pasted Colab tunnel URL from clipboard");
+                        } else {
+                            MessageBox.Show("Clipboard does not contain a valid URL. Copy the 'https://...trycloudflare.com' URL from your Colab notebook first.", "Paste Colab URL", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                } catch { }
+            };
+
+            btnApplyColab = new Button {
+                Text = "💾 Save & Connect",
+                Size = new Size(130, 28),
+                Location = new Point(btnPasteColab.Right + 8, 62),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(16, 185, 129),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnApplyColab.FlatAppearance.BorderSize = 0;
+            btnApplyColab.Click += (s, e) => {
+                string entered = txtColabInput.Text.Trim();
+                if (!entered.StartsWith("http://") && !entered.StartsWith("https://")) entered = "https://" + entered;
+                entered = entered.TrimEnd('/');
+
+                if (db != null && db.Settings != null && db.Settings.connection != null) {
+                    db.Settings.connection.relayServer = entered;
+                    db.Settings.connection.customDomain = entered;
+                    db.Save();
+                    db.SyncYaml();
+                }
+
+                cachedWinningRelayUrl = entered;
+                lastWinningCheckTime = DateTime.MinValue;
+
+                try {
+                    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_tunnel.txt"), entered);
+                } catch { }
+
+                ShowToast("Colab Relay set to: " + entered + ". Probing server...");
+                ThreadPool.QueueUserWorkItem(delegate { 
+                    PingColabServer(); 
+                    RegisterWithColabRelay();
+                    PushLocalHostFrame();
+                });
+            };
+
+            btnStartLocalRelay = new Button {
+                Text = "⚡ Local Relay (8088)",
+                Size = new Size(140, 28),
+                Location = new Point(btnApplyColab.Right + 8, 62),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(14, 165, 233),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnStartLocalRelay.FlatAppearance.BorderSize = 0;
+            btnStartLocalRelay.Click += (s, e) => StartLocalPythonRelay();
+
+            btnColabNotebook = new Button {
+                Text = "🌐 Open Colab Notebook",
+                Size = new Size(160, 28),
+                Location = new Point(btnStartLocalRelay.Right + 8, 62),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240),
+                ForeColor = isDarkMode ? Color.FromArgb(203, 213, 225) : Color.FromArgb(30, 41, 59),
+                Font = new Font("Segoe UI", 8.5f),
+                Cursor = Cursors.Hand
+            };
+            btnColabNotebook.FlatAppearance.BorderSize = 0;
+            btnColabNotebook.Click += (s, e) => {
+                try {
+                    string nb = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.colabNotebookUrl)) ? db.Settings.connection.colabNotebookUrl : "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
+                    Process.Start(new ProcessStartInfo(nb) { UseShellExecute = true });
+                } catch { }
+            };
+
+            card.Controls.Add(lColabTitle);
+            card.Controls.Add(lColabBadge);
+            card.Controls.Add(lColabDesc);
+            card.Controls.Add(txtColabInput);
+            card.Controls.Add(btnPasteColab);
+            card.Controls.Add(btnApplyColab);
+            card.Controls.Add(btnStartLocalRelay);
+            card.Controls.Add(btnColabNotebook);
+
+            cardColab = card;
+            return card;
         }
 
         private void PopulateProcessingLimitsToUi()
