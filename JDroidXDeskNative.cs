@@ -3023,6 +3023,25 @@ namespace JDroidXDesk.Native
         {
             try
             {
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus == OperationalStatus.Up &&
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
+                    {
+                        string desc = (ni.Description + " " + ni.Name).ToLowerInvariant();
+                        if (desc.Contains("virtual") || desc.Contains("vmware") || desc.Contains("vbox") || desc.Contains("hyper-v") || desc.Contains("wsl") || desc.Contains("tailscale"))
+                            continue;
+
+                        foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                        {
+                            if (ip.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip.Address))
+                            {
+                                return ip.Address.ToString();
+                            }
+                        }
+                    }
+                }
                 using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
                 {
                     socket.Connect("8.8.8.8", 65530);
@@ -3472,6 +3491,20 @@ namespace JDroidXDesk.Native
             SwitchWorkspaceView("Console");
             SetDoubleBuffered(this);
             StartEmbeddedRelayServer();
+
+            // Background Firewall Rule Registration (Zero-Block Inbound LAN P2P)
+            ThreadPool.QueueUserWorkItem(delegate {
+                try
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo("netsh", "advfirewall firewall add rule name=\"jDroid-X-Desk\" dir=in action=allow program=\"" + Application.ExecutablePath + "\" enable=yes")
+                    {
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    Process.Start(psi);
+                }
+                catch { }
+            });
         }
 
         private void StartEmbeddedRelayServer()
@@ -10030,7 +10063,7 @@ namespace JDroidXDesk.Native
 
                     if (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(activeReceiverTargetId))
                     {
-                        List<string> candidateUrls = GetRelayCandidateUrls();
+                        List<string> candidateUrls = GetRelayCandidateUrls(activeReceiverTargetId);
 
                         foreach (string rUrl in candidateUrls)
                         {
@@ -10147,6 +10180,7 @@ namespace JDroidXDesk.Native
                                 if (imgBytes != null && imgBytes.Length > 0)
                                 {
                                     sw.Stop();
+                                    cachedWinningRelayUrl = rUrl;
                                     ProcessAndRenderFrame(imgBytes, (int)sw.ElapsedMilliseconds);
                                     successFrame = true;
                                     break;
