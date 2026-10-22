@@ -450,6 +450,9 @@ async function runTests() {
         const healthRes = await makeRequest('GET', '/api/health');
         assert(healthRes.statusCode === 200 && healthRes.body.status === 'UP' && healthRes.body.appSlug === 'jdroid-x-desk', 'GET /api/health returns HTTP 200 server health probe');
 
+        const versionRes = await makeRequest('GET', '/api/version');
+        assert(versionRes.statusCode === 200 && versionRes.body.version === '2.0.0' && versionRes.body.customDomain === 'https://desk.jdroid-x.com', 'GET /api/version returns application metadata and custom domain');
+
         const gwRoutesRes = await makeRequest('GET', '/api/gateway/routes');
         assert(gwRoutesRes.statusCode === 200 && gwRoutesRes.body.appSlug === 'jdroid-x-desk', 'GET /api/gateway/routes serves gateway routes registry');
 

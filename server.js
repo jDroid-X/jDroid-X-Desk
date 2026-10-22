@@ -62,6 +62,20 @@ app.get('/api/gateway/routes', (req, res) => {
     res.status(404).json({ success: false, error: 'Gateway routes registry not found.' });
 });
 
+app.get('/api/version', (req, res) => {
+    res.status(200).json({
+        success: true,
+        name: 'jDroid-X-Desk',
+        version: '2.0.0',
+        author: 'jDroid-X',
+        license: 'MIT',
+        downloadUrl: '/api/download-exe',
+        portalUrl: 'https://www.jdroid-x.com',
+        customDomain: 'https://desk.jdroid-x.com',
+        timestamp: new Date().toISOString()
+    });
+});
+
 let reqLogSeq = 1;
 
 // Automatic Hourly Background 7-Day Log Purging Maintenance
