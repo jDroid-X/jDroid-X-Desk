@@ -21,7 +21,8 @@ const FALLBACK_PORT = 12345;
 process.on('uncaughtException', (err) => { console.error('[SERVER ERROR] Uncaught Exception:', err.message); });
 process.on('unhandledRejection', (reason) => { console.error('[SERVER ERROR] Unhandled Rejection:', reason); });
 
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
+app.use(express.raw({ type: ['image/jpeg', 'image/*', 'application/octet-stream'], limit: '15mb' }));
 
 // Edge & Proxy Cache Control: Ensure latest assets on Cloudflare Tunnel & Browser
 app.use((req, res, next) => {

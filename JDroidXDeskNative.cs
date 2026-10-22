@@ -10250,6 +10250,8 @@ namespace JDroidXDesk.Native
 
         private void ScreenStreamerWorker()
         {
+            ulong lastFrameHash = 0;
+            int staticFrameCount = 0;
             while (isScreenStreamingActive)
             {
                 bool pushSuccess = false;
@@ -10299,6 +10301,24 @@ namespace JDroidXDesk.Native
                                     }
                                     b64 = Convert.ToBase64String(ms.ToArray());
                                     byte[] rawJpgBytes = ms.ToArray();
+
+                                    // Static Frame & Bandwidth Optimization (AnyDesk Dirty-Rect Equivalence)
+                                    ulong frameHash = 14695981039346656037UL;
+                                    int step = Math.Max(1, rawJpgBytes.Length / 512);
+                                    for (int i = 0; i < rawJpgBytes.Length; i += step)
+                                    {
+                                        frameHash ^= rawJpgBytes[i];
+                                        frameHash *= 1099511628211UL;
+                                    }
+
+                                    if (frameHash == lastFrameHash && staticFrameCount < 18)
+                                    {
+                                        staticFrameCount++;
+                                        Thread.Sleep(25);
+                                        continue;
+                                    }
+                                    lastFrameHash = frameHash;
+                                    staticFrameCount = 0;
 
                                     foreach (string rUrl in candidateUrls)
                                     {

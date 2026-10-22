@@ -446,6 +446,19 @@ async function runTests() {
         const pullFrameBinRes = await makeRequest('GET', '/api/relay/frame_bin?targetId=TEST-DESK-1');
         assert(pullFrameBinRes.statusCode === 200 || pullFrameBinRes.statusCode === 204, 'GET /api/relay/frame_bin returns binary stream response (200/204)');
 
+        const registerRes = await makeRequest('POST', '/api/relay/register', {
+            targetId: 'TEST-DESK-1',
+            name: 'Office-PC-1',
+            os: 'Windows 11'
+        });
+        assert(registerRes.statusCode === 200 && registerRes.body.registered, 'POST /api/relay/register registers active desk device');
+
+        const relayDevsRes = await makeRequest('GET', '/api/relay/devices');
+        assert(relayDevsRes.statusCode === 200 && Array.isArray(relayDevsRes.body.data), 'GET /api/relay/devices returns active online desks');
+
+        const pullInputRes = await makeRequest('GET', '/api/relay/input?targetId=TEST-DESK-1');
+        assert(pullInputRes.statusCode === 200 && Array.isArray(pullInputRes.body.events), 'GET /api/relay/input retrieves and flushes queued input events');
+
         // Stage 6 Holistic Gateway Mounting Verification
         const healthRes = await makeRequest('GET', '/api/health');
         assert(healthRes.statusCode === 200 && healthRes.body.status === 'UP' && healthRes.body.appSlug === 'jdroid-x-desk', 'GET /api/health returns HTTP 200 server health probe');
