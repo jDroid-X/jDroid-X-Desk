@@ -582,7 +582,7 @@ class ServerController {
                     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
                     pRes.pipe(res);
                 } else {
-                    res.status(pRes.statusCode || 204).end();
+                    res.status(pRes.statusCode === 404 ? 204 : (pRes.statusCode || 204)).end();
                 }
             });
 

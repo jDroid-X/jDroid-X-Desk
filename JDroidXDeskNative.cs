@@ -735,7 +735,7 @@ namespace JDroidXDesk.Native
 
         public ServerConfigModel()
         {
-            activeEngine = "sunshine";
+            activeEngine = "jdroidRelay";
             processingLimits = new ProcessingLimitsModel();
             engines = new Dictionary<string, OpenSourceEngineModel>();
         }
@@ -743,7 +743,7 @@ namespace JDroidXDesk.Native
         public static ServerConfigModel CreateDefault()
         {
             ServerConfigModel cfg = new ServerConfigModel();
-            cfg.activeEngine = "sunshine";
+            cfg.activeEngine = "jdroidRelay";
             cfg.processingLimits = new ProcessingLimitsModel();
             cfg.engines = new Dictionary<string, OpenSourceEngineModel>();
 
@@ -4339,7 +4339,7 @@ namespace JDroidXDesk.Native
             cbHeaderEngineSelector.Items.Add("⚡ Guacamole (jDroid-X)");
             cbHeaderEngineSelector.Items.Add("⚡ Google Colab (jDroid-X)");
 
-            SyncHeaderEngineDropdown(db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "sunshine");
+            SyncHeaderEngineDropdown(db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "jdroidRelay");
 
             cbHeaderEngineSelector.SelectedIndexChanged += (s, e) => {
                 if (isSwitchingEngineFromHeader) return;
@@ -4426,7 +4426,7 @@ namespace JDroidXDesk.Native
                 Padding = new Padding(8, 4, 8, 0),
                 Cursor = Cursors.Hand
             };
-            string curEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "sunshine";
+            string curEng = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) ? db.ServerConfig.activeEngine : "jdroidRelay";
             lblFooterEngineBadge.Text = string.Format("⚡ jDroid-Engine: {0} [● READY]", curEng.ToUpper());
             lblFooterEngineBadge.Click += (s, e) => SwitchWorkspaceView("ServerAdmin");
 
@@ -4507,7 +4507,7 @@ namespace JDroidXDesk.Native
         private void UpdateMarqueeTicker()
         {
             if (lblFooterMarquee == null || lblFooterMarquee.IsDisposed) return;
-            string eng = db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "sunshine";
+            string eng = db != null && db.ServerConfig != null ? db.ServerConfig.activeEngine : "jdroidRelay";
             string hostId = currentHostDesktop != null ? currentHostDesktop.RemoteId : "984-102-391";
             string lanIp = GetLocalLanIp();
             string themeName = ThemePalette.GetThemeDisplayName();
@@ -4942,10 +4942,10 @@ namespace JDroidXDesk.Native
                     cbHeaderEngineSelector.SelectedIndex = 1;
                 else if (string.Equals(engineId, "guacamole", StringComparison.OrdinalIgnoreCase))
                     cbHeaderEngineSelector.SelectedIndex = 2;
-                else if (string.Equals(engineId, "jdroidRelay", StringComparison.OrdinalIgnoreCase))
-                    cbHeaderEngineSelector.SelectedIndex = 3;
+                else if (string.Equals(engineId, "sunshine", StringComparison.OrdinalIgnoreCase))
+                    cbHeaderEngineSelector.SelectedIndex = 0;
                 else
-                    cbHeaderEngineSelector.SelectedIndex = 0; // sunshine default
+                    cbHeaderEngineSelector.SelectedIndex = 3; // jdroidRelay default
             }
             finally
             {
@@ -4965,7 +4965,7 @@ namespace JDroidXDesk.Native
             {
                 engineId = (db != null && db.ServerConfig != null && !string.IsNullOrEmpty(db.ServerConfig.activeEngine)) 
                     ? db.ServerConfig.activeEngine 
-                    : "sunshine";
+                    : "jdroidRelay";
             }
 
             SyncHeaderEngineDropdown(engineId);
@@ -9732,7 +9732,7 @@ namespace JDroidXDesk.Native
             container.Controls.Clear();
             engineCardPanels.Clear();
 
-            string activeId = db.ServerConfig.activeEngine != null ? db.ServerConfig.activeEngine : "sunshine";
+            string activeId = db.ServerConfig.activeEngine != null ? db.ServerConfig.activeEngine : "jdroidRelay";
             if (lblAdminActiveEngineBadge != null)
             {
                 lblAdminActiveEngineBadge.Text = "jDroid-Engine: " + activeId.ToUpper();

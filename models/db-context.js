@@ -41,6 +41,7 @@ const DEFAULT_SETTINGS = {
         directConnections: true,
         localPort: 7070,
         relayPort: 8088,
+        relayServer: 'http://127.0.0.1:8088',
         discoveryPort: 8089,
         lanDiscovery: true,
         proxyMode: 'detect',
@@ -120,7 +121,7 @@ const DEFAULT_SETTINGS = {
 };
 
 const DEFAULT_SERVER_CONFIG = {
-    activeEngine: 'sunshine',
+    activeEngine: 'jdroidRelay',
     processingLimits: {
         maxConcurrentSessions: 10,
         bandwidthLimitMbps: 50,
