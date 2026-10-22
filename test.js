@@ -374,8 +374,8 @@ async function runTests() {
         const switchEngineId = await makeRequest('POST', '/api/admin/engine/switch', { engineId: 'jdroidRelay' });
         assert(switchEngineId.statusCode === 200 && switchEngineId.body.activeEngine === 'jdroidRelay', 'POST /api/admin/engine/switch accepts engineId payload format');
 
-        // Restore active engine to sunshine
-        await makeRequest('POST', '/api/admin/engine/switch', { engine: 'sunshine' });
+        // Restore active engine to jdroidRelay
+        await makeRequest('POST', '/api/admin/engine/switch', { engine: 'jdroidRelay' });
 
         const probeCheck = await makeRequest('GET', '/api/admin/engine/probe?engine=sunshine');
         assert(probeCheck.statusCode === 200 && probeCheck.body.success && probeCheck.body.port === 47990, 'GET /api/admin/engine/probe verifies port accessibility');
@@ -387,11 +387,11 @@ async function runTests() {
         const initialSettings = await makeRequest('GET', '/api/settings');
         const originalPort = initialSettings.body.data?.connection?.localPort || 7070;
         const putPartialSettings = await makeRequest('PUT', '/api/settings', {
-            connection: { customDomain: 'https://test.jdroid-x.net' }
+            connection: { customDomain: 'https://desk.jdroid-x.com' }
         });
         assert(
             putPartialSettings.statusCode === 200 &&
-            putPartialSettings.body.data?.connection?.customDomain === 'https://test.jdroid-x.net' &&
+            putPartialSettings.body.data?.connection?.customDomain === 'https://desk.jdroid-x.com' &&
             putPartialSettings.body.data?.connection?.localPort === originalPort,
             'PUT /api/settings deep-merges nested properties without erasing sibling keys'
         );

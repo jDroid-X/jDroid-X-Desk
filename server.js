@@ -14,8 +14,8 @@ const dbContext = require('./models/db-context');
 const ServerController = require('./controllers/server-controller');
 
 const app = express();
-// Priority: environment variable > Gateway Port 8080
-const PORT = process.env.PORT || 8080;
+// Priority: environment variable > Cloudflare Tunnel Ingress Port 7700 > Gateway Fallbacks
+const PORT = process.env.PORT || 7700;
 const FALLBACK_PORT = 12345;
 
 process.on('uncaughtException', (err) => { console.error('[SERVER ERROR] Uncaught Exception:', err.message); });
@@ -23,7 +23,13 @@ process.on('unhandledRejection', (reason) => { console.error('[SERVER ERROR] Unh
 
 app.use(express.json());
 
-// Holistic Gateway Mounts (Port 8080 /jdroid-x-desk/...)
+// Edge & Proxy Cache Control: Ensure latest assets on Cloudflare Tunnel & Browser
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    next();
+});
+
+// Holistic Gateway Mounts (Port 7700 /jdroid-x-desk/...)
 app.use('/jdroid-x-desk', express.static(__dirname));
 
 // Encapsulated Static Route Mounts (OOPS MVC View & Asset Standard)

@@ -933,7 +933,7 @@ class AppController {
                         proxyType: document.getElementById('ad-proxy-type')?.value || 'HTTP(S)',
                         proxyAddress: document.getElementById('ad-proxy-addr')?.value || '',
                         proxyPort: document.getElementById('ad-proxy-port')?.value || '',
-                        customDomain: document.getElementById('custom-domain-url')?.value.trim() || 'https://www.jdroid-x.com',
+                        customDomain: document.getElementById('custom-domain-url')?.value.trim() || 'https://desk.jdroid-x.com',
                         colabRelayUrl: document.getElementById('colab-relay-url')?.value.trim() || '',
                         colabRelayEnabled: document.getElementById('ad-colab-relay-enabled')?.checked !== false,
                         lanDiscovery: document.getElementById('ad-conn-lan-discovery')?.checked !== false,
@@ -2789,7 +2789,7 @@ class AppController {
                 setVal('ad-proxy-type', s.connection.proxyType || 'HTTP(S)');
                 setVal('ad-proxy-addr', s.connection.proxyAddress || '');
                 setVal('ad-proxy-port', s.connection.proxyPort || '');
-                setVal('custom-domain-url', s.connection.customDomain || s.connection.relayServer || 'https://www.jdroid-x.com');
+                setVal('custom-domain-url', s.connection.customDomain || s.connection.relayServer || 'https://desk.jdroid-x.com');
                 setVal('colab-relay-url', s.connection.colabRelayUrl || '');
                 setCheck('ad-colab-relay-enabled', s.connection.colabRelayEnabled !== false);
                 setCheck('ad-conn-lan-discovery', s.connection.lanDiscovery !== false);
@@ -2912,7 +2912,7 @@ class AppController {
         if (testColabBtn) {
             testColabBtn.onclick = async () => {
                 const urlInput = document.getElementById('colab-relay-url') || document.getElementById('custom-domain-url');
-                const url = urlInput ? urlInput.value.trim() : 'https://www.jdroid-x.com';
+                const url = urlInput ? urlInput.value.trim() : 'https://desk.jdroid-x.com';
                 this.view.showToast('info', 'Pinging Cloud Relay', `Contacting Cloud Relay at ${url}...`);
                 try {
                     const res = await fetch(`${url}/status`, { mode: 'cors' });
@@ -2934,6 +2934,34 @@ class AppController {
                 } catch (e) {
                     this.view.showToast('info', 'Cloud Endpoint Verified', `Relay endpoint configured: ${url}. Run colab_relay_server.py or web gateway to exchange frames.`);
                 }
+            };
+        }
+
+        // 1-Click Domain Preset Buttons
+        const presetDeskBtn = document.getElementById('btn-preset-desk-domain');
+        if (presetDeskBtn) {
+            presetDeskBtn.onclick = async () => {
+                const domInput = document.getElementById('custom-domain-url');
+                const relayInput = document.getElementById('colab-relay-url');
+                if (domInput) domInput.value = 'https://desk.jdroid-x.com';
+                if (relayInput) relayInput.value = 'https://desk.jdroid-x.com';
+                this.view.showToast('success', 'Domain Selected', 'Active domain set to https://desk.jdroid-x.com');
+                try {
+                    await fetch('/api/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ connection: { customDomain: 'https://desk.jdroid-x.com', colabRelayUrl: 'https://desk.jdroid-x.com' } })
+                    });
+                } catch (_) {}
+            };
+        }
+
+        const presetPortalBtn = document.getElementById('btn-preset-portal-domain');
+        if (presetPortalBtn) {
+            presetPortalBtn.onclick = () => {
+                const domInput = document.getElementById('custom-domain-url');
+                if (domInput) domInput.value = 'https://www.jdroid-x.com';
+                this.view.showToast('info', 'Portal Selected', 'Domain set to https://www.jdroid-x.com');
             };
         }
 

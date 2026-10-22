@@ -510,7 +510,7 @@ namespace JDroidXDesk.Native
             proxyServer = "";
             idServer = "relay.jdroid-x.net:21116";
             relayServer = "http://127.0.0.1:8088";
-            customDomain = "https://www.jdroid-x.com";
+            customDomain = "https://desk.jdroid-x.com";
             webRepoUrl = "https://github.com/jDroid-X/jDroid-X-Web";
             colabNotebookUrl = "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";
             githubBackendUrl = "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main";
@@ -5296,7 +5296,15 @@ namespace JDroidXDesk.Native
                 };
                 gbTunnel.Controls.Add(btnToggleTunnel);
 
-                Button btnPresetDomain = new Button { Text = "🌐 Use jdroid-x.com", Size = new Size(130, 28), Location = new Point(200, 52), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8f), Cursor = Cursors.Hand };
+                Button btnPresetDesk = new Button { Text = "⚡ desk.jdroid-x.com", Size = new Size(130, 28), Location = new Point(200, 52), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(56, 189, 248), Font = new Font("Segoe UI", 8f, FontStyle.Bold), Cursor = Cursors.Hand };
+                btnPresetDesk.FlatAppearance.BorderSize = 0;
+                btnPresetDesk.Click += (s, e) => {
+                    tbRelay.Text = "https://desk.jdroid-x.com";
+                    tbDom.Text = "https://desk.jdroid-x.com";
+                };
+                gbTunnel.Controls.Add(btnPresetDesk);
+
+                Button btnPresetDomain = new Button { Text = "🌐 www.jdroid-x.com", Size = new Size(130, 28), Location = new Point(335, 52), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Segoe UI", 8f), Cursor = Cursors.Hand };
                 btnPresetDomain.FlatAppearance.BorderSize = 0;
                 btnPresetDomain.Click += (s, e) => {
                     tbRelay.Text = "https://www.jdroid-x.com";
@@ -5932,7 +5940,8 @@ namespace JDroidXDesk.Native
                 }
             }
 
-            // 5. Local ports (8088 is official Colab relay port) - Instant loopback
+            // 5. Cloudflare Ingress & Local ports (8088 is official Colab relay port) - Instant loopback
+            if (!candidateUrls.Contains("https://desk.jdroid-x.com")) candidateUrls.Add("https://desk.jdroid-x.com");
             if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
             if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
 
@@ -9020,7 +9029,7 @@ namespace JDroidXDesk.Native
             else if (category == "Connection")
             {
                 addH("Primary Enterprise Cloud Domain & Web Integration");
-                TextBox tbDom = addTb("Primary Branded Cloud Domain", db.Settings.connection.customDomain);
+                TextBox tbDom = addTb("Primary Branded Cloud Domain (Default: https://desk.jdroid-x.com)", db.Settings.connection.customDomain);
                 tbDom.TextChanged += (s, e) => db.Settings.connection.customDomain = tbDom.Text.Trim();
                 TextBox tbWeb = addTb("jDroid-X-Web Repository URL", db.Settings.connection.webRepoUrl);
                 tbWeb.TextChanged += (s, e) => db.Settings.connection.webRepoUrl = tbWeb.Text.Trim();
@@ -9031,7 +9040,7 @@ namespace JDroidXDesk.Native
                     db.Settings.connection.colabCloudRelay = swColab.Checked;
                     RegisterWithColabRelay();
                 };
-                TextBox tbRelay = addTb("Cloud Relay Server URL (Default: https://www.jdroid-x.com)", db.Settings.connection.relayServer);
+                TextBox tbRelay = addTb("Cloud Relay Server URL (Default: http://127.0.0.1:8088 | WAN: https://desk.jdroid-x.com)", db.Settings.connection.relayServer);
                 tbRelay.TextChanged += (s, e) => {
                     db.Settings.connection.relayServer = tbRelay.Text.Trim();
                     RegisterWithColabRelay();
@@ -9041,7 +9050,7 @@ namespace JDroidXDesk.Native
                     int p;
                     if (int.TryParse(tbPort.Text.Trim(), out p) && p > 0) db.Settings.connection.relayPort = p;
                 };
-                TextBox tbToken = addTb("Cloudflare Tunnel Token (For jdroid-x.com Custom Domain)", db.Settings.connection.tunnelToken ?? "");
+                TextBox tbToken = addTb("Cloudflare Tunnel Token (For desk.jdroid-x.com / jdroid-x.com)", db.Settings.connection.tunnelToken ?? "");
                 tbToken.TextChanged += (s, e) => db.Settings.connection.tunnelToken = tbToken.Text.Trim();
                 TextBox tbColab = addTb("Google Colab Central Relay Notebook URL", db.Settings.connection.colabNotebookUrl);
                 tbColab.TextChanged += (s, e) => db.Settings.connection.colabNotebookUrl = tbColab.Text.Trim();

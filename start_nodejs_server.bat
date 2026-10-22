@@ -8,7 +8,7 @@ echo   jDroid-X-Desk Unified Gateway & Node.js Server
 echo ========================================================
 echo.
 
-set GATEWAY_PORT=8080
+set GATEWAY_PORT=7700
 if not "%~1"=="" set GATEWAY_PORT=%~1
 
 where node >nul 2>&1
