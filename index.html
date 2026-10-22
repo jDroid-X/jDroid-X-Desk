@@ -11,9 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/themes/themes.css?v=2026.10.22.3">
-    <link rel="stylesheet" href="styles/styles.css?v=2026.10.22.3">
-    <link rel="stylesheet" href="styles.css?v=2026.10.22.3">
+    <link rel="stylesheet" href="styles/themes/themes.css?v=2026.10.22.4">
+    <link rel="stylesheet" href="styles/styles.css?v=2026.10.22.4">
+    <link rel="stylesheet" href="styles.css?v=2026.10.22.4">
 </head>
 <body class="light-theme">
     <!-- UX-2: App Preloader — shown while Firebase auth state resolves -->
@@ -413,7 +413,7 @@
                     <!-- AnyDesk Style 2-Hero Card Connection Grid: Step 2 & Step 3 Side-by-Side -->
                     <div class="remote-console-2col-grid">
                         <!-- CARD 1: STEP 2 - THIS DESK (Share Screen - Get Support) -->
-                        <div class="widget-box" style="border-top: 4px solid var(--accent-blue); display: flex; flex-direction: column; justify-content: space-between; margin: 0;">
+                        <div class="widget-box console-hero-card" style="border-top: 4px solid var(--accent-blue);">
                             <div>
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -424,13 +424,13 @@
                                 </div>
                                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">Your local computer is ready. Share this address and password with your partner to let them control your screen.</p>
                                 
-                                <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 0.75rem 0.9rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                                <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 1rem 1.15rem; border-radius: 12px; border: 1px solid var(--border-color);">
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Your Desk ID</span>
                                         <span style="font-size: 0.72rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> UAC Ready</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-                                        <div style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--accent-blue); letter-spacing: 1.5px;" id="local-device-id">984-102-391</div>
+                                        <div style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; color: var(--accent-blue); letter-spacing: 2px;" id="local-device-id">984-102-391</div>
                                         <div style="display: flex; gap: 0.4rem;">
                                             <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
                                             <button class="btn btn-danger btn-sm" id="btn-open-invite-modal" style="background: #e53935; border-color: #d32f2f; font-weight: 600; padding: 0.25rem 0.65rem;" title="Send Session Invitation"><i class="fa-solid fa-paper-plane"></i> Invite</button>
@@ -438,24 +438,24 @@
                                     </div>
                                     <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;" id="local-node-desc">Local Node: Initializing Node Identity...</div>
                                     
-                                    <div style="border-top: 1px solid var(--border-color); margin-top: 0.65rem; padding-top: 0.55rem; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="border-top: 1px solid var(--border-color); margin-top: 0.85rem; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
                                         <div>
                                             <span style="font-size: 0.75rem; color: var(--text-dim); display: block;">One-Time Password:</span>
-                                            <span style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
+                                            <span style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
                                         </div>
                                         <span style="font-size: 0.72rem; color: var(--text-dim);"><i class="fa-solid fa-lock"></i> Auto-Generated</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="margin-top-md" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: var(--text-muted); padding-top: 0.4rem; border-top: 1px dashed var(--border-color);">
+                            <div class="margin-top-md" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
                                 <span><i class="fa-solid fa-bolt text-warning"></i> Status: <strong id="session-status-text" style="color: var(--text-muted);">Idle (Awaiting Connection)</strong></span>
                                 <span id="session-protocol-text" style="font-family: var(--font-mono); font-size: 0.72rem;">P2P Encrypted</span>
                             </div>
                         </div>
 
                         <!-- CARD 2: STEP 3 - REMOTE DESK (Connect - Give Support) -->
-                        <div class="widget-box" style="border-top: 4px solid var(--accent-purple); display: flex; flex-direction: column; justify-content: space-between; margin: 0;">
+                        <div class="widget-box console-hero-card" style="border-top: 4px solid var(--accent-purple);">
                             <div>
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -467,37 +467,37 @@
                                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">Enter partner's 9-digit Desk ID to connect with Windows-level Administrator rights.</p>
 
                                 <div class="margin-top-md">
-                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.25rem; font-weight: 600;">Partner Desk ID:</label>
+                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.35rem; font-weight: 600;">Partner Desk ID:</label>
                                     <div style="position: relative; display: flex; align-items: center;">
-                                        <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.45rem 2.2rem 0.45rem 0.65rem; font-family: var(--font-mono); font-size: 1rem; letter-spacing: 0.5px;" placeholder="e.g. 582-109-431 or JDX-ABCD-1234">
+                                        <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; min-height: 44px; box-sizing: border-box; border-radius: 8px; padding: 0.6rem 2.4rem 0.6rem 0.85rem; font-family: var(--font-mono); font-size: 1.05rem; letter-spacing: 0.8px;" placeholder="e.g. 582-109-431 or JDX-ABCD-1234">
                                         <button type="button" id="btn-clear-target-id" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; display: none; font-size: 0.9rem;" title="Clear Input"><i class="fa-solid fa-circle-xmark"></i></button>
                                     </div>
                                     
-                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.55rem; margin-bottom: 0.25rem; font-weight: 600;">Security Password:</label>
-                                    <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; border-radius: 8px; padding: 0.45rem 0.65rem; font-family: var(--font-mono); font-size: 0.95rem;" placeholder="Enter one-time password">
+                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.75rem; margin-bottom: 0.35rem; font-weight: 600;">Security Password:</label>
+                                    <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; min-height: 44px; box-sizing: border-box; border-radius: 8px; padding: 0.6rem 0.85rem; font-family: var(--font-mono); font-size: 1.05rem;" placeholder="Enter one-time password">
 
-                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.9rem;">
-                                        <button id="connect-session-btn" class="btn btn-primary" style="flex: 2; padding: 0.55rem; font-weight: 600; font-size: 0.9rem;">
+                                    <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                                        <button id="connect-session-btn" class="btn btn-primary" style="flex: 2; min-height: 44px; padding: 0.65rem 1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
                                              <i class="fa-solid fa-link"></i> Connect & Control Screen
                                         </button>
-                                        <button id="launch-canvas-btn" class="btn btn-secondary" style="flex: 1; padding: 0.55rem; font-size: 0.8rem;" disabled>
-                                            <i class="fa-solid fa-expand"></i> View Screen
+                                        <button id="launch-canvas-btn" class="btn btn-secondary" style="flex: 1; min-height: 44px; padding: 0.65rem 1rem; font-size: 0.88rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" disabled>
+                                             <i class="fa-solid fa-expand"></i> View Screen
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Native Windows Remote Assistance Buttons -->
-                            <div class="margin-top-md" style="padding-top: 0.6rem; border-top: 1px dashed var(--border-color);">
-                                <span style="font-size: 0.72rem; color: var(--text-dim); display: block; margin-bottom: 0.35rem; font-weight: 600;">NATIVE WINDOWS DIRECT RELAY (BUILT-IN UAC BYPASS):</span>
-                                <div style="display: flex; gap: 0.4rem;">
-                                    <button id="btn-native-quick-assist" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.73rem; padding: 0.35rem 0.4rem;" title="Native Windows Quick Assist (Cloud-assisted screen control)">
+                            <div class="margin-top-md" style="padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
+                                <span style="font-size: 0.72rem; color: var(--text-dim); display: block; margin-bottom: 0.45rem; font-weight: 600; letter-spacing: 0.5px;">NATIVE WINDOWS DIRECT RELAY (BUILT-IN UAC BYPASS):</span>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button id="btn-native-quick-assist" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 38px; font-size: 0.76rem; padding: 0.45rem 0.6rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;" title="Native Windows Quick Assist (Cloud-assisted screen control)">
                                         <i class="fa-brands fa-windows text-info"></i> Quick Assist
                                     </button>
-                                    <button id="btn-native-terminal" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.73rem; padding: 0.35rem 0.4rem;" title="Elevated Windows Remote Admin Terminal">
+                                    <button id="btn-native-terminal" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 38px; font-size: 0.76rem; padding: 0.45rem 0.6rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;" title="Elevated Windows Remote Admin Terminal">
                                         <i class="fa-solid fa-terminal text-emerald"></i> Admin Terminal
                                     </button>
-                                    <button id="btn-native-msra" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.73rem; padding: 0.35rem 0.4rem;" title="Microsoft Remote Assistance (MSRA)">
+                                    <button id="btn-native-msra" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 38px; font-size: 0.76rem; padding: 0.45rem 0.6rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;" title="Microsoft Remote Assistance (MSRA)">
                                         <i class="fa-solid fa-headset text-warning"></i> MSRA
                                     </button>
                                 </div>
@@ -506,7 +506,7 @@
                     </div>
 
                     <!-- CARD 3: DISCOVERED ON LOCAL NETWORK (Nearby Desks) -->
-                    <div id="discovered-desks-card" class="widget-box" style="border-top: 4px solid var(--accent-emerald); margin-top: 1rem;">
+                    <div id="discovered-desks-card" class="widget-box" style="border-top: 4px solid var(--accent-emerald); padding: 1.35rem 1.65rem; border-radius: 12px; margin-top: 1.5rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
                                 <i class="fa-solid fa-tower-cell" style="color: var(--accent-emerald); font-size: 1.25rem;"></i>
