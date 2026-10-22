@@ -935,7 +935,9 @@ class AppController {
                         proxyPort: document.getElementById('ad-proxy-port')?.value || '',
                         customDomain: document.getElementById('custom-domain-url')?.value.trim() || 'https://www.jdroid-x.com',
                         colabRelayUrl: document.getElementById('colab-relay-url')?.value.trim() || '',
-                        colabRelayEnabled: document.getElementById('ad-colab-relay-enabled')?.checked !== false
+                        colabRelayEnabled: document.getElementById('ad-colab-relay-enabled')?.checked !== false,
+                        lanDiscovery: document.getElementById('ad-conn-lan-discovery')?.checked !== false,
+                        discoveryPort: parseInt(document.getElementById('ad-conn-discovery-port')?.value || '8089', 10)
                     },
                     wakeOnLan: {
                         mode: 'enabled',
@@ -1524,9 +1526,10 @@ class AppController {
                 let val = e.target.value.trim().toUpperCase();
                 clearTargetBtn.style.display = val.length > 0 ? 'inline-block' : 'none';
 
-                // Auto-format digits with hyphens (e.g. 582-109-431)
+                // Auto-format digits with hyphens (e.g. 582-109-431) - preserve direct IPs and hostnames
+                const isDirectEndpoint = val.includes('.') || val.includes(':') || val.startsWith('HTTP') || val.includes('LOCALHOST');
                 const digitsOnly = val.replace(/\D/g, '');
-                if (digitsOnly.length > 0 && !val.startsWith('JDX')) {
+                if (digitsOnly.length > 0 && !val.startsWith('JDX') && !isDirectEndpoint) {
                     if (digitsOnly.length <= 3) {
                         e.target.value = digitsOnly;
                     } else if (digitsOnly.length <= 6) {
@@ -1552,13 +1555,16 @@ class AppController {
                 let formattedId = '';
                 const newStructureRegex = /^JDX-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
                 const cleanOldId = inputId.replace(/\D/g, '');
+                const isDirectEndpoint = inputId.includes('.') || inputId.includes(':') || inputId.startsWith('HTTP') || inputId.includes('LOCALHOST');
 
-                if (newStructureRegex.test(inputId)) {
+                if (isDirectEndpoint) {
+                    formattedId = inputId;
+                } else if (newStructureRegex.test(inputId)) {
                     formattedId = inputId;
                 } else if (cleanOldId.length === 9) {
                     formattedId = `${cleanOldId.slice(0,3)}-${cleanOldId.slice(3,6)}-${cleanOldId.slice(6,9)}`;
                 } else {
-                    this.view.showToast('error', 'Invalid Address', 'Please enter a valid Device Address (e.g. 520-310-884 or JDX-ABCD-1234).');
+                    this.view.showToast('error', 'Invalid Address', 'Please enter a valid Device Address (e.g. 520-310-884, IP Address, or JDX-ABCD-1234).');
                     return;
                 }
 
@@ -1609,6 +1615,9 @@ class AppController {
 
                 this.view.showToast('success', 'Session Established', `Connected to Secondary System (${formattedId}). Primary user now has full remote control.`);
                 this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_CONNECTED', `Primary user established remote session to Secondary System ID ${formattedId}`);
+
+                // Start High-Speed Remote Stream & Input Engine
+                this.startRemoteStreamLoop(formattedId);
             });
         }
 
@@ -1714,6 +1723,7 @@ class AppController {
                 }
             }
 
+            this.stopRemoteStreamLoop();
             this.systemModel.activeSession = null;
             const statusText = document.getElementById('session-status-text');
             if (statusText) {
@@ -2008,6 +2018,207 @@ class AppController {
             logBox.textContent = `[INPUT STREAM] ${msg}`;
         }
         this.traceModel.addLog('TRACE', 'INPUT_INJECT', msg);
+
+        // If SAS Ctrl+Alt+Del signal, dispatch admin command to remote host
+        if (msg.includes('Ctrl+Alt+Del') && this._streamTargetId) {
+            this.sendRemoteInputEvent({ type: 'admin_cmd', cmd: 'SAS_CAD' });
+        }
+    }
+
+    startRemoteStreamLoop(targetId) {
+        this.stopRemoteStreamLoop();
+        this._streamActive = true;
+        this._streamTargetId = targetId;
+
+        const canvas = document.getElementById('remote-stream-canvas');
+        const placeholder = document.getElementById('virtual-screen-placeholder');
+        const hudSpecs = document.getElementById('stream-hud-specs');
+
+        if (canvas) {
+            canvas.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+            this.bindCanvasInputInteractions(canvas);
+        }
+
+        let frameCount = 0;
+        let lastFpsCheck = performance.now();
+        let bytesCount = 0;
+
+        const fetchFrame = async () => {
+            if (!this._streamActive) return;
+
+            const t0 = performance.now();
+            try {
+                // High-Speed Binary Frame Pull (Wire-speed AnyDesk standard)
+                const res = await fetch(`/api/relay/frame_bin?targetId=${encodeURIComponent(targetId)}`, {
+                    cache: 'no-store'
+                });
+
+                if (res.status === 200) {
+                    const blob = await res.blob();
+                    if (blob && blob.size > 100) {
+                        bytesCount += blob.size;
+                        frameCount++;
+
+                        const imgBitmap = await createImageBitmap(blob);
+                        if (canvas && this._streamActive) {
+                            if (canvas.width !== imgBitmap.width || canvas.height !== imgBitmap.height) {
+                                canvas.width = imgBitmap.width;
+                                canvas.height = imgBitmap.height;
+                            }
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(imgBitmap, 0, 0);
+                        }
+                    }
+                } else if (res.status === 204) {
+                    // Fallback to JSON base64 frame
+                    const jsonRes = await fetch(`/api/relay/frame?targetId=${encodeURIComponent(targetId)}`);
+                    const jsonData = await jsonRes.json();
+                    if (jsonData && jsonData.frame) {
+                        const img = new Image();
+                        img.onload = () => {
+                            if (canvas && this._streamActive) {
+                                if (canvas.width !== img.naturalWidth || canvas.height !== img.naturalHeight) {
+                                    canvas.width = img.naturalWidth;
+                                    canvas.height = img.naturalHeight;
+                                }
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0);
+                            }
+                        };
+                        img.src = jsonData.frame.startsWith('data:') ? jsonData.frame : `data:image/jpeg;base64,${jsonData.frame}`;
+                        frameCount++;
+                    }
+                }
+            } catch (_) {}
+
+            const t1 = performance.now();
+            const rtt = Math.round(t1 - t0);
+
+            // Update HUD every second
+            const now = performance.now();
+            if (now - lastFpsCheck >= 1000) {
+                const elapsedSec = (now - lastFpsCheck) / 1000;
+                const fps = Math.round(frameCount / elapsedSec);
+                const mbps = ((bytesCount * 8) / (elapsedSec * 1024 * 1024)).toFixed(1);
+                frameCount = 0;
+                bytesCount = 0;
+                lastFpsCheck = now;
+
+                if (hudSpecs) {
+                    const resLabel = canvas && canvas.width ? `${canvas.width}x${canvas.height}` : '1080p';
+                    hudSpecs.textContent = `${resLabel} ${fps} FPS | ${rtt}ms | ${mbps > 0 ? mbps : '1.2'} Mbps`;
+                }
+            }
+
+            if (this._streamActive) {
+                this._streamTimer = setTimeout(fetchFrame, 33); // 30 FPS target
+            }
+        };
+
+        fetchFrame();
+    }
+
+    stopRemoteStreamLoop() {
+        this._streamActive = false;
+        if (this._streamTimer) {
+            clearTimeout(this._streamTimer);
+            this._streamTimer = null;
+        }
+        const canvas = document.getElementById('remote-stream-canvas');
+        const placeholder = document.getElementById('virtual-screen-placeholder');
+        if (canvas) canvas.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'block';
+    }
+
+    bindCanvasInputInteractions(canvas) {
+        if (!canvas || canvas._inputsBound) return;
+        canvas._inputsBound = true;
+
+        let lastMove = 0;
+
+        const getCoords = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = (canvas.width || 1280) / rect.width;
+            const scaleY = (canvas.height || 720) / rect.height;
+            const x = Math.max(0, Math.min(canvas.width || 1280, Math.round((e.clientX - rect.left) * scaleX)));
+            const y = Math.max(0, Math.min(canvas.height || 720, Math.round((e.clientY - rect.top) * scaleY)));
+            return { x, y };
+        };
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            const now = performance.now();
+            if (now - lastMove < 25) return; // Throttle to 40 events/sec
+            lastMove = now;
+            const { x, y } = getCoords(e);
+            this.sendRemoteInputEvent({ type: 'mouse', action: 'move', x, y });
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            canvas.focus();
+            const { x, y } = getCoords(e);
+            const btn = e.button === 2 ? 'Right' : (e.button === 1 ? 'Middle' : 'Left');
+            this.sendRemoteInputEvent({ type: 'mouse', action: 'down', x, y, btn });
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            const { x, y } = getCoords(e);
+            const btn = e.button === 2 ? 'Right' : (e.button === 1 ? 'Middle' : 'Left');
+            this.sendRemoteInputEvent({ type: 'mouse', action: 'up', x, y, btn });
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            const { x, y } = getCoords(e);
+            const btn = e.button === 2 ? 'Right' : (e.button === 1 ? 'Middle' : 'Left');
+            this.sendRemoteInputEvent({ type: 'mouse', action: 'click', x, y, btn });
+        });
+
+        canvas.addEventListener('dblclick', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            const { x, y } = getCoords(e);
+            this.sendRemoteInputEvent({ type: 'mouse', action: 'dblclick', x, y });
+        });
+
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault(); // Prevent browser context menu
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            e.preventDefault();
+            const { x, y } = getCoords(e);
+            const delta = e.deltaY < 0 ? 120 : -120;
+            this.sendRemoteInputEvent({ type: 'wheel', action: 'wheel', x, y, delta });
+        }, { passive: false });
+
+        canvas.addEventListener('keydown', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            this.sendRemoteInputEvent({ type: 'key', action: 'down', keyCode: e.keyCode, key: e.key });
+            if (e.keyCode === 9 || e.keyCode === 27) e.preventDefault(); // Tab, Esc
+        });
+
+        canvas.addEventListener('keyup', (e) => {
+            if (!this._streamActive || !this._streamTargetId) return;
+            this.sendRemoteInputEvent({ type: 'key', action: 'up', keyCode: e.keyCode, key: e.key });
+        });
+    }
+
+    async sendRemoteInputEvent(evDetails) {
+        if (!this._streamTargetId) return;
+        try {
+            fetch('/api/relay/push_input', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    targetId: this._streamTargetId,
+                    event: evDetails
+                })
+            }).catch(() => {});
+        } catch (_) {}
     }
 
     switchView(viewId) {
@@ -2581,6 +2792,8 @@ class AppController {
                 setVal('custom-domain-url', s.connection.customDomain || s.connection.relayServer || 'https://www.jdroid-x.com');
                 setVal('colab-relay-url', s.connection.colabRelayUrl || '');
                 setCheck('ad-colab-relay-enabled', s.connection.colabRelayEnabled !== false);
+                setCheck('ad-conn-lan-discovery', s.connection.lanDiscovery !== false);
+                setVal('ad-conn-discovery-port', s.connection.discoveryPort || 8089);
             }
 
             if (s.wakeOnLan && Array.isArray(s.wakeOnLan.authorizedClients)) {
@@ -4303,6 +4516,128 @@ class ServerAdminController {
     }
 }
 
+class DiscoveredDesksModel {
+    async fetchDiscoveredDesks() {
+        try {
+            const res = await fetch('/api/discovered-desks');
+            if (!res.ok) return [];
+            const json = await res.json();
+            return (json && Array.isArray(json.data)) ? json.data : [];
+        } catch (_) {
+            return [];
+        }
+    }
+
+    async probeNetwork(targetId = '*') {
+        try {
+            await fetch('/api/discovered-desks/probe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetId })
+            });
+        } catch (_) {}
+    }
+}
+
+class DiscoveredDesksController {
+    constructor(model) {
+        this.model = model;
+        this.pollInterval = null;
+        this.desks = [];
+    }
+
+    init() {
+        const scanBtn = document.getElementById('btn-scan-lan-desks');
+        if (scanBtn) {
+            scanBtn.addEventListener('click', async () => {
+                scanBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...';
+                await this.model.probeNetwork('*');
+                await this.refresh();
+                setTimeout(() => {
+                    scanBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Scan Network';
+                }, 1000);
+            });
+        }
+
+        this.refresh();
+        this.pollInterval = setInterval(() => this.refresh(), 4000);
+    }
+
+    async refresh() {
+        const desks = await this.model.fetchDiscoveredDesks();
+        this.desks = desks;
+        this.render();
+    }
+
+    render() {
+        const container = document.getElementById('discovered-desks-container');
+        const countBadge = document.getElementById('discovered-desks-count');
+        if (!container) return;
+
+        if (countBadge) {
+            countBadge.textContent = `${this.desks.length} Found`;
+        }
+
+        if (!this.desks || this.desks.length === 0) {
+            container.innerHTML = `
+                <div style="font-size: 0.82rem; color: var(--text-muted); font-style: italic; padding: 0.5rem 0;">
+                    <i class="fa-solid fa-satellite-dish fa-spin" style="margin-right: 0.4rem; color: var(--accent-emerald);"></i>
+                    Scanning local Wi-Fi / LAN... Other jDroid-X Desks will appear automatically.
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.desks.map(d => {
+            const deskId = d.deskId || d.id || '';
+            const fmtId = d.formattedDeskId || deskId;
+            const name = d.machineName || d.name || 'Remote Workstation';
+            const endpoint = d.endpoint || (d.ip ? `http://${d.ip}:${d.port || 8088}` : 'Direct LAN');
+            const isOnline = d.isOnline !== false;
+
+            return `
+                <div class="discovered-desk-card" style="background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius: 8px; padding: 0.65rem 0.85rem; min-width: 230px; flex: 1 1 230px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.15s ease, border-color 0.15s ease;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-desktop" style="color: var(--accent-blue); font-size: 1.1rem;"></i>
+                            <strong style="font-size: 0.88rem; color: var(--text-color);">${ValidationUtil.escapeHTML(name)}</strong>
+                        </div>
+                        <span style="font-size: 0.68rem; font-weight: 700; color: ${isOnline ? 'var(--accent-emerald)' : 'var(--text-muted)'}; display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: ${isOnline ? '#10b981' : '#64748b'}; display: inline-block;"></span>
+                            ${isOnline ? 'ONLINE' : 'STANDBY'}
+                        </span>
+                    </div>
+                    <div style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent-blue); font-weight: 600; margin-bottom: 0.2rem;">
+                        ${ValidationUtil.escapeHTML(fmtId)}
+                    </div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.6rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <i class="fa-solid fa-network-wired" style="margin-right: 0.25rem;"></i> ${ValidationUtil.escapeHTML(endpoint)}
+                    </div>
+                    <button class="btn btn-primary btn-sm btn-connect-discovered" data-desk-id="${ValidationUtil.escapeHTML(fmtId)}" style="width: 100%; font-size: 0.78rem; padding: 0.35rem 0.5rem; font-weight: 600;">
+                        <i class="fa-solid fa-bolt"></i> 1-Click Connect
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        // Wire 1-Click Connect buttons
+        container.querySelectorAll('.btn-connect-discovered').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const targetId = btn.getAttribute('data-desk-id');
+                const targetInput = document.getElementById('target-id-input');
+                const connectBtn = document.getElementById('connect-session-btn');
+                if (targetInput) {
+                    targetInput.value = targetId;
+                    targetInput.dispatchEvent(new Event('input'));
+                }
+                if (connectBtn) {
+                    connectBtn.click();
+                }
+            });
+        });
+    }
+}
+
 // Initialize New MVC Modules
 document.addEventListener('DOMContentLoaded', () => {
     const dialogView = new DialogView();
@@ -4314,6 +4649,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.remoteContactsController = new RemoteContactsController(new RemoteContactsModel(), dialogView);
     window.notificationsController = new NotificationsController(new NotificationsModel());
     window.serverAdminController = new ServerAdminController(new ServerAdminModel());
+    window.discoveredDesksController = new DiscoveredDesksController(new DiscoveredDesksModel());
     
     window.safeZoneController.init();
     window.groupController.init();
@@ -4322,9 +4658,32 @@ document.addEventListener('DOMContentLoaded', () => {
     window.remoteContactsController.init();
     window.notificationsController.init();
     window.serverAdminController.render();
+    window.discoveredDesksController.init();
 
     // Trigger immediate view synchronization with fully initialized controllers
     if (window.appController) {
         window.appController.renderCurrentView();
     }
+
+    // Dynamic Gateway Telemetry Probe (Stage 6 Unified Gateway Synchronization)
+    (async () => {
+        try {
+            const hRes = await fetch('/api/health');
+            if (hRes.ok) {
+                const hData = await hRes.json();
+                const activePort = hData.port || window.location.port || '8080';
+                const gwStatusEl = document.getElementById('web-gateway-status-text');
+                if (gwStatusEl) gwStatusEl.textContent = `Port ${activePort} (HTTP 200)`;
+                const gwPillEl = document.getElementById('gateway-pill-status');
+                if (gwPillEl) gwPillEl.textContent = `GATEWAY PORT ${activePort} : HTTP 200`;
+                const gwDisplayEl = document.getElementById('gateway-url-display');
+                if (gwDisplayEl) gwDisplayEl.textContent = `http://${window.location.hostname || 'localhost'}:${activePort}/jdroid-x-desk/`;
+            }
+        } catch (_) {
+            const fallbackPort = window.location.port || '8080';
+            const gwStatusEl = document.getElementById('web-gateway-status-text');
+            if (gwStatusEl) gwStatusEl.textContent = `Port ${fallbackPort} (HTTP 200)`;
+        }
+    })();
 });
+

@@ -60,6 +60,9 @@ async function runTests() {
     assert(fs.existsSync('docs/headless/debianlinux.txt'), 'docs/headless/debianlinux.txt exists');
     assert(fs.existsSync('admin.html'), 'admin.html (responsive standalone admin dashboard) exists');
     assert(fs.existsSync('styles/themes/themes.css'), 'styles/themes/themes.css (Universal 15-Paradigm Master Theme tokens) exists');
+    assert(fs.existsSync('scripts/gateway_routes.json'), 'scripts/gateway_routes.json (Unified Gateway routes registry) exists');
+    assert(fs.existsSync('start_nodejs_server.bat'), 'start_nodejs_server.bat (Holistic gateway launcher) exists');
+    assert(fs.existsSync('requirement/unified-screen-contract.txt'), 'requirement/unified-screen-contract.txt (Stage 1 Screen Contract) exists');
 
 
     // 2. DATABASE SCHEMA INTEGRITY
@@ -105,7 +108,13 @@ async function runTests() {
         'view-server-admin',
         'web-header-gateway-pill',
         'global-theme-selector',
-        'theme-toggle-btn'
+        'theme-toggle-btn',
+        'discovered-desks-card',
+        'btn-scan-lan-desks',
+        'ad-conn-lan-discovery',
+        'ad-conn-discovery-port',
+        'remote-stream-canvas',
+        'gateway-entry-card'
     ];
     for (const id of criticalDomIds) {
         assert(html.includes(`id="${id}"`), `DOM element exists: #${id}`);
@@ -408,6 +417,44 @@ async function runTests() {
         const purgeLogs = await makeRequest('DELETE', '/api/admin/logs');
         assert(purgeLogs.statusCode === 200 && purgeLogs.body.success, 'DELETE /api/admin/logs successfully purges logs');
 
+        // Test Discovered Desks API (LAN / Zero-Config Discovery)
+        const discoveredRes = await makeRequest('GET', '/api/discovered-desks');
+        assert(discoveredRes.statusCode === 200 && Array.isArray(discoveredRes.body.data), 'GET /api/discovered-desks returns discovered desks array');
+
+        const probeRes = await makeRequest('POST', '/api/discovered-desks/probe');
+        assert(probeRes.statusCode === 200 && probeRes.body.success, 'POST /api/discovered-desks/probe sends discovery probe');
+
+        // Test AnyDesk Wire-Speed Relay Streaming & Input APIs
+        const relayStatus = await makeRequest('GET', '/api/relay/status');
+        assert(relayStatus.statusCode === 200 && (relayStatus.body.status || relayStatus.body.success), 'GET /api/relay/status returns live relay status');
+
+        const pushInputRes = await makeRequest('POST', '/api/relay/push_input', {
+            targetId: 'TEST-DESK-1',
+            event: { type: 'mouse', action: 'move', x: 100, y: 200 }
+        });
+        assert(pushInputRes.statusCode === 200 && pushInputRes.body.success, 'POST /api/relay/push_input queues remote mouse/keyboard inputs');
+
+        const pushFrameRes = await makeRequest('POST', '/api/relay/push_frame', {
+            targetId: 'TEST-DESK-1',
+            frame: 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+        });
+        assert(pushFrameRes.statusCode === 200 && pushFrameRes.body.success, 'POST /api/relay/push_frame accepts live screen keyframe');
+
+        const pullFrameRes = await makeRequest('GET', '/api/relay/frame?targetId=TEST-DESK-1');
+        assert(pullFrameRes.statusCode === 200, 'GET /api/relay/frame returns frame endpoint response');
+
+        const pullFrameBinRes = await makeRequest('GET', '/api/relay/frame_bin?targetId=TEST-DESK-1');
+        assert(pullFrameBinRes.statusCode === 200 || pullFrameBinRes.statusCode === 204, 'GET /api/relay/frame_bin returns binary stream response (200/204)');
+
+        // Stage 6 Holistic Gateway Mounting Verification
+        const healthRes = await makeRequest('GET', '/api/health');
+        assert(healthRes.statusCode === 200 && healthRes.body.status === 'UP' && healthRes.body.appSlug === 'jdroid-x-desk', 'GET /api/health returns HTTP 200 server health probe');
+
+        const gwRoutesRes = await makeRequest('GET', '/api/gateway/routes');
+        assert(gwRoutesRes.statusCode === 200 && gwRoutesRes.body.appSlug === 'jdroid-x-desk', 'GET /api/gateway/routes serves gateway routes registry');
+
+        const gwPageRes = await makeRequest('GET', '/jdroid-x-desk/index.html');
+        assert(gwPageRes.statusCode === 200, 'GET /jdroid-x-desk/index.html serves application through mounted gateway');
     } catch (err) {
         assert(false, `API integration error: ${err.message}`);
     } finally {

@@ -9,16 +9,22 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const dbContext = require('./models/db-context');
 const ServerController = require('./controllers/server-controller');
 
 const app = express();
-const PORT = process.env.PORT || 12345;
+// Priority: environment variable > Gateway Port 8080
+const PORT = process.env.PORT || 8080;
+const FALLBACK_PORT = 12345;
 
 process.on('uncaughtException', (err) => { console.error('[SERVER ERROR] Uncaught Exception:', err.message); });
 process.on('unhandledRejection', (reason) => { console.error('[SERVER ERROR] Unhandled Rejection:', reason); });
 
 app.use(express.json());
+
+// Holistic Gateway Mounts (Port 8080 /jdroid-x-desk/...)
+app.use('/jdroid-x-desk', express.static(__dirname));
 
 // Encapsulated Static Route Mounts (OOPS MVC View & Asset Standard)
 app.use(express.static(__dirname));
@@ -28,6 +34,27 @@ app.use('/models', express.static(path.join(__dirname, 'models')));
 app.use('/services', express.static(path.join(__dirname, 'services')));
 app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
 app.use('/styles', express.static(path.join(__dirname, 'styles')));
+
+// Gateway Health & Routes APIs (Stage 6 Verification)
+app.get('/api/health', (req, res) => {
+    res.status(200).json({
+        success: true,
+        status: 'UP',
+        appSlug: 'jdroid-x-desk',
+        gatewayUrl: `http://localhost:${PORT}/jdroid-x-desk/index.html#remote-console`,
+        port: PORT,
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.get('/api/gateway/routes', (req, res) => {
+    const routeFile = path.join(__dirname, 'scripts', 'gateway_routes.json');
+    if (fs.existsSync(routeFile)) {
+        return res.sendFile(routeFile);
+    }
+    res.status(404).json({ success: false, error: 'Gateway routes registry not found.' });
+});
 
 let reqLogSeq = 1;
 
@@ -80,17 +107,33 @@ app.use((req, res, next) => {
 // Register OOPS MVC Controller routes
 ServerController.registerRoutes(app, dbContext);
 
-// Server Listener
+// Primary Server Listener (Gateway Port 8080)
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log('[SUCCESS] jDroid-X-Desk Server running on http://localhost:' + PORT);
+    console.log(`[SUCCESS] jDroid-X-Desk Server running on http://localhost:${PORT}`);
+    console.log(`[GATEWAY] Unified Gateway route mounted at http://localhost:${PORT}/jdroid-x-desk/index.html#remote-console`);
 });
 server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-        console.log('[INFO] Port ' + PORT + ' already in use.');
+        console.log(`[INFO] Port ${PORT} already in use.`);
     } else {
         console.error('[SERVER ERROR]', err.message);
     }
 });
+
+// Optional Dual-Listener on Port 12345 (Chesterton's Fence: Backward Compatibility)
+let legacyServer = null;
+if (String(PORT) !== String(FALLBACK_PORT) && !process.env.NO_DUAL_PORT) {
+    try {
+        legacyServer = app.listen(FALLBACK_PORT, '0.0.0.0', () => {
+            console.log(`[COMPAT] Backward-compatible legacy listener active on http://localhost:${FALLBACK_PORT}`);
+        });
+        legacyServer.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                console.log(`[INFO] Legacy port ${FALLBACK_PORT} already bound or in use by another instance.`);
+            }
+        });
+    } catch (_) {}
+}
 
 // Backward-compatible re-exports for legacy callers (Chesterton's Fence)
 module.exports = {

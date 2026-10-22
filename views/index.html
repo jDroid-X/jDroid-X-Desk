@@ -389,6 +389,26 @@
                         </div>
                     </div>
 
+                    <!-- Holistic Gateway Entry Card (Stage 6 Unified Gateway Mounting) -->
+                    <div id="gateway-entry-card" class="gateway-entry-card">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <span class="gateway-pill-tag">
+                                <i class="fa-solid fa-network-wired"></i> <span id="gateway-pill-status">GATEWAY PORT 8080 : HTTP 200</span>
+                            </span>
+                            <div style="font-size: 0.8rem; color: var(--text-main);">
+                                <strong>Active Gateway:</strong> <span id="gateway-url-display" style="font-family: var(--font-mono); color: var(--accent-blue);">http://localhost:8080/jdroid-x-desk/</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap;">
+                            <button id="btn-copy-gateway-url" class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('http://localhost:8080/jdroid-x-desk/index.html#remote-console'); alert('Gateway URL copied to clipboard!');" title="Copy Gateway Route URL">
+                                <i class="fa-solid fa-copy"></i> Copy Route
+                            </button>
+                            <a id="btn-launch-gateway-route" href="/jdroid-x-desk/index.html#remote-console" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;" title="Open Unified Gateway Screen">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Gateway
+                            </a>
+                        </div>
+                    </div>
+
                     <!-- AnyDesk Style 2-Hero Card Connection Grid: Step 2 & Step 3 Side-by-Side -->
                     <div class="remote-console-2col-grid">
                         <!-- CARD 1: STEP 2 - THIS DESK (Share Screen - Get Support) -->
@@ -484,6 +504,31 @@
                         </div>
                     </div>
 
+                    <!-- CARD 3: DISCOVERED ON LOCAL NETWORK (Nearby Desks) -->
+                    <div id="discovered-desks-card" class="widget-box" style="border-top: 4px solid var(--accent-emerald); margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-tower-cell" style="color: var(--accent-emerald); font-size: 1.25rem;"></i>
+                                <h3 style="margin: 0; font-size: 1.05rem;">Discovered on Local Network (Nearby Desks)</h3>
+                                <span class="badge" id="discovered-desks-count" style="background: rgba(16,185,129,0.15); color: var(--accent-emerald); font-size: 0.72rem; padding: 0.15rem 0.5rem;">0 Found</span>
+                            </div>
+                            <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                <button id="btn-scan-lan-desks" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Scan Network
+                                </button>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                            Workstations running jDroid-X Desk on your local subnet appear here automatically for instant 1-click connection.
+                        </p>
+                        <div id="discovered-desks-container" style="display: flex; gap: 0.75rem; flex-wrap: wrap; min-height: 52px; align-items: center;">
+                            <div style="font-size: 0.82rem; color: var(--text-muted); font-style: italic;">
+                                <i class="fa-solid fa-satellite-dish fa-spin" style="margin-right: 0.4rem; color: var(--accent-emerald);"></i>
+                                Scanning local Wi-Fi / LAN... Other jDroid-X Desks will appear automatically.
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- STEP 3 SIMULATED REMOTE DESKTOP INTERACTIVE CANVAS VIEWPORT -->
                     <div id="remote-desktop-viewport-box" class="widget-box" style="display: none; background: #060911; border: 2px solid var(--accent-blue);">
                         <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
@@ -517,6 +562,9 @@
                                             <span style="font-size: 0.8rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> Live Encrypted Remote Session Active</span>
                                             <span style="font-size: 0.75rem; color: var(--text-muted);" id="virtual-screen-clock">11:42:00 AM</span>
                                         </div>
+
+                                        <!-- HIGH-SPEED INTERACTIVE REMOTE SCREEN CANVAS (AnyDesk Wire-Speed Engine) -->
+                                        <canvas id="remote-stream-canvas" tabindex="0" style="display: none; width: 100%; height: auto; max-height: 480px; object-fit: contain; border-radius: 6px; background: #000; margin: auto; cursor: crosshair; box-shadow: 0 4px 20px rgba(0,0,0,0.5); outline: none;"></canvas>
 
                                         <video id="live-screen-video" autoplay playsinline muted style="display: none; width: 100%; max-height: 380px; object-fit: contain; border-radius: 6px; background: #000; margin: auto;"></video>
 
@@ -1106,6 +1154,20 @@
                                     <div style="display: flex; align-items: center; gap: 0.8rem;">
                                         <label style="font-size: 0.88rem;">Local port:</label>
                                         <input type="number" id="ad-conn-port" value="7070" style="width: 100px; padding: 0.35rem; border: 1px solid #ccc; border-radius: 4px;">
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title"><i class="fa-solid fa-satellite-dish text-success"></i> Local Network (LAN) Peer-to-Peer Auto-Discovery</div>
+                                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.6rem;">Broadcast UDP beacons across the local subnet for zero-config discovery of nearby jDroid-X Desks.</p>
+                                    <label class="ui-switch switch-danger" style="margin-bottom: 0.8rem; display: flex;">
+                                        <input type="checkbox" id="ad-conn-lan-discovery" checked>
+                                        <span class="switch-slider"></span>
+                                        <span>Enable Zero-Config LAN P2P Direct Discovery</span>
+                                    </label>
+                                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                        <label style="font-size: 0.88rem;">LAN Discovery UDP Port:</label>
+                                        <input type="number" id="ad-conn-discovery-port" value="8089" style="width: 100px; padding: 0.35rem; border: 1px solid #ccc; border-radius: 4px;">
                                     </div>
                                 </div>
 

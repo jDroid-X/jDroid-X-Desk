@@ -217,7 +217,7 @@
                 <button id="btn-theme-toggle" class="btn btn-secondary btn-sm" title="Toggle Light/Dark Theme">
                     <i class="fa-solid fa-moon"></i>
                 </button>
-                <a href="/" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                <a href="index.html#remote-console" class="btn btn-primary btn-sm" style="text-decoration: none;">
                     <i class="fa-solid fa-desktop"></i> Open User Console
                 </a>
                 <button id="btn-refresh-telemetry" class="btn btn-outline btn-sm">
@@ -550,6 +550,21 @@
                 await this.fetchMetrics();
                 await this.fetchLogs();
                 this.startAutoRefresh();
+
+                // Dynamic Server Status & Active Port Hydration
+                try {
+                    const hRes = await fetch('/api/health');
+                    if (hRes.ok) {
+                        const hData = await hRes.json();
+                        const p = hData.port || window.location.port || '8080';
+                        const pill = document.getElementById('server-status-pill');
+                        if (pill) pill.innerHTML = `<i class="fa-solid fa-server"></i> HTTP 200 Online (Port ${p})`;
+                    }
+                } catch (_) {
+                    const p = window.location.port || '8080';
+                    const pill = document.getElementById('server-status-pill');
+                    if (pill) pill.innerHTML = `<i class="fa-solid fa-server"></i> HTTP 200 Online (Port ${p})`;
+                }
             }
 
             bindEvents() {

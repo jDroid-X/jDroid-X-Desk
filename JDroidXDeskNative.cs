@@ -484,6 +484,8 @@ namespace JDroidXDesk.Native
     {
         public int localPort { get; set; }
         public int relayPort { get; set; }
+        public int discoveryPort { get; set; }
+        public bool lanDiscovery { get; set; }
         public string tunnelToken { get; set; }
         public bool directConnections { get; set; }
         public bool colabCloudRelay { get; set; }
@@ -500,6 +502,8 @@ namespace JDroidXDesk.Native
         {
             localPort = 7070;
             relayPort = 8088;
+            discoveryPort = 8089;
+            lanDiscovery = true;
             tunnelToken = "";
             directConnections = true;
             colabCloudRelay = true;
@@ -1946,6 +1950,80 @@ namespace JDroidXDesk.Native
     }
 
     // ==========================================================================
+    // ANYDESK INCOMING SESSION APPROVAL DIALOG (FLOATING SYSTEM POPUP)
+    // ==========================================================================
+
+    public class AnyDeskIncomingSessionDialog : Form
+    {
+        private Action<bool, bool, bool, bool> onAccept;
+        private Action onDismiss;
+
+        public AnyDeskIncomingSessionDialog(string endpoint, Action<bool, bool, bool, bool> acceptCallback, Action dismissCallback)
+        {
+            this.onAccept = acceptCallback;
+            this.onDismiss = dismissCallback;
+
+            this.Width = 360;
+            this.Height = 250;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.StartPosition = FormStartPosition.Manual;
+            this.TopMost = true;
+            this.ShowInTaskbar = false;
+            this.BackColor = Color.FromArgb(15, 23, 42);
+
+            Rectangle workArea = Screen.PrimaryScreen.WorkingArea;
+            this.Location = new Point(workArea.Right - this.Width - 20, workArea.Bottom - this.Height - 20);
+
+            // Title Bar
+            Panel topBar = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = Color.FromArgb(220, 38, 38), Padding = new Padding(12, 8, 12, 8) };
+            Label lblTitle = new Label { Text = "⚡ ANYDESK SESSION REQUEST", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true };
+            topBar.Controls.Add(lblTitle);
+
+            // Content Panel
+            Panel pnlContent = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 10, 16, 10) };
+            Label lblEndpoint = new Label { Text = "Remote Device: " + (string.IsNullOrEmpty(endpoint) ? "Remote Operator" : endpoint), Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(14, 8), AutoSize = true };
+            
+            CheckBox chkInput = new CheckBox { Text = "Allow Mouse & Keyboard Control", Checked = true, Location = new Point(16, 36), AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 8.2f) };
+            CheckBox chkClip = new CheckBox { Text = "Allow Clipboard Synchronization", Checked = true, Location = new Point(16, 60), AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 8.2f) };
+            CheckBox chkFiles = new CheckBox { Text = "Allow File Transfer", Checked = true, Location = new Point(16, 84), AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 8.2f) };
+            CheckBox chkLock = new CheckBox { Text = "Lock Local Physical Input", Checked = false, Location = new Point(16, 108), AutoSize = true, ForeColor = Color.FromArgb(248, 113, 113), Font = new Font("Segoe UI", 8.2f) };
+
+            FlowLayoutPanel btnBox = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(0, 4, 10, 0) };
+            ModernButton btnAccept = new ModernButton { Text = "✅ Accept", Size = new Size(110, 32), NormalColor = Color.FromArgb(16, 185, 129), HoverColor = Color.FromArgb(5, 150, 105), Margin = new Padding(8, 0, 0, 0) };
+            ModernButton btnDismiss = new ModernButton { Text = "❌ Dismiss", Size = new Size(110, 32), NormalColor = Color.FromArgb(220, 38, 38), HoverColor = Color.FromArgb(185, 28, 28) };
+
+            btnAccept.Click += (s, e) => {
+                if (onAccept != null) onAccept(chkInput.Checked, chkClip.Checked, chkFiles.Checked, chkLock.Checked);
+                this.Close();
+            };
+            btnDismiss.Click += (s, e) => {
+                if (onDismiss != null) onDismiss();
+                this.Close();
+            };
+
+            btnBox.Controls.Add(btnAccept);
+            btnBox.Controls.Add(btnDismiss);
+
+            pnlContent.Controls.Add(lblEndpoint);
+            pnlContent.Controls.Add(chkInput);
+            pnlContent.Controls.Add(chkClip);
+            pnlContent.Controls.Add(chkFiles);
+            pnlContent.Controls.Add(chkLock);
+
+            this.Controls.Add(pnlContent);
+            this.Controls.Add(btnBox);
+            this.Controls.Add(topBar);
+
+            this.Paint += (s, e) => {
+                using (Pen borderPen = new Pen(Color.FromArgb(220, 38, 38), 2))
+                {
+                    e.Graphics.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                }
+            };
+        }
+    }
+
+    // ==========================================================================
     // 2.5 DYNAMIC ENGINE SCRIPT PROVISIONER (AUTOMATIC FRESH DESK INSTALLATION)
     // ==========================================================================
 
@@ -2045,15 +2123,26 @@ namespace JDroidXDesk.Native
         private readonly Dictionary<string, List<Dictionary<string, object>>> _inputQueues = new Dictionary<string, List<Dictionary<string, object>>>();
         private readonly DateTime _startTime = DateTime.UtcNow;
         private DateTime _lastViewerActivityTime = DateTime.MinValue;
+        private string _lastViewerEndpoint = "";
 
         public bool IsRunning { get { return _isRunning; } }
         public int Port { get { return _port; } }
         public int AdminPort { get { return _adminPort; } }
         public string ActiveEngine { get { return _activeEngine; } set { _activeEngine = value; } }
+        public string LastViewerEndpoint { get { return _lastViewerEndpoint; } }
 
         public bool HasActiveViewers()
         {
             return (DateTime.UtcNow - _lastViewerActivityTime).TotalSeconds < 4;
+        }
+
+        public void DisconnectAllViewers()
+        {
+            lock (_syncLock)
+            {
+                _lastViewerActivityTime = DateTime.MinValue;
+                _lastViewerEndpoint = "";
+            }
         }
 
         public void RecordViewerActivity()
@@ -2254,6 +2343,14 @@ namespace JDroidXDesk.Native
                     if (path.StartsWith("/api/relay/") || path.StartsWith("/view"))
                     {
                         _lastViewerActivityTime = DateTime.UtcNow;
+                        try
+                        {
+                            if (client.Client != null && client.Client.RemoteEndPoint != null)
+                            {
+                                _lastViewerEndpoint = client.Client.RemoteEndPoint.ToString();
+                            }
+                        }
+                        catch { }
                     }
 
                     Dictionary<string, string> queryParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -2402,6 +2499,24 @@ namespace JDroidXDesk.Native
                         resp["success"] = true;
                         resp["devices"] = devs;
                         SendJsonResponse(stream, 200, serializer.Serialize(resp));
+                        return;
+                    }
+
+                    if (path == "/api/discovered-desks" || path == "/api/relay/discovered")
+                    {
+                        List<DiscoveredDeskInfo> dList = LanDiscoveryEngine.Instance.GetDiscoveredDesks();
+                        Dictionary<string, object> dResp = new Dictionary<string, object>();
+                        dResp["success"] = true;
+                        dResp["desks"] = dList;
+                        dResp["count"] = dList.Count;
+                        SendJsonResponse(stream, 200, serializer.Serialize(dResp));
+                        return;
+                    }
+
+                    if (path == "/api/discovered-desks/probe")
+                    {
+                        LanDiscoveryEngine.Instance.BroadcastQuery("*");
+                        SendJsonResponse(stream, 200, "{\"success\":true,\"probed\":true}");
                         return;
                     }
 
@@ -2592,10 +2707,16 @@ namespace JDroidXDesk.Native
                             string target = payload.ContainsKey("targetId") ? Convert.ToString(payload["targetId"]) : "";
                             if (!string.IsNullOrEmpty(target))
                             {
+                                Dictionary<string, object> eventToQueue = payload;
+                                if (payload.ContainsKey("event") && payload["event"] is Dictionary<string, object>)
+                                {
+                                    eventToQueue = payload["event"] as Dictionary<string, object>;
+                                    if (!eventToQueue.ContainsKey("targetId")) eventToQueue["targetId"] = target;
+                                }
                                 lock (_syncLock)
                                 {
                                     if (!_inputQueues.ContainsKey(target)) _inputQueues[target] = new List<Dictionary<string, object>>();
-                                    _inputQueues[target].Add(payload);
+                                    _inputQueues[target].Add(eventToQueue);
                                 }
                             }
                         }
@@ -2823,6 +2944,19 @@ namespace JDroidXDesk.Native
     // 2.6 NATIVE P2P LAN DISCOVERY ENGINE (ZERO-CONFIG ANYDESK-STYLE UDP BEACON)
     // ==========================================================================
 
+    public class DiscoveredDeskInfo
+    {
+        public string deskId { get; set; }
+        public string formattedDeskId { get; set; }
+        public string endpoint { get; set; }
+        public string ip { get; set; }
+        public int port { get; set; }
+        public string machineName { get; set; }
+        public string tunnelUrl { get; set; }
+        public DateTime lastSeen { get; set; }
+        public bool isOnline { get { return (DateTime.UtcNow - lastSeen).TotalSeconds < 15; } }
+    }
+
     public class LanDiscoveryEngine
     {
         private static readonly LanDiscoveryEngine _instance = new LanDiscoveryEngine();
@@ -2833,28 +2967,29 @@ namespace JDroidXDesk.Native
         private Thread _broadcastThread;
         private Thread _listenThread;
         private volatile bool _isRunning = false;
-        private const int DISCOVERY_PORT = 8089;
+        private int _discoveryPort = 8089;
         private string _localDeskId = "";
         private int _localHttpPort = 8088;
 
+        private readonly Dictionary<string, DiscoveredDeskInfo> _discoveredDesks = new Dictionary<string, DiscoveredDeskInfo>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _discoveredEndpoints = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, DateTime> _lastSeenTimestamps = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         private readonly object _lock = new object();
 
         public bool IsRunning { get { return _isRunning; } }
 
-        public void Start(string localDeskId, int localHttpPort = 8088)
+        public void Start(string localDeskId, int localHttpPort = 8088, int discoveryPort = 8089)
         {
             if (_isRunning) return;
             _localDeskId = localDeskId ?? "";
             _localHttpPort = localHttpPort > 0 ? localHttpPort : 8088;
+            _discoveryPort = discoveryPort > 0 ? discoveryPort : 8089;
             _isRunning = true;
 
             try
             {
                 _udpListener = new UdpClient();
                 _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                _udpListener.Client.Bind(new IPEndPoint(IPAddress.Any, DISCOVERY_PORT));
+                _udpListener.Client.Bind(new IPEndPoint(IPAddress.Any, _discoveryPort));
                 _udpListener.EnableBroadcast = true;
 
                 _listenThread = new Thread(new ThreadStart(ListenLoop))
@@ -2888,19 +3023,80 @@ namespace JDroidXDesk.Native
             try { if (_udpBroadcastSender != null) _udpBroadcastSender.Close(); } catch { }
         }
 
-        public void RegisterDiscoveredDesk(string deskId, string endpoint)
+        public void RegisterDiscoveredDesk(string deskId, string endpoint, string machineName = "", string tunnelUrl = "")
         {
             if (string.IsNullOrEmpty(deskId) || string.IsNullOrEmpty(endpoint)) return;
             string cleanId = deskId.Trim().Replace(" ", "").Replace("-", "");
             string formattedId = (cleanId.Length == 9) ? string.Format("{0}-{1}-{2}", cleanId.Substring(0, 3), cleanId.Substring(3, 3), cleanId.Substring(6, 3)) : deskId.Trim();
+
+            string ip = "";
+            int port = 8088;
+            try
+            {
+                Uri u = new Uri(endpoint);
+                ip = u.Host;
+                port = u.Port;
+            }
+            catch { }
 
             lock (_lock)
             {
                 _discoveredEndpoints[deskId] = endpoint;
                 _discoveredEndpoints[cleanId] = endpoint;
                 _discoveredEndpoints[formattedId] = endpoint;
-                _lastSeenTimestamps[deskId] = DateTime.UtcNow;
+
+                DiscoveredDeskInfo info;
+                if (!_discoveredDesks.TryGetValue(cleanId, out info))
+                {
+                    info = new DiscoveredDeskInfo();
+                    _discoveredDesks[cleanId] = info;
+                }
+                info.deskId = cleanId;
+                info.formattedDeskId = formattedId;
+                info.endpoint = endpoint;
+                info.ip = ip;
+                info.port = port;
+                if (!string.IsNullOrEmpty(machineName)) info.machineName = machineName;
+                else if (string.IsNullOrEmpty(info.machineName)) info.machineName = "Remote Desk " + formattedId;
+                if (!string.IsNullOrEmpty(tunnelUrl)) info.tunnelUrl = tunnelUrl;
+                info.lastSeen = DateTime.UtcNow;
             }
+        }
+
+        public List<DiscoveredDeskInfo> GetDiscoveredDesks()
+        {
+            List<DiscoveredDeskInfo> list = new List<DiscoveredDeskInfo>();
+            DateTime cutoff = DateTime.UtcNow.AddSeconds(-45);
+            lock (_lock)
+            {
+                List<string> expiredKeys = new List<string>();
+                foreach (var kvp in _discoveredDesks)
+                {
+                    if (kvp.Value.lastSeen < cutoff)
+                    {
+                        expiredKeys.Add(kvp.Key);
+                    }
+                    else
+                    {
+                        list.Add(new DiscoveredDeskInfo
+                        {
+                            deskId = kvp.Value.deskId,
+                            formattedDeskId = kvp.Value.formattedDeskId,
+                            endpoint = kvp.Value.endpoint,
+                            ip = kvp.Value.ip,
+                            port = kvp.Value.port,
+                            machineName = kvp.Value.machineName,
+                            tunnelUrl = kvp.Value.tunnelUrl,
+                            lastSeen = kvp.Value.lastSeen
+                        });
+                    }
+                }
+                foreach (string k in expiredKeys)
+                {
+                    _discoveredDesks.Remove(k);
+                }
+            }
+            return list;
         }
 
         public bool TryGetDeskEndpoint(string deskId, out string endpoint)
@@ -2915,11 +3111,17 @@ namespace JDroidXDesk.Native
                 {
                     return true;
                 }
+                DiscoveredDeskInfo info;
+                if (_discoveredDesks.TryGetValue(cleanId, out info))
+                {
+                    endpoint = !string.IsNullOrEmpty(info.endpoint) ? info.endpoint : info.tunnelUrl;
+                    return !string.IsNullOrEmpty(endpoint);
+                }
             }
             return false;
         }
 
-        public void BroadcastQuery(string targetDeskId)
+        public void BroadcastQuery(string targetDeskId = "*")
         {
             try
             {
@@ -2927,7 +3129,7 @@ namespace JDroidXDesk.Native
                 {
                     string msg = "JDX_QUERY|" + targetDeskId;
                     byte[] data = System.Text.Encoding.UTF8.GetBytes(msg);
-                    IPEndPoint ep = new IPEndPoint(IPAddress.Broadcast, DISCOVERY_PORT);
+                    IPEndPoint ep = new IPEndPoint(IPAddress.Broadcast, _discoveryPort);
                     _udpBroadcastSender.Send(data, data.Length, ep);
                 }
             }
@@ -2947,7 +3149,7 @@ namespace JDroidXDesk.Native
                         string beaconMsg = string.Format("JDX_BEACON|{0}|{1}|{2}|{3}|{4}",
                             _localDeskId, localIp, _localHttpPort, Environment.MachineName, activeTun);
                         byte[] data = System.Text.Encoding.UTF8.GetBytes(beaconMsg);
-                        IPEndPoint ep = new IPEndPoint(IPAddress.Broadcast, DISCOVERY_PORT);
+                        IPEndPoint ep = new IPEndPoint(IPAddress.Broadcast, _discoveryPort);
                         _udpBroadcastSender.Send(data, data.Length, ep);
                     }
                 }
@@ -2977,7 +3179,8 @@ namespace JDroidXDesk.Native
                                 string senderDeskId = parts[1];
                                 string senderIp = parts[2];
                                 string senderPort = parts[3];
-                                string senderTun = (parts.Length >= 5) ? parts[4] : "";
+                                string machineName = (parts.Length >= 5) ? parts[4] : "";
+                                string senderTun = (parts.Length >= 6) ? parts[5] : "";
 
                                 if (!string.IsNullOrEmpty(_localDeskId) && senderDeskId.Replace("-", "") == _localDeskId.Replace("-", ""))
                                     continue;
@@ -2988,10 +3191,10 @@ namespace JDroidXDesk.Native
                                 }
 
                                 string endpoint = string.Format("http://{0}:{1}", senderIp, senderPort);
-                                RegisterDiscoveredDesk(senderDeskId, endpoint);
+                                RegisterDiscoveredDesk(senderDeskId, endpoint, machineName, senderTun);
                                 if (!string.IsNullOrEmpty(senderTun))
                                 {
-                                    RegisterDiscoveredDesk(senderDeskId + "_tunnel", senderTun);
+                                    RegisterDiscoveredDesk(senderDeskId + "_tunnel", senderTun, machineName, senderTun);
                                 }
                             }
                         }
@@ -3011,7 +3214,7 @@ namespace JDroidXDesk.Native
                                     byte[] replyData = System.Text.Encoding.UTF8.GetBytes(replyMsg);
                                     if (_udpBroadcastSender != null)
                                     {
-                                        _udpBroadcastSender.Send(replyData, replyData.Length, new IPEndPoint(remoteEp.Address, DISCOVERY_PORT));
+                                        _udpBroadcastSender.Send(replyData, replyData.Length, new IPEndPoint(remoteEp.Address, _discoveryPort));
                                     }
                                 }
                             }
@@ -3091,12 +3294,16 @@ namespace JDroidXDesk.Native
         [DllImport("user32.dll")]
         private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
 
+        [DllImport("user32.dll", EntryPoint = "BlockInput")]
+        private static extern bool BlockInput(bool fBlockIt);
+
         private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
         private const uint MOUSEEVENTF_LEFTUP = 0x0004;
         private const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
         private const uint MOUSEEVENTF_RIGHTUP = 0x0010;
         private const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
         private const uint MOUSEEVENTF_MIDDLEUP = 0x0040;
+        private const uint MOUSEEVENTF_WHEEL = 0x0800;
         private const uint KEYEVENTF_KEYUP = 0x0002;
 
         private DatabaseContext db;
@@ -3161,6 +3368,25 @@ namespace JDroidXDesk.Native
         private Process localPythonRelayProcess = null;
         private ComboBox cboSavedFleet;
         private Panel cardRecent;
+        private Panel cardDiscovered;
+        private FlowLayoutPanel flowDiscoveredDesks;
+        private Panel pnlHostViewerAlert;
+        private Label lblHostViewerAlert;
+        private ModernButton btnHostDisconnectViewer;
+        private ModernButton btnHostAcceptViewer;
+        private CheckBox chkPermInput;
+        private CheckBox chkPermClip;
+        private CheckBox chkPermFiles;
+        private CheckBox chkPermBlockLocal;
+        private bool isLocalInputBlockedByRemote = false;
+        private bool isRemoteInputBlockedByViewer = false;
+        private bool hostPermissionAllowInput = true;
+        private bool hostPermissionAllowClipboard = true;
+        private bool hostPermissionAllowFiles = true;
+        private bool autoSyncClipboard = true;
+        private string lastLocalClipboardText = "";
+        private string lastReceivedClipboardText = "";
+        private AnyDeskIncomingSessionDialog activeIncomingDialog = null;
 
         // Console Controls
         private Label lblLocalId;
@@ -3432,6 +3658,33 @@ namespace JDroidXDesk.Native
                     UpdateLiveTelemetry();
                     if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
 
+                    // Automatic Bi-directional Clipboard Sync (AnyDesk Feature)
+                    if (isSessionActive && autoSyncClipboard)
+                    {
+                        try
+                        {
+                            string curClip = "";
+                            Thread ct = new Thread(() => {
+                                try {
+                                    if (Clipboard.ContainsText()) curClip = Clipboard.GetText();
+                                } catch { }
+                            });
+                            ct.SetApartmentState(ApartmentState.STA);
+                            ct.IsBackground = true;
+                            ct.Start();
+                            ct.Join(250);
+
+                            if (!string.IsNullOrEmpty(curClip) && curClip != lastLocalClipboardText && curClip.Length < 150000)
+                            {
+                                lastLocalClipboardText = curClip;
+                                Dictionary<string, object> clipEv = new Dictionary<string, object>();
+                                clipEv["text"] = curClip;
+                                SendRemoteInput("clipboard", clipEv);
+                            }
+                        }
+                        catch { }
+                    }
+
                     // Enforce Idle Session Timeout from ServerConfig Processing Limits
                     if (db != null && db.ServerConfig != null && db.ServerConfig.processingLimits != null)
                     {
@@ -3450,6 +3703,65 @@ namespace JDroidXDesk.Native
             connectingAnimationTimer.Tick += (s, e) => {
                 headerHeartbeatPulseFrame++;
                 if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
+
+                // Periodic Host Security Alert (Incoming AnyDesk Viewer Detection)
+                if (headerHeartbeatPulseFrame % 4 == 0 && pnlHostViewerAlert != null && !pnlHostViewerAlert.IsDisposed)
+                {
+                    bool hasViewer = EmbeddedRelayServer.Instance.HasActiveViewers();
+                    if (pnlHostViewerAlert.Visible != hasViewer)
+                    {
+                        pnlHostViewerAlert.Visible = hasViewer;
+                        if (hasViewer && btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = true;
+
+                        // AnyDesk Floating Pop-Up Dialog
+                        if (hasViewer)
+                        {
+                            if (activeIncomingDialog == null || activeIncomingDialog.IsDisposed)
+                            {
+                                string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                                activeIncomingDialog = new AnyDeskIncomingSessionDialog(ep,
+                                    (allowInput, allowClip, allowFiles, lockHost) => {
+                                        hostPermissionAllowInput = allowInput;
+                                        hostPermissionAllowClipboard = allowClip;
+                                        hostPermissionAllowFiles = allowFiles;
+                                        isLocalInputBlockedByRemote = lockHost;
+                                        try { BlockInput(lockHost); } catch { }
+                                        if (chkPermInput != null) chkPermInput.Checked = allowInput;
+                                        if (chkPermClip != null) chkPermClip.Checked = allowClip;
+                                        if (chkPermFiles != null) chkPermFiles.Checked = allowFiles;
+                                        if (chkPermBlockLocal != null) chkPermBlockLocal.Checked = lockHost;
+                                        if (btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = false;
+                                        ShowToast("✅ AnyDesk session accepted with custom permissions.");
+                                    },
+                                    () => {
+                                        EmbeddedRelayServer.Instance.DisconnectAllViewers();
+                                        pnlHostViewerAlert.Visible = false;
+                                        ShowToast("🛑 Incoming AnyDesk session rejected.");
+                                    });
+                                activeIncomingDialog.Show();
+                            }
+                        }
+                        else
+                        {
+                            if (activeIncomingDialog != null && !activeIncomingDialog.IsDisposed)
+                            {
+                                activeIncomingDialog.Close();
+                                activeIncomingDialog = null;
+                            }
+                        }
+                    }
+                    if (hasViewer && lblHostViewerAlert != null && !lblHostViewerAlert.IsDisposed)
+                    {
+                        string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                        lblHostViewerAlert.Text = "⚠️ ANYDESK SESSION: " + ep;
+                    }
+                }
+
+                // Periodic LAN Discovered Desks Refresh (every 4 seconds when in Console view)
+                if (headerHeartbeatPulseFrame % 16 == 0 && activeViewKey == "Console" && flowDiscoveredDesks != null && !flowDiscoveredDesks.IsDisposed && !isSessionActive)
+                {
+                    UpdateDiscoveredDesksContent();
+                }
 
                 if (currentConnectionState == SessionConnectionState.Connecting)
                 {
@@ -3525,9 +3837,13 @@ namespace JDroidXDesk.Native
                     ? db.ServerConfig.engines["jdroidRelay"].localPort
                     : 12345;
                 EmbeddedRelayServer.Instance.Start(p, adminP);
-                if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                int discP = (db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.discoveryPort > 0)
+                    ? db.Settings.connection.discoveryPort
+                    : 8089;
+                bool lanEnabled = (db == null || db.Settings == null || db.Settings.connection == null || db.Settings.connection.lanDiscovery);
+                if (lanEnabled && currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
                 {
-                    LanDiscoveryEngine.Instance.Start(currentHostDesktop.RemoteId, p);
+                    LanDiscoveryEngine.Instance.Start(currentHostDesktop.RemoteId, p, discP);
                 }
             }
             catch { }
@@ -6443,6 +6759,96 @@ namespace JDroidXDesk.Native
             sessionFloatingToolbar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(20, 28, 45), Padding = new Padding(6, 4, 6, 4), Visible = false };
             BuildFloatingSessionToolbar();
 
+            // AnyDesk Host Session Security Ribbon (Interactive Permission Controls & Approval)
+            pnlHostViewerAlert = new Panel {
+                Dock = DockStyle.Top,
+                Height = 38,
+                BackColor = Color.FromArgb(15, 23, 42),
+                Padding = new Padding(10, 5, 10, 5),
+                Visible = false
+            };
+            lblHostViewerAlert = new Label {
+                Text = "⚠️ ANYDESK SESSION: Remote Desk",
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(248, 113, 113),
+                Dock = DockStyle.Left,
+                AutoSize = true,
+                Margin = new Padding(0, 6, 8, 0)
+            };
+
+            FlowLayoutPanel pnlPerms = new FlowLayoutPanel {
+                Dock = DockStyle.Left,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Margin = new Padding(12, 2, 0, 0)
+            };
+
+            chkPermInput = new CheckBox { Text = "🎮 Input", Checked = true, AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermInput.CheckedChanged += (s, e) => { hostPermissionAllowInput = chkPermInput.Checked; ShowToast(hostPermissionAllowInput ? "Allowed remote control" : "Blocked remote control"); };
+
+            chkPermClip = new CheckBox { Text = "📋 Clipboard", Checked = true, AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermClip.CheckedChanged += (s, e) => { hostPermissionAllowClipboard = chkPermClip.Checked; ShowToast(hostPermissionAllowClipboard ? "Allowed clipboard sync" : "Blocked clipboard sync"); };
+
+            chkPermFiles = new CheckBox { Text = "📁 Files", Checked = true, AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermFiles.CheckedChanged += (s, e) => { hostPermissionAllowFiles = chkPermFiles.Checked; ShowToast(hostPermissionAllowFiles ? "Allowed file transfer" : "Blocked file transfer"); };
+
+            chkPermBlockLocal = new CheckBox { Text = "🚫 Lock Host", Checked = false, AutoSize = true, ForeColor = Color.FromArgb(248, 113, 113), Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermBlockLocal.CheckedChanged += (s, e) => {
+                isLocalInputBlockedByRemote = chkPermBlockLocal.Checked;
+                try { BlockInput(isLocalInputBlockedByRemote); } catch { }
+                ShowToast(isLocalInputBlockedByRemote ? "Local host input locked" : "Local host input unlocked");
+            };
+
+            pnlPerms.Controls.Add(chkPermInput);
+            pnlPerms.Controls.Add(chkPermClip);
+            pnlPerms.Controls.Add(chkPermFiles);
+            pnlPerms.Controls.Add(chkPermBlockLocal);
+
+            FlowLayoutPanel pnlAlertActions = new FlowLayoutPanel {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true
+            };
+
+            btnHostAcceptViewer = new ModernButton {
+                Text = "✅ Accept",
+                Size = new Size(82, 26),
+                NormalColor = Color.FromArgb(16, 185, 129),
+                HoverColor = Color.FromArgb(5, 150, 105),
+                Margin = new Padding(0, 0, 6, 0)
+            };
+            btnHostAcceptViewer.Click += (s, e) => {
+                btnHostAcceptViewer.Visible = false;
+                ShowToast("Incoming AnyDesk session accepted.");
+            };
+
+            btnHostDisconnectViewer = new ModernButton {
+                Text = "🛑 Disconnect",
+                Size = new Size(96, 26),
+                Dock = DockStyle.None,
+                NormalColor = Color.FromArgb(220, 38, 38),
+                HoverColor = Color.FromArgb(185, 28, 28)
+            };
+            btnHostDisconnectViewer.Click += (s, e) => {
+                EmbeddedRelayServer.Instance.DisconnectAllViewers();
+                pnlHostViewerAlert.Visible = false;
+                if (isLocalInputBlockedByRemote) {
+                    isLocalInputBlockedByRemote = false;
+                    try { BlockInput(false); } catch { }
+                    if (chkPermBlockLocal != null) chkPermBlockLocal.Checked = false;
+                }
+                ShowToast("AnyDesk session disconnected. Access revoked.");
+            };
+
+            pnlAlertActions.Controls.Add(btnHostAcceptViewer);
+            pnlAlertActions.Controls.Add(btnHostDisconnectViewer);
+
+            pnlHostViewerAlert.Controls.Add(pnlAlertActions);
+            pnlHostViewerAlert.Controls.Add(pnlPerms);
+            pnlHostViewerAlert.Controls.Add(lblHostViewerAlert);
+
             // Local Node Info Ribbon (Non-overlapping, Clean Layout)
             localBar = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = ThemePalette.ColorBgCardHeader, Padding = new Padding(14, 8, 14, 8) };
 
@@ -6470,7 +6876,25 @@ namespace JDroidXDesk.Native
             FlowLayoutPanel targetBox = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true, Margin = new Padding(0) };
             Label lTargetPrompt = new Label { Text = "REMOTE DESK:", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextSecondary, Margin = new Padding(0, 4, 8, 0), AutoSize = true };
             txtTargetId = new TextBox { Font = new Font("Consolas", 11f, FontStyle.Bold), Size = new Size(130, 24), BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, BorderStyle = BorderStyle.FixedSingle, Text = "" };
+            bool isFormattingTxtTarget = false;
             txtTargetId.TextChanged += (s, e) => {
+                if (isFormattingTxtTarget) return;
+                string raw = txtTargetId.Text.Trim();
+                bool isDirect = raw.Contains(".") || raw.Contains(":") || raw.ToLowerInvariant().StartsWith("http");
+                string digits = Regex.Replace(raw, @"\D", "");
+                if (!isDirect && digits.Length == 9 && !raw.Contains("-"))
+                {
+                    try
+                    {
+                        isFormattingTxtTarget = true;
+                        txtTargetId.Text = string.Format("{0}-{1}-{2}", digits.Substring(0, 3), digits.Substring(3, 3), digits.Substring(6, 3));
+                        txtTargetId.SelectionStart = txtTargetId.Text.Length;
+                    }
+                    finally { isFormattingTxtTarget = false; }
+                }
+
+                if (modernCardTargetBox != null && modernCardTargetBox.Text != txtTargetId.Text)
+                    modernCardTargetBox.Text = txtTargetId.Text;
                 if (txtCardTargetId != null && txtCardTargetId.Text != txtTargetId.Text)
                     txtCardTargetId.Text = txtTargetId.Text;
             };
@@ -6526,9 +6950,11 @@ namespace JDroidXDesk.Native
             viewportCanvas.MouseDoubleClick += ViewportCanvas_MouseDoubleClick;
 
             viewConsole.Controls.Add(sessionFloatingToolbar);
+            viewConsole.Controls.Add(pnlHostViewerAlert);
             viewConsole.Controls.Add(localBar);
             viewConsole.Controls.Add(panelWelcomeCards);
             viewConsole.Controls.Add(viewportCanvas);
+            viewConsole.Controls.SetChildIndex(pnlHostViewerAlert, 4);
             viewConsole.Controls.SetChildIndex(sessionFloatingToolbar, 3);
             viewConsole.Controls.SetChildIndex(localBar, 2);
             viewConsole.Controls.SetChildIndex(panelWelcomeCards, 1);
@@ -6594,10 +7020,19 @@ namespace JDroidXDesk.Native
                     }
                 }
 
+                // Re-arrange Card Discovered
+                int afterStep2Y = Math.Max(cardShare != null ? cardShare.Bottom : 0, flipperConnect != null ? flipperConnect.Bottom : 0) + 14;
+                if (cardDiscovered != null)
+                {
+                    cardDiscovered.Location = new Point(0, afterStep2Y);
+                    cardDiscovered.Width = dynW;
+                    if (flowDiscoveredDesks != null) flowDiscoveredDesks.Width = dynW - 28;
+                }
+
                 // Re-arrange Card Recent
                 if (cardRecent != null)
                 {
-                    int recentY = Math.Max(cardShare != null ? cardShare.Bottom : 0, flipperConnect != null ? flipperConnect.Bottom : 0) + 14;
+                    int recentY = (cardDiscovered != null ? cardDiscovered.Bottom : afterStep2Y) + 14;
                     cardRecent.Location = new Point(0, recentY);
                     cardRecent.Width = dynW;
                 }
@@ -6866,6 +7301,46 @@ namespace JDroidXDesk.Native
 
             y += isTwoCol ? colH + 16 : (colH * 2) + 28;
 
+            // CARD 2.5: DISCOVERED ON LOCAL NETWORK (Nearby Desks) - 3D Floating Card
+            cardDiscovered = new Panel {
+                Size = new Size(containerW, 134),
+                Location = new Point(0, y),
+                BackColor = Color.Transparent
+            };
+            cardDiscovered.Paint += (s, e) => {
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardDiscovered.Width - 1, cardDiscovered.Height - 1), ThemePalette.ColorBgCard, Color.FromArgb(16, 185, 129), ThemePalette.ColorShadow, 10);
+            };
+
+            Label lDiscTitle = new Label { Text = "📡  Discovered on Local Network (Nearby Desks)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 10), AutoSize = true };
+            cardDiscovered.Controls.Add(lDiscTitle);
+
+            ModernButton btnDiscScan = new ModernButton {
+                Text = "🔄 Scan LAN",
+                Size = new Size(88, 22),
+                Location = new Point(containerW - 106, 10),
+                NormalColor = Color.FromArgb(40, 53, 76),
+                HoverColor = Color.FromArgb(16, 185, 129)
+            };
+            btnDiscScan.Click += (s, e) => {
+                LanDiscoveryEngine.Instance.BroadcastQuery("*");
+                ShowToast("Probing local network (UDP 8089)...");
+                UpdateDiscoveredDesksContent();
+            };
+            cardDiscovered.Controls.Add(btnDiscScan);
+
+            flowDiscoveredDesks = new FlowLayoutPanel {
+                Location = new Point(14, 38),
+                Size = new Size(containerW - 28, 86),
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoScroll = true,
+                BackColor = Color.Transparent
+            };
+            cardDiscovered.Controls.Add(flowDiscoveredDesks);
+            UpdateDiscoveredDesksContent();
+
+            cardContainer.Controls.Add(cardDiscovered);
+            y += 144;
+
             // CARD 3: RECENT CONNECTIONS (3D Floating Card)
             cardRecent = new Panel { Size = new Size(containerW, 124), Location = new Point(0, y), BackColor = Color.Transparent };
             cardRecent.Paint += (s, e) => {
@@ -6907,6 +7382,91 @@ namespace JDroidXDesk.Native
             cardContainer.Controls.Add(cardRecent);
             panelWelcomeCards.Controls.Add(cardContainer);
             RelayoutWelcomeCards();
+        }
+
+        private void UpdateDiscoveredDesksContent()
+        {
+            if (flowDiscoveredDesks == null || flowDiscoveredDesks.IsDisposed) return;
+            try
+            {
+                flowDiscoveredDesks.SuspendLayout();
+                flowDiscoveredDesks.Controls.Clear();
+
+                List<DiscoveredDeskInfo> desks = LanDiscoveryEngine.Instance.GetDiscoveredDesks();
+                if (desks == null || desks.Count == 0)
+                {
+                    Label lDiscEmpty = new Label {
+                        Text = "📡 Scanning local Wi-Fi / LAN (UDP 8089)... Other jDroid-X Desks will appear automatically here.",
+                        Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
+                        ForeColor = ThemePalette.ColorTextSecondary,
+                        Location = new Point(4, 12),
+                        AutoSize = true
+                    };
+                    flowDiscoveredDesks.Controls.Add(lDiscEmpty);
+                }
+                else
+                {
+                    foreach (DiscoveredDeskInfo d in desks)
+                    {
+                        DiscoveredDeskInfo deskItem = d;
+                        Panel p = new Panel {
+                            Size = new Size(230, 72),
+                            BackColor = Color.Transparent,
+                            Margin = new Padding(0, 0, 10, 0),
+                            Padding = new Padding(6)
+                        };
+                        p.Paint += (ps, pe) => {
+                            ThemePalette.DrawFloatingCard(pe.Graphics, new Rectangle(0, 0, p.Width - 1, p.Height - 1), ThemePalette.ColorBgCardHeader, Color.FromArgb(16, 185, 129), ThemePalette.ColorShadow, 6);
+                        };
+                        Label ln = new Label {
+                            Text = "💻 " + (string.IsNullOrEmpty(deskItem.machineName) ? "Remote Desk" : deskItem.machineName),
+                            Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                            ForeColor = ThemePalette.ColorTextPrimary,
+                            Location = new Point(6, 6),
+                            AutoSize = true,
+                            BackColor = Color.Transparent
+                        };
+                        Label lid = new Label {
+                            Text = deskItem.formattedDeskId,
+                            Font = new Font("Consolas", 7.8f, FontStyle.Bold),
+                            ForeColor = Color.FromArgb(56, 189, 248),
+                            Location = new Point(6, 26),
+                            AutoSize = true,
+                            BackColor = Color.Transparent
+                        };
+                        Label lep = new Label {
+                            Text = (deskItem.ip ?? "") + ":" + deskItem.port + " ● LAN",
+                            Font = new Font("Segoe UI", 6.8f),
+                            ForeColor = Color.FromArgb(16, 185, 129),
+                            Location = new Point(6, 46),
+                            AutoSize = true,
+                            BackColor = Color.Transparent
+                        };
+                        ModernButton bc = new ModernButton {
+                            Text = "⚡ Connect",
+                            Size = new Size(72, 26),
+                            Location = new Point(148, 36),
+                            NormalColor = Color.FromArgb(16, 185, 129),
+                            HoverColor = Color.FromArgb(5, 150, 105)
+                        };
+                        bc.Click += (s, e) => {
+                            if (txtTargetId != null) txtTargetId.Text = deskItem.deskId;
+                            if (modernCardTargetBox != null) modernCardTargetBox.Text = deskItem.deskId;
+                            ToggleSessionConnection();
+                        };
+
+                        p.Controls.Add(ln);
+                        p.Controls.Add(lid);
+                        p.Controls.Add(lep);
+                        p.Controls.Add(bc);
+                        flowDiscoveredDesks.Controls.Add(p);
+                    }
+                }
+            }
+            finally
+            {
+                flowDiscoveredDesks.ResumeLayout(true);
+            }
         }
 
         private void BuildFloatingSessionToolbar()
@@ -6955,16 +7515,29 @@ namespace JDroidXDesk.Native
             });
             Button btnImmersive = CreateToolbarBtn("⛶ Immersive (F11)", (s, e) => ToggleImmersiveZenMode());
 
+            // AnyDesk Features
+            Button btnSyncClip = CreateToolbarBtn("📋 Sync Clip", (s, e) => SyncLocalClipboardToRemote());
+            Button btnScreenshot = CreateToolbarBtn("📸 Screenshot", (s, e) => CaptureRemoteScreenshot());
+            Button btnBlockInput = CreateToolbarBtn("🚫 Block Input", (s, e) => ToggleBlockRemoteUserInput((Button)s));
+            Button btnFiles = CreateToolbarBtn("📁 Files", (s, e) => OpenRemoteFileManager());
+            Button btnSwitchSides = CreateToolbarBtn("⚡ Switch Sides", (s, e) => RequestSwitchSides());
+            Button btnChat = CreateToolbarBtn("💬 Chat", (s, e) => OpenInSessionChat());
+
             leftTools.Controls.Add(btnDisplay);
             leftTools.Controls.Add(btnSmartFit);
             leftTools.Controls.Add(btnImmersive);
             leftTools.Controls.Add(btnMirror);
+            leftTools.Controls.Add(btnSyncClip);
+            leftTools.Controls.Add(btnScreenshot);
+            leftTools.Controls.Add(btnBlockInput);
+            leftTools.Controls.Add(btnFiles);
+            leftTools.Controls.Add(btnSwitchSides);
+            leftTools.Controls.Add(btnChat);
             leftTools.Controls.Add(btnCad);
             leftTools.Controls.Add(btnTaskMgr);
             leftTools.Controls.Add(btnCmd);
             leftTools.Controls.Add(btnExplorer);
             leftTools.Controls.Add(btnLock);
-
 
             FlowLayoutPanel rightHUD = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
             lblSessionTelemetryHUD = new Label { Text = "⏳ Awaiting Stream...", Font = new Font("Segoe UI", 8f, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), AutoSize = true, Margin = new Padding(0, 6, 8, 0) };
@@ -6999,6 +7572,186 @@ namespace JDroidXDesk.Native
             btn.FlatAppearance.BorderSize = 0;
             btn.Click += onClick;
             return btn;
+        }
+
+        // ======================================================================
+        // ANYDESK COMPONENT HELPERS (SCREENSHOT, CLIPBOARD, INPUT LOCK, SWITCH SIDES)
+        // ======================================================================
+
+        private void CaptureRemoteScreenshot()
+        {
+            try
+            {
+                Bitmap snap = null;
+                lock (frameLock)
+                {
+                    if (latestRemoteFrame != null)
+                    {
+                        snap = new Bitmap(latestRemoteFrame);
+                    }
+                }
+
+                if (snap == null && viewportCanvas != null && viewportCanvas.Width > 0 && viewportCanvas.Height > 0)
+                {
+                    snap = new Bitmap(viewportCanvas.Width, viewportCanvas.Height);
+                    viewportCanvas.DrawToBitmap(snap, new Rectangle(0, 0, snap.Width, snap.Height));
+                }
+
+                if (snap != null)
+                {
+                    string picDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "jDroid-X-Desk", "Screenshots");
+                    if (!Directory.Exists(picDir)) Directory.CreateDirectory(picDir);
+
+                    string targetTag = !string.IsNullOrEmpty(activeReceiverTargetId) ? activeReceiverTargetId : (connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "Remote");
+                    string fileName = string.Format("Desk_{0}_{1:yyyyMMdd_HHmmss}.png", targetTag, DateTime.Now);
+                    string fullPath = Path.Combine(picDir, fileName);
+
+                    snap.Save(fullPath, ImageFormat.Png);
+
+                    // Copy snapshot to Windows clipboard
+                    Thread t = new Thread(() => {
+                        try { Clipboard.SetImage(snap); } catch { }
+                    });
+                    t.SetApartmentState(ApartmentState.STA);
+                    t.IsBackground = true;
+                    t.Start();
+
+                    ShowToast("📸 Screenshot saved: " + fileName + " & copied to clipboard!");
+                }
+                else
+                {
+                    ShowToast("⚠️ No active remote frame to capture.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowToast("Screenshot error: " + ex.Message);
+            }
+        }
+
+        private void SyncLocalClipboardToRemote()
+        {
+            try
+            {
+                string clipText = "";
+                Thread t = new Thread(() => {
+                    try {
+                        if (Clipboard.ContainsText()) clipText = Clipboard.GetText();
+                    } catch { }
+                });
+                t.SetApartmentState(ApartmentState.STA);
+                t.IsBackground = true;
+                t.Start();
+                t.Join(350);
+
+                if (!string.IsNullOrEmpty(clipText))
+                {
+                    lastLocalClipboardText = clipText;
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["text"] = clipText;
+                    SendRemoteInput("clipboard", ev);
+                    ShowToast("📋 Synchronized clipboard (" + clipText.Length + " chars) to remote desk.");
+                }
+                else
+                {
+                    ShowToast("📋 Local clipboard is empty or non-text.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowToast("Clipboard sync error: " + ex.Message);
+            }
+        }
+
+        private void ToggleBlockRemoteUserInput(Button btn)
+        {
+            isRemoteInputBlockedByViewer = !isRemoteInputBlockedByViewer;
+            SendRemoteAdminCommand("block_input");
+            if (btn != null)
+            {
+                btn.Text = isRemoteInputBlockedByViewer ? "🔓 Unblock Input" : "🚫 Block Input";
+                btn.BackColor = isRemoteInputBlockedByViewer ? Color.FromArgb(220, 38, 38) : Color.FromArgb(30, 41, 59);
+            }
+            ShowToast(isRemoteInputBlockedByViewer ? "🚫 Remote user input disabled." : "🔓 Remote user input restored.");
+        }
+
+        private void OpenRemoteFileManager()
+        {
+            string targetId = !string.IsNullOrEmpty(activeReceiverTargetId) ? activeReceiverTargetId : (connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "");
+            SwitchWorkspaceView("FileTransfer");
+            ShowToast("📁 File Transfer Workspace activated for Desk: " + targetId);
+        }
+
+        private void RequestSwitchSides()
+        {
+            string localDeskId = currentHostDesktop != null ? currentHostDesktop.RemoteId : "";
+            Dictionary<string, object> ev = new Dictionary<string, object>();
+            ev["cmd"] = "switch_sides";
+            ev["viewerDeskId"] = localDeskId;
+            SendRemoteInput("admin_cmd", ev);
+            ShowToast("⚡ Sent switch sides request to remote desk.");
+        }
+
+        private void HandleSwitchSidesRequested(string viewerDeskId)
+        {
+            ShowToast("⚡ Remote desk requested side switch. Initiating connection back to " + viewerDeskId + "...");
+            if (txtTargetId != null && !string.IsNullOrEmpty(viewerDeskId))
+            {
+                txtTargetId.Text = viewerDeskId;
+            }
+            if (modernCardTargetBox != null && !string.IsNullOrEmpty(viewerDeskId))
+            {
+                modernCardTargetBox.Text = viewerDeskId;
+            }
+            ThreadPool.QueueUserWorkItem(delegate {
+                Thread.Sleep(600);
+                if (this.IsHandleCreated && !this.IsDisposed)
+                {
+                    this.BeginInvoke(new Action(() => {
+                        if (!isSessionActive) ToggleSessionConnection();
+                    }));
+                }
+            });
+        }
+
+        private void OpenInSessionChat()
+        {
+            using (Form prompt = new Form())
+            {
+                prompt.Width = 440;
+                prompt.Height = 165;
+                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+                prompt.Text = "💬 AnyDesk In-Session Chat";
+                prompt.StartPosition = FormStartPosition.CenterParent;
+                prompt.BackColor = Color.FromArgb(15, 23, 42);
+                prompt.ForeColor = Color.White;
+
+                Label textLabel = new Label() { Left = 16, Top = 14, Text = "Message to Remote Operator:", AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
+                TextBox textBox = new TextBox() { Left = 16, Top = 40, Width = 390, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 9.5f) };
+                Button confirmation = new Button() { Text = "Send", Left = 246, Width = 76, Top = 80, DialogResult = DialogResult.OK, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+                confirmation.FlatAppearance.BorderSize = 0;
+                Button cancel = new Button() { Text = "Cancel", Left = 330, Width = 76, Top = 80, DialogResult = DialogResult.Cancel, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(51, 65, 85), ForeColor = Color.White, Font = new Font("Segoe UI", 8.5f) };
+                cancel.FlatAppearance.BorderSize = 0;
+
+                confirmation.Click += (sender, e) => { prompt.Close(); };
+                prompt.Controls.Add(textLabel);
+                prompt.Controls.Add(textBox);
+                prompt.Controls.Add(confirmation);
+                prompt.Controls.Add(cancel);
+                prompt.AcceptButton = confirmation;
+                prompt.CancelButton = cancel;
+
+                if (prompt.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(textBox.Text))
+                {
+                    string msg = textBox.Text.Trim();
+                    string myId = currentHostDesktop != null ? currentHostDesktop.RemoteId : "Operator";
+                    Dictionary<string, object> chatEv = new Dictionary<string, object>();
+                    chatEv["sender"] = myId;
+                    chatEv["text"] = msg;
+                    SendRemoteInput("chat", chatEv);
+                    ShowToast("💬 Sent: " + msg);
+                }
+            }
         }
 
         private void ReleaseAllModifierKeys()
@@ -8302,6 +9055,17 @@ namespace JDroidXDesk.Native
                 TextBox tbId = addTb("jDroid-X Rendezvous ID Server (hbbs :21116)", db.Settings.connection.idServer);
                 tbId.TextChanged += (s, e) => db.Settings.connection.idServer = tbId.Text.Trim();
 
+                addH("Local Network (LAN) Peer-to-Peer Auto-Discovery");
+                ModernSwitch swLan = addSw("Enable Zero-Config LAN P2P Direct Discovery (UDP Beacons)", db.Settings.connection.lanDiscovery);
+                swLan.CheckedChanged += (s, e) => {
+                    db.Settings.connection.lanDiscovery = swLan.Checked;
+                };
+                TextBox tbDiscPort = addTb("LAN Discovery UDP Port (Default: 8089)", db.Settings.connection.discoveryPort > 0 ? db.Settings.connection.discoveryPort.ToString() : "8089");
+                tbDiscPort.TextChanged += (s, e) => {
+                    int dp;
+                    if (int.TryParse(tbDiscPort.Text.Trim(), out dp) && dp > 0) db.Settings.connection.discoveryPort = dp;
+                };
+
                 Button btnSaveConn = new Button {
                     Text = "💾 Save & Persist Network Settings",
                     Font = new Font("Segoe UI", 9f, FontStyle.Bold),
@@ -8316,6 +9080,10 @@ namespace JDroidXDesk.Native
                     db.Save();
                     ShowToast("Network settings successfully saved to database.json");
                     RegisterWithColabRelay();
+                    if (db.Settings.connection.lanDiscovery)
+                    {
+                        LanDiscoveryEngine.Instance.BroadcastQuery("*");
+                    }
                     viewportCanvas.Invalidate();
                 };
                 settingsSubContentPanel.Controls.Add(btnSaveConn);
@@ -9765,12 +10533,20 @@ namespace JDroidXDesk.Native
         {
             try
             {
+                if (ev == null) return;
+                // Auto-unwrap if payload is wrapped inside "event" property
+                if (!ev.ContainsKey("type") && ev.ContainsKey("event") && ev["event"] is Dictionary<string, object>)
+                {
+                    ev = ev["event"] as Dictionary<string, object>;
+                }
                 if (!ev.ContainsKey("type")) return;
                 string type = ev["type"] as string;
 
-                if (type == "mouse")
+                if (type == "mouse" || type == "wheel")
                 {
-                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : "move";
+                    if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
+
+                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : (type == "wheel" ? "wheel" : "move");
                     int rx = ev.ContainsKey("x") ? Convert.ToInt32(ev["x"]) : 0;
                     int ry = ev.ContainsKey("y") ? Convert.ToInt32(ev["y"]) : 0;
                     string btn = ev.ContainsKey("btn") ? (ev["btn"] as string) : "Left";
@@ -9799,6 +10575,19 @@ namespace JDroidXDesk.Native
                         else if (btn == "Middle") mouse_event(MOUSEEVENTF_MIDDLEUP, (uint)realX, (uint)realY, 0, 0);
                         else mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
                     }
+                    else if (action == "click")
+                    {
+                        if (btn == "Right")
+                        {
+                            mouse_event(MOUSEEVENTF_RIGHTDOWN, (uint)realX, (uint)realY, 0, 0);
+                            mouse_event(MOUSEEVENTF_RIGHTUP, (uint)realX, (uint)realY, 0, 0);
+                        }
+                        else
+                        {
+                            mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
+                            mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                        }
+                    }
                     else if (action == "dblclick")
                     {
                         mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
@@ -9807,9 +10596,16 @@ namespace JDroidXDesk.Native
                         mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
                         mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
                     }
+                    else if (action == "wheel")
+                    {
+                        int delta = ev.ContainsKey("delta") ? Convert.ToInt32(ev["delta"]) : (ev.ContainsKey("deltaY") ? -Convert.ToInt32(ev["deltaY"]) : 120);
+                        mouse_event(MOUSEEVENTF_WHEEL, (uint)realX, (uint)realY, (uint)delta, 0);
+                    }
                 }
                 else if (type == "key")
                 {
+                    if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
+
                     string action = ev.ContainsKey("action") ? (ev["action"] as string) : "down";
                     int keyCode = ev.ContainsKey("keyCode") ? Convert.ToInt32(ev["keyCode"]) : 0;
                     if (keyCode > 0 && keyCode < 256)
@@ -9819,10 +10615,52 @@ namespace JDroidXDesk.Native
                         else if (action == "up") keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
                     }
                 }
+                else if (type == "clipboard")
+                {
+                    if (hostPermissionAllowClipboard)
+                    {
+                        string text = ev.ContainsKey("text") ? (ev["text"] as string) : "";
+                        if (!string.IsNullOrEmpty(text) && text != lastReceivedClipboardText)
+                        {
+                            lastReceivedClipboardText = text;
+                            lastLocalClipboardText = text;
+                            Thread t = new Thread(() => {
+                                try { Clipboard.SetText(text); } catch { }
+                            });
+                            t.SetApartmentState(ApartmentState.STA);
+                            t.IsBackground = true;
+                            t.Start();
+                            ShowToast("📋 Remote clipboard received and synced to host.");
+                        }
+                    }
+                }
+                else if (type == "chat")
+                {
+                    string sender = ev.ContainsKey("sender") ? (ev["sender"] as string) : "Remote Desk";
+                    string text = ev.ContainsKey("text") ? (ev["text"] as string) : "";
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        if (this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            this.BeginInvoke(new Action(() => {
+                                ModernNotificationToast.ShowToast("💬 Message from " + sender, text, "info");
+                                ShowToast("💬 [" + sender + "]: " + text);
+                            }));
+                        }
+                    }
+                }
                 else if (type == "admin_cmd")
                 {
                     string cmd = ev.ContainsKey("cmd") ? (ev["cmd"] as string) : "";
-                    ExecuteAdminCommand(cmd);
+                    if (cmd == "switch_sides")
+                    {
+                        string viewerDeskId = ev.ContainsKey("viewerDeskId") ? (ev["viewerDeskId"] as string) : "";
+                        HandleSwitchSidesRequested(viewerDeskId);
+                    }
+                    else
+                    {
+                        ExecuteAdminCommand(cmd);
+                    }
                 }
             }
             catch { }
@@ -9845,13 +10683,27 @@ namespace JDroidXDesk.Native
                         Process.Start(new ProcessStartInfo("powershell.exe") { UseShellExecute = true });
                         break;
                     case "explorer":
-                        Process.Start(new ProcessStartInfo("explorer.exe") { UseShellExecute = true });
+                        if (hostPermissionAllowFiles)
+                        {
+                            Process.Start(new ProcessStartInfo("explorer.exe") { UseShellExecute = true });
+                        }
                         break;
                     case "lock":
                         try { Process.Start("rundll32.exe", "user32.dll,LockWorkStation"); } catch { }
                         break;
                     case "cad":
                         try { Process.Start("taskmgr.exe"); } catch { }
+                        break;
+                    case "block_input":
+                        isLocalInputBlockedByRemote = !isLocalInputBlockedByRemote;
+                        try { BlockInput(isLocalInputBlockedByRemote); } catch { }
+                        if (chkPermBlockLocal != null && this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            this.BeginInvoke(new Action(() => {
+                                chkPermBlockLocal.Checked = isLocalInputBlockedByRemote;
+                            }));
+                        }
+                        ShowToast(isLocalInputBlockedByRemote ? "🚫 Local host input locked." : "🔓 Local host input unlocked.");
                         break;
                 }
             }

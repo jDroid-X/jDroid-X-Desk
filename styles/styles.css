@@ -2113,5 +2113,217 @@ body.light-theme .web-marquee-footer {
     flex-shrink: 0;
 }
 
+/* ==========================================================================
+   7. Smart-Fit Multi-Device Architecture (Laptops, Tablets, Mobiles)
+      Orientation-Aware Responsive Grid & 60 FPS Micro-Animations
+   ========================================================================== */
+
+/* Universal Smart-Fit Container */
+.smart-fit-container {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+/* Gateway Entry Banner Card */
+.gateway-entry-card {
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(124, 58, 237, 0.06));
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.1rem;
+    margin-bottom: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.gateway-entry-card:hover {
+    border-color: var(--border-bright);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.gateway-pill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-emerald);
+}
+
+/* 60 FPS Interactive Card Hover Elevations */
+.card-interactive, .widget-box {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+    will-change: transform, box-shadow;
+}
+
+.card-interactive:hover, .widget-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-bright);
+}
+
+/* --- Device Profile: Tablet Landscape (768px - 1024px Landscape) --- */
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    :root {
+        --sidebar-width: 200px;
+        --topbar-height: 56px;
+    }
+    .content-container {
+        padding: 0.85rem;
+    }
+    .remote-console-2col-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.85rem;
+    }
+    .engine-active-banner, .gateway-entry-card {
+        padding: 0.5rem 0.85rem;
+    }
+    .btn {
+        min-height: 38px;
+    }
+}
+
+/* --- Device Profile: Tablet Portrait (768px - 1024px Portrait) --- */
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    :root {
+        --topbar-height: 58px;
+    }
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main-wrapper {
+        margin-left: 0 !important;
+        width: 100vw;
+    }
+    .content-container {
+        padding: 1rem;
+    }
+    .remote-console-2col-grid {
+        grid-template-columns: 1fr;
+        gap: 1.15rem;
+    }
+    .topbar-right {
+        gap: 0.4rem;
+    }
+}
+
+/* --- Device Profile: Mobile Portrait (< 768px Portrait) --- */
+@media screen and (max-width: 767px) and (orientation: portrait) {
+    :root {
+        --topbar-height: 52px;
+    }
+    .sidebar {
+        width: 280px;
+        transform: translateX(-100%);
+        z-index: 9999;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main-wrapper {
+        margin-left: 0 !important;
+        width: 100vw;
+    }
+    .topbar {
+        padding: 0 0.6rem;
+    }
+    .page-title {
+        font-size: 0.92rem;
+    }
+    .topbar-right #global-theme-selector {
+        max-width: 110px;
+        font-size: 0.72rem;
+    }
+    #web-header-gateway-pill, #web-header-engine-badge {
+        display: none !important;
+    }
+    .content-container {
+        padding: 0.65rem;
+    }
+    .remote-console-2col-grid {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+    .engine-active-banner, .gateway-entry-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.65rem;
+    }
+    .engine-active-banner div, .gateway-entry-card div {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .btn {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+    .web-marquee-footer {
+        height: 32px;
+        padding: 0 0.4rem;
+    }
+    .marquee-tag {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.35rem;
+    }
+}
+
+/* --- Device Profile: Mobile Landscape (< 900px Landscape, Max-Height 500px) --- */
+@media screen and (max-height: 520px) and (orientation: landscape) {
+    :root {
+        --topbar-height: 44px;
+    }
+    .topbar {
+        padding: 0 0.5rem;
+    }
+    .page-title {
+        font-size: 0.85rem;
+    }
+    .sidebar {
+        width: 220px;
+        transform: translateX(-100%);
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main-wrapper {
+        margin-left: 0 !important;
+    }
+    .content-container {
+        padding: 0.5rem;
+    }
+    .remote-console-2col-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.65rem;
+    }
+    .engine-active-banner, .gateway-entry-card {
+        padding: 0.35rem 0.6rem;
+        margin-bottom: 0.5rem;
+    }
+    #remote-desktop-viewport-box {
+        min-height: 240px;
+    }
+    .web-marquee-footer {
+        display: none;
+    }
+}
+
+
 
 

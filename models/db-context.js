@@ -38,7 +38,11 @@ const DEFAULT_SETTINGS = {
     },
     connection: {
         allowDirectConnections: true,
+        directConnections: true,
         localPort: 7070,
+        relayPort: 8088,
+        discoveryPort: 8089,
+        lanDiscovery: true,
         proxyMode: 'detect',
         proxyType: 'HTTP(S)',
         proxyAddress: '',

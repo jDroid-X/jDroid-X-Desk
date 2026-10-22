@@ -1,24 +1,24 @@
 """
-jDroid-X-Desk Colab Relay Service (services/colab-relay-service.py)
-OOPS MVC Encapsulated Service Layer
-Strangler Proxy & Forwarder to canonical colab_relay_server.py
+services/colab-relay-service.py
+OOPS MVC Service Wrapper -> Canonical Root colab_relay_server.py
+Preserves Standalone Colab zero-dependency execution while providing
+OOPS MVC service hierarchy reference.
 """
-
 import os
 import sys
 
+# Add repository root to python search path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CANONICAL_SCRIPT = os.path.join(BASE_DIR, "colab_relay_server.py")
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
-def main():
-    if not os.path.exists(CANONICAL_SCRIPT):
-        print(f"[ERROR] Canonical Colab Relay script not found at {CANONICAL_SCRIPT}")
-        sys.exit(1)
-    
-    # Execute canonical script with forwarded environment and arguments
-    with open(CANONICAL_SCRIPT, "r", encoding="utf-8") as f:
-        code = compile(f.read(), CANONICAL_SCRIPT, "exec")
-        exec(code, {"__name__": "__main__", "__file__": CANONICAL_SCRIPT})
+ROOT_RELAY = os.path.join(BASE_DIR, "colab_relay_server.py")
 
 if __name__ == "__main__":
-    main()
+    if os.path.exists(ROOT_RELAY):
+        with open(ROOT_RELAY, "r", encoding="utf-8") as f:
+            code = compile(f.read(), ROOT_RELAY, "exec")
+            exec(code, {"__name__": "__main__", "__file__": ROOT_RELAY})
+    else:
+        print(f"[ERROR] Standalone relay script not found at {ROOT_RELAY}")
+        sys.exit(1)

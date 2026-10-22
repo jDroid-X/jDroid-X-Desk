@@ -1,0 +1,64 @@
+{
+  "gatewayPort": 8080,
+  "gatewayHost": "localhost",
+  "appSlug": "jdroid-x-desk",
+  "appName": "jDroid-X-Desk Remote Desktop Console",
+  "entryUrl": "http://localhost:8080/jdroid-x-desk/index.html#remote-console",
+  "routes": [
+    {
+      "slug": "jdroid-x-desk",
+      "name": "jDroid-X-Desk Remote Desktop Console",
+      "description": "Ultra-Low Latency Unified Remote Desktop Control Console & Enterprise Gateway",
+      "port": 8080,
+      "basePath": "/jdroid-x-desk",
+      "screens": [
+        {
+          "name": "Remote Control Console",
+          "url": "/jdroid-x-desk/index.html#remote-console",
+          "heading": "remote-console",
+          "file": "index.html",
+          "viewId": "view-remote-console"
+        },
+        {
+          "name": "Address Book & Fleet",
+          "url": "/jdroid-x-desk/index.html#device-fleet",
+          "heading": "device-fleet",
+          "file": "index.html",
+          "viewId": "view-device-fleet"
+        },
+        {
+          "name": "Partners & Contacts",
+          "url": "/jdroid-x-desk/index.html#remote-contacts",
+          "heading": "remote-contacts",
+          "file": "index.html",
+          "viewId": "view-remote-contacts"
+        },
+        {
+          "name": "System Studio & Settings",
+          "url": "/jdroid-x-desk/index.html#system-settings",
+          "heading": "system-settings",
+          "file": "index.html",
+          "viewId": "view-system-settings"
+        },
+        {
+          "name": "Connection History & Traceability",
+          "url": "/jdroid-x-desk/index.html#location-history",
+          "heading": "location-history",
+          "file": "index.html",
+          "viewId": "view-location-history"
+        },
+        {
+          "name": "Server Admin & Limits",
+          "url": "/jdroid-x-desk/admin.html#server-admin",
+          "heading": "server-admin",
+          "file": "admin.html",
+          "viewId": "view-server-admin"
+        }
+      ]
+    }
+  ],
+  "healthCheck": {
+    "endpoint": "/api/health",
+    "expectedStatus": 200
+  }
+}

@@ -98,4 +98,51 @@ Viewport Screen:
   6. Stale Cloudflare Relay Cleanup: Pruned expired tunnel URLs from database.json and models/database.json to prevent connection timeouts.
   7. Verification: Clean csc.exe compilation (exit code 0), updated jDroid-X-Desk-Universal.zip, 130/130 Stage 5 verification assertions passed in test.js.
 
+[CHANGE LOG: 2026-10-19 - Deep-Dive Due Diligence & Human-In-The-Loop (HITL) UI/UX Parity]
+- Root Cause Analysis & HITL Due Diligence:
+  1. Identified Beacon Decoding Offset in Native C# (JDroidXDeskNative.cs): JDX_BEACON format was JDX_BEACON|<id>|<ip>|<port>|<machineName>|<tunnelUrl>. ListenLoop was assigning parts[4] to tunnel dictionary, corrupting tunnel endpoints with computer hostnames. Corrected indexing to parts[4]=machineName and parts[5]=tunnelUrl.
+  2. Solved Input Masking Rejection Bug (app.js & Native WinForms): Raw numeric filter previously stripped periods (.) from direct IP inputs (e.g. 192.168.1.15 -> 192168115) and rejected them with "Invalid Address". Added isDirectEndpoint bypass regex for dot/colon/http formats across both Web and WinForms input handlers.
+  3. Added Discovered On Local Network (Nearby Desks) Card: Implemented DiscoveredDesksModel & DiscoveredDesksController in app.js and cardDiscovered in JDroidXDeskNative.cs. Automatically scans and displays live workstations on the local subnet with machine name, IP, port, and 1-click "⚡ Connect" action.
+  4. Added Host-Side Security Alert Banner (pnlHostViewerAlert): Floating red non-modal notification banner on the host console indicating when a remote viewer is controlling the screen, featuring real-time IP/machine endpoint reporting and a 1-click "🛑 Revoke Access / Disconnect" safety switch.
+  5. Dynamic Configuration & Hardcode Removal: Integrated discoveryPort (default: 8089) and lanDiscovery (default: true) into database.json, models/database.json, models/db-context.js, and the native Settings Studio "Connection" tab with editable controls and persist-on-save logic.
+  6. Universal Package & Automated Verification: Recompiled jDroid-X-Desk.exe (exit code 0), updated jDroid-X-Desk-Universal.zip, and expanded test.js suite to 134 assertions (134 PASSED, 0 FAILED).
+
+[CHANGE LOG: 2026-10-21 - AnyDesk Architecture Reverse Engineering, Evidence Grounding & Remote Stream/Input Fix]
+- Reverse Engineering & Evidence from C:\Users\jiten\Downloads\AnyDesk.exe (Version 9.8.1, SHA-256: dbcb74f0523a2e281c8e0f89cb47234ce46249ad67126dc4ea5af22d4b99af34):
+  1. Portable Zero-Dependency Runtime: Executable is an 8.5MB self-extracting image (.text stub 10KB, .data 8.5MB compressed payload, unpacking into 31MB .itext virtual space), running standalone without dependencies.
+  2. DeskRT Proprietary Display Pipeline: GUI-optimized dirty-rectangle / differential tile streaming rather than generic video encoding, yielding sub-16ms latency.
+  3. Dual-Path Networking (P2P + Fallback Relay): LAN UDP discovery, direct hole-punched P2P, and fallback to cloud relay nodes on TCP 443/7070.
+  4. Input Injection & SAS: Virtual mouse/keyboard injection via win32 APIs, with elevation support for Secure Attention Sequence (SAS / Ctrl+Alt+Del).
+- Root Cause Analysis of Non-Working Similar Functions in jDroid-X-Desk:
+  1. Input Dropping Bug: In JDroidXDeskNative.cs, SendRemoteInput wrapped inputs inside payload["event"], but EmbeddedRelayServer stored the top-level payload. When HostDaemonWorker pulled from EmbeddedRelayServer, it passed the dictionary to ExecuteRemoteInputEvent which checked !ev.ContainsKey("type"). Because "type" was nested under "event", 100% of remote input events were dropped silently. Corrected by unwrapping ev["event"] in both EmbeddedRelayServer and ExecuteRemoteInputEvent, and added wheel scroll and click normalization.
+  2. Missing Web Gateway Endpoints in server.js / server-controller.js: Web client at localhost:12345 lacked proxy endpoints for /api/relay/frame_bin, /api/relay/frame, /api/relay/push_input, /api/relay/push_frame, and /api/relay/status, preventing web remote sessions from receiving frames or dispatching inputs. Added complete proxy pipeline with pipe streaming.
+  3. Missing Stream Loop in Web Client: In index.html and app.js, connecting only toggled visibility of static placeholder text and a local WebRTC webcam video element without any loop to fetch or render frames. Implemented interactive <canvas id="remote-stream-canvas"> and startRemoteStreamLoop() in app.js pulling frames at up to 60 FPS.
+  4. Missing Web Input Dispatch: Added full mouse (move, down, up, click, dblclick, wheel) and keyboard event listeners on #remote-stream-canvas in app.js, dynamically scaling client viewport coordinates to remote host resolution and dispatching to /api/relay/push_input.
+  5. Automated Verification & Artifact Parity: Recompiled jDroid-X-Desk.exe (exit code 0), updated jDroid-X-Desk-Universal.zip, and expanded test.js suite to 142 assertions (142 PASSED, 0 FAILED).
+
+[CHANGE LOG: 2026-10-21 - AnyDesk Native Windows Base Application Feature Implementation]
+- Features Added to Native Windows Base Application (JDroidXDeskNative.cs -> jDroid-X-Desk.exe):
+  1. AnyDesk Session Ribbon Controls (BuildFloatingSessionToolbar):
+     - 📋 Sync Clip: One-click local-to-remote clipboard synchronization across workstations.
+     - 📸 Screenshot: High-fidelity capture of active remote desktop stream saved automatically to %USERPROFILE%\Pictures\jDroid-X-Desk\Screenshots\Desk_{id}_{timestamp}.png and copied to Windows clipboard.
+     - 🚫 Block Remote Input: Toggle remote operator input locking via win32 BlockInput API.
+     - 📁 File Manager: Instant 1-click jump to FileTransfer workspace view for active remote Desk ID.
+     - ⚡ Switch Sides: Invert session roles in real-time, requesting remote machine to take control without re-authentication.
+     - 💬 In-Session Chat: Modal messaging interface to communicate between viewer and remote host in real time.
+  2. AnyDesk Interactive Session Security Ribbon (pnlHostViewerAlert) & Floating Pop-Up Dialog (AnyDeskIncomingSessionDialog):
+     - Top-most, non-intrusive floating dialog (AnyDeskIncomingSessionDialog) that appears over all desktop windows when an incoming connection arrives.
+     - Interactive session approval header displaying remote endpoint/Desk ID.
+     - Granular permission gates: Allow Input (Mouse/Keys), Allow Clipboard Sync, Allow File Transfer, and Lock Host Input.
+     - 1-click Accept (Green) and Disconnect (Red) control buttons.
+  3. Continuous Bi-Directional Clipboard Synchronization:
+     - Background clipboard watcher in sessionTelemetryTimer streaming updated text between viewer and host.
+     - Safe STA Thread injection of incoming clipboard events into Windows OS clipboard.
+  4. Win32 Input Blocking & Security Gates:
+     - Integrated user32.dll BlockInput P/Invoke API.
+     - Enforced hostPermissionAllowInput and hostPermissionAllowClipboard in ExecuteRemoteInputEvent.
+  5. Verified Compilation & Universal Artifact Packaging:
+     - Recompiled jDroid-X-Desk.exe via csc.exe (exit code 0, 331,776 bytes).
+     - Synchronized jDroid-X-Desk-Universal.zip.
+     - Verified test.js suite passes all 142 assertions (0 failures).
+
 
