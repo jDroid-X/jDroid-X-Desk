@@ -1061,7 +1061,7 @@
                                         <label class="ui-switch switch-danger">
                                             <input type="checkbox" id="ad-set-hide-taskbar">
                                             <span class="switch-slider"></span>
-                                            <span>Hide local taskbar if AnyDesk window is maximized</span>
+                                            <span>Hide local taskbar if jDroid-X window is maximized</span>
                                         </label>
                                         <label class="ui-switch switch-danger">
                                             <input type="checkbox" id="ad-set-req-comment">
@@ -1246,7 +1246,7 @@
                                         </div>
                                     </div>
                                     <p style="font-size: 0.78rem; color: #777; margin-top: 0.5rem;">
-                                        <em>Please note: Provide a list of AnyDesk IDs only. The list is limited to a maximum of 25 IDs. Wildcards and AnyDesk Aliases can not be used.</em>
+                                        <em>Please note: Provide a list of jDroid-X IDs only. The list is limited to a maximum of 25 IDs. Wildcards and jDroid-X Aliases can not be used.</em>
                                     </p>
                                 </div>
                             </div>
@@ -1300,7 +1300,7 @@
                                     <div class="anydesk-section-title">Interactive Access</div>
                                     <div class="anydesk-radio-group">
                                         <label class="anydesk-radio-item"><input type="radio" name="ad-access-interactive" value="always"> Always show incoming session requests</label>
-                                        <label class="anydesk-radio-item"><input type="radio" name="ad-access-interactive" value="open_only" checked> Only show incoming session requests if AnyDesk window is open</label>
+                                        <label class="anydesk-radio-item"><input type="radio" name="ad-access-interactive" value="open_only" checked> Only show incoming session requests if jDroid-X window is open</label>
                                         <label class="anydesk-radio-item"><input type="radio" name="ad-access-interactive" value="never"> Never show incoming session requests</label>
                                     </div>
                                 </div>
@@ -1333,7 +1333,7 @@
                                 <div class="anydesk-section">
                                     <div class="anydesk-section-title">Access Control List</div>
                                     <label class="anydesk-check-item" style="margin-bottom: 0.5rem;">
-                                        <input type="checkbox" id="ad-acl-enabled"> Restrict client access to the following AnyDesk addresses:
+                                        <input type="checkbox" id="ad-acl-enabled"> Restrict client access to the following jDroid-X addresses:
                                     </label>
                                     <div style="display: flex; gap: 0.5rem; max-width: 500px;">
                                         <div class="anydesk-box-list" id="ad-acl-list">
@@ -1345,14 +1345,14 @@
                                         </div>
                                     </div>
                                     <p style="font-size: 0.78rem; color: #777; margin-top: 0.5rem;">
-                                        <em>Note: After activating Access Control List, only users with a matching AnyDesk ID or Alias will be able to connect to you. Wildcards are supported for Aliases (e.g., user-?@ad, *@demo).</em>
+                                        <em>Note: After activating Access Control List, only users with a matching jDroid-X ID or Alias will be able to connect to you. Wildcards are supported for Aliases (e.g., user-?@ad, *@demo).</em>
                                     </p>
                                 </div>
 
                                 <div class="anydesk-section">
                                     <div class="anydesk-section-title">Discovery</div>
                                     <div class="anydesk-check-group">
-                                        <label class="anydesk-check-item"><input type="checkbox" id="ad-disc-local"> Search local network for other AnyDesk clients</label>
+                                        <label class="anydesk-check-item"><input type="checkbox" id="ad-disc-local"> Search local network for other jDroid-X clients</label>
                                         <label class="anydesk-check-item"><input type="checkbox" id="ad-disc-exclude"> Exclude this device from discovery</label>
                                     </div>
                                 </div>
@@ -1578,9 +1578,9 @@
                                 <div class="anydesk-section">
                                     <div class="anydesk-section-title">Outgoing Print Jobs</div>
                                     <p style="font-size: 0.85rem; color: #555; margin-bottom: 0.8rem;">
-                                        <em>In order to use remote printing, AnyDesk needs to be installed on this device.</em>
+                                        <em>In order to use remote printing, jDroid-X needs to be installed on this device.</em>
                                     </p>
-                                    <button class="anydesk-btn-red" id="btn-install-printer">Install AnyDesk now...</button>
+                                    <button class="anydesk-btn-red" id="btn-install-printer">Install jDroid-X Remote Driver...</button>
                                 </div>
 
                                 <div class="anydesk-section">
@@ -1603,7 +1603,7 @@
                             <!-- 12. ACCOUNT & ABOUT PANEL (Account1.png, About.png) -->
                             <div id="ad-tab-account" class="anydesk-content-panel">
                                 <div class="anydesk-section">
-                                    <div class="anydesk-section-title">Log in to AnyDesk</div>
+                                    <div class="anydesk-section-title">Log in to jDroid-X Desk</div>
                                     <div style="display: flex; flex-direction: column; gap: 0.6rem; max-width: 400px;">
                                         <div>
                                             <label style="font-size: 0.85rem; display: block; margin-bottom: 0.2rem;">Email</label>
@@ -2734,8 +2734,8 @@
                 <button class="icon-btn" id="btn-close-invite-modal" style="font-size: 1.1rem; color: var(--text-muted);"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body" style="padding: 1rem 0; max-height: 70vh; overflow-y: auto;">
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;">Send a Session Invitation to the following AnyDesk ID or Alias</p>
-                <input type="text" id="invite-target-id" class="search-bar-mini" placeholder="Enter target AnyDesk / jDroid ID (e.g. 1 465 486 144)" style="width: 100%; padding: 0.5rem 0.75rem; font-family: var(--font-mono); font-size: 1rem; border-radius: 8px;">
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;">Send a Session Invitation to the following jDroid-X ID or Alias</p>
+                <input type="text" id="invite-target-id" class="search-bar-mini" placeholder="Enter target jDroid-X ID or Alias (e.g. 1 465 486 144)" style="width: 100%; padding: 0.5rem 0.75rem; font-family: var(--font-mono); font-size: 1rem; border-radius: 8px;">
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                     <span style="font-size: 0.85rem; font-weight: 600;">Profile</span>

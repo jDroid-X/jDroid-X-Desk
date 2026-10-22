@@ -1950,45 +1950,104 @@ namespace JDroidXDesk.Native
     }
 
     // ==========================================================================
-    // ANYDESK INCOMING SESSION APPROVAL DIALOG (FLOATING SYSTEM POPUP)
+    // JDROID-X INCOMING SESSION APPROVAL DIALOG (FLOATING SYSTEM POPUP)
     // ==========================================================================
 
-    public class AnyDeskIncomingSessionDialog : Form
+    public class JDroidXIncomingSessionDialog : Form
     {
         private Action<bool, bool, bool, bool> onAccept;
         private Action onDismiss;
 
-        public AnyDeskIncomingSessionDialog(string endpoint, Action<bool, bool, bool, bool> acceptCallback, Action dismissCallback)
+        public JDroidXIncomingSessionDialog(string endpoint, Action<bool, bool, bool, bool> acceptCallback, Action dismissCallback)
         {
             this.onAccept = acceptCallback;
             this.onDismiss = dismissCallback;
 
-            this.Width = 360;
+            this.Width = 380;
             this.Height = 250;
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.Manual;
             this.TopMost = true;
             this.ShowInTaskbar = false;
-            this.BackColor = Color.FromArgb(15, 23, 42);
+
+            bool isDark = ThemePalette.IsDarkTheme;
+            Color bgCard = isDark ? Color.FromArgb(15, 23, 42) : Color.FromArgb(255, 255, 255);
+            Color topBarBg = isDark ? Color.FromArgb(30, 58, 138) : Color.FromArgb(37, 99, 235);
+            Color textPrimary = isDark ? Color.White : Color.FromArgb(15, 23, 42);
+            Color textSecondary = isDark ? Color.FromArgb(148, 163, 184) : Color.FromArgb(71, 85, 105);
+            Color accentColor = isDark ? Color.FromArgb(56, 189, 248) : Color.FromArgb(37, 99, 235);
+            Color borderColor = isDark ? Color.FromArgb(59, 130, 246) : Color.FromArgb(37, 99, 235);
+
+            this.BackColor = bgCard;
 
             Rectangle workArea = Screen.PrimaryScreen.WorkingArea;
-            this.Location = new Point(workArea.Right - this.Width - 20, workArea.Bottom - this.Height - 20);
+            this.Location = new Point(workArea.Right - this.Width - 24, workArea.Bottom - this.Height - 24);
 
-            // Title Bar
-            Panel topBar = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = Color.FromArgb(220, 38, 38), Padding = new Padding(12, 8, 12, 8) };
-            Label lblTitle = new Label { Text = "⚡ ANYDESK SESSION REQUEST", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true };
+            // Draggable Title Bar
+            Panel topBar = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = topBarBg, Padding = new Padding(12, 6, 8, 6), Cursor = Cursors.SizeAll };
+            Label lblTitle = new Label { Text = "⚡ jDroid-X SESSION REQUEST", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Color.White, Dock = DockStyle.Left, AutoSize = true, Cursor = Cursors.SizeAll };
+            
+            // Drag Support so notification can be moved anywhere on screen
+            Point dragOffset = Point.Empty;
+            bool dragging = false;
+            topBar.MouseDown += (s, e) => {
+                if (e.Button == MouseButtons.Left) {
+                    dragging = true;
+                    dragOffset = new Point(e.X, e.Y);
+                }
+            };
+            topBar.MouseMove += (s, e) => {
+                if (dragging) {
+                    Point currentScreenPos = PointToScreen(e.Location);
+                    this.Location = new Point(currentScreenPos.X - dragOffset.X, currentScreenPos.Y - dragOffset.Y);
+                }
+            };
+            topBar.MouseUp += (s, e) => { dragging = false; };
+
+            lblTitle.MouseDown += (s, e) => {
+                if (e.Button == MouseButtons.Left) {
+                    dragging = true;
+                    dragOffset = new Point(e.X + lblTitle.Left, e.Y + lblTitle.Top);
+                }
+            };
+            lblTitle.MouseMove += (s, e) => {
+                if (dragging) {
+                    Point currentScreenPos = PointToScreen(new Point(e.X + lblTitle.Left, e.Y + lblTitle.Top));
+                    this.Location = new Point(currentScreenPos.X - dragOffset.X, currentScreenPos.Y - dragOffset.Y);
+                }
+            };
+            lblTitle.MouseUp += (s, e) => { dragging = false; };
+
+            // Quick Dismiss Button (✕)
+            Label btnClose = new Label {
+                Text = "✕",
+                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+                ForeColor = Color.White,
+                Dock = DockStyle.Right,
+                Width = 28,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Cursor = Cursors.Hand
+            };
+            btnClose.MouseEnter += (s, e) => { btnClose.ForeColor = Color.FromArgb(254, 202, 202); };
+            btnClose.MouseLeave += (s, e) => { btnClose.ForeColor = Color.White; };
+            btnClose.Click += (s, e) => {
+                if (onDismiss != null) onDismiss();
+                this.Close();
+            };
+
             topBar.Controls.Add(lblTitle);
+            topBar.Controls.Add(btnClose);
 
             // Content Panel
-            Panel pnlContent = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 10, 16, 10) };
-            Label lblEndpoint = new Label { Text = "Remote Device: " + (string.IsNullOrEmpty(endpoint) ? "Remote Operator" : endpoint), Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(14, 8), AutoSize = true };
+            Panel pnlContent = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 10, 16, 10), BackColor = bgCard };
+            Label lblEndpoint = new Label { Text = "Remote Device: " + (string.IsNullOrEmpty(endpoint) ? "Remote Operator" : endpoint), Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = accentColor, Location = new Point(14, 8), AutoSize = true };
             
-            CheckBox chkInput = new CheckBox { Text = "Allow Mouse & Keyboard Control", Checked = true, Location = new Point(16, 36), AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 8.2f) };
-            CheckBox chkClip = new CheckBox { Text = "Allow Clipboard Synchronization", Checked = true, Location = new Point(16, 60), AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 8.2f) };
-            CheckBox chkFiles = new CheckBox { Text = "Allow File Transfer", Checked = true, Location = new Point(16, 84), AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 8.2f) };
-            CheckBox chkLock = new CheckBox { Text = "Lock Local Physical Input", Checked = false, Location = new Point(16, 108), AutoSize = true, ForeColor = Color.FromArgb(248, 113, 113), Font = new Font("Segoe UI", 8.2f) };
+            CheckBox chkInput = new CheckBox { Text = "Allow Mouse & Keyboard Control", Checked = true, Location = new Point(16, 36), AutoSize = true, ForeColor = textPrimary, Font = new Font("Segoe UI", 8.2f) };
+            CheckBox chkClip = new CheckBox { Text = "Allow Clipboard Synchronization", Checked = true, Location = new Point(16, 60), AutoSize = true, ForeColor = textPrimary, Font = new Font("Segoe UI", 8.2f) };
+            CheckBox chkFiles = new CheckBox { Text = "Allow File Transfer", Checked = true, Location = new Point(16, 84), AutoSize = true, ForeColor = textPrimary, Font = new Font("Segoe UI", 8.2f) };
+            CheckBox chkLock = new CheckBox { Text = "Lock Local Physical Input", Checked = false, Location = new Point(16, 108), AutoSize = true, ForeColor = Color.FromArgb(220, 38, 38), Font = new Font("Segoe UI", 8.2f) };
 
-            FlowLayoutPanel btnBox = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(0, 4, 10, 0) };
+            FlowLayoutPanel btnBox = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 46, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(0, 6, 12, 0), BackColor = bgCard };
             ModernButton btnAccept = new ModernButton { Text = "✅ Accept", Size = new Size(110, 32), NormalColor = Color.FromArgb(16, 185, 129), HoverColor = Color.FromArgb(5, 150, 105), Margin = new Padding(8, 0, 0, 0) };
             ModernButton btnDismiss = new ModernButton { Text = "❌ Dismiss", Size = new Size(110, 32), NormalColor = Color.FromArgb(220, 38, 38), HoverColor = Color.FromArgb(185, 28, 28) };
 
@@ -2015,11 +2074,20 @@ namespace JDroidXDesk.Native
             this.Controls.Add(topBar);
 
             this.Paint += (s, e) => {
-                using (Pen borderPen = new Pen(Color.FromArgb(220, 38, 38), 2))
+                using (Pen borderPen = new Pen(borderColor, 2))
                 {
                     e.Graphics.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
                 }
             };
+        }
+    }
+
+    // Chesterton's Fence: Backward-compatible alias for existing callers
+    public class AnyDeskIncomingSessionDialog : JDroidXIncomingSessionDialog
+    {
+        public AnyDeskIncomingSessionDialog(string endpoint, Action<bool, bool, bool, bool> acceptCallback, Action dismissCallback)
+            : base(endpoint, acceptCallback, dismissCallback)
+        {
         }
     }
 
@@ -2340,7 +2408,13 @@ namespace JDroidXDesk.Native
                     string method = requestLine[0].ToUpperInvariant();
                     string fullUrl = requestLine[1];
                     string path = fullUrl.Split('?')[0];
-                    if (path.StartsWith("/api/relay/") || path.StartsWith("/view"))
+                    bool isRealViewerSession = path.StartsWith("/api/relay/pull_bin") || 
+                                               path.StartsWith("/api/relay/pull_frame") || 
+                                               path.StartsWith("/api/relay/frame_bin") ||
+                                               path.StartsWith("/api/relay/frame") ||
+                                               path.StartsWith("/view") ||
+                                               (path.StartsWith("/api/relay/push_input") && method == "POST");
+                    if (isRealViewerSession)
                     {
                         _lastViewerActivityTime = DateTime.UtcNow;
                         try
@@ -3386,7 +3460,10 @@ namespace JDroidXDesk.Native
         private bool autoSyncClipboard = true;
         private string lastLocalClipboardText = "";
         private string lastReceivedClipboardText = "";
-        private AnyDeskIncomingSessionDialog activeIncomingDialog = null;
+        private JDroidXIncomingSessionDialog activeIncomingDialog = null;
+        private string lastApprovedViewerEndpoint = "";
+        private string lastRejectedViewerEndpoint = "";
+        private DateTime lastRejectedViewerTime = DateTime.MinValue;
 
         // Console Controls
         private Label lblLocalId;
@@ -3704,23 +3781,38 @@ namespace JDroidXDesk.Native
                 headerHeartbeatPulseFrame++;
                 if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
 
-                // Periodic Host Security Alert (Incoming AnyDesk Viewer Detection)
+                // Periodic Host Security Alert (Incoming jDroid-X Viewer Detection)
                 if (headerHeartbeatPulseFrame % 4 == 0 && pnlHostViewerAlert != null && !pnlHostViewerAlert.IsDisposed)
                 {
                     bool hasViewer = EmbeddedRelayServer.Instance.HasActiveViewers();
-                    if (pnlHostViewerAlert.Visible != hasViewer)
-                    {
-                        pnlHostViewerAlert.Visible = hasViewer;
-                        if (hasViewer && btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = true;
+                    string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
 
-                        // AnyDesk Floating Pop-Up Dialog
-                        if (hasViewer)
+                    if (!hasViewer)
+                    {
+                        lastApprovedViewerEndpoint = "";
+                        if (pnlHostViewerAlert.Visible) pnlHostViewerAlert.Visible = false;
+                        if (activeIncomingDialog != null && !activeIncomingDialog.IsDisposed)
+                        {
+                            activeIncomingDialog.Close();
+                            activeIncomingDialog = null;
+                        }
+                    }
+                    else
+                    {
+                        if (!pnlHostViewerAlert.Visible) pnlHostViewerAlert.Visible = true;
+                        if (btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = (ep != lastApprovedViewerEndpoint);
+
+                        bool isAlreadyApproved = (!string.IsNullOrEmpty(lastApprovedViewerEndpoint) && ep == lastApprovedViewerEndpoint);
+                        bool isRecentlyRejected = (!string.IsNullOrEmpty(lastRejectedViewerEndpoint) && ep == lastRejectedViewerEndpoint && (DateTime.UtcNow - lastRejectedViewerTime).TotalSeconds < 30);
+
+                        if (!isAlreadyApproved && !isRecentlyRejected)
                         {
                             if (activeIncomingDialog == null || activeIncomingDialog.IsDisposed)
                             {
-                                string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
-                                activeIncomingDialog = new AnyDeskIncomingSessionDialog(ep,
+                                activeIncomingDialog = new JDroidXIncomingSessionDialog(ep,
                                     (allowInput, allowClip, allowFiles, lockHost) => {
+                                        lastApprovedViewerEndpoint = ep;
+                                        lastRejectedViewerEndpoint = "";
                                         hostPermissionAllowInput = allowInput;
                                         hostPermissionAllowClipboard = allowClip;
                                         hostPermissionAllowFiles = allowFiles;
@@ -3731,29 +3823,24 @@ namespace JDroidXDesk.Native
                                         if (chkPermFiles != null) chkPermFiles.Checked = allowFiles;
                                         if (chkPermBlockLocal != null) chkPermBlockLocal.Checked = lockHost;
                                         if (btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = false;
-                                        ShowToast("✅ AnyDesk session accepted with custom permissions.");
+                                        ShowToast("✅ jDroid-X session accepted with custom permissions.");
                                     },
                                     () => {
+                                        lastRejectedViewerEndpoint = ep;
+                                        lastRejectedViewerTime = DateTime.UtcNow;
+                                        lastApprovedViewerEndpoint = "";
                                         EmbeddedRelayServer.Instance.DisconnectAllViewers();
                                         pnlHostViewerAlert.Visible = false;
-                                        ShowToast("🛑 Incoming AnyDesk session rejected.");
+                                        ShowToast("🛑 Incoming jDroid-X session rejected.");
                                     });
                                 activeIncomingDialog.Show();
                             }
                         }
-                        else
+
+                        if (lblHostViewerAlert != null && !lblHostViewerAlert.IsDisposed)
                         {
-                            if (activeIncomingDialog != null && !activeIncomingDialog.IsDisposed)
-                            {
-                                activeIncomingDialog.Close();
-                                activeIncomingDialog = null;
-                            }
+                            lblHostViewerAlert.Text = "⚠️ jDroid-X SESSION: " + ep;
                         }
-                    }
-                    if (hasViewer && lblHostViewerAlert != null && !lblHostViewerAlert.IsDisposed)
-                    {
-                        string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
-                        lblHostViewerAlert.Text = "⚠️ ANYDESK SESSION: " + ep;
                     }
                 }
 
@@ -4655,6 +4742,14 @@ namespace JDroidXDesk.Native
 
             // Sync Subviews
             if (viewConsole != null) viewConsole.BackColor = bgWork;
+            if (pnlHostViewerAlert != null)
+            {
+                pnlHostViewerAlert.BackColor = isDarkMode ? Color.FromArgb(15, 23, 42) : Color.FromArgb(241, 245, 249);
+                if (lblHostViewerAlert != null) lblHostViewerAlert.ForeColor = isDarkMode ? Color.FromArgb(248, 113, 113) : Color.FromArgb(220, 38, 38);
+                if (chkPermInput != null) chkPermInput.ForeColor = ThemePalette.ColorTextPrimary;
+                if (chkPermClip != null) chkPermClip.ForeColor = ThemePalette.ColorTextPrimary;
+                if (chkPermFiles != null) chkPermFiles.ForeColor = ThemePalette.ColorTextPrimary;
+            }
             if (panelWelcomeCards != null)
             {
                 panelWelcomeCards.BackColor = bgWork;
@@ -6768,18 +6863,19 @@ namespace JDroidXDesk.Native
             sessionFloatingToolbar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(20, 28, 45), Padding = new Padding(6, 4, 6, 4), Visible = false };
             BuildFloatingSessionToolbar();
 
-            // AnyDesk Host Session Security Ribbon (Interactive Permission Controls & Approval)
+            // jDroid-X Host Session Security Ribbon (Interactive Permission Controls & Approval)
+            bool isDarkRibbon = ThemePalette.IsDarkTheme;
             pnlHostViewerAlert = new Panel {
                 Dock = DockStyle.Top,
                 Height = 38,
-                BackColor = Color.FromArgb(15, 23, 42),
+                BackColor = isDarkRibbon ? Color.FromArgb(15, 23, 42) : Color.FromArgb(241, 245, 249),
                 Padding = new Padding(10, 5, 10, 5),
                 Visible = false
             };
             lblHostViewerAlert = new Label {
-                Text = "⚠️ ANYDESK SESSION: Remote Desk",
+                Text = "⚠️ jDroid-X SESSION: Remote Desk",
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(248, 113, 113),
+                ForeColor = isDarkRibbon ? Color.FromArgb(248, 113, 113) : Color.FromArgb(220, 38, 38),
                 Dock = DockStyle.Left,
                 AutoSize = true,
                 Margin = new Padding(0, 6, 8, 0)
@@ -6793,16 +6889,16 @@ namespace JDroidXDesk.Native
                 Margin = new Padding(12, 2, 0, 0)
             };
 
-            chkPermInput = new CheckBox { Text = "🎮 Input", Checked = true, AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermInput = new CheckBox { Text = "🎮 Input", Checked = true, AutoSize = true, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
             chkPermInput.CheckedChanged += (s, e) => { hostPermissionAllowInput = chkPermInput.Checked; ShowToast(hostPermissionAllowInput ? "Allowed remote control" : "Blocked remote control"); };
 
-            chkPermClip = new CheckBox { Text = "📋 Clipboard", Checked = true, AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermClip = new CheckBox { Text = "📋 Clipboard", Checked = true, AutoSize = true, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
             chkPermClip.CheckedChanged += (s, e) => { hostPermissionAllowClipboard = chkPermClip.Checked; ShowToast(hostPermissionAllowClipboard ? "Allowed clipboard sync" : "Blocked clipboard sync"); };
 
-            chkPermFiles = new CheckBox { Text = "📁 Files", Checked = true, AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermFiles = new CheckBox { Text = "📁 Files", Checked = true, AutoSize = true, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
             chkPermFiles.CheckedChanged += (s, e) => { hostPermissionAllowFiles = chkPermFiles.Checked; ShowToast(hostPermissionAllowFiles ? "Allowed file transfer" : "Blocked file transfer"); };
 
-            chkPermBlockLocal = new CheckBox { Text = "🚫 Lock Host", Checked = false, AutoSize = true, ForeColor = Color.FromArgb(248, 113, 113), Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
+            chkPermBlockLocal = new CheckBox { Text = "🚫 Lock Host", Checked = false, AutoSize = true, ForeColor = Color.FromArgb(220, 38, 38), Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(4, 4, 6, 0) };
             chkPermBlockLocal.CheckedChanged += (s, e) => {
                 isLocalInputBlockedByRemote = chkPermBlockLocal.Checked;
                 try { BlockInput(isLocalInputBlockedByRemote); } catch { }
@@ -6830,7 +6926,9 @@ namespace JDroidXDesk.Native
             };
             btnHostAcceptViewer.Click += (s, e) => {
                 btnHostAcceptViewer.Visible = false;
-                ShowToast("Incoming AnyDesk session accepted.");
+                lastApprovedViewerEndpoint = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                lastRejectedViewerEndpoint = "";
+                ShowToast("Incoming jDroid-X session accepted.");
             };
 
             btnHostDisconnectViewer = new ModernButton {
@@ -6841,6 +6939,9 @@ namespace JDroidXDesk.Native
                 HoverColor = Color.FromArgb(185, 28, 28)
             };
             btnHostDisconnectViewer.Click += (s, e) => {
+                lastRejectedViewerEndpoint = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                lastRejectedViewerTime = DateTime.UtcNow;
+                lastApprovedViewerEndpoint = "";
                 EmbeddedRelayServer.Instance.DisconnectAllViewers();
                 pnlHostViewerAlert.Visible = false;
                 if (isLocalInputBlockedByRemote) {
@@ -6848,7 +6949,7 @@ namespace JDroidXDesk.Native
                     try { BlockInput(false); } catch { }
                     if (chkPermBlockLocal != null) chkPermBlockLocal.Checked = false;
                 }
-                ShowToast("AnyDesk session disconnected. Access revoked.");
+                ShowToast("jDroid-X session disconnected. Access revoked.");
             };
 
             pnlAlertActions.Controls.Add(btnHostAcceptViewer);
@@ -7729,11 +7830,11 @@ namespace JDroidXDesk.Native
             {
                 prompt.Width = 440;
                 prompt.Height = 165;
-                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
-                prompt.Text = "💬 AnyDesk In-Session Chat";
+                prompt.Text = "💬 jDroid-X In-Session Chat";
                 prompt.StartPosition = FormStartPosition.CenterParent;
-                prompt.BackColor = Color.FromArgb(15, 23, 42);
-                prompt.ForeColor = Color.White;
+                bool isDarkChat = ThemePalette.IsDarkTheme;
+                prompt.BackColor = isDarkChat ? Color.FromArgb(15, 23, 42) : Color.FromArgb(255, 255, 255);
+                prompt.ForeColor = isDarkChat ? Color.White : Color.FromArgb(15, 23, 42);
 
                 Label textLabel = new Label() { Left = 16, Top = 14, Text = "Message to Remote Operator:", AutoSize = true, ForeColor = Color.White, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
                 TextBox textBox = new TextBox() { Left = 16, Top = 40, Width = 390, BackColor = Color.FromArgb(30, 41, 59), ForeColor = Color.White, Font = new Font("Segoe UI", 9.5f) };

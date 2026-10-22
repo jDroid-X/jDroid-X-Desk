@@ -1,6 +1,6 @@
 {
   "settings": {
-    "theme": "theme-cyberpunk",
+    "theme": "light-theme",
     "language": "autoselect",
     "general": {
       "hideLocalTaskbar": false,
@@ -21,11 +21,11 @@
       "idServer": "relay.jdroid-x.net:21116",
       "relayServer": "http://127.0.0.1:8088",
       "customDomain": "https://desk.jdroid-x.com",
-      "portalUrl": "https://www.jdroid-x.com",
-      "tunnelPort": 7700,
       "webRepoUrl": "https://github.com/jDroid-X/jDroid-X-Web",
       "colabNotebookUrl": "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai",
-      "githubBackendUrl": "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main"
+      "githubBackendUrl": "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main",
+      "localInstalledFolder": "C:\\Users\\jiten\\jAnitGravity\\jDroid-X-Desk\\",
+      "localRelayScriptPath": "C:\\Users\\jiten\\jAnitGravity\\jDroid-X-Desk\\colab_relay_server.py"
     },
     "wakeOnLan": {
       "enabled": true,
@@ -57,7 +57,7 @@
       "licenseType": "Enterprise Platinum (Unlimited)",
       "enterpriseTenant": "jDroid-X Workstation"
     },
-    "updatedAt": "2026-10-22T08:36:25.653Z"
+    "updatedAt": "2026-10-22T10:06:39.725Z"
   },
   "serverConfig": {
     "activeEngine": "jdroidRelay",
@@ -281,177 +281,141 @@
   "notifications": [],
   "logs": [
     {
-      "id": "REQ-1792658185746-52",
+      "id": "REQ-1792663599792-232",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "DELETE",
       "url": "/api/admin/logs",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 15,
-      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (15ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.746Z"
+      "rttMs": 6,
+      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (6ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.792Z"
     },
     {
-      "id": "REQ-1792658185795-53",
+      "id": "REQ-1792663599801-233",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/discovered-desks",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 39,
-      "msg": "[IN/OUT] GET /api/discovered-desks -> HTTP 200 (39ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.795Z"
+      "rttMs": 5,
+      "msg": "[IN/OUT] GET /api/discovered-desks -> HTTP 200 (5ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.801Z"
     },
     {
-      "id": "REQ-1792658185809-54",
+      "id": "REQ-1792663599811-234",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "POST",
       "url": "/api/discovered-desks/probe",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] POST /api/discovered-desks/probe -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.809Z"
+      "rttMs": 2,
+      "msg": "[IN/OUT] POST /api/discovered-desks/probe -> HTTP 200 (2ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.811Z"
     },
     {
-      "id": "REQ-1792658185818-55",
+      "id": "REQ-1792663599822-235",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/relay/status",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/relay/status -> HTTP 200 (4ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.819Z"
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/relay/status -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.822Z"
     },
     {
-      "id": "REQ-1792658185845-56",
+      "id": "REQ-1792663599829-236",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "POST",
       "url": "/api/relay/push_input",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 21,
-      "msg": "[IN/OUT] POST /api/relay/push_input -> HTTP 200 (21ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.845Z"
+      "rttMs": 3,
+      "msg": "[IN/OUT] POST /api/relay/push_input -> HTTP 200 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.829Z"
     },
     {
-      "id": "REQ-1792658185926-57",
+      "id": "REQ-1792663599844-237",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "POST",
       "url": "/api/relay/push_frame",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 41,
-      "msg": "[IN/OUT] POST /api/relay/push_frame -> HTTP 200 (41ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.926Z"
+      "rttMs": 3,
+      "msg": "[IN/OUT] POST /api/relay/push_frame -> HTTP 200 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.844Z"
     },
     {
-      "id": "REQ-1792658185965-58",
+      "id": "REQ-1792663599855-238",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/relay/frame?targetId=TEST-DESK-1",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 5,
-      "msg": "[IN/OUT] GET /api/relay/frame?targetId=TEST-DESK-1 -> HTTP 200 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.965Z"
+      "rttMs": 0,
+      "msg": "[IN/OUT] GET /api/relay/frame?targetId=TEST-DESK-1 -> HTTP 200 (0ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.855Z"
     },
     {
-      "id": "REQ-1792658185978-59",
+      "id": "REQ-1792663599862-239",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/relay/frame_bin?targetId=TEST-DESK-1",
       "ip": "127.0.0.1",
-      "statusCode": 204,
-      "rttMs": 6,
-      "msg": "[IN/OUT] GET /api/relay/frame_bin?targetId=TEST-DESK-1 -> HTTP 204 (6ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:36:25.978Z"
-    },
-    {
-      "id": "REQ-1792658377813-1",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/settings",
-      "ip": "2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
       "statusCode": 200,
-      "rttMs": 4,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (4ms) from 2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
-      "timestamp": "2026-10-22T08:39:37.813Z"
-    },
-    {
-      "id": "REQ-1792658379468-2",
-      "level": "INFO",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/relay/status",
-      "ip": "2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
-      "statusCode": 200,
-      "rttMs": 15,
-      "msg": "[IN/OUT] GET /api/relay/status -> HTTP 200 (15ms) from 2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
-      "timestamp": "2026-10-22T08:39:39.468Z"
-    },
-    {
-      "id": "REQ-1792658416687-3",
-      "level": "WARN",
-      "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/version",
-      "ip": "127.0.0.1",
-      "statusCode": 404,
       "rttMs": 1,
-      "msg": "[IN/OUT] GET /api/version -> HTTP 404 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:40:16.687Z"
+      "msg": "[IN/OUT] GET /api/relay/frame_bin?targetId=TEST-DESK-1 -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.862Z"
     },
     {
-      "id": "REQ-1792658728298-1",
-      "level": "WARN",
+      "id": "REQ-1792663599870-240",
+      "level": "INFO",
       "stage": "HTTP_TRAFFIC",
-      "method": "GET",
-      "url": "/api/version",
+      "method": "POST",
+      "url": "/api/relay/register",
       "ip": "127.0.0.1",
-      "statusCode": 404,
-      "rttMs": 5,
-      "msg": "[IN/OUT] GET /api/version -> HTTP 404 (5ms) from 127.0.0.1",
-      "timestamp": "2026-10-22T08:45:28.298Z"
+      "statusCode": 200,
+      "rttMs": 1,
+      "msg": "[IN/OUT] POST /api/relay/register -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.870Z"
     },
     {
-      "id": "REQ-1792658732000-2",
+      "id": "REQ-1792663599876-241",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
-      "url": "/api/settings",
-      "ip": "2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
+      "url": "/api/relay/devices",
+      "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/settings -> HTTP 200 (2ms) from 2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
-      "timestamp": "2026-10-22T08:45:32.000Z"
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/relay/devices -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.876Z"
     },
     {
-      "id": "REQ-1792658732762-3",
+      "id": "REQ-1792663599887-242",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
-      "url": "/api/relay/status",
-      "ip": "2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
+      "url": "/api/relay/input?targetId=TEST-DESK-1",
+      "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 6,
-      "msg": "[IN/OUT] GET /api/relay/status -> HTTP 200 (6ms) from 2401:4900:1c9b:b4bb:15e6:d6ce:8d6a:51c3",
-      "timestamp": "2026-10-22T08:45:32.762Z"
+      "rttMs": 0,
+      "msg": "[IN/OUT] GET /api/relay/input?targetId=TEST-DESK-1 -> HTTP 200 (0ms) from 127.0.0.1",
+      "timestamp": "2026-10-22T10:06:39.887Z"
     }
   ],
   "invites": [
     {
-      "id": "INV-1792346089303-986",
+      "id": "INV-1792662392755-659",
       "targetId": "JDX-TEST-TGT",
       "sourceId": "JDX-TEST-SRC",
       "permissions": {
@@ -460,11 +424,11 @@
         "clipboard": true
       },
       "status": "ACCEPTED",
-      "createdAt": "2026-10-18T17:54:49.303Z",
-      "respondedAt": "2026-10-18T17:54:49.326Z"
+      "createdAt": "2026-10-22T09:46:32.755Z",
+      "respondedAt": "2026-10-22T09:46:32.779Z"
     },
     {
-      "id": "INV-1792420075246-52",
+      "id": "INV-1792663599166-651",
       "targetId": "JDX-TEST-TGT",
       "sourceId": "JDX-TEST-SRC",
       "permissions": {
@@ -473,333 +437,8 @@
         "clipboard": true
       },
       "status": "ACCEPTED",
-      "createdAt": "2026-10-19T14:27:55.246Z",
-      "respondedAt": "2026-10-19T14:27:55.261Z"
-    },
-    {
-      "id": "INV-1792420460644-164",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T14:34:20.644Z",
-      "respondedAt": "2026-10-19T14:34:20.657Z"
-    },
-    {
-      "id": "INV-1792424700111-977",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T15:45:00.111Z",
-      "respondedAt": "2026-10-19T15:45:00.128Z"
-    },
-    {
-      "id": "INV-1792426151896-299",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T16:09:11.896Z",
-      "respondedAt": "2026-10-19T16:09:11.912Z"
-    },
-    {
-      "id": "INV-1792426691883-296",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T16:18:11.883Z",
-      "respondedAt": "2026-10-19T16:18:11.896Z"
-    },
-    {
-      "id": "INV-1792426938492-958",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T16:22:18.492Z",
-      "respondedAt": "2026-10-19T16:22:18.505Z"
-    },
-    {
-      "id": "INV-1792427776912-566",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T16:36:16.912Z",
-      "respondedAt": "2026-10-19T16:36:16.927Z"
-    },
-    {
-      "id": "INV-1792427801123-853",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T16:36:41.123Z",
-      "respondedAt": "2026-10-19T16:36:41.144Z"
-    },
-    {
-      "id": "INV-1792430629753-544",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-19T17:23:49.753Z",
-      "respondedAt": "2026-10-19T17:23:49.778Z"
-    },
-    {
-      "id": "INV-1792575376026-925",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-21T09:36:16.026Z",
-      "respondedAt": "2026-10-21T09:36:16.047Z"
-    },
-    {
-      "id": "INV-1792576203554-350",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-21T09:50:03.554Z",
-      "respondedAt": "2026-10-21T09:50:03.574Z"
-    },
-    {
-      "id": "INV-1792576261824-808",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-21T09:51:01.824Z",
-      "respondedAt": "2026-10-21T09:51:01.841Z"
-    },
-    {
-      "id": "INV-1792580404953-636",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-21T11:00:04.953Z",
-      "respondedAt": "2026-10-21T11:00:04.973Z"
-    },
-    {
-      "id": "INV-1792582082877-432",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-21T11:28:02.877Z",
-      "respondedAt": "2026-10-21T11:28:02.893Z"
-    },
-    {
-      "id": "INV-1792646563118-751",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T05:22:43.118Z",
-      "respondedAt": "2026-10-22T05:22:43.158Z"
-    },
-    {
-      "id": "INV-1792647163853-808",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T05:32:43.853Z",
-      "respondedAt": "2026-10-22T05:32:43.909Z"
-    },
-    {
-      "id": "INV-1792647647920-270",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T05:40:47.921Z",
-      "respondedAt": "2026-10-22T05:40:47.943Z"
-    },
-    {
-      "id": "INV-1792648336058-549",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T05:52:16.058Z",
-      "respondedAt": "2026-10-22T05:52:16.075Z"
-    },
-    {
-      "id": "INV-1792651062779-920",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T06:37:42.779Z",
-      "respondedAt": "2026-10-22T06:37:42.798Z"
-    },
-    {
-      "id": "INV-1792651307931-611",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T06:41:47.931Z",
-      "respondedAt": "2026-10-22T06:41:47.948Z"
-    },
-    {
-      "id": "INV-1792651948196-321",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T06:52:28.196Z",
-      "respondedAt": "2026-10-22T06:52:28.208Z"
-    },
-    {
-      "id": "INV-1792654614812-618",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T07:36:54.812Z",
-      "respondedAt": "2026-10-22T07:36:54.824Z"
-    },
-    {
-      "id": "INV-1792654707475-45",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T07:38:27.475Z",
-      "respondedAt": "2026-10-22T07:38:27.491Z"
-    },
-    {
-      "id": "INV-1792654745890-366",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T07:39:05.890Z",
-      "respondedAt": "2026-10-22T07:39:05.904Z"
-    },
-    {
-      "id": "INV-1792656829367-990",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T08:13:49.367Z",
-      "respondedAt": "2026-10-22T08:13:49.391Z"
-    },
-    {
-      "id": "INV-1792658185065-303",
-      "targetId": "JDX-TEST-TGT",
-      "sourceId": "JDX-TEST-SRC",
-      "permissions": {
-        "screen": true,
-        "keyboard": true,
-        "clipboard": true
-      },
-      "status": "ACCEPTED",
-      "createdAt": "2026-10-22T08:36:25.065Z",
-      "respondedAt": "2026-10-22T08:36:25.080Z"
+      "createdAt": "2026-10-22T10:06:39.166Z",
+      "respondedAt": "2026-10-22T10:06:39.186Z"
     }
   ]
 }

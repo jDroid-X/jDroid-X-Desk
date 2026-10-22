@@ -1003,7 +1003,7 @@ class AppController {
 
         if (wolAddBtn && wolList) {
             wolAddBtn.addEventListener('click', () => {
-                const id = prompt('Enter AnyDesk ID to allow Wake-on-LAN wakeups (e.g. 1 465 486 144):', '');
+                const id = prompt('Enter jDroid-X ID to allow Wake-on-LAN wakeups (e.g. 1 465 486 144):', '');
                 if (id) {
                     if (wolList.querySelector('div')?.textContent.includes('No custom client')) {
                         wolList.innerHTML = '';
@@ -1019,7 +1019,7 @@ class AppController {
                         item.classList.add('selected');
                     };
                     wolList.appendChild(item);
-                    this.view.showToast('success', 'Client Added', `AnyDesk ID ${id} authorized for Wake-on-LAN.`);
+                    this.view.showToast('success', 'Client Added', `jDroid-X ID ${id} authorized for Wake-on-LAN.`);
                 }
             });
         }
@@ -1045,7 +1045,7 @@ class AppController {
 
         if (aclAddBtn && aclList) {
             aclAddBtn.addEventListener('click', () => {
-                const addr = prompt('Enter AnyDesk Address or Alias wildcard (e.g. user-?@ad or *@demo):', '');
+                const addr = prompt('Enter jDroid-X Address or Alias wildcard (e.g. user-?@ad or *@demo):', '');
                 if (addr) {
                     if (aclList.querySelector('div')?.textContent.includes('No addresses restricted')) {
                         aclList.innerHTML = '';
@@ -1127,7 +1127,7 @@ class AppController {
         const installPrinterBtn = document.getElementById('btn-install-printer');
         if (installPrinterBtn) {
             installPrinterBtn.addEventListener('click', () => {
-                this.view.showToast('success', 'Printer Driver Initialized', 'AnyDesk Virtual Printer Spooler active. Incoming remote print jobs enabled.');
+                this.view.showToast('success', 'Printer Driver Initialized', 'jDroid-X Virtual Printer Spooler active. Incoming remote print jobs enabled.');
             });
         }
 
@@ -1141,14 +1141,14 @@ class AppController {
                     this.view.showToast('error', 'Login Required', 'Please enter your account email and password.');
                     return;
                 }
-                this.view.showToast('success', 'Authenticated', `Connected to AnyDesk account network as ${email}.`);
+                this.view.showToast('success', 'Authenticated', `Connected to jDroid-X account network as ${email}.`);
             });
         }
 
         const accRegisterBtn = document.getElementById('btn-ad-account-register');
         if (accRegisterBtn) {
             accRegisterBtn.addEventListener('click', () => {
-                const email = prompt('Enter email address for new AnyDesk account:', '');
+                const email = prompt('Enter email address for new jDroid-X account:', '');
                 if (email) {
                     this.view.showToast('success', 'Registration Sent', `Verification email sent to ${email}.`);
                 }
@@ -1869,7 +1869,7 @@ class AppController {
                 const targetInput = document.getElementById('invite-target-id');
                 const targetId = targetInput ? targetInput.value.trim() : '';
                 if (!targetId) {
-                    this.view.showToast('error', 'Missing Target', 'Please enter a target AnyDesk or jDroid-X Desk ID.');
+                    this.view.showToast('error', 'Missing Target', 'Please enter a target jDroid-X Desk ID.');
                     return;
                 }
 
