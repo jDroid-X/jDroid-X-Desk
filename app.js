@@ -4700,12 +4700,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hRes.ok) {
                 const hData = await hRes.json();
                 const activePort = hData.port || window.location.port || '8080';
+                const isWan = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
                 const gwStatusEl = document.getElementById('web-gateway-status-text');
-                if (gwStatusEl) gwStatusEl.textContent = `Port ${activePort} (HTTP 200)`;
+                if (gwStatusEl) gwStatusEl.textContent = isWan ? `${window.location.hostname} (HTTP 200)` : `Port ${activePort} (HTTP 200)`;
                 const gwPillEl = document.getElementById('gateway-pill-status');
-                if (gwPillEl) gwPillEl.textContent = `GATEWAY PORT ${activePort} : HTTP 200`;
+                if (gwPillEl) gwPillEl.textContent = isWan ? `CLOUD EDGE : ${window.location.hostname.toUpperCase()} : HTTP 200` : `GATEWAY PORT ${activePort} : HTTP 200`;
                 const gwDisplayEl = document.getElementById('gateway-url-display');
-                if (gwDisplayEl) gwDisplayEl.textContent = `http://${window.location.hostname || 'localhost'}:${activePort}/jdroid-x-desk/`;
+                if (gwDisplayEl) gwDisplayEl.textContent = isWan ? `${window.location.origin}/` : `http://${window.location.hostname || 'localhost'}:${activePort}/jdroid-x-desk/`;
             }
         } catch (_) {
             const fallbackPort = window.location.port || '8080';
