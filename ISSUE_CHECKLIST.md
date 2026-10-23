@@ -270,6 +270,12 @@ When an active session fails or freezes, perform this quick triage first:
   - [x] Upon Desk 2 clicking `[Accept]`, does Desk 2 authorize Desk 1 (`AuthorizeViewer`), triggering Desk 1 to transition to `CONNECTED & ACTIVE` and begin remote display and control?
   - [x] Upon Desk 2 clicking `[Reject]`, does Desk 1 transition to `CONNECTION DECLINED` and reset cleanly?
 
+- [x] **9.5 Native C# OOPS MVC Modularization & Build Verification**:
+  - [x] Is the native C# codebase decomposed into 15 cohesive modules across 5 architectural layers in `Native/` (`1_Models/`, `2_Services/`, `3_Network/`, `4_UI_Controls/`, `5_Forms/`)?
+  - [x] Does `compile_native.bat` successfully compile all `Native\**\*.cs` files using .NET Framework 4.8 `csc.exe` with zero external dependencies into `jDroid-X-Desk.exe` (~352 KB)?
+  - [x] Does `server.js` enforce Single Source of Truth (SSOT) canonical route mapping for `/controllers/app-controller.js`, `/views/index.html`, `/views/admin.html`, and `/styles/styles.css`?
+  - [x] Does `test.js` automatically snapshot and restore the database state on test completion, keeping the Git working tree 100% clean?
+
 ---
 
 ## 8. Diagnostic CLI Toolkit (Rapid Execution)
@@ -288,7 +294,7 @@ Run these diagnostic commands to gather immediate state across all subsystems:
 | **Frame Buffer Probe** | `curl.exe -s -m 3 http://127.0.0.1:12345/api/relay/frame?targetId=DEFAULT` |
 | **Active Engine Probe** | `curl.exe -s -m 3 http://127.0.0.1:12345/api/admin/config` |
 | **Test Suite Run** | `node test.js` |
-| **Compile Native C#** | `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /platform:anycpu /optimize+ /debug- /win32manifest:app.manifest /r:System.dll,System.Windows.Forms.dll,System.Drawing.dll,System.Web.Extensions.dll,System.Net.dll,System.Data.dll,System.Xml.dll,System.Core.dll /out:jDroid-X-Desk.exe JDroidXDeskNative.cs` |
+| **Compile Modular Native C#** | `cmd.exe /c compile_native.bat` *(or `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe ...`)* |
 
 ---
 
@@ -298,6 +304,7 @@ Run these diagnostic commands to gather immediate state across all subsystems:
 
 | Date | Defect Description | Root Cause | Preventive Check Added |
 | :--- | :--- | :--- | :--- |
+| 2026-10-23 | Monolithic native codebase exceeds maintenance bounds | 12k lines in single C# file; duplicate 246KB web controllers and views violating Ponytail rules | Section 9.5 (15 modules in `Native/`, `compile_native.bat`, canonical route mapping in `server.js`, auto-restoring test DB) |
 | 2026-10-23 | Desk 1 gets remote control & screen before Desk 2 accepts | Desk 1 immediately connected without waiting for invite acceptance; relays and input executor had no approval gate | Section 9.4 (Invite state polling, 403 Forbidden relay gate, viewer authorization before frame pull/input push) |
 | 2026-10-23 | Screen frozen when one app closes / disconnects | No `session_close` signal was sent on close; `FrameReceiverWorker` looped indefinitely rendering stale bitmap without timeout | Section 9.1 (`SendRemoteDisconnectSignal`, `session_close` event, 5s radar timeout) |
 | 2026-10-23 | Desks out of sync / feature divergence across systems | Endpoints running differing executable versions/sizes without automatic background synchronization | Section 9.2 (Automatic `/api/version` size check, background staged download, `apply_update.bat` restart) |
