@@ -28,6 +28,7 @@ async function runTests() {
 
     // 1. FILE EXISTENCE & SYNTAX
     console.log('[1/4] Verifying Code Integrity & Static Files...');
+    const initialDbSnapshot = fs.existsSync('database.json') ? fs.readFileSync('database.json', 'utf8') : null;
     assert(fs.existsSync('server.js'), 'server.js exists');
     assert(fs.existsSync('app.js'), 'app.js exists');
     assert(fs.existsSync('index.html'), 'index.html exists');
@@ -503,7 +504,19 @@ async function runTests() {
         assert(false, `API integration error: ${err.message}`);
     } finally {
         if (serverProc) {
-            serverProc.kill();
+            await new Promise(resolve => {
+                serverProc.on('exit', resolve);
+                serverProc.kill();
+                setTimeout(resolve, 800);
+            });
+        }
+        if (initialDbSnapshot) {
+            try {
+                fs.writeFileSync('database.json', initialDbSnapshot, 'utf8');
+                if (fs.existsSync('models/database.json')) {
+                    fs.writeFileSync('models/database.json', initialDbSnapshot, 'utf8');
+                }
+            } catch (_) {}
         }
     }
 

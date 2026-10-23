@@ -18,3 +18,12 @@ __pycache__/
 scratch/
 graphify-out/
 Archives/
+
+# Runtime Dynamic Tunnels & Scratch
+colab_tunnel.txt
+colab_url.txt
+tunnel.txt
+native_compile.rsp
+NativeTest.exe
+*.mindmap*
+jdroid-x-desk-mindmap*
