@@ -262,6 +262,8 @@ Run these diagnostic commands to gather immediate state across all subsystems:
 | Date | Defect Description | Root Cause | Preventive Check Added |
 | :--- | :--- | :--- | :--- |
 | 2026-10-23 | Screen frozen on remote side mid-session | Desk B was not confirmed active / Relay frame eviction (<30s) / Target ID format mismatch / Native input key contract (`inputs` vs `events`) | Section 0.1, 0.2, 2.4, 4.2 |
+| 2026-10-23 | Repeated incoming session dialogs (never dismisses) | Ephemeral TCP client port in `ep` changed on every HTTP request, failing `ep == lastApprovedViewerEndpoint` | Section 1.1, 1.2 |
+| 2026-10-23 | Input works but screen is frozen | Synchronous HTTP POST to external relays (`timeout=3500ms`) blocked host GDI capture thread to 0.2 FPS | Section 2.3 |
 | 2026-10-23 | Stuck in infinite mirror loop | User connected to own Desk ID; raw `CopyFromScreen` in preview | Section 3.1, 3.2 |
 | 2026-10-22 | Repeated theme applied notification toasts | Programmatic theme update triggered event handler recursively | Section 7.1 |
 | *Open* | Windows UAC prompt causes black frame | Winlogon Secure Desktop boundary | Section 6.1 |
