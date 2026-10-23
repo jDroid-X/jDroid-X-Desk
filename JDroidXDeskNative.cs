@@ -3556,6 +3556,9 @@ namespace JDroidXDesk.Native
         private string backendSyncStatusBadge = "[✓ SYNCED]";
         private bool isSwitchingEngineFromHeader = false;
         private FileSystemWatcher dbThemeWatcher;
+        private bool isUpdatingThemeProgrammatically = false;
+        private string lastNotifiedTheme = null;
+        private DateTime lastThemeToastTime = DateTime.MinValue;
 
         // Bottom Footer with Scrolling Marquee Metadata
         private Panel footerStatusBar;
@@ -4196,7 +4199,7 @@ namespace JDroidXDesk.Native
                                         {
                                             if (db.Settings.theme != ThemePalette.CurrentThemeName)
                                             {
-                                                ApplyThemeParadigm(db.Settings.theme, false);
+                                                ApplyThemeParadigm(db.Settings.theme, false, false);
                                             }
                                         }
                                     }
@@ -4371,10 +4374,14 @@ namespace JDroidXDesk.Native
             });
             cbHeaderThemeSelector.SelectedIndex = ThemeToComboIndex(ThemePalette.CurrentThemeName);
             cbHeaderThemeSelector.SelectedIndexChanged += (s, e) => {
+                if (isUpdatingThemeProgrammatically) return;
                 if (cbHeaderThemeSelector.SelectedIndex >= 0)
                 {
                     string key = ComboIndexToThemeKey(cbHeaderThemeSelector.SelectedIndex);
-                    ApplyThemeParadigm(key, true);
+                    if (!string.Equals(key, ThemePalette.CurrentThemeName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ApplyThemeParadigm(key, true, true);
+                    }
                 }
             };
 
@@ -4663,23 +4670,47 @@ namespace JDroidXDesk.Native
             }
         }
 
-        private void ApplyThemeParadigm(string themeKey, bool saveToDb = true)
+        private void ApplyThemeParadigm(string themeKey, bool saveToDb = true, bool userInitiated = false)
         {
+            if (string.IsNullOrEmpty(themeKey)) return;
+
+            bool themeActuallyChanged = !string.Equals(themeKey, ThemePalette.CurrentThemeName, StringComparison.OrdinalIgnoreCase);
+
             ThemePalette.SetTheme(themeKey);
             isDarkMode = ThemePalette.IsDarkTheme;
-            if (saveToDb && db != null && db.Settings != null)
+
+            if (saveToDb && db != null && db.Settings != null && themeActuallyChanged)
             {
                 db.Settings.theme = themeKey;
                 db.Save();
             }
-            ApplyThemeToApp();
-            ShowToast(string.Format("Theme applied: {0}", ThemePalette.GetThemeDisplayName().ToUpper()));
+
+            isUpdatingThemeProgrammatically = true;
+            try
+            {
+                ApplyThemeToApp();
+            }
+            finally
+            {
+                isUpdatingThemeProgrammatically = false;
+            }
+
+            // Exactly ONE TIME notification only when explicitly requested by user and theme actually changed
+            if (userInitiated && themeActuallyChanged)
+            {
+                if (lastNotifiedTheme != themeKey || (DateTime.UtcNow - lastThemeToastTime).TotalSeconds > 8)
+                {
+                    lastNotifiedTheme = themeKey;
+                    lastThemeToastTime = DateTime.UtcNow;
+                    ShowToast(string.Format("Theme applied: {0}", ThemePalette.GetThemeDisplayName().ToUpper()));
+                }
+            }
         }
 
         private void ToggleAppTheme()
         {
             string next = isDarkMode ? "light-theme" : "dark-theme";
-            ApplyThemeParadigm(next, true);
+            ApplyThemeParadigm(next, true, true);
         }
 
         private void ApplyThemeToApp()
@@ -4701,7 +4732,15 @@ namespace JDroidXDesk.Native
                 int desiredIdx = ThemeToComboIndex(ThemePalette.CurrentThemeName);
                 if (cbHeaderThemeSelector.SelectedIndex != desiredIdx)
                 {
-                    cbHeaderThemeSelector.SelectedIndex = desiredIdx;
+                    isUpdatingThemeProgrammatically = true;
+                    try
+                    {
+                        cbHeaderThemeSelector.SelectedIndex = desiredIdx;
+                    }
+                    finally
+                    {
+                        isUpdatingThemeProgrammatically = false;
+                    }
                 }
                 cbHeaderThemeSelector.BackColor = ThemePalette.ColorBgInput;
                 cbHeaderThemeSelector.ForeColor = ThemePalette.ColorTextPrimary;
