@@ -33,6 +33,12 @@ app.use((req, res, next) => {
 // Holistic Gateway Mounts (Port 7700 /jdroid-x-desk/...)
 app.use('/jdroid-x-desk', express.static(__dirname));
 
+// Canonical OOPS MVC Route Mapping (Single Source of Truth)
+app.get(['/views/index.html', '/jdroid-x-desk/views/index.html'], (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get(['/views/admin.html', '/jdroid-x-desk/views/admin.html'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get(['/controllers/app-controller.js', '/jdroid-x-desk/controllers/app-controller.js'], (req, res) => res.sendFile(path.join(__dirname, 'app.js')));
+app.get(['/styles/styles.css', '/jdroid-x-desk/styles/styles.css'], (req, res) => res.sendFile(path.join(__dirname, 'styles.css')));
+
 // Encapsulated Static Route Mounts (OOPS MVC View & Asset Standard)
 app.use(express.static(__dirname));
 app.use('/views', express.static(path.join(__dirname, 'views')));
