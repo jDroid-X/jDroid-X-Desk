@@ -2199,9 +2199,81 @@ namespace JDroidXDesk.Native
         public string ActiveEngine { get { return _activeEngine; } set { _activeEngine = value; } }
         public string LastViewerEndpoint { get { return _lastViewerEndpoint; } }
 
+        private readonly HashSet<string> _approvedViewers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _rejectedViewers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         public bool HasActiveViewers()
         {
             return (DateTime.UtcNow - _lastViewerActivityTime).TotalSeconds < 4;
+        }
+
+        public bool HasApprovedViewers()
+        {
+            lock (_syncLock)
+            {
+                return _approvedViewers.Count > 0;
+            }
+        }
+
+        public void AuthorizeViewer(string endpointOrIp)
+        {
+            if (string.IsNullOrEmpty(endpointOrIp)) return;
+            string clean = ExtractCleanIp(endpointOrIp);
+            lock (_syncLock)
+            {
+                _approvedViewers.Add(clean);
+                _approvedViewers.Add(endpointOrIp.Trim());
+                _rejectedViewers.Remove(clean);
+                _rejectedViewers.Remove(endpointOrIp.Trim());
+            }
+        }
+
+        public void RejectViewer(string endpointOrIp)
+        {
+            if (string.IsNullOrEmpty(endpointOrIp)) return;
+            string clean = ExtractCleanIp(endpointOrIp);
+            lock (_syncLock)
+            {
+                _rejectedViewers.Add(clean);
+                _rejectedViewers.Add(endpointOrIp.Trim());
+                _approvedViewers.Remove(clean);
+                _approvedViewers.Remove(endpointOrIp.Trim());
+                _lastViewerActivityTime = DateTime.MinValue;
+            }
+        }
+
+        public bool IsViewerAuthorized(string endpointOrIp, string sourceId = null)
+        {
+            lock (_syncLock)
+            {
+                if (!string.IsNullOrEmpty(sourceId))
+                {
+                    string cleanSrc = ExtractCleanIp(sourceId);
+                    if (_rejectedViewers.Contains(cleanSrc) || _rejectedViewers.Contains(sourceId.Trim())) return false;
+                    if (_approvedViewers.Contains(cleanSrc) || _approvedViewers.Contains(sourceId.Trim())) return true;
+                }
+                if (!string.IsNullOrEmpty(endpointOrIp))
+                {
+                    string clean = ExtractCleanIp(endpointOrIp);
+                    if (_rejectedViewers.Contains(clean) || _rejectedViewers.Contains(endpointOrIp.Trim())) return false;
+                    if (_approvedViewers.Contains(clean) || _approvedViewers.Contains(endpointOrIp.Trim())) return true;
+                }
+                return false;
+            }
+        }
+
+        public static string ExtractCleanIp(string ep)
+        {
+            if (string.IsNullOrEmpty(ep)) return "";
+            string ip = ep.Trim();
+            if (ip.StartsWith("["))
+            {
+                int closeB = ip.IndexOf(']');
+                if (closeB > 0) return ip.Substring(1, closeB - 1);
+            }
+            int colon = ip.IndexOf(':');
+            if (colon > 0) return ip.Substring(0, colon);
+            return ip;
         }
 
         public void DisconnectAllViewers()
@@ -2210,6 +2282,7 @@ namespace JDroidXDesk.Native
             {
                 _lastViewerActivityTime = DateTime.MinValue;
                 _lastViewerEndpoint = "";
+                _approvedViewers.Clear();
             }
         }
 
@@ -2496,6 +2569,22 @@ namespace JDroidXDesk.Native
 
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
 
+                    string clientIp = "";
+                    try
+                    {
+                        if (client.Client != null && client.Client.RemoteEndPoint != null)
+                        {
+                            clientIp = ExtractCleanIp(client.Client.RemoteEndPoint.ToString());
+                        }
+                    }
+                    catch { }
+                    if (headers.ContainsKey("X-Forwarded-For"))
+                    {
+                        string xff = headers["X-Forwarded-For"].Split(',')[0].Trim();
+                        if (!string.IsNullOrEmpty(xff)) clientIp = ExtractCleanIp(xff);
+                    }
+                    string sourceDeskId = headers.ContainsKey("X-Source-Id") ? headers["X-Source-Id"].Trim() : (queryParams.ContainsKey("sourceId") ? queryParams["sourceId"].Trim() : "");
+
                     if (path == "/" || path == "/ping" || path == "/api/relay/ping" || path == "/wake" || path == "/api/relay/status" || path == "/status" || path == "/api/settings" || path == "/api/admin/metrics")
                     {
                         int devCount = 0;
@@ -2655,8 +2744,28 @@ namespace JDroidXDesk.Native
                         return;
                     }
 
+                    if (path == "/api/relay/authorize" && method == "POST")
+                    {
+                        string bodyStr = System.Text.Encoding.UTF8.GetString(bodyBytes);
+                        Dictionary<string, object> payload = serializer.Deserialize<Dictionary<string, object>>(bodyStr);
+                        string vTarget = payload != null && payload.ContainsKey("viewer") ? Convert.ToString(payload["viewer"]) : "";
+                        string action = payload != null && payload.ContainsKey("action") ? Convert.ToString(payload["action"]) : "accept";
+                        if (!string.IsNullOrEmpty(vTarget))
+                        {
+                            if (action.ToLower() == "accept") AuthorizeViewer(vTarget);
+                            else RejectViewer(vTarget);
+                        }
+                        SendJsonResponse(stream, 200, "{\"success\":true,\"action\":\"" + action + "\"}");
+                        return;
+                    }
+
                     if (path == "/api/relay/frame_bin" || path.StartsWith("/api/relay/pull_bin/"))
                     {
+                        if (!IsViewerAuthorized(clientIp, sourceDeskId))
+                        {
+                            SendJsonResponse(stream, 403, "{\"success\":false,\"status\":\"AWAITING_AUTHORIZATION\",\"message\":\"Remote desk has not accepted the connection request yet.\"}");
+                            return;
+                        }
                         string tid = queryParams.ContainsKey("targetId") ? queryParams["targetId"] : "";
                         if (string.IsNullOrEmpty(tid) && path.StartsWith("/api/relay/pull_bin/"))
                         {
@@ -2684,6 +2793,11 @@ namespace JDroidXDesk.Native
 
                     if (path == "/api/relay/frame" || path.StartsWith("/api/relay/pull_frame/"))
                     {
+                        if (!IsViewerAuthorized(clientIp, sourceDeskId))
+                        {
+                            SendJsonResponse(stream, 403, "{\"success\":false,\"status\":\"AWAITING_AUTHORIZATION\",\"message\":\"Remote desk has not accepted the connection request yet.\"}");
+                            return;
+                        }
                         string tid = queryParams.ContainsKey("targetId") ? queryParams["targetId"] : "";
                         if (string.IsNullOrEmpty(tid) && path.StartsWith("/api/relay/pull_frame/"))
                         {
@@ -2707,6 +2821,11 @@ namespace JDroidXDesk.Native
 
                     if (path.StartsWith("/api/relay/stream_bin/"))
                     {
+                        if (!IsViewerAuthorized(clientIp, sourceDeskId))
+                        {
+                            SendJsonResponse(stream, 403, "{\"success\":false,\"status\":\"AWAITING_AUTHORIZATION\",\"message\":\"Remote desk has not accepted the connection request yet.\"}");
+                            return;
+                        }
                         string tid = path.Substring("/api/relay/stream_bin/".Length).Trim('/');
                         client.ReceiveTimeout = 0;
                         client.SendTimeout = 0;
@@ -2774,6 +2893,11 @@ namespace JDroidXDesk.Native
 
                     if ((path == "/api/relay/push_input" || path == "/api/relay/input") && method == "POST")
                     {
+                        if (!IsViewerAuthorized(clientIp, sourceDeskId))
+                        {
+                            SendJsonResponse(stream, 403, "{\"success\":false,\"status\":\"INPUT_BLOCKED_UNAUTHORIZED\",\"message\":\"Remote desk has not accepted the connection request yet.\"}");
+                            return;
+                        }
                         string bodyStr = System.Text.Encoding.UTF8.GetString(bodyBytes);
                         Dictionary<string, object> payload = serializer.Deserialize<Dictionary<string, object>>(bodyStr);
                         if (payload != null)
@@ -3904,6 +4028,8 @@ namespace JDroidXDesk.Native
                                     (allowInput, allowClip, allowFiles, lockHost) => {
                                         approvedViewerIps.Add(clientIp);
                                         rejectedViewerIps.Remove(clientIp);
+                                        EmbeddedRelayServer.Instance.AuthorizeViewer(clientIp);
+                                        EmbeddedRelayServer.Instance.AuthorizeViewer(ep);
                                         lastApprovedViewerEndpoint = ep;
                                         lastRejectedViewerEndpoint = "";
                                         hostPermissionAllowInput = allowInput;
@@ -3921,6 +4047,8 @@ namespace JDroidXDesk.Native
                                     () => {
                                         rejectedViewerIps.Add(clientIp);
                                         approvedViewerIps.Remove(clientIp);
+                                        EmbeddedRelayServer.Instance.RejectViewer(clientIp);
+                                        EmbeddedRelayServer.Instance.RejectViewer(ep);
                                         lastRejectedViewerEndpoint = ep;
                                         lastRejectedViewerTime = DateTime.UtcNow;
                                         lastApprovedViewerEndpoint = "";
@@ -7057,9 +7185,18 @@ namespace JDroidXDesk.Native
             };
             btnHostAcceptViewer.Click += (s, e) => {
                 btnHostAcceptViewer.Visible = false;
-                lastApprovedViewerEndpoint = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                string clientIp = ExtractClientIp(ep);
+                if (!string.IsNullOrEmpty(clientIp)) {
+                    approvedViewerIps.Add(clientIp);
+                    rejectedViewerIps.Remove(clientIp);
+                    EmbeddedRelayServer.Instance.AuthorizeViewer(clientIp);
+                    EmbeddedRelayServer.Instance.AuthorizeViewer(ep);
+                }
+                hostPermissionAllowInput = true;
+                lastApprovedViewerEndpoint = ep;
                 lastRejectedViewerEndpoint = "";
-                ShowToast("Incoming jDroid-X session accepted.");
+                ShowToast("Incoming jDroid-X session accepted. Remote control granted.");
             };
 
             btnHostDisconnectViewer = new ModernButton {
@@ -7070,7 +7207,15 @@ namespace JDroidXDesk.Native
                 HoverColor = Color.FromArgb(185, 28, 28)
             };
             btnHostDisconnectViewer.Click += (s, e) => {
-                lastRejectedViewerEndpoint = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                string clientIp = ExtractClientIp(ep);
+                if (!string.IsNullOrEmpty(clientIp)) {
+                    rejectedViewerIps.Add(clientIp);
+                    approvedViewerIps.Remove(clientIp);
+                    EmbeddedRelayServer.Instance.RejectViewer(clientIp);
+                    EmbeddedRelayServer.Instance.RejectViewer(ep);
+                }
+                lastRejectedViewerEndpoint = ep;
                 lastRejectedViewerTime = DateTime.UtcNow;
                 lastApprovedViewerEndpoint = "";
                 EmbeddedRelayServer.Instance.DisconnectAllViewers();
@@ -10875,6 +11020,7 @@ namespace JDroidXDesk.Native
                 if (type == "mouse" || type == "wheel")
                 {
                     if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
+                    if (approvedViewerIps.Count == 0 && !EmbeddedRelayServer.Instance.HasApprovedViewers()) return; // Gated until host accepts
 
                     string action = ev.ContainsKey("action") ? (ev["action"] as string) : (type == "wheel" ? "wheel" : "move");
                     int rx = ev.ContainsKey("x") ? Convert.ToInt32(ev["x"]) : 0;
@@ -10935,6 +11081,7 @@ namespace JDroidXDesk.Native
                 else if (type == "key")
                 {
                     if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
+                    if (approvedViewerIps.Count == 0 && !EmbeddedRelayServer.Instance.HasApprovedViewers()) return; // Gated until host accepts
 
                     string action = ev.ContainsKey("action") ? (ev["action"] as string) : "down";
                     int keyCode = ev.ContainsKey("keyCode") ? Convert.ToInt32(ev["keyCode"]) : 0;
@@ -11502,6 +11649,10 @@ namespace JDroidXDesk.Native
                                     reqStream.Proxy = null;
                                     reqStream.Timeout = 6000;
                                     reqStream.ReadWriteTimeout = 6000;
+                                    if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                                    {
+                                        reqStream.Headers["X-Source-Id"] = currentHostDesktop.RemoteId;
+                                    }
                                     using (HttpWebResponse respStream = (HttpWebResponse)reqStream.GetResponse())
                                     {
                                         if (respStream.StatusCode == HttpStatusCode.OK && respStream.ContentType != null && respStream.ContentType.Contains("octet-stream"))
@@ -11555,7 +11706,29 @@ namespace JDroidXDesk.Native
                                             }
                                         }
                                     }
-                                } catch { }
+                                }
+                                catch (WebException wex)
+                                {
+                                    HttpWebResponse fResp = wex.Response as HttpWebResponse;
+                                    if (fResp != null && fResp.StatusCode == HttpStatusCode.Forbidden)
+                                    {
+                                        if (currentConnectionState == SessionConnectionState.Connecting)
+                                        {
+                                            connectionStageMessage = "Waiting for Remote Desk (" + activeReceiverTargetId + ") to Accept Connection...";
+                                            if (lblRemoteStatus != null && this.IsHandleCreated && !this.IsDisposed)
+                                            {
+                                                this.BeginInvoke(new Action(() => {
+                                                    if (lblRemoteStatus != null)
+                                                    {
+                                                        lblRemoteStatus.Text = "● Awaiting Acceptance...";
+                                                        lblRemoteStatus.ForeColor = Color.FromArgb(245, 158, 11);
+                                                    }
+                                                }));
+                                            }
+                                        }
+                                    }
+                                }
+                                catch { }
 
                                 if (successFrame) break;
 
@@ -11570,6 +11743,10 @@ namespace JDroidXDesk.Native
                                     reqBin.Proxy = null;
                                     reqBin.KeepAlive = true;
                                     reqBin.ServicePoint.UseNagleAlgorithm = false;
+                                    if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                                    {
+                                        reqBin.Headers["X-Source-Id"] = currentHostDesktop.RemoteId;
+                                    }
                                     using (HttpWebResponse respBin = (HttpWebResponse)reqBin.GetResponse())
                                     {
                                         if (respBin.StatusCode == HttpStatusCode.OK && respBin.ContentType != null && respBin.ContentType.StartsWith("image/"))
@@ -11583,7 +11760,29 @@ namespace JDroidXDesk.Native
                                             }
                                         }
                                     }
-                                } catch { }
+                                }
+                                catch (WebException wex)
+                                {
+                                    HttpWebResponse fResp = wex.Response as HttpWebResponse;
+                                    if (fResp != null && fResp.StatusCode == HttpStatusCode.Forbidden)
+                                    {
+                                        if (currentConnectionState == SessionConnectionState.Connecting)
+                                        {
+                                            connectionStageMessage = "Waiting for Remote Desk (" + activeReceiverTargetId + ") to Accept Connection...";
+                                            if (lblRemoteStatus != null && this.IsHandleCreated && !this.IsDisposed)
+                                            {
+                                                this.BeginInvoke(new Action(() => {
+                                                    if (lblRemoteStatus != null)
+                                                    {
+                                                        lblRemoteStatus.Text = "● Awaiting Acceptance...";
+                                                        lblRemoteStatus.ForeColor = Color.FromArgb(245, 158, 11);
+                                                    }
+                                                }));
+                                            }
+                                        }
+                                    }
+                                }
+                                catch { }
 
                                 // 2. Fallback to JSON Base64 pull
                                 if (imgBytes == null)
@@ -11595,6 +11794,10 @@ namespace JDroidXDesk.Native
                                         req.Proxy = null;
                                         req.KeepAlive = true;
                                         req.ServicePoint.UseNagleAlgorithm = false;
+                                        if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                                        {
+                                            req.Headers["X-Source-Id"] = currentHostDesktop.RemoteId;
+                                        }
                                         using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                                         using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                                         {

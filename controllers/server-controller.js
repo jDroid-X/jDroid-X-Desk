@@ -470,8 +470,22 @@ class ServerController {
 
         app.get('/api/invites/pending/:targetId', (req, res) => {
             const db = readDB();
-            const invs = (db.invites || []).filter(i => i.targetId === req.params.targetId && i.status === 'PENDING');
+            const cleanParam = (req.params.targetId || '').replace(/\D/g, '');
+            const invs = (db.invites || []).filter(i => {
+                if (i.status !== 'PENDING') return false;
+                if (i.targetId === req.params.targetId) return true;
+                const cleanTgt = (i.targetId || '').replace(/\D/g, '');
+                return (cleanParam.length > 0 && cleanTgt.length > 0 && cleanParam === cleanTgt);
+            });
             res.json({ success: true, data: invs });
+        });
+
+        app.get('/api/invites/:id', (req, res) => {
+            const db = readDB();
+            const inv = (db.invites || []).find(i => i.id === req.params.id);
+            if (!inv) return res.status(404).json({ success: false, error: 'Invitation not found.' });
+            const session = (db.sessions || []).find(s => s.targetId === inv.targetId && s.sourceId === inv.sourceId && s.status === 'ACTIVE');
+            res.json({ success: true, data: inv, session: session || null });
         });
 
         app.put('/api/invites/:id/respond', (req, res) => {

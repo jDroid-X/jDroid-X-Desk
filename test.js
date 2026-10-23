@@ -143,8 +143,17 @@ async function runTests() {
     let serverProc = null;
 
     const isLive = await new Promise(res => {
-        const pingReq = http.get('http://127.0.0.1:12345/api/settings', (r) => {
-            res(r.statusCode === 200);
+        const pingReq = http.get('http://127.0.0.1:12345/api/health', (r) => {
+            let d = '';
+            r.on('data', c => d += c);
+            r.on('end', () => {
+                try {
+                    const j = JSON.parse(d);
+                    res(r.statusCode === 200 && j.appSlug === 'jdroid-x-desk');
+                } catch (_) {
+                    res(false);
+                }
+            });
         });
         pingReq.on('error', () => res(false));
         pingReq.setTimeout(1000, () => { pingReq.destroy(); res(false); });

@@ -262,6 +262,14 @@ When an active session fails or freezes, perform this quick triage first:
   - [ ] When a session is closed or aborted, does the relay delete stale frame buffers (`_binaryFrames.Remove(targetId)` and `relayFrames.delete(targetId)`)?
   - [ ] Does this prevent subsequent viewers from seeing stale frozen frames from hours ago?
 
+- [x] **9.4 Connection Acceptance Handshake & Access Control Gate**:
+  - [x] When Desk 1 enters Desk 2's code and clicks `Connect`, does Desk 1 dispatch an invite (`POST /api/invites`) and hold in Amber status (`AWAITING REMOTE ACCEPTANCE...`) without streaming or sending inputs?
+  - [x] Does Desk 2 receive incoming session notification modal with `Accept` and `Reject` options?
+  - [x] While unapproved, do Desk 2's relay endpoints (`/api/relay/pull_bin`, `/api/relay/pull_frame`, `/api/relay/push_input`) reject unauthorized requests with HTTP 403 Forbidden?
+  - [x] Does `ExecuteRemoteInputEvent` drop all incoming mouse/keyboard actions until Desk 2 explicitly authorizes the viewer?
+  - [x] Upon Desk 2 clicking `[Accept]`, does Desk 2 authorize Desk 1 (`AuthorizeViewer`), triggering Desk 1 to transition to `CONNECTED & ACTIVE` and begin remote display and control?
+  - [x] Upon Desk 2 clicking `[Reject]`, does Desk 1 transition to `CONNECTION DECLINED` and reset cleanly?
+
 ---
 
 ## 8. Diagnostic CLI Toolkit (Rapid Execution)
@@ -290,6 +298,7 @@ Run these diagnostic commands to gather immediate state across all subsystems:
 
 | Date | Defect Description | Root Cause | Preventive Check Added |
 | :--- | :--- | :--- | :--- |
+| 2026-10-23 | Desk 1 gets remote control & screen before Desk 2 accepts | Desk 1 immediately connected without waiting for invite acceptance; relays and input executor had no approval gate | Section 9.4 (Invite state polling, 403 Forbidden relay gate, viewer authorization before frame pull/input push) |
 | 2026-10-23 | Screen frozen when one app closes / disconnects | No `session_close` signal was sent on close; `FrameReceiverWorker` looped indefinitely rendering stale bitmap without timeout | Section 9.1 (`SendRemoteDisconnectSignal`, `session_close` event, 5s radar timeout) |
 | 2026-10-23 | Desks out of sync / feature divergence across systems | Endpoints running differing executable versions/sizes without automatic background synchronization | Section 9.2 (Automatic `/api/version` size check, background staged download, `apply_update.bat` restart) |
 | 2026-10-23 | Screen frozen on remote side mid-session | Desk B was not confirmed active / Relay frame eviction (<30s) / Target ID format mismatch / Native input key contract (`inputs` vs `events`) | Section 0.1, 0.2, 2.4, 4.2 |

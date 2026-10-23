@@ -1579,54 +1579,113 @@ class AppController {
 
                 const origHtml = connectBtn.innerHTML;
                 connectBtn.disabled = true;
-                connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Establishing Connection...';
-                
-                this.systemModel.activeSession = formattedId;
+                connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Awaiting Remote Acceptance...';
 
-                // Sync with Backend Database Sessions table
+                // Dispatch connection invitation to remote desk
+                let pendingInviteId = null;
                 try {
-                    const res = await fetch('/api/sessions', {
+                    const res = await fetch('/api/invites', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             targetId: formattedId,
-                            sourceId: this.systemModel.deviceId,
-                            targetName: 'Remote Workstation ' + formattedId,
-                            protocol: 'Windows Remote Control / P2P',
-                            quality: '1080p'
+                            sourceId: myDeskId || this.systemModel.deviceId || 'PRIMARY-DESK',
+                            permissions: { screen: true, keyboard: true, clipboard: true }
                         })
                     });
                     const resData = await res.json();
                     if (resData.success && resData.data) {
-                        this.systemModel.currentSessionDbId = resData.data.id;
+                        pendingInviteId = resData.data.id;
+                        this._currentPendingInviteId = pendingInviteId;
+                    } else {
+                        throw new Error(resData.error || 'Failed to dispatch session invitation.');
                     }
                 } catch (e) {
-                    console.warn('[SESSION] Could not record to backend DB:', e.message);
-                } finally {
+                    console.warn('[SESSION] Invite dispatch failed:', e.message);
+                    this.view.showToast('error', 'Connection Request Failed', e.message || 'Could not reach remote desk.');
                     connectBtn.disabled = false;
                     connectBtn.innerHTML = origHtml;
+                    return;
                 }
 
-                // Update UI state
+                this.systemModel.activeSession = formattedId;
+                this.systemModel.isAwaitingAcceptance = true;
+
+                // Update UI state to Awaiting Acceptance (Amber)
                 const statusText = document.getElementById('session-status-text');
                 if (statusText) {
-                    statusText.textContent = 'CONNECTED & ACTIVE';
-                    statusText.style.color = 'var(--accent-emerald)';
+                    statusText.textContent = 'AWAITING REMOTE ACCEPTANCE...';
+                    statusText.style.color = 'var(--accent-amber)';
                 }
                 const targetLabel = document.getElementById('active-target-id-label');
                 if (targetLabel) targetLabel.textContent = formattedId;
-                
+
                 const viewportBox = document.getElementById('remote-desktop-viewport-box');
                 if (viewportBox) viewportBox.style.display = 'block';
 
-                if (launchCanvasBtn) launchCanvasBtn.disabled = false;
+                if (launchCanvasBtn) launchCanvasBtn.disabled = true;
                 if (quickDisconnectBtn) quickDisconnectBtn.style.display = 'inline-flex';
 
-                this.view.showToast('success', 'Session Established', `Connected to Secondary System (${formattedId}). Primary user now has full remote control.`);
-                this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_CONNECTED', `Primary user established remote session to Secondary System ID ${formattedId}`);
+                this.view.showToast('info', 'Session Requested', `Notification sent to Desk ${formattedId}. Waiting for remote user to accept...`);
+                this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_REQUESTED', `Dispatched connection request to Desk ${formattedId}. Awaiting remote acceptance.`);
 
-                // Start High-Speed Remote Stream & Input Engine
-                this.startRemoteStreamLoop(formattedId);
+                // Poll for Remote Desk Acceptance
+                if (this.sessionInvitePollInterval) clearInterval(this.sessionInvitePollInterval);
+                this.sessionInvitePollInterval = setInterval(async () => {
+                    if (this.systemModel.activeSession !== formattedId || !pendingInviteId) {
+                        clearInterval(this.sessionInvitePollInterval);
+                        this.sessionInvitePollInterval = null;
+                        return;
+                    }
+
+                    try {
+                        const pollRes = await fetch(`/api/invites/${pendingInviteId}`);
+                        const pollData = await pollRes.json();
+                        if (pollData.success && pollData.data) {
+                            const inv = pollData.data;
+                            if (inv.status === 'ACCEPTED') {
+                                clearInterval(this.sessionInvitePollInterval);
+                                this.sessionInvitePollInterval = null;
+                                this.systemModel.isAwaitingAcceptance = false;
+
+                                if (pollData.session && pollData.session.id) {
+                                    this.systemModel.currentSessionDbId = pollData.session.id;
+                                }
+
+                                connectBtn.disabled = false;
+                                connectBtn.innerHTML = origHtml;
+                                if (statusText) {
+                                    statusText.textContent = 'CONNECTED & ACTIVE';
+                                    statusText.style.color = 'var(--accent-emerald)';
+                                }
+                                if (launchCanvasBtn) launchCanvasBtn.disabled = false;
+
+                                this.view.showToast('success', 'Session Established', `Remote Desk (${formattedId}) accepted connection. Primary user now has full remote control.`);
+                                this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_CONNECTED', `Remote Desk ${formattedId} accepted session invitation. Streaming started.`);
+
+                                // ONLY NOW: Start High-Speed Remote Stream & Input Engine
+                                this.startRemoteStreamLoop(formattedId);
+                            } else if (inv.status === 'REJECTED') {
+                                clearInterval(this.sessionInvitePollInterval);
+                                this.sessionInvitePollInterval = null;
+                                this.systemModel.isAwaitingAcceptance = false;
+                                this.systemModel.activeSession = null;
+
+                                connectBtn.disabled = false;
+                                connectBtn.innerHTML = origHtml;
+                                if (statusText) {
+                                    statusText.textContent = 'CONNECTION DECLINED';
+                                    statusText.style.color = 'var(--accent-rose)';
+                                }
+                                if (viewportBox) viewportBox.style.display = 'none';
+                                if (quickDisconnectBtn) quickDisconnectBtn.style.display = 'none';
+
+                                this.view.showToast('warning', 'Connection Declined', `Remote Desk (${formattedId}) rejected or dismissed the session invitation.`);
+                                this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_REJECTED', `Remote Desk ${formattedId} declined session request.`);
+                            }
+                        }
+                    } catch (_) {}
+                }, 1000);
             });
         }
 
@@ -1741,6 +1800,26 @@ class AppController {
                         body: JSON.stringify({ targetId: activeId, reason: 'Viewer closed session' })
                     }).catch(() => {});
                 } catch (_) {}
+            }
+
+            if (this.sessionInvitePollInterval) {
+                clearInterval(this.sessionInvitePollInterval);
+                this.sessionInvitePollInterval = null;
+            }
+            if (this._currentPendingInviteId) {
+                try {
+                    fetch(`/api/invites/${this._currentPendingInviteId}/respond`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'REJECTED' })
+                    }).catch(() => {});
+                } catch (_) {}
+                this._currentPendingInviteId = null;
+            }
+            this.systemModel.isAwaitingAcceptance = false;
+            if (connectBtn) {
+                connectBtn.disabled = false;
+                connectBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> Connect';
             }
 
             this.stopRemoteStreamLoop();
@@ -1947,7 +2026,8 @@ class AppController {
         let currentActiveInvite = null;
 
         setInterval(async () => {
-            const myId = this.systemModel.hardwareId;
+            const localIdEl = document.getElementById('local-device-id') || document.getElementById('my-desk-id');
+            const myId = (this.systemModel.deviceId || (localIdEl ? localIdEl.textContent.trim() : '')).toUpperCase();
             if (!myId || this.systemModel.activeSession || (incomingModal && incomingModal.style.display === 'flex')) return;
 
             try {
@@ -1960,7 +2040,7 @@ class AppController {
                     if (incomingModal) incomingModal.style.display = 'flex';
                 }
             } catch (_) {}
-        }, 3000);
+        }, 1200);
 
         if (acceptInviteBtn && incomingModal) {
             acceptInviteBtn.addEventListener('click', async () => {

@@ -1,0 +1,3577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>jdroid-x-desk - jDroid-X-MindMapView</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-subtle: #f1f5f9;
+      --border: #e2e8f0;
+      --border-focus: #0284c7;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --card-shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+      --font-mono: 'Consolas', 'Courier New', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .badge-logo {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+    .app-title { font-size: 17px; font-weight: 700; color: var(--text); }
+    .app-version { font-size: 11px; background: var(--surface-subtle); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); font-family: var(--font-mono); }
+
+    .lens-tabs { display: flex; background: var(--surface-subtle); padding: 4px; border-radius: 8px; gap: 4px; border: 1px solid var(--border); }
+    .lens-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .lens-btn:hover { color: var(--text); }
+    .lens-btn.active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 700; }
+
+    .meta-pills { display: flex; gap: 10px; align-items: center; }
+    .pill { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600; background: var(--surface-subtle); border: 1px solid var(--border); }
+    .pill-green { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+    .pill-amber { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+
+    main { flex: 1; position: relative; overflow: hidden; background: #fafafa; }
+    .lens-panel { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: auto; padding: 24px; }
+    .lens-panel.active { display: block; }
+
+    /* Lens 1: Concept Tree */
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; max-width: 1200px; margin: 0 auto; }
+    .concept-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; box-shadow: var(--card-shadow); }
+    .concept-card h3 { font-size: 15px; margin-bottom: 8px; color: var(--primary); }
+    .concept-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+    .concept-tags { display: flex; flex-direction: column; gap: 6px; }
+    .concept-tag { font-size: 12px; background: var(--surface-subtle); padding: 5px 8px; border-radius: 4px; border-left: 3px solid var(--primary); }
+
+    /* Lens 2: Access Studio Canvas */
+    #lens2 { position: relative; background: #f8fafc; background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px); background-size: 20px 20px; padding: 0; overflow: auto; }
+    #studio-canvas { position: absolute; top: 0; left: 0; width: 1400px; height: 900px; }
+    #svg-wires { position: absolute; top: 0; left: 0; width: 1400px; height: 900px; pointer-events: none; z-index: 10; }
+
+    .entity-card {
+      position: absolute;
+      width: 270px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -4px rgba(0,0,0,0.04);
+      z-index: 20;
+      cursor: grab;
+      user-select: none;
+    }
+    .entity-card:active { cursor: grabbing; }
+    .card-header {
+      padding: 9px 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      border-radius: 6px 6px 0 0;
+    }
+    .card-view .card-header { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+    .card-controller .card-header { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
+    .card-settings .card-header { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .card-model .card-header { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+    .card-database .card-header { background: #faf5ff; color: #6b21a8; border-color: #e9d5ff; }
+
+    .card-body { padding: 6px 0; }
+    .card-item {
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid #f8fafc;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .card-item:hover { background: #f1f5f9; }
+    .card-item.highlighted { background: #fef08a !important; font-weight: 700; }
+    .card-item-label { color: var(--text); font-weight: 600; }
+    .card-item-detail { font-size: 10px; color: var(--text-muted); font-family: sans-serif; }
+
+    .wire { stroke: #94a3b8; stroke-width: 2; fill: none; transition: stroke 0.2s, stroke-width 0.2s; }
+    .wire.active { stroke: #0284c7; stroke-width: 3.5; stroke-dasharray: 6; animation: dash 1s linear infinite; }
+    @keyframes dash { to { stroke-dashoffset: -12; } }
+
+    /* Lens 3: AST Reality & Alerts */
+    .ast-container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .alert-box { background: #fff; border: 1.5px solid #fde68a; border-radius: 8px; padding: 16px; box-shadow: var(--card-shadow); }
+    .alert-box h4 { color: #b45309; margin-bottom: 8px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .alert-item { font-size: 12px; margin-bottom: 6px; font-family: var(--font-mono); color: #78350f; }
+
+    .file-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .file-table th, .file-table td { padding: 10px 14px; font-size: 12.5px; text-align: left; border-bottom: 1px solid var(--border); }
+    .file-table th { background: var(--surface-subtle); font-weight: 700; }
+    .file-table tr:hover { background: #f8fafc; }
+
+    /* Lens 4: Funnel & Closed-Loop */
+    .funnel-container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .funnel-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px; box-shadow: var(--card-shadow); }
+    .funnel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .funnel-title { font-size: 14.5px; font-weight: 700; color: var(--text); }
+    .status-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 12px; }
+    .status-closed { background: #dcfce7; color: #15803d; }
+
+    .funnel-flow { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 8px 0; }
+    .step-box { background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 12px; min-width: 180px; }
+    .arrow-icon { color: var(--text-muted); font-weight: bold; }
+    .loop-back { border-left: 3px solid var(--success); background: #f0fdf4; margin-top: 10px; padding: 8px 12px; border-radius: 4px; font-size: 11.5px; color: #166534; }
+
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 24px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="badge-logo">jDroid-X</span>
+      <span class="app-title">jdroid-x-desk</span>
+      <span class="app-version">v2.0.0</span>
+    </div>
+
+    <div class="lens-tabs">
+      <button class="lens-btn active" onclick="switchLens(1)">
+        <span>🌳</span> Lens 1: Concept Tree
+      </button>
+      <button class="lens-btn" onclick="switchLens(2)">
+        <span>🗄️</span> Lens 2: Access Studio
+      </button>
+      <button class="lens-btn" onclick="switchLens(3)">
+        <span>🔬</span> Lens 3: AST Reality
+      </button>
+      <button class="lens-btn" onclick="switchLens(4)">
+        <span>🔄</span> Lens 4: Closed-Loop Funnel
+      </button>
+    </div>
+
+    <div class="meta-pills">
+      <div class="pill pill-amber">
+        <span>⚠️</span> Health: 88.5%
+      </div>
+      <div class="pill pill-green">
+        <span>●</span> 75.0% Closed Loop
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- LENS 1 -->
+    <div id="lens1" class="lens-panel active">
+      <div class="concept-grid">
+        
+        <div class="concept-card">
+          <h3>Master Application Core & Gateway</h3>
+          <p>Operational console for jdroid-x-desk with verified AST event routing.</p>
+          <div class="concept-tags">
+            <div class="concept-tag">✓ Entry: index.html</div><div class="concept-tag">✓ Total Monitored Files: 3618</div><div class="concept-tag">✓ Health Heartbeat Monitor</div>
+          </div>
+        </div>
+        
+        <div class="concept-card">
+          <h3>Screen View Affordances & Interactivity</h3>
+          <p>User screen containing 395 verified DOM elements (225 bound, 75 orphans).</p>
+          <div class="concept-tags">
+            <div class="concept-tag">✓ Verified DOM Elements: 395</div><div class="concept-tag">✓ Theme Mode Selector</div><div class="concept-tag">✓ Responsive Grid Layout</div>
+          </div>
+        </div>
+        
+        <div class="concept-card">
+          <h3>Dynamic OOPS MVC Architecture</h3>
+          <p>Structural layers featuring 8 domain classes verified in code.</p>
+          <div class="concept-tags">
+            <div class="concept-tag">✓ Classes: LocalSystemModel, SystemSettingsModel, SystemTraceabilityLogModel</div><div class="concept-tag">✓ DbContext State Contract</div><div class="concept-tag">✓ Call-by-Reference Flow</div>
+          </div>
+        </div>
+        
+        <div class="concept-card">
+          <h3>Dynamic Settings & Valuebase</h3>
+          <p>Central runtime configuration managing 8 persistent keys.</p>
+          <div class="concept-tags">
+            <div class="concept-tag">✓ Active Keys: 8</div><div class="concept-tag">✓ Runtime Port Binding</div><div class="concept-tag">✓ Zero Hardcoded Values Protocol</div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- LENS 2: Authoritative Wiremap -->
+    <div id="lens2" class="lens-panel">
+      <div id="studio-canvas">
+        <svg id="svg-wires"></svg>
+
+        
+        <div class="entity-card card-view" id="card_view" style="left: 40px; top: 60px;">
+          <div class="card-header">
+            <span>Screen: View (HTML/UI)</span>
+            <span>⋮</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="card-item" id="v_toggle-pass-visibility" onclick="highlightFlow('v_toggle-pass-visibility')">
+              <span class="card-item-label">#toggle-pass-visibility</span>
+              <span class="card-item-detail">Button • onClick</span>
+            </div>
+            
+            <div class="card-item" id="v_launch-canvas-btn" onclick="highlightFlow('v_launch-canvas-btn')">
+              <span class="card-item-label">#launch-canvas-btn</span>
+              <span class="card-item-detail">Button • onClick</span>
+            </div>
+            
+            <div class="card-item" id="v_ad-proxy-port" onclick="highlightFlow('v_ad-proxy-port')">
+              <span class="card-item-label">#ad-proxy-port</span>
+              <span class="card-item-detail">Input • onAccess</span>
+            </div>
+            
+            <div class="card-item" id="v_inapp-purge-logs-btn" onclick="highlightFlow('v_inapp-purge-logs-btn')">
+              <span class="card-item-label">#inapp-purge-logs-btn</span>
+              <span class="card-item-detail">Button • onClick</span>
+            </div>
+            
+            <div class="card-item" id="v_viewport-flipper-card" onclick="highlightFlow('v_viewport-flipper-card')">
+              <span class="card-item-label">#viewport-flipper-card</span>
+              <span class="card-item-detail">Container • onAccess</span>
+            </div>
+            
+          </div>
+        </div>
+        
+        <div class="entity-card card-controller" id="card_controller" style="left: 340px; top: 60px;">
+          <div class="card-header">
+            <span>Controller (Logic & Handlers)</span>
+            <span>⋮</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="card-item" id="c_renderLiveMap" onclick="highlightFlow('c_renderLiveMap')">
+              <span class="card-item-label">renderLiveMap()</span>
+              <span class="card-item-detail">File: app.js</span>
+            </div>
+            
+            <div class="card-item" id="c_unlockConsole" onclick="highlightFlow('c_unlockConsole')">
+              <span class="card-item-label">unlockConsole()</span>
+              <span class="card-item-detail">File: app.js</span>
+            </div>
+            
+            <div class="card-item" id="c_then" onclick="highlightFlow('c_then')">
+              <span class="card-item-label">then()</span>
+              <span class="card-item-detail">File: app.js</span>
+            </div>
+            
+            <div class="card-item" id="c_updateFirebaseStatusUI" onclick="highlightFlow('c_updateFirebaseStatusUI')">
+              <span class="card-item-label">updateFirebaseStatusUI()</span>
+              <span class="card-item-detail">File: app.js</span>
+            </div>
+            
+            <div class="card-item" id="c_bindLoginGate" onclick="highlightFlow('c_bindLoginGate')">
+              <span class="card-item-label">bindLoginGate()</span>
+              <span class="card-item-detail">File: app.js</span>
+            </div>
+            
+          </div>
+        </div>
+        
+        <div class="entity-card card-settings" id="card_settings" style="left: 340px; top: 320px;">
+          <div class="card-header">
+            <span>Settings: Dynamic Valuebase</span>
+            <span>⋮</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="card-item" id="s_jdx_fb_api_key" onclick="highlightFlow('s_jdx_fb_api_key')">
+              <span class="card-item-label">jdx_fb_api_key</span>
+              <span class="card-item-detail">LocalStorage Valuebase</span>
+            </div>
+            
+            <div class="card-item" id="s_jdx_fb_project_id" onclick="highlightFlow('s_jdx_fb_project_id')">
+              <span class="card-item-label">jdx_fb_project_id</span>
+              <span class="card-item-detail">LocalStorage Valuebase</span>
+            </div>
+            
+            <div class="card-item" id="s_jdx_fb_db_url" onclick="highlightFlow('s_jdx_fb_db_url')">
+              <span class="card-item-label">jdx_fb_db_url</span>
+              <span class="card-item-detail">LocalStorage Valuebase</span>
+            </div>
+            
+            <div class="card-item" id="s_jdx_fb_messaging_sender_id" onclick="highlightFlow('s_jdx_fb_messaging_sender_id')">
+              <span class="card-item-label">jdx_fb_messaging_sender_id</span>
+              <span class="card-item-detail">LocalStorage Valuebase</span>
+            </div>
+            
+          </div>
+        </div>
+        
+        <div class="entity-card card-model" id="card_model" style="left: 640px; top: 60px;">
+          <div class="card-header">
+            <span>Model (Contracts & State)</span>
+            <span>⋮</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="card-item" id="m_SystemTraceabilityLogModel" onclick="highlightFlow('m_SystemTraceabilityLogModel')">
+              <span class="card-item-label">SystemTraceabilityLogModel</span>
+              <span class="card-item-detail">State Contract</span>
+            </div>
+            
+            <div class="card-item" id="m_LocalSystemModel" onclick="highlightFlow('m_LocalSystemModel')">
+              <span class="card-item-label">LocalSystemModel</span>
+              <span class="card-item-detail">State Contract</span>
+            </div>
+            
+            <div class="card-item" id="m_SystemSettingsModel" onclick="highlightFlow('m_SystemSettingsModel')">
+              <span class="card-item-label">SystemSettingsModel</span>
+              <span class="card-item-detail">State Contract</span>
+            </div>
+            
+          </div>
+        </div>
+        
+        <div class="entity-card card-database" id="card_db" style="left: 920px; top: 60px;">
+          <div class="card-header">
+            <span>Database & Persistence</span>
+            <span>⋮</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="card-item" id="db_main" onclick="highlightFlow('db_main')">
+              <span class="card-item-label">database.json / RTDB</span>
+              <span class="card-item-detail">Persistent Cloud/Local DB</span>
+            </div>
+            
+            <div class="card-item" id="db_local" onclick="highlightFlow('db_local')">
+              <span class="card-item-label">localStorage Client Cache</span>
+              <span class="card-item-detail">Client State</span>
+            </div>
+            
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- LENS 3: Reality & AMBER Diagnostics -->
+    <div id="lens3" class="lens-panel">
+      <div class="ast-container">
+        <div class="alert-box">
+          <h4>🟡 AST Centrality Shield (God-Node Warnings)</h4>
+          <p style="font-size: 12px; color: #78350f; margin-bottom: 8px;">
+            Files exceeding coupling thresholds. Refactoring must decouple these before feature addition:
+          </p>
+          <div class="alert-item">⚠️ <strong>JDroidXDeskNative.cs</strong> (11,249 lines, In-Degree: 16) — File exceeds 4,000 lines (11,249 lines). Overloaded responsibilities violate Single Responsibility Principle.</div><div class="alert-item">⚠️ <strong>app.js</strong> (4,689 lines, In-Degree: 16) — File exceeds 4,000 lines (4,689 lines). Overloaded responsibilities violate Single Responsibility Principle.</div><div class="alert-item">⚠️ <strong>controllers/app-controller.js</strong> (4,689 lines, In-Degree: 16) — File exceeds 4,000 lines (4,689 lines). Overloaded responsibilities violate Single Responsibility Principle.</div><div class="alert-item">⚠️ <strong>graphify-out/.graphify_labels.json</strong> (4,862 lines, In-Degree: 16) — File exceeds 4,000 lines (4,862 lines). Overloaded responsibilities violate Single Responsibility Principle.</div>
+        </div>
+
+        <div class="alert-box" style="border-color: #fca5a5; background: #fff5f5;">
+          <h4 style="color: #b91c1c;">🟡 Secret Exposure & Hardcoded Fallbacks</h4>
+          <p style="font-size: 12px; color: #7f1d1d; margin-bottom: 8px;">
+            The following fallback credentials were detected in code files violating Prime Directive 6:
+          </p>
+          <div class="alert-item" style="color: #991b1b;">⚠️ <strong>app.js</strong>: Firebase API Key Fallback (Risk: Medium)</div><div class="alert-item" style="color: #991b1b;">⚠️ <strong>app.js</strong>: Hardcoded One-Time Pass (Risk: High)</div><div class="alert-item" style="color: #991b1b;">⚠️ <strong>controllers/app-controller.js</strong>: Firebase API Key Fallback (Risk: Medium)</div><div class="alert-item" style="color: #991b1b;">⚠️ <strong>controllers/app-controller.js</strong>: Hardcoded One-Time Pass (Risk: High)</div>
+        </div>
+
+        <table class="file-table">
+          <thead>
+            <tr>
+              <th>File Path</th>
+              <th>Type</th>
+              <th>Lines</th>
+              <th>Centrality</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">JDroidXDeskNative.cs</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>11249</td>
+              <td>9.8</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">admin.html</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">html</span></td>
+              <td>941</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">app.js</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">javascript</span></td>
+              <td>4689</td>
+              <td>9.8</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">colab_relay_server.py</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>659</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">controllers/app-controller.js</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">javascript</span></td>
+              <td>4689</td>
+              <td>9.8</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">controllers/server-controller.js</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">javascript</span></td>
+              <td>1011</td>
+              <td>7.1</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">database.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>718</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/.graphify_labels.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>4862</td>
+              <td>9.8</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/001123ecaf9be2efbd6c58aeaa3805c0e554b966c9edf949e5790c65c4cde98c.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/002ac951ae143c1f09e7948ebd4f541135ebc0acf89112ca6535417681bd7976.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/002e7d360c5317e836c3e57aadda4b100c36d7c4119f39abd970bf24a26d9ed3.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/004c1fb223d8c69989158e944eb309dbaed27f7e54cb9df00be02606e4961ae7.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/004c5968432db3b948110c8881c1b79a680eebc021716a805a62e375c0fa7042.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/005480d617445eda884046e13ad5b66e15488e5341bf5ce47809a8c7c3d49a49.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/0054e0eccc2648c8ec85c7d4c3896ff7c64276721436cabb5f9f4a41cc257375.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/005950b717a4b936687667bbb5b969dce25ed9302cdb8e00cddcf86c9cf404fb.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/005dee5d23d88867e2e525c9f5875675ddbd76d20cbd36370c7bb4a2113fee42.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/007a3c3cbda4a1b87449dc5fc36ec9eb4487ccbc555bb5b422d7db8b270c457f.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/007c184d6c70ed8ae53bf3e218090d4b359faa180f3e3e3ff0ffb933e075a533.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/008435860402a3dd721ddd3b3d99b175f90aed12e507baa2adbf7c0d3637b94e.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/0087fc6c36e29709049d179964d46f132b04a4fb8a3a7d80c597053763c451c3.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/008a6a0fe8a773dff70fdecd55134e1b8fe07d327d9f167eae750c9edab93f6a.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/00979847023b3bbd24b19512b47ca64f10765c20136fd165e9d3b4f16ff9efe1.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/00e4d5b2e65f41da2f263351ab032a8286a44e9d90a4cc51b8ce7112e1a82d25.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/00ea254e184f30e8a4cd37449d90f78342947e10edb75a8feab8b7ae53bdece8.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/0121e55354c4df52a5a047c3352c216044fb3bbe140778d71a29203234117a90.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/0132e384b398a6e9c547c6a983a5c5c7488c2eb9502d4c4ff30c37cb0c2d7bba.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/0139c7d9ecabe8dc60c7160051e219d26fb77e2199f8c0ea0afe52c9fbf18871.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/014910ecedf7fbe2f9ff580d239daa869b7f1fde220bf1ea3dbd11e775b4404f.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+            <tr>
+              <td style="font-family: var(--font-mono); font-weight: 600;">graphify-out/cache/ast/vunknown/01516c18516d20871994208d170609c3f8e307fd6dd29633ab78a5de836ce76f.json</td>
+              <td><span style="font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px;">data</span></td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LENS 4 -->
+    <div id="lens4" class="lens-panel">
+      <div class="funnel-container">
+        
+        <div class="funnel-card">
+          <div class="funnel-header">
+            <span class="funnel-title">Auth Journey: Login Gate ➔ Firebase Initializer ➔ Session Unlock</span>
+            <span class="status-badge status-closed">● CLOSED</span>
+          </div>
+          <div class="funnel-flow">
+            <div class="step-box" style="border-left: 3px solid #0284c7;">
+              <strong>Trigger:</strong><br>User clicks #login-submit-btn
+            </div>
+            <span class="arrow-icon">➔</span>
+            <div class="step-box">bindLoginGate() intercepts click event</div><span class="arrow-icon">➔</span><div class="step-box">Validates email and password inputs</div><span class="arrow-icon">➔</span><div class="step-box">Reads Firebase keys from SystemSettingsModel</div><span class="arrow-icon">➔</span><div class="step-box">Firebase initializes app and verifies session</div><span class="arrow-icon">➔</span><div class="step-box">Preloader fade-out triggered and Console unlocked</div><span class="arrow-icon">➔</span>
+            <div class="step-box" style="border-left: 3px solid #16a34a;">
+              <strong>Delivery:</strong><br>Desktop Console Active
+            </div>
+          </div>
+          <div class="loop-back">
+            🔄 <strong>Closed-Loop Feedback:</strong> SystemTraceabilityLogModel audit log & toast notification
+          </div>
+        </div>
+        
+        <div class="funnel-card">
+          <div class="funnel-header">
+            <span class="funnel-title">Affordance Journey: Password Visibility Toggle</span>
+            <span class="status-badge status-closed">● CLOSED</span>
+          </div>
+          <div class="funnel-flow">
+            <div class="step-box" style="border-left: 3px solid #0284c7;">
+              <strong>Trigger:</strong><br>User clicks #toggle-pass-visibility
+            </div>
+            <span class="arrow-icon">➔</span>
+            <div class="step-box">Click event listener fires in init()</div><span class="arrow-icon">➔</span><div class="step-box">Reads current type of #login-password-input</div><span class="arrow-icon">➔</span><div class="step-box">Toggles input type between 'password' and 'text'</div><span class="arrow-icon">➔</span><div class="step-box">Updates #toggle-pass-icon class (eye / eye-slash)</div><span class="arrow-icon">➔</span>
+            <div class="step-box" style="border-left: 3px solid #16a34a;">
+              <strong>Delivery:</strong><br>Immediate DOM state feedback
+            </div>
+          </div>
+          <div class="loop-back">
+            🔄 <strong>Closed-Loop Feedback:</strong> Instant visual icon toggle
+          </div>
+        </div>
+        
+        <div class="funnel-card">
+          <div class="funnel-header">
+            <span class="funnel-title">Governance Journey: Zero-Hardcode Valuebase Sync</span>
+            <span class="status-badge status-closed">● CLOSED</span>
+          </div>
+          <div class="funnel-flow">
+            <div class="step-box" style="border-left: 3px solid #0284c7;">
+              <strong>Trigger:</strong><br>User updates Firebase key or Local Port in settings
+            </div>
+            <span class="arrow-icon">➔</span>
+            <div class="step-box">Settings controller captures input change</div><span class="arrow-icon">➔</span><div class="step-box">SystemSettingsModel writes to localStorage</div><span class="arrow-icon">➔</span><div class="step-box">Runtime rebinds active connection without code edit</div><span class="arrow-icon">➔</span>
+            <div class="step-box" style="border-left: 3px solid #16a34a;">
+              <strong>Delivery:</strong><br>Runtime config active
+            </div>
+          </div>
+          <div class="loop-back">
+            🔄 <strong>Closed-Loop Feedback:</strong> Health check probe confirmation
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div>jDroid-X-MindMapView Architecture (Enterprise v3.0) • Dynamic OOPS MVC Validated</div>
+    <div>Generated: 2026-10-22 13:47:33 • Zero LLM Tokens Consumed</div>
+  </footer>
+
+  <script>
+    const appData = {
+  "meta": {
+    "app_name": "jdroid-x-desk",
+    "app_slug": "jdroid-x-desk",
+    "version": "2.0.0",
+    "generated_at": "2026-10-22 13:47:33",
+    "total_files": 3618,
+    "health_score": 88.5,
+    "hardcoded_secrets": [
+      {
+        "file": "app.js",
+        "secret_type": "Firebase API Key Fallback",
+        "risk": "Medium"
+      },
+      {
+        "file": "app.js",
+        "secret_type": "Hardcoded One-Time Pass",
+        "risk": "High"
+      },
+      {
+        "file": "controllers/app-controller.js",
+        "secret_type": "Firebase API Key Fallback",
+        "risk": "Medium"
+      },
+      {
+        "file": "controllers/app-controller.js",
+        "secret_type": "Hardcoded One-Time Pass",
+        "risk": "High"
+      }
+    ]
+  },
+  "lens1_concept": {
+    "root_node": "jdroid-x-desk",
+    "summary": "Full-stack application analyzed via AST-Authoritative Event Resolver.",
+    "features": [
+      {
+        "id": "feat_core",
+        "title": "Master Application Core & Gateway",
+        "description": "Operational console for jdroid-x-desk with verified AST event routing.",
+        "sub_features": [
+          "Entry: index.html",
+          "Total Monitored Files: 3618",
+          "Health Heartbeat Monitor"
+        ]
+      },
+      {
+        "id": "feat_ui",
+        "title": "Screen View Affordances & Interactivity",
+        "description": "User screen containing 395 verified DOM elements (225 bound, 75 orphans).",
+        "sub_features": [
+          "Verified DOM Elements: 395",
+          "Theme Mode Selector",
+          "Responsive Grid Layout"
+        ]
+      },
+      {
+        "id": "feat_mvc",
+        "title": "Dynamic OOPS MVC Architecture",
+        "description": "Structural layers featuring 8 domain classes verified in code.",
+        "sub_features": [
+          "Classes: LocalSystemModel, SystemSettingsModel, SystemTraceabilityLogModel",
+          "DbContext State Contract",
+          "Call-by-Reference Flow"
+        ]
+      },
+      {
+        "id": "feat_config",
+        "title": "Dynamic Settings & Valuebase",
+        "description": "Central runtime configuration managing 8 persistent keys.",
+        "sub_features": [
+          "Active Keys: 8",
+          "Runtime Port Binding",
+          "Zero Hardcoded Values Protocol"
+        ]
+      }
+    ]
+  },
+  "lens2_mvc_studio": {
+    "cards": [
+      {
+        "id": "card_view",
+        "type": "view",
+        "title": "Screen: View (HTML/UI)",
+        "pos": {
+          "x": 40,
+          "y": 60
+        },
+        "items": [
+          {
+            "id": "v_toggle-pass-visibility",
+            "label": "#toggle-pass-visibility",
+            "detail": "Button \u2022 onClick"
+          },
+          {
+            "id": "v_launch-canvas-btn",
+            "label": "#launch-canvas-btn",
+            "detail": "Button \u2022 onClick"
+          },
+          {
+            "id": "v_ad-proxy-port",
+            "label": "#ad-proxy-port",
+            "detail": "Input \u2022 onAccess"
+          },
+          {
+            "id": "v_inapp-purge-logs-btn",
+            "label": "#inapp-purge-logs-btn",
+            "detail": "Button \u2022 onClick"
+          },
+          {
+            "id": "v_viewport-flipper-card",
+            "label": "#viewport-flipper-card",
+            "detail": "Container \u2022 onAccess"
+          }
+        ]
+      },
+      {
+        "id": "card_controller",
+        "type": "controller",
+        "title": "Controller (Logic & Handlers)",
+        "pos": {
+          "x": 340,
+          "y": 60
+        },
+        "items": [
+          {
+            "id": "c_renderLiveMap",
+            "label": "renderLiveMap()",
+            "detail": "File: app.js"
+          },
+          {
+            "id": "c_unlockConsole",
+            "label": "unlockConsole()",
+            "detail": "File: app.js"
+          },
+          {
+            "id": "c_then",
+            "label": "then()",
+            "detail": "File: app.js"
+          },
+          {
+            "id": "c_updateFirebaseStatusUI",
+            "label": "updateFirebaseStatusUI()",
+            "detail": "File: app.js"
+          },
+          {
+            "id": "c_bindLoginGate",
+            "label": "bindLoginGate()",
+            "detail": "File: app.js"
+          }
+        ]
+      },
+      {
+        "id": "card_settings",
+        "type": "settings",
+        "title": "Settings: Dynamic Valuebase",
+        "pos": {
+          "x": 340,
+          "y": 320
+        },
+        "items": [
+          {
+            "id": "s_jdx_fb_api_key",
+            "label": "jdx_fb_api_key",
+            "detail": "LocalStorage Valuebase"
+          },
+          {
+            "id": "s_jdx_fb_project_id",
+            "label": "jdx_fb_project_id",
+            "detail": "LocalStorage Valuebase"
+          },
+          {
+            "id": "s_jdx_fb_db_url",
+            "label": "jdx_fb_db_url",
+            "detail": "LocalStorage Valuebase"
+          },
+          {
+            "id": "s_jdx_fb_messaging_sender_id",
+            "label": "jdx_fb_messaging_sender_id",
+            "detail": "LocalStorage Valuebase"
+          }
+        ]
+      },
+      {
+        "id": "card_model",
+        "type": "model",
+        "title": "Model (Contracts & State)",
+        "pos": {
+          "x": 640,
+          "y": 60
+        },
+        "items": [
+          {
+            "id": "m_SystemTraceabilityLogModel",
+            "label": "SystemTraceabilityLogModel",
+            "detail": "State Contract"
+          },
+          {
+            "id": "m_LocalSystemModel",
+            "label": "LocalSystemModel",
+            "detail": "State Contract"
+          },
+          {
+            "id": "m_SystemSettingsModel",
+            "label": "SystemSettingsModel",
+            "detail": "State Contract"
+          }
+        ]
+      },
+      {
+        "id": "card_db",
+        "type": "database",
+        "title": "Database & Persistence",
+        "pos": {
+          "x": 920,
+          "y": 60
+        },
+        "items": [
+          {
+            "id": "db_main",
+            "label": "database.json / RTDB",
+            "detail": "Persistent Cloud/Local DB"
+          },
+          {
+            "id": "db_local",
+            "label": "localStorage Client Cache",
+            "detail": "Client State"
+          }
+        ]
+      }
+    ],
+    "connectors": [
+      {
+        "id": "conn_1",
+        "from_card": "card_view",
+        "from_item": "v_app-preloader",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_2",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_3",
+        "from_card": "card_view",
+        "from_item": "v_login-gate-overlay",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_4",
+        "from_card": "card_view",
+        "from_item": "v_login-error-msg",
+        "to_card": "card_controller",
+        "to_item": "c_bindLoginGate",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_5",
+        "from_card": "card_view",
+        "from_item": "v_login-email-input",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_6",
+        "from_card": "card_controller",
+        "from_item": "c_catch",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_7",
+        "from_card": "card_view",
+        "from_item": "v_login-password-input",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_8",
+        "from_card": "card_view",
+        "from_item": "v_toggle-pass-visibility",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_9",
+        "from_card": "card_view",
+        "from_item": "v_toggle-pass-icon",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_10",
+        "from_card": "card_view",
+        "from_item": "v_login-submit-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindLoginGate",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_11",
+        "from_card": "card_view",
+        "from_item": "v_login-bypass-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindLoginGate",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_12",
+        "from_card": "card_view",
+        "from_item": "v_toast-container",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_13",
+        "from_card": "card_view",
+        "from_item": "v_sidebar-drawer",
+        "to_card": "card_controller",
+        "to_item": "c_bindNavigation",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_14",
+        "from_card": "card_view",
+        "from_item": "v_close-drawer-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindNavigation",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_15",
+        "from_card": "card_view",
+        "from_item": "v_nav-logout-btn",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_16",
+        "from_card": "card_view",
+        "from_item": "v_nav-exit-app",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_17",
+        "from_card": "card_view",
+        "from_item": "v_logged-in-user-email",
+        "to_card": "card_controller",
+        "to_item": "c_unlockConsole",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_18",
+        "from_card": "card_view",
+        "from_item": "v_session-online-dot",
+        "to_card": "card_controller",
+        "to_item": "c_unlockConsole",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_19",
+        "from_card": "card_view",
+        "from_item": "v_hud-conn-type",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_20",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_21",
+        "from_card": "card_view",
+        "from_item": "v_hud-ip-address",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_22",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_23",
+        "from_card": "card_view",
+        "from_item": "v_hud-dl-speed",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_24",
+        "from_card": "card_view",
+        "from_item": "v_hud-ul-speed",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_25",
+        "from_card": "card_view",
+        "from_item": "v_hud-ping-ms",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_26",
+        "from_card": "card_view",
+        "from_item": "v_hud-stream-fps",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_27",
+        "from_card": "card_view",
+        "from_item": "v_hud-4g-status",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_28",
+        "from_card": "card_view",
+        "from_item": "v_toggle-drawer-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindNavigation",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_29",
+        "from_card": "card_view",
+        "from_item": "v_view-title",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_30",
+        "from_card": "card_view",
+        "from_item": "v_web-gateway-status-text",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_31",
+        "from_card": "card_view",
+        "from_item": "v_web-header-engine-badge",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_32",
+        "from_card": "card_view",
+        "from_item": "v_web-header-engine-name",
+        "to_card": "card_controller",
+        "to_item": "c_updateActiveEngineUI",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_33",
+        "from_card": "card_view",
+        "from_item": "v_web-header-engine-status",
+        "to_card": "card_controller",
+        "to_item": "c_probeEngineStatus",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_34",
+        "from_card": "card_view",
+        "from_item": "v_web-header-run-script-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindEvents",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_35",
+        "from_card": "card_view",
+        "from_item": "v_global-theme-selector",
+        "to_card": "card_controller",
+        "to_item": "c_bindThemeToggle",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_36",
+        "from_card": "card_view",
+        "from_item": "v_theme-toggle-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindThemeToggle",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_37",
+        "from_card": "card_view",
+        "from_item": "v_quick-disconnect-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_38",
+        "from_card": "card_view",
+        "from_item": "v_content-area",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_39",
+        "from_card": "card_view",
+        "from_item": "v_console-active-engine-title",
+        "to_card": "card_controller",
+        "to_item": "c_updateActiveEngineUI",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_40",
+        "from_card": "card_view",
+        "from_item": "v_console-engine-probe-badge",
+        "to_card": "card_controller",
+        "to_item": "c_probeEngineStatus",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_41",
+        "from_card": "card_view",
+        "from_item": "v_console-engine-probe-text",
+        "to_card": "card_controller",
+        "to_item": "c_probeEngineStatus",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_42",
+        "from_card": "card_view",
+        "from_item": "v_console-run-script-btn",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_43",
+        "from_card": "card_view",
+        "from_item": "v_console-switch-engine-btn",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_44",
+        "from_card": "card_view",
+        "from_item": "v_btn-download-share-bat",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_45",
+        "from_card": "card_view",
+        "from_item": "v_gateway-pill-status",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_46",
+        "from_card": "card_view",
+        "from_item": "v_gateway-url-display",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_47",
+        "from_card": "card_view",
+        "from_item": "v_local-device-id",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_48",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_49",
+        "from_card": "card_view",
+        "from_item": "v_copy-id-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_50",
+        "from_card": "card_view",
+        "from_item": "v_btn-open-invite-modal",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_51",
+        "from_card": "card_view",
+        "from_item": "v_local-node-desc",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_52",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_53",
+        "from_card": "card_view",
+        "from_item": "v_local-device-pass",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_54",
+        "from_card": "card_view",
+        "from_item": "v_session-status-text",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_55",
+        "from_card": "card_view",
+        "from_item": "v_target-id-input",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_56",
+        "from_card": "card_view",
+        "from_item": "v_btn-clear-target-id",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_57",
+        "from_card": "card_view",
+        "from_item": "v_target-pass-input",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_58",
+        "from_card": "card_view",
+        "from_item": "v_connect-session-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_59",
+        "from_card": "card_view",
+        "from_item": "v_launch-canvas-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_60",
+        "from_card": "card_controller",
+        "from_item": "c_bindRemoteConnectLogic",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_61",
+        "from_card": "card_view",
+        "from_item": "v_btn-native-quick-assist",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_62",
+        "from_card": "card_view",
+        "from_item": "v_btn-native-terminal",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_63",
+        "from_card": "card_view",
+        "from_item": "v_btn-native-msra",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_64",
+        "from_card": "card_view",
+        "from_item": "v_discovered-desks-count",
+        "to_card": "card_controller",
+        "to_item": "c_render",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_65",
+        "from_card": "card_view",
+        "from_item": "v_btn-scan-lan-desks",
+        "to_card": "card_controller",
+        "to_item": "c_init",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_66",
+        "from_card": "card_view",
+        "from_item": "v_discovered-desks-container",
+        "to_card": "card_controller",
+        "to_item": "c_render",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_67",
+        "from_card": "card_view",
+        "from_item": "v_remote-desktop-viewport-box",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_68",
+        "from_card": "card_view",
+        "from_item": "v_active-target-id-label",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_69",
+        "from_card": "card_view",
+        "from_item": "v_stream-hud-specs",
+        "to_card": "card_controller",
+        "to_item": "c_startRemoteStreamLoop",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_70",
+        "from_card": "card_view",
+        "from_item": "v_stream-quality-select",
+        "to_card": "card_controller",
+        "to_item": "c_bindDeepDiveEvents",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_71",
+        "from_card": "card_view",
+        "from_item": "v_btn-toggle-clipboard",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_72",
+        "from_card": "card_view",
+        "from_item": "v_btn-toggle-audio",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_73",
+        "from_card": "card_view",
+        "from_item": "v_btn-webrtc-share-screen",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_74",
+        "from_card": "card_view",
+        "from_item": "v_btn-flip-viewport",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_75",
+        "from_card": "card_view",
+        "from_item": "v_ctrl-alt-del-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_76",
+        "from_card": "card_controller",
+        "from_item": "c_bindRemoteConnectLogic",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_77",
+        "from_card": "card_view",
+        "from_item": "v_toggle-file-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_78",
+        "from_card": "card_controller",
+        "from_item": "c_bindRemoteConnectLogic",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_79",
+        "from_card": "card_view",
+        "from_item": "v_disconnect-session-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindRemoteConnectLogic",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_80",
+        "from_card": "card_view",
+        "from_item": "v_viewport-flipper-card",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_81",
+        "from_card": "card_view",
+        "from_item": "v_remote-stream-canvas",
+        "to_card": "card_controller",
+        "to_item": "c_startRemoteStreamLoop",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_82",
+        "from_card": "card_view",
+        "from_item": "v_live-screen-video",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_83",
+        "from_card": "card_view",
+        "from_item": "v_virtual-screen-placeholder",
+        "to_card": "card_controller",
+        "to_item": "c_startRemoteStreamLoop",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_84",
+        "from_card": "card_view",
+        "from_item": "v_virtual-screen-log",
+        "to_card": "card_controller",
+        "to_item": "c_injectVirtualInput",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_85",
+        "from_card": "card_controller",
+        "from_item": "c_injectVirtualInput",
+        "to_card": "card_model",
+        "to_item": "m_SystemTraceabilityLogModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_86",
+        "from_card": "card_view",
+        "from_item": "v_btn-flip-back-screen",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_87",
+        "from_card": "card_view",
+        "from_item": "v_remote-terminal-output",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_88",
+        "from_card": "card_view",
+        "from_item": "v_terminal-log-content",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_89",
+        "from_card": "card_view",
+        "from_item": "v_terminal-cmd-input",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_90",
+        "from_card": "card_view",
+        "from_item": "v_terminal-send-btn",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_91",
+        "from_card": "card_view",
+        "from_item": "v_system-monitor-content",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_92",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_SystemTraceabilityLogModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_93",
+        "from_card": "card_view",
+        "from_item": "v_fleet-filter-all",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_94",
+        "from_card": "card_view",
+        "from_item": "v_fleet-group-filter",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_95",
+        "from_card": "card_view",
+        "from_item": "v_btn-fleet-manage-groups",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_96",
+        "from_card": "card_view",
+        "from_item": "v_btn-open-add-device",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_97",
+        "from_card": "card_view",
+        "from_item": "v_device-list-ul",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_98",
+        "from_card": "card_view",
+        "from_item": "v_btn-test-mesh-route",
+        "to_card": "card_controller",
+        "to_item": "c_renderLiveMap",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_99",
+        "from_card": "card_view",
+        "from_item": "v_mesh-nodes-display",
+        "to_card": "card_controller",
+        "to_item": "c_renderLiveMap",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_100",
+        "from_card": "card_view",
+        "from_item": "v_mesh-ping-result",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_101",
+        "from_card": "card_view",
+        "from_item": "v_history-search-input",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_102",
+        "from_card": "card_view",
+        "from_item": "v_btn-generate-audit-report",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_103",
+        "from_card": "card_view",
+        "from_item": "v_session-history-tbody",
+        "to_card": "card_controller",
+        "to_item": "c_renderSessionHistory",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_104",
+        "from_card": "card_view",
+        "from_item": "v_btn-add-group",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_105",
+        "from_card": "card_view",
+        "from_item": "v_groups-list",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_106",
+        "from_card": "card_view",
+        "from_item": "v_btn-open-add-contact",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_107",
+        "from_card": "card_view",
+        "from_item": "v_contacts-list-grid",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_108",
+        "from_card": "card_view",
+        "from_item": "v_btn-add-safe-zone",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_109",
+        "from_card": "card_view",
+        "from_item": "v_safe-zones-list",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_110",
+        "from_card": "card_view",
+        "from_item": "v_btn-emergency-kill",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_111",
+        "from_card": "card_view",
+        "from_item": "v_btn-open-add-guardian",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_112",
+        "from_card": "card_view",
+        "from_item": "v_guardians-list-container",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_113",
+        "from_card": "card_view",
+        "from_item": "v_notif-filter-all",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_114",
+        "from_card": "card_view",
+        "from_item": "v_btn-mark-all-read",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_115",
+        "from_card": "card_view",
+        "from_item": "v_notifications-list-container",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_116",
+        "from_card": "card_view",
+        "from_item": "v_btn-run-self-diagnostic",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_117",
+        "from_card": "card_view",
+        "from_item": "v_health-cpu-val",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_118",
+        "from_card": "card_view",
+        "from_item": "v_health-cpu-model",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_119",
+        "from_card": "card_view",
+        "from_item": "v_health-mem-val",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_120",
+        "from_card": "card_view",
+        "from_item": "v_health-mem-sub",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_121",
+        "from_card": "card_view",
+        "from_item": "v_health-uptime-val",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_122",
+        "from_card": "card_view",
+        "from_item": "v_health-platform-sub",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_123",
+        "from_card": "card_view",
+        "from_item": "v_health-network-nics",
+        "to_card": "card_controller",
+        "to_item": "c_renderDeviceHealth",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_124",
+        "from_card": "card_view",
+        "from_item": "v_profile-operator-name",
+        "to_card": "card_controller",
+        "to_item": "c_renderUserProfile",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_125",
+        "from_card": "card_controller",
+        "from_item": "c_renderUserProfile",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_126",
+        "from_card": "card_view",
+        "from_item": "v_profile-operator-org",
+        "to_card": "card_controller",
+        "to_item": "c_renderUserProfile",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_127",
+        "from_card": "card_controller",
+        "from_item": "c_renderUserProfile",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_128",
+        "from_card": "card_view",
+        "from_item": "v_profile-operator-role",
+        "to_card": "card_controller",
+        "to_item": "c_renderUserProfile",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_129",
+        "from_card": "card_controller",
+        "from_item": "c_renderUserProfile",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_130",
+        "from_card": "card_view",
+        "from_item": "v_profile-console-id",
+        "to_card": "card_controller",
+        "to_item": "c_renderUserProfile",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_131",
+        "from_card": "card_view",
+        "from_item": "v_btn-save-operator-profile",
+        "to_card": "card_controller",
+        "to_item": "c_renderUserProfile",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_132",
+        "from_card": "card_controller",
+        "from_item": "c_renderUserProfile",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_133",
+        "from_card": "card_view",
+        "from_item": "v_btn-save-all-settings",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_134",
+        "from_card": "card_view",
+        "from_item": "v_ad-settings-search",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_135",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-lang",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_136",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-theme",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_137",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-hide-taskbar",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_138",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-req-comment",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_139",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-open-addrbook",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_140",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-accept-chat",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_141",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-popup-invite",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_142",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-sound-conn",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_143",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-transmit-hotkeys",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_144",
+        "from_card": "card_view",
+        "from_item": "v_ad-ss-path-display",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_145",
+        "from_card": "card_view",
+        "from_item": "v_ad-chat-path-display",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_146",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-online-vis",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_147",
+        "from_card": "card_view",
+        "from_item": "v_ad-set-allow-telemetry",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_148",
+        "from_card": "card_view",
+        "from_item": "v_ad-conn-direct",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_149",
+        "from_card": "card_view",
+        "from_item": "v_ad-conn-port",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_150",
+        "from_card": "card_view",
+        "from_item": "v_ad-conn-lan-discovery",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_151",
+        "from_card": "card_view",
+        "from_item": "v_ad-conn-discovery-port",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_152",
+        "from_card": "card_view",
+        "from_item": "v_ad-proxy-type",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_153",
+        "from_card": "card_view",
+        "from_item": "v_ad-proxy-addr",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_154",
+        "from_card": "card_view",
+        "from_item": "v_ad-proxy-port",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_155",
+        "from_card": "card_view",
+        "from_item": "v_custom-domain-url",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_156",
+        "from_card": "card_view",
+        "from_item": "v_ad-colab-relay-enabled",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_157",
+        "from_card": "card_view",
+        "from_item": "v_colab-relay-url",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_158",
+        "from_card": "card_view",
+        "from_item": "v_btn-test-colab-relay",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_159",
+        "from_card": "card_view",
+        "from_item": "v_ad-wol-clients-list",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_160",
+        "from_card": "card_view",
+        "from_item": "v_btn-wol-add",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_161",
+        "from_card": "card_view",
+        "from_item": "v_btn-wol-rem",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_162",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-set-password",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_163",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-clear-tokens",
+        "to_card": "card_controller",
+        "to_item": "c_forEach",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_164",
+        "from_card": "card_view",
+        "from_item": "v_ad-acl-enabled",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_165",
+        "from_card": "card_view",
+        "from_item": "v_ad-acl-list",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_166",
+        "from_card": "card_view",
+        "from_item": "v_btn-acl-add",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_167",
+        "from_card": "card_view",
+        "from_item": "v_btn-acl-rem",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_168",
+        "from_card": "card_view",
+        "from_item": "v_ad-auto-disconnect-mins",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_169",
+        "from_card": "card_view",
+        "from_item": "v_btn-apply-timeout",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_170",
+        "from_card": "card_view",
+        "from_item": "v_btn-add-profile",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_171",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-prof-set-password",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_172",
+        "from_card": "card_view",
+        "from_item": "v_ad-priv-frame-enabled",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_173",
+        "from_card": "card_view",
+        "from_item": "v_ad-priv-frame-color",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_174",
+        "from_card": "card_view",
+        "from_item": "v_ad-priv-frame-opacity",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_175",
+        "from_card": "card_view",
+        "from_item": "v_ad-priv-frame-width",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_176",
+        "from_card": "card_view",
+        "from_item": "v_btn-apply-frame",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_177",
+        "from_card": "card_view",
+        "from_item": "v_ad-disp-follow-cursor",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_178",
+        "from_card": "card_view",
+        "from_item": "v_ad-disp-follow-focus",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_179",
+        "from_card": "card_view",
+        "from_item": "v_ad-disp-show-size",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_180",
+        "from_card": "card_view",
+        "from_item": "v_ad-disp-edge-scroll",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_181",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_182",
+        "from_card": "card_view",
+        "from_item": "v_ad-rec-incoming",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_183",
+        "from_card": "card_view",
+        "from_item": "v_ad-rec-outgoing",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_184",
+        "from_card": "card_view",
+        "from_item": "v_ad-sess-rec-path-display",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_185",
+        "from_card": "card_view",
+        "from_item": "v_btn-install-printer",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_186",
+        "from_card": "card_view",
+        "from_item": "v_ad-acc-email",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_187",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_188",
+        "from_card": "card_view",
+        "from_item": "v_ad-acc-pass",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_189",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-account-forgot",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_190",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-account-login",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_191",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-account-register",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_192",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-account-sso",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_193",
+        "from_card": "card_view",
+        "from_item": "v_btn-ad-account-remove-license",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_194",
+        "from_card": "card_view",
+        "from_item": "v_settings-fb-status-banner",
+        "to_card": "card_controller",
+        "to_item": "c_updateFirebaseStatusUI",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_195",
+        "from_card": "card_view",
+        "from_item": "v_settings-fb-app",
+        "to_card": "card_controller",
+        "to_item": "c_bindSettingsEvents",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_196",
+        "from_card": "card_controller",
+        "from_item": "c_bindSettingsEvents",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_197",
+        "from_card": "card_view",
+        "from_item": "v_settings-fb-api",
+        "to_card": "card_controller",
+        "to_item": "c_bindSettingsEvents",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_198",
+        "from_card": "card_controller",
+        "from_item": "c_bindSettingsEvents",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_199",
+        "from_card": "card_view",
+        "from_item": "v_btn-save-firebase",
+        "to_card": "card_controller",
+        "to_item": "c_bindSettingsEvents",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_200",
+        "from_card": "card_controller",
+        "from_item": "c_bindSettingsEvents",
+        "to_card": "card_model",
+        "to_item": "m_SystemSettingsModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_201",
+        "from_card": "card_view",
+        "from_item": "v_settings-startup-checkbox",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_202",
+        "from_card": "card_view",
+        "from_item": "v_btn-regenerate-pass",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_203",
+        "from_card": "card_view",
+        "from_item": "v_inapp-refresh-admin-btn",
+        "to_card": "card_controller",
+        "to_item": "c_bindEvents",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_204",
+        "from_card": "card_view",
+        "from_item": "v_inapp-save-limits-btn",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_205",
+        "from_card": "card_view",
+        "from_item": "v_inapp-lim-sessions",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_206",
+        "from_card": "card_view",
+        "from_item": "v_inapp-lim-bandwidth",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_207",
+        "from_card": "card_view",
+        "from_item": "v_inapp-lim-fps",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_208",
+        "from_card": "card_view",
+        "from_item": "v_inapp-lim-timeout",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_209",
+        "from_card": "card_view",
+        "from_item": "v_inapp-lim-retention",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_210",
+        "from_card": "card_view",
+        "from_item": "v_inapp-lim-hw",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_211",
+        "from_card": "card_view",
+        "from_item": "v_inapp-log-search",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onInput",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_212",
+        "from_card": "card_view",
+        "from_item": "v_inapp-log-level",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_213",
+        "from_card": "card_view",
+        "from_item": "v_inapp-purge-logs-btn",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_214",
+        "from_card": "card_view",
+        "from_item": "v_inapp-log-tbody",
+        "to_card": "card_controller",
+        "to_item": "c_filterAndRenderLogs",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_215",
+        "from_card": "card_view",
+        "from_item": "v_web-marquee-ticker",
+        "to_card": "card_controller",
+        "to_item": "c_updateMarqueeTickerText",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_216",
+        "from_card": "card_view",
+        "from_item": "v_launch-popup-modal",
+        "to_card": "card_controller",
+        "to_item": "c_then",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_217",
+        "from_card": "card_view",
+        "from_item": "v_launch-popup-close-btn",
+        "to_card": "card_controller",
+        "to_item": "c_then",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_218",
+        "from_card": "card_view",
+        "from_item": "v_startup-checkbox",
+        "to_card": "card_controller",
+        "to_item": "c_then",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_219",
+        "from_card": "card_view",
+        "from_item": "v_hide-popup-checkbox",
+        "to_card": "card_controller",
+        "to_item": "c_then",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_220",
+        "from_card": "card_view",
+        "from_item": "v_launch-popup-ok-btn",
+        "to_card": "card_controller",
+        "to_item": "c_then",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_221",
+        "from_card": "card_view",
+        "from_item": "v_audit-report-modal",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_222",
+        "from_card": "card_view",
+        "from_item": "v_add-device-modal",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_223",
+        "from_card": "card_view",
+        "from_item": "v_device-modal-title",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_224",
+        "from_card": "card_view",
+        "from_item": "v_device-modal-id",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_225",
+        "from_card": "card_view",
+        "from_item": "v_device-modal-name",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_226",
+        "from_card": "card_view",
+        "from_item": "v_device-modal-ip",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_227",
+        "from_card": "card_view",
+        "from_item": "v_device-modal-group",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_228",
+        "from_card": "card_view",
+        "from_item": "v_device-modal-access",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_229",
+        "from_card": "card_view",
+        "from_item": "v_device-modal-save-btn",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_230",
+        "from_card": "card_view",
+        "from_item": "v_dynamic-modal-overlay",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_231",
+        "from_card": "card_view",
+        "from_item": "v_dynamic-modal-title",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_232",
+        "from_card": "card_view",
+        "from_item": "v_dynamic-modal-body",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_233",
+        "from_card": "card_view",
+        "from_item": "v_dynamic-modal-footer",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_234",
+        "from_card": "card_view",
+        "from_item": "v_dynamic-modal-cancel",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_235",
+        "from_card": "card_view",
+        "from_item": "v_dynamic-modal-confirm",
+        "to_card": "card_controller",
+        "to_item": "c_constructor",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_236",
+        "from_card": "card_view",
+        "from_item": "v_anydesk-invite-modal",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_237",
+        "from_card": "card_view",
+        "from_item": "v_btn-close-invite-modal",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_238",
+        "from_card": "card_view",
+        "from_item": "v_invite-target-id",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_239",
+        "from_card": "card_view",
+        "from_item": "v_invite-profile-select",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_240",
+        "from_card": "card_view",
+        "from_item": "v_btn-cancel-invite",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_241",
+        "from_card": "card_view",
+        "from_item": "v_btn-submit-invite",
+        "to_card": "card_controller",
+        "to_item": "c_catch",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_242",
+        "from_card": "card_view",
+        "from_item": "v_anydesk-incoming-modal",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_243",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_244",
+        "from_card": "card_view",
+        "from_item": "v_incoming-source-id",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onClick",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_245",
+        "from_card": "card_view",
+        "from_item": "v_btn-reject-invite",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_246",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_247",
+        "from_card": "card_view",
+        "from_item": "v_btn-accept-invite",
+        "to_card": "card_controller",
+        "to_item": "c_if",
+        "label": "onAccess",
+        "flow_type": "event"
+      },
+      {
+        "id": "conn_248",
+        "from_card": "card_controller",
+        "from_item": "c_if",
+        "to_card": "card_model",
+        "to_item": "m_LocalSystemModel",
+        "label": "mutatesState",
+        "flow_type": "data"
+      },
+      {
+        "id": "conn_249",
+        "from_card": "card_model",
+        "from_item": "m_SystemTraceabilityLogModel",
+        "to_card": "card_db",
+        "to_item": "db_main",
+        "label": "syncsWith",
+        "flow_type": "persistence"
+      },
+      {
+        "id": "conn_250",
+        "from_card": "card_settings",
+        "from_item": "s_jdx_fb_api_key",
+        "to_card": "card_db",
+        "to_item": "db_local",
+        "label": "persistsKey",
+        "flow_type": "persistence"
+      }
+    ]
+  },
+  "lens3_ast_reality": {
+    "files": [
+      {
+        "path": "JDroidXDeskNative.cs",
+        "type": "data",
+        "lines": 11249,
+        "centrality": 9.8
+      },
+      {
+        "path": "admin.html",
+        "type": "html",
+        "lines": 941,
+        "centrality": 1.0
+      },
+      {
+        "path": "app.js",
+        "type": "javascript",
+        "lines": 4689,
+        "centrality": 9.8
+      },
+      {
+        "path": "colab_relay_server.py",
+        "type": "data",
+        "lines": 659,
+        "centrality": 1.0
+      },
+      {
+        "path": "controllers/app-controller.js",
+        "type": "javascript",
+        "lines": 4689,
+        "centrality": 9.8
+      },
+      {
+        "path": "controllers/server-controller.js",
+        "type": "javascript",
+        "lines": 1011,
+        "centrality": 7.1
+      },
+      {
+        "path": "database.json",
+        "type": "data",
+        "lines": 718,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/.graphify_labels.json",
+        "type": "data",
+        "lines": 4862,
+        "centrality": 9.8
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/001123ecaf9be2efbd6c58aeaa3805c0e554b966c9edf949e5790c65c4cde98c.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/002ac951ae143c1f09e7948ebd4f541135ebc0acf89112ca6535417681bd7976.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/002e7d360c5317e836c3e57aadda4b100c36d7c4119f39abd970bf24a26d9ed3.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/004c1fb223d8c69989158e944eb309dbaed27f7e54cb9df00be02606e4961ae7.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/004c5968432db3b948110c8881c1b79a680eebc021716a805a62e375c0fa7042.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/005480d617445eda884046e13ad5b66e15488e5341bf5ce47809a8c7c3d49a49.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/0054e0eccc2648c8ec85c7d4c3896ff7c64276721436cabb5f9f4a41cc257375.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/005950b717a4b936687667bbb5b969dce25ed9302cdb8e00cddcf86c9cf404fb.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/005dee5d23d88867e2e525c9f5875675ddbd76d20cbd36370c7bb4a2113fee42.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/007a3c3cbda4a1b87449dc5fc36ec9eb4487ccbc555bb5b422d7db8b270c457f.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/007c184d6c70ed8ae53bf3e218090d4b359faa180f3e3e3ff0ffb933e075a533.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/008435860402a3dd721ddd3b3d99b175f90aed12e507baa2adbf7c0d3637b94e.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/0087fc6c36e29709049d179964d46f132b04a4fb8a3a7d80c597053763c451c3.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/008a6a0fe8a773dff70fdecd55134e1b8fe07d327d9f167eae750c9edab93f6a.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/00979847023b3bbd24b19512b47ca64f10765c20136fd165e9d3b4f16ff9efe1.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/00e4d5b2e65f41da2f263351ab032a8286a44e9d90a4cc51b8ce7112e1a82d25.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/00ea254e184f30e8a4cd37449d90f78342947e10edb75a8feab8b7ae53bdece8.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/0121e55354c4df52a5a047c3352c216044fb3bbe140778d71a29203234117a90.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/0132e384b398a6e9c547c6a983a5c5c7488c2eb9502d4c4ff30c37cb0c2d7bba.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/0139c7d9ecabe8dc60c7160051e219d26fb77e2199f8c0ea0afe52c9fbf18871.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/014910ecedf7fbe2f9ff580d239daa869b7f1fde220bf1ea3dbd11e775b4404f.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      },
+      {
+        "path": "graphify-out/cache/ast/vunknown/01516c18516d20871994208d170609c3f8e307fd6dd29633ab78a5de836ce76f.json",
+        "type": "data",
+        "lines": 1,
+        "centrality": 1.0
+      }
+    ],
+    "god_nodes": [
+      {
+        "path": "JDroidXDeskNative.cs",
+        "lines": 11249,
+        "in_degree": 16,
+        "alert_level": "amber_warning",
+        "risk_reason": "File exceeds 4,000 lines (11,249 lines). Overloaded responsibilities violate Single Responsibility Principle."
+      },
+      {
+        "path": "app.js",
+        "lines": 4689,
+        "in_degree": 16,
+        "alert_level": "amber_warning",
+        "risk_reason": "File exceeds 4,000 lines (4,689 lines). Overloaded responsibilities violate Single Responsibility Principle."
+      },
+      {
+        "path": "controllers/app-controller.js",
+        "lines": 4689,
+        "in_degree": 16,
+        "alert_level": "amber_warning",
+        "risk_reason": "File exceeds 4,000 lines (4,689 lines). Overloaded responsibilities violate Single Responsibility Principle."
+      },
+      {
+        "path": "graphify-out/.graphify_labels.json",
+        "lines": 4862,
+        "in_degree": 16,
+        "alert_level": "amber_warning",
+        "risk_reason": "File exceeds 4,000 lines (4,862 lines). Overloaded responsibilities violate Single Responsibility Principle."
+      }
+    ],
+    "hardcoded_secrets": [
+      {
+        "file": "app.js",
+        "secret_type": "Firebase API Key Fallback",
+        "risk": "Medium"
+      },
+      {
+        "file": "app.js",
+        "secret_type": "Hardcoded One-Time Pass",
+        "risk": "High"
+      },
+      {
+        "file": "controllers/app-controller.js",
+        "secret_type": "Firebase API Key Fallback",
+        "risk": "Medium"
+      },
+      {
+        "file": "controllers/app-controller.js",
+        "secret_type": "Hardcoded One-Time Pass",
+        "risk": "High"
+      }
+    ]
+  },
+  "lens4_convergence": {
+    "closed_loop_percentage": 75.0,
+    "orphan_branches": 75,
+    "funnels": [
+      {
+        "id": "funnel_auth",
+        "title": "Auth Journey: Login Gate \u2794 Firebase Initializer \u2794 Session Unlock",
+        "start_point": "User clicks #login-submit-btn",
+        "steps": [
+          "bindLoginGate() intercepts click event",
+          "Validates email and password inputs",
+          "Reads Firebase keys from SystemSettingsModel",
+          "Firebase initializes app and verifies session",
+          "Preloader fade-out triggered and Console unlocked"
+        ],
+        "end_point": "Desktop Console Active",
+        "is_closed_loop": true,
+        "feedback_target": "SystemTraceabilityLogModel audit log & toast notification",
+        "status": "closed"
+      },
+      {
+        "id": "funnel_pass_toggle",
+        "title": "Affordance Journey: Password Visibility Toggle",
+        "start_point": "User clicks #toggle-pass-visibility",
+        "steps": [
+          "Click event listener fires in init()",
+          "Reads current type of #login-password-input",
+          "Toggles input type between 'password' and 'text'",
+          "Updates #toggle-pass-icon class (eye / eye-slash)"
+        ],
+        "end_point": "Immediate DOM state feedback",
+        "is_closed_loop": true,
+        "feedback_target": "Instant visual icon toggle",
+        "status": "closed"
+      },
+      {
+        "id": "funnel_settings_mutator",
+        "title": "Governance Journey: Zero-Hardcode Valuebase Sync",
+        "start_point": "User updates Firebase key or Local Port in settings",
+        "steps": [
+          "Settings controller captures input change",
+          "SystemSettingsModel writes to localStorage",
+          "Runtime rebinds active connection without code edit"
+        ],
+        "end_point": "Runtime config active",
+        "is_closed_loop": true,
+        "feedback_target": "Health check probe confirmation",
+        "status": "closed"
+      }
+    ]
+  }
+};
+
+    function switchLens(idx) {
+      document.querySelectorAll('.lens-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i + 1 === idx);
+      });
+      document.querySelectorAll('.lens-panel').forEach((panel, i) => {
+        panel.classList.toggle('active', i + 1 === idx);
+      });
+      if (idx === 2) {
+        renderWires();
+      }
+    }
+
+    function renderWires() {
+      const svg = document.getElementById('svg-wires');
+      svg.innerHTML = '';
+      
+      appData.lens2_mvc_studio.connectors.forEach(conn => {
+        const fromEl = document.getElementById(conn.from_item);
+        const toEl = document.getElementById(conn.to_item);
+        if (!fromEl || !toEl) return;
+
+        const r1 = fromEl.getBoundingClientRect();
+        const r2 = toEl.getBoundingClientRect();
+        const canvasRect = document.getElementById('studio-canvas').getBoundingClientRect();
+
+        const x1 = r1.right - canvasRect.left;
+        const y1 = r1.top + r1.height / 2 - canvasRect.top;
+        const x2 = r2.left - canvasRect.left;
+        const y2 = r2.top + r2.height / 2 - canvasRect.top;
+
+        const dx = Math.max(30, (x2 - x1) * 0.4);
+        const pathData = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', pathData);
+        path.setAttribute('class', 'wire');
+        path.setAttribute('id', 'wire_' + conn.id);
+        svg.appendChild(path);
+      });
+    }
+
+    function highlightFlow(itemId) {
+      document.querySelectorAll('.card-item').forEach(el => el.classList.remove('highlighted'));
+      document.querySelectorAll('.wire').forEach(w => w.classList.remove('active'));
+
+      const targetEl = document.getElementById(itemId);
+      if (targetEl) targetEl.classList.add('highlighted');
+
+      appData.lens2_mvc_studio.connectors.forEach(conn => {
+        if (conn.from_item === itemId || conn.to_item === itemId) {
+          const wire = document.getElementById('wire_' + conn.id);
+          if (wire) wire.classList.add('active');
+          const otherId = (conn.from_item === itemId) ? conn.to_item : conn.from_item;
+          const otherEl = document.getElementById(otherId);
+          if (otherEl) otherEl.classList.add('highlighted');
+        }
+      });
+    }
+
+    let activeCard = null;
+    let offset = [0, 0];
+
+    document.querySelectorAll('.entity-card').forEach(card => {
+      card.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.card-item')) return;
+        activeCard = card;
+        offset = [card.offsetLeft - e.clientX, card.offsetTop - e.clientY];
+      });
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (activeCard) {
+        activeCard.style.left = (e.clientX + offset[0]) + 'px';
+        activeCard.style.top = (e.clientY + offset[1]) + 'px';
+        renderWires();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      activeCard = null;
+    });
+
+    window.addEventListener('resize', renderWires);
+    window.addEventListener('load', () => setTimeout(renderWires, 100));
+  </script>
+</body>
+</html>
