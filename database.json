@@ -57,7 +57,7 @@
       "licenseType": "Enterprise Platinum (Unlimited)",
       "enterpriseTenant": "jDroid-X Workstation"
     },
-    "updatedAt": "2026-10-23T06:12:56.669Z"
+    "updatedAt": "2026-10-23T07:28:03.255Z"
   },
   "serverConfig": {
     "activeEngine": "jdroidRelay",
@@ -303,67 +303,67 @@
   "notifications": [],
   "logs": [
     {
-      "id": "REQ-1792735976758-615",
+      "id": "REQ-1792740483334-749",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "DELETE",
       "url": "/api/admin/logs",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 7,
-      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (7ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.758Z"
+      "rttMs": 5,
+      "msg": "[IN/OUT] DELETE /api/admin/logs -> HTTP 200 (5ms) from 127.0.0.1",
+      "timestamp": "2026-10-23T07:28:03.334Z"
     },
     {
-      "id": "REQ-1792735976771-616",
+      "id": "REQ-1792740483341-750",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/discovered-desks",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] GET /api/discovered-desks -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.771Z"
+      "rttMs": 2,
+      "msg": "[IN/OUT] GET /api/discovered-desks -> HTTP 200 (2ms) from 127.0.0.1",
+      "timestamp": "2026-10-23T07:28:03.341Z"
     },
     {
-      "id": "REQ-1792735976779-617",
+      "id": "REQ-1792740483349-751",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "POST",
       "url": "/api/discovered-desks/probe",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] POST /api/discovered-desks/probe -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.779Z"
+      "rttMs": 3,
+      "msg": "[IN/OUT] POST /api/discovered-desks/probe -> HTTP 200 (3ms) from 127.0.0.1",
+      "timestamp": "2026-10-23T07:28:03.349Z"
     },
     {
-      "id": "REQ-1792735976786-618",
+      "id": "REQ-1792740483354-752",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/relay/status",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 2,
-      "msg": "[IN/OUT] GET /api/relay/status -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.786Z"
+      "rttMs": 0,
+      "msg": "[IN/OUT] GET /api/relay/status -> HTTP 200 (0ms) from 127.0.0.1",
+      "timestamp": "2026-10-23T07:28:03.354Z"
     },
     {
-      "id": "REQ-1792735976797-619",
+      "id": "REQ-1792740483360-753",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "POST",
       "url": "/api/relay/push_input",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 3,
-      "msg": "[IN/OUT] POST /api/relay/push_input -> HTTP 200 (3ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.797Z"
+      "rttMs": 1,
+      "msg": "[IN/OUT] POST /api/relay/push_input -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-23T07:28:03.360Z"
     },
     {
-      "id": "REQ-1792735976804-620",
+      "id": "REQ-1792740483370-754",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "POST",
@@ -372,22 +372,22 @@
       "statusCode": 200,
       "rttMs": 2,
       "msg": "[IN/OUT] POST /api/relay/push_frame -> HTTP 200 (2ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.804Z"
+      "timestamp": "2026-10-23T07:28:03.370Z"
     },
     {
-      "id": "REQ-1792735976810-621",
+      "id": "REQ-1792740483378-755",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/relay/frame?targetId=TEST-DESK-1",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 0,
-      "msg": "[IN/OUT] GET /api/relay/frame?targetId=TEST-DESK-1 -> HTTP 200 (0ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.810Z"
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/relay/frame?targetId=TEST-DESK-1 -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-23T07:28:03.378Z"
     },
     {
-      "id": "REQ-1792735976816-622",
+      "id": "REQ-1792740483385-756",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -396,10 +396,10 @@
       "statusCode": 200,
       "rttMs": 0,
       "msg": "[IN/OUT] GET /api/relay/frame_bin?targetId=TEST-DESK-1 -> HTTP 200 (0ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.816Z"
+      "timestamp": "2026-10-23T07:28:03.385Z"
     },
     {
-      "id": "REQ-1792735976823-623",
+      "id": "REQ-1792740483391-757",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "POST",
@@ -408,22 +408,22 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] POST /api/relay/register -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.823Z"
+      "timestamp": "2026-10-23T07:28:03.391Z"
     },
     {
-      "id": "REQ-1792735976830-624",
+      "id": "REQ-1792740483400-758",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
       "url": "/api/relay/devices",
       "ip": "127.0.0.1",
       "statusCode": 200,
-      "rttMs": 0,
-      "msg": "[IN/OUT] GET /api/relay/devices -> HTTP 200 (0ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.830Z"
+      "rttMs": 1,
+      "msg": "[IN/OUT] GET /api/relay/devices -> HTTP 200 (1ms) from 127.0.0.1",
+      "timestamp": "2026-10-23T07:28:03.400Z"
     },
     {
-      "id": "REQ-1792735976838-625",
+      "id": "REQ-1792740483406-759",
       "level": "INFO",
       "stage": "HTTP_TRAFFIC",
       "method": "GET",
@@ -432,12 +432,12 @@
       "statusCode": 200,
       "rttMs": 1,
       "msg": "[IN/OUT] GET /api/relay/input?targetId=TEST-DESK-1 -> HTTP 200 (1ms) from 127.0.0.1",
-      "timestamp": "2026-10-23T06:12:56.838Z"
+      "timestamp": "2026-10-23T07:28:03.406Z"
     }
   ],
   "invites": [
     {
-      "id": "INV-1792735976153-985",
+      "id": "INV-1792740482810-582",
       "targetId": "JDX-TEST-TGT",
       "sourceId": "JDX-TEST-SRC",
       "permissions": {
@@ -446,8 +446,8 @@
         "clipboard": true
       },
       "status": "ACCEPTED",
-      "createdAt": "2026-10-23T06:12:56.153Z",
-      "respondedAt": "2026-10-23T06:12:56.170Z"
+      "createdAt": "2026-10-23T07:28:02.810Z",
+      "respondedAt": "2026-10-23T07:28:02.832Z"
     }
   ]
 }

@@ -3464,6 +3464,25 @@ namespace JDroidXDesk.Native
         private string lastApprovedViewerEndpoint = "";
         private string lastRejectedViewerEndpoint = "";
         private DateTime lastRejectedViewerTime = DateTime.MinValue;
+        private readonly HashSet<string> approvedViewerIps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> rejectedViewerIps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        private static string ExtractClientIp(string endpoint)
+        {
+            if (string.IsNullOrEmpty(endpoint)) return "Remote Desk";
+            string s = endpoint.Trim();
+            int colon = s.LastIndexOf(':');
+            if (colon > 0 && !s.Contains("["))
+            {
+                return s.Substring(0, colon);
+            }
+            if (s.StartsWith("[") && s.Contains("]:"))
+            {
+                int bracket = s.IndexOf(']');
+                return s.Substring(1, bracket - 1);
+            }
+            return s;
+        }
 
         // Console Controls
         private Label lblLocalId;
@@ -3789,10 +3808,10 @@ namespace JDroidXDesk.Native
                 {
                     bool hasViewer = EmbeddedRelayServer.Instance.HasActiveViewers();
                     string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
+                    string clientIp = ExtractClientIp(ep);
 
                     if (!hasViewer)
                     {
-                        lastApprovedViewerEndpoint = "";
                         if (pnlHostViewerAlert.Visible) pnlHostViewerAlert.Visible = false;
                         if (activeIncomingDialog != null && !activeIncomingDialog.IsDisposed)
                         {
@@ -3803,10 +3822,10 @@ namespace JDroidXDesk.Native
                     else
                     {
                         if (!pnlHostViewerAlert.Visible) pnlHostViewerAlert.Visible = true;
-                        if (btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = (ep != lastApprovedViewerEndpoint);
+                        bool isAlreadyApproved = approvedViewerIps.Contains(clientIp);
+                        if (btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = !isAlreadyApproved;
 
-                        bool isAlreadyApproved = (!string.IsNullOrEmpty(lastApprovedViewerEndpoint) && ep == lastApprovedViewerEndpoint);
-                        bool isRecentlyRejected = (!string.IsNullOrEmpty(lastRejectedViewerEndpoint) && ep == lastRejectedViewerEndpoint && (DateTime.UtcNow - lastRejectedViewerTime).TotalSeconds < 30);
+                        bool isRecentlyRejected = rejectedViewerIps.Contains(clientIp) && (DateTime.UtcNow - lastRejectedViewerTime).TotalSeconds < 30;
 
                         if (!isAlreadyApproved && !isRecentlyRejected)
                         {
@@ -3814,6 +3833,8 @@ namespace JDroidXDesk.Native
                             {
                                 activeIncomingDialog = new JDroidXIncomingSessionDialog(ep,
                                     (allowInput, allowClip, allowFiles, lockHost) => {
+                                        approvedViewerIps.Add(clientIp);
+                                        rejectedViewerIps.Remove(clientIp);
                                         lastApprovedViewerEndpoint = ep;
                                         lastRejectedViewerEndpoint = "";
                                         hostPermissionAllowInput = allowInput;
@@ -3826,15 +3847,17 @@ namespace JDroidXDesk.Native
                                         if (chkPermFiles != null) chkPermFiles.Checked = allowFiles;
                                         if (chkPermBlockLocal != null) chkPermBlockLocal.Checked = lockHost;
                                         if (btnHostAcceptViewer != null) btnHostAcceptViewer.Visible = false;
-                                        ShowToast("✅ jDroid-X session accepted with custom permissions.");
+                                        ShowToast("✅ jDroid-X session accepted for " + clientIp);
                                     },
                                     () => {
+                                        rejectedViewerIps.Add(clientIp);
+                                        approvedViewerIps.Remove(clientIp);
                                         lastRejectedViewerEndpoint = ep;
                                         lastRejectedViewerTime = DateTime.UtcNow;
                                         lastApprovedViewerEndpoint = "";
                                         EmbeddedRelayServer.Instance.DisconnectAllViewers();
                                         pnlHostViewerAlert.Visible = false;
-                                        ShowToast("🛑 Incoming jDroid-X session rejected.");
+                                        ShowToast("🛑 Incoming jDroid-X session rejected for " + clientIp);
                                     });
                                 activeIncomingDialog.Show();
                             }
@@ -3842,7 +3865,7 @@ namespace JDroidXDesk.Native
 
                         if (lblHostViewerAlert != null && !lblHostViewerAlert.IsDisposed)
                         {
-                            lblHostViewerAlert.Text = "⚠️ jDroid-X SESSION: " + ep;
+                            lblHostViewerAlert.Text = "⚠️ jDroid-X SESSION: " + clientIp;
                         }
                     }
                 }
@@ -10659,6 +10682,7 @@ namespace JDroidXDesk.Native
                 int th = (int)(sh * ((float)tw / sw));
 
                 string b64 = null;
+                byte[] rawBytes = null;
                 using (Bitmap fullBmp = new Bitmap(sw, sh))
                 {
                     using (Graphics g = Graphics.FromImage(fullBmp))
@@ -10684,7 +10708,7 @@ namespace JDroidXDesk.Native
                                 if (jpgEncoder != null) scaledBmp.Save(ms, jpgEncoder, ep);
                                 else scaledBmp.Save(ms, ImageFormat.Jpeg);
                             }
-                            byte[] rawBytes = ms.ToArray();
+                            rawBytes = ms.ToArray();
                             b64 = Convert.ToBase64String(rawBytes);
                             EmbeddedRelayServer.Instance.UpdateFrame(currentHostDesktop.RemoteId, rawBytes, b64);
                         }
@@ -10693,33 +10717,65 @@ namespace JDroidXDesk.Native
 
                 if (!string.IsNullOrEmpty(b64))
                 {
-                    string postJson = string.Format("{{\"targetId\":\"{0}\",\"frame\":\"data:image/jpeg;base64,{1}\"}}",
-                        currentHostDesktop.RemoteId, b64);
-                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(postJson);
-
-                    foreach (string rUrl in candidateUrls)
-                    {
+                    string targetId = currentHostDesktop.RemoteId;
+                    byte[] localRawBytes = rawBytes;
+                    ThreadPool.QueueUserWorkItem(delegate {
                         try
                         {
-                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_frame");
-                            req.Method = "POST";
-                            req.ContentType = "application/json";
-                            req.Timeout = 3500;
-                            req.ContentLength = bytes.Length;
-                            using (Stream os = req.GetRequestStream())
+                            foreach (string rUrl in candidateUrls)
                             {
-                                os.Write(bytes, 0, bytes.Length);
-                            }
-                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
-                            {
-                                cachedWinningRelayUrl = rUrl;
-                                lastWinningCheckTime = DateTime.Now;
-                                bytesTransferred += bytes.Length;
-                                break;
+                                // 1. Fast binary push first
+                                try
+                                {
+                                    HttpWebRequest reqBin = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_bin?targetId=" + targetId);
+                                    reqBin.Method = "POST";
+                                    reqBin.ContentType = "image/jpeg";
+                                    reqBin.Headers["X-Target-Id"] = targetId;
+                                    reqBin.Timeout = 1000;
+                                    reqBin.Proxy = null;
+                                    reqBin.ContentLength = localRawBytes.Length;
+                                    using (Stream os = reqBin.GetRequestStream())
+                                    {
+                                        os.Write(localRawBytes, 0, localRawBytes.Length);
+                                    }
+                                    using (HttpWebResponse resp = (HttpWebResponse)reqBin.GetResponse())
+                                    {
+                                        cachedWinningRelayUrl = rUrl;
+                                        lastWinningCheckTime = DateTime.Now;
+                                        bytesTransferred += localRawBytes.Length;
+                                        break;
+                                    }
+                                }
+                                catch { }
+
+                                // 2. Fallback to json base64 push
+                                try
+                                {
+                                    string postJson = string.Format("{{\"targetId\":\"{0}\",\"frame\":\"data:image/jpeg;base64,{1}\"}}", targetId, b64);
+                                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(postJson);
+                                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_frame");
+                                    req.Method = "POST";
+                                    req.ContentType = "application/json";
+                                    req.Timeout = 1000;
+                                    req.Proxy = null;
+                                    req.ContentLength = bytes.Length;
+                                    using (Stream os = req.GetRequestStream())
+                                    {
+                                        os.Write(bytes, 0, bytes.Length);
+                                    }
+                                    using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                                    {
+                                        cachedWinningRelayUrl = rUrl;
+                                        lastWinningCheckTime = DateTime.Now;
+                                        bytesTransferred += bytes.Length;
+                                        break;
+                                    }
+                                }
+                                catch { }
                             }
                         }
                         catch { }
-                    }
+                    });
                 }
             }
             catch { }
