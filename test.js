@@ -340,19 +340,38 @@ async function runTests() {
         }
 
         // Scenario 7: AnyDesk Session Invitation Lifecycle
-        const postInvite = await makeRequest('POST', '/api/invites', { sourceId: 'JDX-TEST-SRC', targetId: 'JDX-TEST-TGT' });
+        const postInvite = await makeRequest('POST', '/api/invites', { sourceId: 'JDX-TEST-SRC', targetId: '729-928-576' });
         assert(postInvite.statusCode === 200 && postInvite.body.data.id, 'POST /api/invites dispatches session invitation');
         const testInviteId = postInvite.body.data?.id;
 
-        const getPending = await makeRequest('GET', '/api/invites/pending/JDX-TEST-TGT');
-        assert(getPending.statusCode === 200 && Array.isArray(getPending.body.data) && getPending.body.data.length > 0, 'GET /api/invites/pending/:targetId retrieves pending invite');
+        // Verify Desk 1 invite status polling endpoint while pending
+        if (testInviteId) {
+            const getInviteState = await makeRequest('GET', `/api/invites/${testInviteId}`);
+            assert(getInviteState.statusCode === 200 && getInviteState.body.data?.status === 'PENDING', 'GET /api/invites/:id returns PENDING state before acceptance');
+        }
+
+        // Verify Desk 2 pending invite discovery with unformatted digits
+        const getPending = await makeRequest('GET', '/api/invites/pending/729928576');
+        assert(getPending.statusCode === 200 && Array.isArray(getPending.body.data) && getPending.body.data.length > 0, 'GET /api/invites/pending/:targetId retrieves pending invite with digit normalization');
 
         if (testInviteId) {
             const respondInvite = await makeRequest('PUT', `/api/invites/${testInviteId}/respond`, { status: 'ACCEPTED' });
             assert(respondInvite.statusCode === 200 && respondInvite.body.session?.id, 'PUT /api/invites/:id/respond accepts invite and creates live session');
+            
+            // Verify Desk 1 invite status polling endpoint after acceptance
+            const getAcceptedState = await makeRequest('GET', `/api/invites/${testInviteId}`);
+            assert(getAcceptedState.statusCode === 200 && getAcceptedState.body.data?.status === 'ACCEPTED' && getAcceptedState.body.session?.id, 'GET /api/invites/:id returns ACCEPTED state with active session');
+
             if (respondInvite.body.session?.id) {
                 await makeRequest('DELETE', `/api/sessions/${respondInvite.body.session.id}`);
             }
+        }
+
+        // Verify rejected invite does not generate a session
+        const postRejectInvite = await makeRequest('POST', '/api/invites', { sourceId: 'JDX-TEST-SRC', targetId: 'JDX-TEST-REJECT' });
+        if (postRejectInvite.body.data?.id) {
+            const rejectRes = await makeRequest('PUT', `/api/invites/${postRejectInvite.body.data.id}/respond`, { status: 'REJECTED' });
+            assert(rejectRes.statusCode === 200 && rejectRes.body.data?.status === 'REJECTED' && !rejectRes.body.session, 'PUT /api/invites/:id/respond cleanly marks REJECTED without creating session');
         }
 
         // Scenario 8: Download Endpoints
