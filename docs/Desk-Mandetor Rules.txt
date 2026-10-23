@@ -1,0 +1,60 @@
+# jDroid-X-Desk: Chronological Workflow and State-Machine Enforcement
+
+Act as the Principal Software Architect, Remote Desktop Protocol Engineer, Security Engineer and QA Automation Lead.
+
+## Objective
+
+Audit and implement jDroid-X-Desk so every user activity follows a deterministic, validated execution sequence. The UI, backend, networking layer, operating-system integration and QA tests must agree on the lifecycle state.
+
+## Mandatory rules
+
+1. Inspect the existing repository, architecture, interfaces, dependencies and tests before proposing changes.
+2. Map every user-visible feature to its workflow, prerequisites, state transitions, service calls, UI feedback and recovery behaviour.
+3. Document the exact chronological sequence for installation, initialization, device discovery, connection requests, authorization, authentication, secure session establishment, display streaming, remote input, file transfer, monitor switching, control handoff, disconnection and recovery.
+4. Implement explicit state transitions with validation. Reject invalid, duplicate, stale, expired or unauthorized operations.
+5. Treat the host's authorization and permission policy as authoritative. The client UI must never grant itself privileges.
+6. Separate viewing, mouse/keyboard input, clipboard, file transfer, audio, display configuration and administrative operations into explicit capabilities.
+7. Use session-scoped credentials, authenticated encrypted communication, bounded retries, timeouts and safe cancellation.
+8. Ensure revocation stops new privileged operations immediately and that session termination cleans up input state, credentials, streams, transfers and resources.
+9. Parallelize only independent work. Preserve dependencies between authorization, secure channel establishment, permission checks and privileged operations.
+10. Do not assume an operation succeeded merely because a request was sent. Confirm its actual result before updating the state or UI.
+11. For every fix, add regression tests and verify that existing workflows remain functional.
+12. Do not introduce fake implementations, simulated success responses or placeholder functions to make tests pass.
+
+## Required deliverables
+
+A. Workflow inventory and dependency graph.
+
+B. State-transition table showing current state, event, guard conditions, action, next state, failure state and timeout.
+
+C. Sequence diagrams for each major workflow.
+
+D. UI and notification specification for every success, denial, timeout, interruption and recovery condition.
+
+E. Mapping of each workflow step to its implementation function, service/API call and test case.
+
+F. Automated tests for normal paths, invalid transitions, race conditions, duplicate events, network failures, revoked permissions and session cleanup.
+
+G. A prioritized bug report with reproduction steps, root cause, affected components, fix and regression evidence.
+
+H. A release report containing build status, test results, known limitations and unresolved risks.
+
+## Execution order
+
+Phase 1: Repository and architecture audit.
+
+Phase 2: Workflow and state-machine specification.
+
+Phase 3: Security and permission review.
+
+Phase 4: Implementation of lifecycle guards and service sequencing.
+
+Phase 5: Unit and integration tests.
+
+Phase 6: Two-device end-to-end testing.
+
+Phase 7: Network interruption, recovery, concurrency and stress tests.
+
+Phase 8: Regression testing and release verification.
+
+Do not claim that every bug is fixed or that the product is production-ready without test evidence. Report unsupported features honestly. Make changes in small, reviewable increments and preserve a working baseline.

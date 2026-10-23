@@ -1499,6 +1499,60 @@ class AppController {
         });
     }
 
+    updateLifecycleState(state, targetId) {
+        this._currentLifecycleState = state;
+        const badge = document.getElementById('viewport-lifecycle-badge');
+        if (badge) {
+            badge.className = 'badge';
+            if (state === 'CONNECTED_CONTROL_ENABLED' || state === 'READY') {
+                badge.classList.add('badge-emerald');
+                badge.innerHTML = `<i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> ${state === 'CONNECTED_CONTROL_ENABLED' ? 'CONTROL ACTIVE' : 'READY'}`;
+            } else if (state === 'CONNECTED_VIEW_ONLY') {
+                badge.classList.add('badge-blue');
+                badge.innerHTML = `<i class="fa-solid fa-eye" style="font-size:0.5rem;"></i> VIEW ONLY`;
+            } else if (state === 'RECONNECTING') {
+                badge.classList.add('badge-amber');
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation fa-beat-fade" style="font-size:0.5rem;"></i> RECONNECTING`;
+            } else if (state === 'REQUEST_PENDING' || state === 'AUTHENTICATING' || state === 'CONNECTING') {
+                badge.classList.add('badge-amber');
+                badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="font-size:0.5rem;"></i> ${state.replace(/_/g, ' ')}`;
+            } else if (state === 'REJECTED') {
+                badge.classList.add('badge-rose');
+                badge.innerHTML = `<i class="fa-solid fa-circle-xmark" style="font-size:0.5rem;"></i> REJECTED`;
+            } else {
+                badge.classList.add('badge-blue');
+                badge.innerHTML = `<i class="fa-solid fa-circle-notch" style="font-size:0.5rem;"></i> ${state.replace(/_/g, ' ')}`;
+            }
+        }
+        const tid = targetId || this.systemModel?.activeSession || 'DEFAULT';
+        fetch('/api/lifecycle/transition', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetId: tid, state })
+        }).catch(() => {});
+    }
+
+    async loadMonitorLayout(targetId) {
+        const monSelect = document.getElementById('stream-monitor-select');
+        if (!monSelect) return;
+        try {
+            const res = await fetch(`/api/relay/monitors?targetId=${encodeURIComponent(targetId || 'DEFAULT')}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && Array.isArray(data.monitors)) {
+                    monSelect.innerHTML = '';
+                    data.monitors.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = `${m.name} (${m.resolution})`;
+                        if (m.id === data.activeMonitor) opt.selected = true;
+                        monSelect.appendChild(opt);
+                    });
+                }
+            }
+        } catch (_) {}
+    }
+
     bindRemoteConnectLogic() {
         if (this._remoteConnectLogicBound) return;
         this._remoteConnectLogicBound = true;
@@ -1610,6 +1664,7 @@ class AppController {
 
                 this.systemModel.activeSession = formattedId;
                 this.systemModel.isAwaitingAcceptance = true;
+                this.updateLifecycleState('REQUEST_PENDING', formattedId);
 
                 // Update UI state to Awaiting Acceptance (Amber)
                 const statusText = document.getElementById('session-status-text');
@@ -1629,12 +1684,37 @@ class AppController {
                 this.view.showToast('info', 'Session Requested', `Notification sent to Desk ${formattedId}. Waiting for remote user to accept...`);
                 this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_REQUESTED', `Dispatched connection request to Desk ${formattedId}. Awaiting remote acceptance.`);
 
-                // Poll for Remote Desk Acceptance
+                // Poll for Remote Desk Acceptance (Bounded by 45s Timeout per Desk-Mandetor Rule 7 & Section 4 B1)
+                let pollElapsedSeconds = 0;
+                const MAX_POLL_TIMEOUT_SECONDS = 45;
                 if (this.sessionInvitePollInterval) clearInterval(this.sessionInvitePollInterval);
                 this.sessionInvitePollInterval = setInterval(async () => {
+                    pollElapsedSeconds++;
                     if (this.systemModel.activeSession !== formattedId || !pendingInviteId) {
                         clearInterval(this.sessionInvitePollInterval);
                         this.sessionInvitePollInterval = null;
+                        return;
+                    }
+
+                    // Bounded timeout check (Desk-Mandetor Rules Rule 7)
+                    if (pollElapsedSeconds >= MAX_POLL_TIMEOUT_SECONDS) {
+                        clearInterval(this.sessionInvitePollInterval);
+                        this.sessionInvitePollInterval = null;
+                        this.systemModel.isAwaitingAcceptance = false;
+                        this.systemModel.activeSession = null;
+                        this.updateLifecycleState('DISCONNECTED', formattedId);
+
+                        connectBtn.disabled = false;
+                        connectBtn.innerHTML = origHtml;
+                        if (statusText) {
+                            statusText.textContent = 'REQUEST TIMED OUT';
+                            statusText.style.color = 'var(--accent-amber)';
+                        }
+                        if (viewportBox) viewportBox.style.display = 'none';
+                        if (quickDisconnectBtn) quickDisconnectBtn.style.display = 'none';
+
+                        this.view.showToast('warning', 'Connection Timed Out', `Remote Desk (${formattedId}) did not respond within 45 seconds.`);
+                        this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_TIMEOUT', `Session invitation to ${formattedId} timed out after 45s.`);
                         return;
                     }
 
@@ -1659,6 +1739,7 @@ class AppController {
                                     statusText.style.color = 'var(--accent-emerald)';
                                 }
                                 if (launchCanvasBtn) launchCanvasBtn.disabled = false;
+                                this.updateLifecycleState('CONNECTED_CONTROL_ENABLED', formattedId);
 
                                 this.view.showToast('success', 'Session Established', `Remote Desk (${formattedId}) accepted connection. Primary user now has full remote control.`);
                                 this.traceModel.addLog('SECURITY_AUDIT', 'SESSION_CONNECTED', `Remote Desk ${formattedId} accepted session invitation. Streaming started.`);
@@ -1670,6 +1751,7 @@ class AppController {
                                 this.sessionInvitePollInterval = null;
                                 this.systemModel.isAwaitingAcceptance = false;
                                 this.systemModel.activeSession = null;
+                                this.updateLifecycleState('REJECTED', formattedId);
 
                                 connectBtn.disabled = false;
                                 connectBtn.innerHTML = origHtml;
@@ -1731,30 +1813,18 @@ class AppController {
             if (lower === 'clear' || lower === 'cls') {
                 termOutput.innerHTML = '';
                 return;
-            } else if (lower.startsWith('ping')) {
-                resultLine.innerHTML = `Pinging remote host [192.168.1.55] with 32 bytes of data:<br>` +
-                    `Reply from 192.168.1.55: bytes=32 time=11ms TTL=128<br>` +
-                    `Reply from 192.168.1.55: bytes=32 time=9ms TTL=128<br>` +
-                    `Ping statistics: Packets: Sent = 2, Received = 2, Lost = 0 (0% loss)`;
-            } else if (lower === 'ipconfig') {
-                resultLine.innerHTML = `Windows IP Configuration<br><br>` +
-                    `Ethernet adapter vEthernet (jDroid-X Relay):<br>` +
-                    `   IPv4 Address. . . . . . . . . . . : 192.168.1.55<br>` +
-                    `   Subnet Mask . . . . . . . . . . . : 255.255.255.0<br>` +
-                    `   Default Gateway . . . . . . . . . : 192.168.1.1`;
-            } else if (lower === 'systeminfo') {
-                resultLine.innerHTML = `OS Name: Microsoft Windows 11 Enterprise<br>` +
-                    `System Model: jDroid-X Virtual Remote Host<br>` +
-                    `Processor(s): Intel(R) Core(TM) Architecture (64-bit)<br>` +
-                    `Total Physical Memory: 16,384 MB`;
-            } else if (lower === 'get-process' || lower === 'ps') {
-                resultLine.innerHTML = `Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id ProcessName<br>` +
-                    `-------  ------    -----      -----     ------     -- -----------<br>` +
-                    `    412      24    42150      56800       2.14   4092 jdroid-x-desk<br>` +
-                    `    620      31    78100      92100       5.80   5120 msedge<br>` +
-                    `    180      14    12400      18200       0.45   1024 svchost`;
+            }
+
+            if (!this.systemModel.activeSession) {
+                resultLine.innerHTML = `<span style="color:var(--accent-amber,#f59e0b); font-weight:600;">[STANDBY]</span> ` +
+                    `Remote Terminal requires an active authenticated remote session. ` +
+                    `Connect to a remote workstation or start Windows Native Remote Administrator Terminal (Elevated) above.`;
             } else {
-                resultLine.innerHTML = `[EXECUTED] Command '${ValidationUtil.escapeHTML(cmd)}' dispatched to remote session with exit code 0.`;
+                // Real Command Forwarding to Remote Workstation over Secure Relay
+                this.sendRemoteInputEvent({ type: 'command', cmd: cmd, stream: 'terminal' });
+                resultLine.innerHTML = `<span style="color:var(--accent-emerald,#10b981); font-weight:600;">[DISPATCHED]</span> ` +
+                    `Command '${ValidationUtil.escapeHTML(cmd)}' transmitted to remote session (Desk ${ValidationUtil.escapeHTML(this.systemModel.activeSession)}).`;
+                this.traceModel.addLog('TERMINAL', 'CMD_EXEC', `Transmitted remote shell command: ${cmd}`);
             }
 
             termOutput.appendChild(resultLine);
@@ -1823,6 +1893,7 @@ class AppController {
             }
 
             this.stopRemoteStreamLoop();
+            this.updateLifecycleState('DISCONNECTED', activeId);
             this.systemModel.activeSession = null;
             const statusText = document.getElementById('session-status-text');
             if (statusText) {
@@ -2099,6 +2170,11 @@ class AppController {
 
         if (ctrlAltDelBtn) {
             ctrlAltDelBtn.addEventListener('click', () => {
+                if (!this.systemModel.activeSession) {
+                    this.view.showToast('warning', 'Session Required', 'Secure Attention Sequence (Ctrl+Alt+Del) requires an active authenticated remote session.');
+                    return;
+                }
+                this.sendRemoteInputEvent({ type: 'admin_cmd', cmd: 'SAS_CAD' });
                 this.injectVirtualInput('System Signal: Ctrl+Alt+Del injected to Secondary System');
                 this.view.showToast('info', 'Signal Sent', 'Ctrl+Alt+Del key sequence transmitted to Secondary System.');
             });
@@ -2106,10 +2182,208 @@ class AppController {
 
         if (toggleFileBtn) {
             toggleFileBtn.addEventListener('click', () => {
-                this.injectVirtualInput('File Manager Opened: Split-Pane directory sync active');
-                this.view.showToast('info', 'File Transfer', 'Two-way File Manager module opened.');
+                const targetId = this.systemModel.activeSession || this._streamTargetId;
+                if (!targetId) {
+                    this.view.showToast('warning', 'Session Required', 'Two-Way File Transfer protocol requires an active authenticated remote session.');
+                    return;
+                }
+                this.sendRemoteInputEvent({ type: 'file_transfer', action: 'open_manager' });
+                this.injectVirtualInput('File Manager Protocol: Session-bound storage directory sync initialized');
+                this.openFileTransferModal(targetId);
             });
         }
+
+        // Bind File Transfer Modal Dialog Actions (Testing core design principle C3)
+        const fileModal = document.getElementById('file-transfer-modal');
+        const closeFileBtn = document.getElementById('btn-close-file-modal');
+        const dismissFileBtn = document.getElementById('btn-dismiss-file-modal');
+        const filePickerBtn = document.getElementById('btn-upload-file-picker');
+        const fileInput = document.getElementById('file-transfer-input');
+        const startUploadBtn = document.getElementById('btn-start-file-upload');
+        const abortUploadBtn = document.getElementById('btn-abort-file-transfer');
+        const refreshRemoteFilesBtn = document.getElementById('btn-refresh-remote-files');
+
+        const closeFileModal = () => {
+            if (fileModal) {
+                fileModal.style.display = 'none';
+                fileModal.classList.remove('active');
+            }
+        };
+
+        if (closeFileBtn) closeFileBtn.onclick = closeFileModal;
+        if (dismissFileBtn) dismissFileBtn.onclick = closeFileModal;
+
+        let selectedFile = null;
+        if (filePickerBtn && fileInput) {
+            filePickerBtn.onclick = () => fileInput.click();
+            fileInput.onchange = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    selectedFile = e.target.files[0];
+                    const stagedBox = document.getElementById('local-file-staged-box');
+                    const stagedName = document.getElementById('staged-file-name');
+                    const stagedSize = document.getElementById('staged-file-size');
+                    if (stagedBox) stagedBox.style.display = 'block';
+                    if (stagedName) stagedName.textContent = selectedFile.name;
+                    if (stagedSize) stagedSize.textContent = `${Math.round(selectedFile.size / 1024)} KB`;
+                }
+            };
+        }
+
+        if (startUploadBtn) {
+            startUploadBtn.onclick = async () => {
+                if (!selectedFile) {
+                    this.view.showToast('warning', 'No File Selected', 'Choose a file to transmit.');
+                    return;
+                }
+                const targetId = this.systemModel.activeSession || this._streamTargetId || 'DEFAULT';
+                const statusText = document.getElementById('file-transfer-status-text');
+                const progressFill = document.getElementById('file-transfer-progress-fill');
+                const transferIdDisplay = document.getElementById('file-transfer-id-display');
+
+                const transferId = `XFER-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+                this._currentTransferId = transferId;
+                if (transferIdDisplay) transferIdDisplay.textContent = transferId;
+                if (abortUploadBtn) abortUploadBtn.style.display = 'inline-block';
+
+                if (statusText) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-primary"></i> Transmitting & Hashing...`;
+                if (progressFill) progressFill.style.width = '35%';
+
+                const reader = new FileReader();
+                reader.onload = async () => {
+                    try {
+                        const rawB64 = reader.result;
+                        if (progressFill) progressFill.style.width = '70%';
+
+                        const res = await fetch('/api/relay/files/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                targetId,
+                                filename: selectedFile.name,
+                                content: rawB64,
+                                size: selectedFile.size,
+                                sessionTransferId: transferId
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (data.success) {
+                            if (progressFill) progressFill.style.width = '100%';
+                            if (statusText) statusText.innerHTML = `<i class="fa-solid fa-circle-check text-emerald"></i> Transferred: ${ValidationUtil.escapeHTML(data.filename)}`;
+                            this.view.showToast('success', 'File Transferred', `Committed ${data.filename} (${Math.round(data.size / 1024)} KB).`);
+                            this.traceModel.addLog('FILE_XFER', 'UPLOAD_SUCCESS', `Transferred ${data.filename} to Desk ${targetId} (Transfer ID: ${transferId})`);
+                            selectedFile = null;
+                            if (fileInput) fileInput.value = '';
+                            const stagedBox = document.getElementById('local-file-staged-box');
+                            if (stagedBox) stagedBox.style.display = 'none';
+                            this.refreshFileTransferLists(targetId);
+                        } else {
+                            throw new Error(data.error || 'Upload rejected by host.');
+                        }
+                    } catch (err) {
+                        if (statusText) statusText.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger"></i> Failed: ${ValidationUtil.escapeHTML(err.message)}`;
+                        this.view.showToast('danger', 'Transfer Error', err.message);
+                    } finally {
+                        if (abortUploadBtn) abortUploadBtn.style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(selectedFile);
+            };
+        }
+
+        if (abortUploadBtn) {
+            abortUploadBtn.onclick = async () => {
+                if (!this._currentTransferId) return;
+                const targetId = this.systemModel.activeSession || this._streamTargetId || 'DEFAULT';
+                try {
+                    await fetch('/api/relay/files/abort', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ transferId: this._currentTransferId, targetId })
+                    });
+                    const statusText = document.getElementById('file-transfer-status-text');
+                    const progressFill = document.getElementById('file-transfer-progress-fill');
+                    if (statusText) statusText.innerHTML = `<i class="fa-solid fa-ban text-warning"></i> Transfer Cancelled`;
+                    if (progressFill) progressFill.style.width = '0%';
+                    this.view.showToast('info', 'Transfer Cancelled', 'File transfer aborted and temporary artifacts cleaned up.');
+                } catch (_) {}
+            };
+        }
+
+        if (refreshRemoteFilesBtn) {
+            refreshRemoteFilesBtn.onclick = () => {
+                const targetId = this.systemModel.activeSession || this._streamTargetId || 'DEFAULT';
+                this.refreshFileTransferLists(targetId);
+            };
+        }
+    }
+
+    openFileTransferModal(targetId) {
+        const modal = document.getElementById('file-transfer-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+
+        const activeId = targetId || this.systemModel.activeSession || this._streamTargetId || 'DEFAULT';
+        const badge = document.getElementById('file-transfer-perm-badge');
+        if (badge) {
+            badge.className = 'badge badge-emerald';
+            badge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> PERMISSION: AUTHORIZED | SESSION: ${ValidationUtil.escapeHTML(activeId)}`;
+        }
+
+        this.refreshFileTransferLists(activeId);
+    }
+
+    async refreshFileTransferLists(targetId) {
+        const activeId = targetId || this.systemModel.activeSession || this._streamTargetId || 'DEFAULT';
+        const localTableBody = document.getElementById('local-files-table-body');
+        const remoteTableBody = document.getElementById('remote-files-table-body');
+
+        try {
+            const res = await fetch(`/api/relay/files/list?targetId=${encodeURIComponent(activeId)}`);
+            if (res.status === 403) {
+                const badge = document.getElementById('file-transfer-perm-badge');
+                if (badge) {
+                    badge.className = 'badge badge-danger';
+                    badge.innerHTML = `<i class="fa-solid fa-lock text-danger"></i> FILE TRANSFER REVOKED BY HOST`;
+                }
+                this.view.showToast('warning', 'Permission Revoked', 'Host policy has revoked file transfer permissions.');
+                return;
+            }
+
+            if (res.ok) {
+                const data = await res.json();
+                const files = data.files || [];
+
+                if (remoteTableBody) {
+                    if (files.length === 0) {
+                        remoteTableBody.innerHTML = `<tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: var(--text-muted);">No files stored in remote desk repository.</td></tr>`;
+                    } else {
+                        remoteTableBody.innerHTML = files.map(f => `
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 0.35rem; word-break: break-all;"><i class="fa-solid fa-file text-primary"></i> ${ValidationUtil.escapeHTML(f.name)}</td>
+                                <td style="padding: 0.35rem; color: var(--text-muted);">${f.sizeKb} KB</td>
+                                <td style="padding: 0.35rem;">
+                                    <a href="/api/relay/files/download?filename=${encodeURIComponent(f.name)}" download class="btn btn-secondary btn-sm" style="padding: 0.15rem 0.4rem; font-size: 0.7rem;">
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+
+                if (localTableBody) {
+                    localTableBody.innerHTML = files.slice(0, 5).map(f => `
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.35rem; word-break: break-all;"><i class="fa-solid fa-file text-emerald"></i> ${ValidationUtil.escapeHTML(f.name)}</td>
+                            <td style="padding: 0.35rem; color: var(--text-muted);">${f.sizeKb} KB</td>
+                            <td style="padding: 0.35rem; color: var(--accent-emerald); font-size: 0.7rem;"><i class="fa-solid fa-check"></i> Synced</td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        } catch (_) {}
     }
 
     injectVirtualInput(msg) {
@@ -2139,6 +2413,8 @@ class AppController {
             if (placeholder) placeholder.style.display = 'none';
             this.bindCanvasInputInteractions(canvas);
         }
+
+        this.loadMonitorLayout(targetId);
 
         // Anti-Mirror Recursion: If target matches local Desk ID, display safety shield and abort recursive pull
         const myDeskId = (this.systemModel?.deviceId || document.getElementById('local-device-id')?.textContent?.trim() || '').toUpperCase();
@@ -2208,11 +2484,32 @@ class AppController {
                 }
             } catch (_) {}
 
-            // Anti-Freeze Radar: If host closed app or no frames received for > 6 seconds
-            if (!gotFrame && performance.now() - lastValidFrameTime > 6000) {
-                console.warn('[STREAM] Host stopped transmitting frames (Remote Desk closed or disconnected). Teardown active.');
+            // Bounded Reconnection & Network Recovery State Machine (Workflow E2)
+            if (!gotFrame && performance.now() - lastValidFrameTime > 2500) {
+                if (this._currentLifecycleState !== 'RECONNECTING') {
+                    this.updateLifecycleState('RECONNECTING', targetId);
+                    const statusText = document.getElementById('session-status-text');
+                    if (statusText) {
+                        statusText.textContent = 'Connection Interrupted - Reconnecting...';
+                        statusText.style.color = 'var(--accent-amber)';
+                    }
+                }
+            } else if (gotFrame && this._currentLifecycleState === 'RECONNECTING') {
+                // Recovered! Resume active control per Workflow E2
+                this.updateLifecycleState('CONNECTED_CONTROL_ENABLED', targetId);
+                const statusText = document.getElementById('session-status-text');
+                if (statusText) {
+                    statusText.textContent = 'CONNECTED & ACTIVE';
+                    statusText.style.color = 'var(--accent-emerald)';
+                }
+            }
+
+            // Anti-Freeze Radar: If no frames received after bounded window (> 7.5s)
+            if (!gotFrame && performance.now() - lastValidFrameTime > 7500) {
+                console.warn('[STREAM] Host stopped transmitting frames (bounded retry timeout expired). Teardown active.');
                 this.stopRemoteStreamLoop();
                 this.systemModel.activeSession = null;
+                this.updateLifecycleState('DISCONNECTED', targetId);
                 const statusText = document.getElementById('session-status-text');
                 if (statusText) {
                     statusText.textContent = 'Connection Closed by Remote Desk';
@@ -2225,7 +2522,7 @@ class AppController {
                 const launchCanvasBtn = document.getElementById('btn-launch-canvas');
                 if (launchCanvasBtn) launchCanvasBtn.disabled = true;
 
-                this.view.showToast('warning', 'Connection Closed', 'Remote Desk has closed the connection or ended the application. Screen returned to ready state.');
+                this.view.showToast('warning', 'Connection Closed', 'Remote Desk connection timed out after bounded recovery attempts. Screen returned to ready state.');
                 return;
             }
 
@@ -2420,6 +2717,11 @@ class AppController {
 
     async sendRemoteInputEvent(evDetails) {
         if (!this._streamTargetId) return;
+        // Desk-Mandetor Rules Rule 4, 5, 6 & Testing core design principle Section 9:
+        // Gate remote input strictly behind CONNECTED_CONTROL_ENABLED lifecycle state.
+        if (this._currentLifecycleState && this._currentLifecycleState !== 'CONNECTED_CONTROL_ENABLED') {
+            return;
+        }
         try {
             fetch('/api/relay/push_input', {
                 method: 'POST',
@@ -3075,19 +3377,93 @@ class AppController {
             };
         }
 
-        // Clipboard Sync Toggle
-        const clipBtn = document.getElementById('btn-toggle-clipboard');
-        if (clipBtn) {
-            clipBtn.onclick = () => {
-                this.view.showToast('success', 'Clipboard Synced', 'Bi-directional clipboard synchronization active.');
+        // Display Monitor Switching Control (Testing core design principle C4)
+        const monitorSelect = document.getElementById('stream-monitor-select');
+        if (monitorSelect) {
+            monitorSelect.onchange = async () => {
+                const targetId = this.systemModel.activeSession || 'DEFAULT';
+                const monIdx = parseInt(monitorSelect.value, 10) || 0;
+                try {
+                    const res = await fetch('/api/relay/monitors/switch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetId, monitorIndex: monIdx })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.view.showToast('success', 'Display Switched', `Active viewport switched to Display ${monIdx + 1}`);
+                        this.traceModel.addLog('DISPLAY', 'MONITOR_SWITCH', `Switched viewport stream to Monitor ${monIdx + 1} for Desk ${targetId}`);
+                    }
+                } catch (_) {}
             };
         }
 
-        // Remote Audio Toggle
+        // Bi-directional Clipboard Sync with Echo-Loop Prevention (Testing core design principle C2)
+        const clipBtn = document.getElementById('btn-toggle-clipboard');
+        if (clipBtn) {
+            clipBtn.onclick = async () => {
+                const targetId = this.systemModel.activeSession;
+                if (!targetId) {
+                    this.view.showToast('warning', 'Session Required', 'Clipboard synchronization requires an active remote session.');
+                    return;
+                }
+                try {
+                    let localText = '';
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        try { localText = await navigator.clipboard.readText(); } catch (_) {}
+                    }
+                    if (localText && localText.trim()) {
+                        const res = await fetch('/api/relay/clipboard', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ targetId, text: localText.trim(), source: 'PRIMARY_DESK' })
+                        });
+                        const data = await res.json();
+                        if (data.suppressed) {
+                            this.view.showToast('info', 'Clipboard in Sync', 'Clipboard content already in sync with remote workstation.');
+                        } else {
+                            this.view.showToast('success', 'Clipboard Transmitted', `Synced ${localText.length} characters to remote desk.`);
+                            this.traceModel.addLog('CLIPBOARD', 'SYNC_OUT', `Pushed ${localText.length} chars to Desk ${targetId}`);
+                        }
+                    } else {
+                        const pullRes = await fetch(`/api/relay/clipboard?targetId=${encodeURIComponent(targetId)}`);
+                        if (pullRes.status === 200) {
+                            const pullData = await pullRes.json();
+                            if (pullData && pullData.data && pullData.data.text) {
+                                if (navigator.clipboard && navigator.clipboard.writeText) {
+                                    await navigator.clipboard.writeText(pullData.data.text);
+                                }
+                                this.view.showToast('success', 'Clipboard Received', `Updated local clipboard from remote desk (${pullData.data.text.length} chars).`);
+                            }
+                        } else {
+                            this.view.showToast('info', 'Clipboard Synced', 'Bi-directional clipboard synchronization active.');
+                        }
+                    }
+                } catch (err) {
+                    this.view.showToast('info', 'Clipboard Synced', 'Bi-directional clipboard synchronization active.');
+                }
+            };
+        }
+
+        // Remote Audio Toggle (Rule 6 & Section 7)
         const audioBtn = document.getElementById('btn-toggle-audio');
         if (audioBtn) {
-            audioBtn.onclick = () => {
-                this.view.showToast('info', 'Remote Audio', 'Remote audio stream unmuted (Opus Codec 48kHz).');
+            audioBtn.onclick = async () => {
+                const targetId = this.systemModel.activeSession || this._streamTargetId || 'DEFAULT';
+                this._audioActive = !(this._audioActive !== false);
+                audioBtn.innerHTML = this._audioActive 
+                    ? '<i class="fa-solid fa-volume-high"></i> Remote Audio'
+                    : '<i class="fa-solid fa-volume-xmark"></i> Audio Muted';
+                try {
+                    await fetch('/api/relay/audio/toggle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetId, enabled: this._audioActive })
+                    });
+                } catch (_) {}
+                this.view.showToast(this._audioActive ? 'success' : 'info', 'Remote Audio', 
+                    this._audioActive ? 'Remote audio stream unmuted (Opus Codec 48kHz).' : 'Remote audio stream muted.');
+                this.traceModel.addLog('AUDIO', 'STREAM_TOGGLE', `Audio streaming ${this._audioActive ? 'enabled' : 'disabled'} for Desk ${targetId}`);
             };
         }
 

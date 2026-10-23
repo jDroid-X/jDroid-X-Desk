@@ -97,6 +97,7 @@ namespace JDroidXDesk.Native
         private void StopScreenStreamer()
         {
             isScreenStreamingActive = false;
+            try { SetThreadExecutionState(ES_CONTINUOUS); } catch { }
             if (screenStreamerThread != null && screenStreamerThread.IsAlive)
             {
                 try { screenStreamerThread.Join(300); } catch { }
@@ -106,6 +107,7 @@ namespace JDroidXDesk.Native
 
         private void ScreenStreamerWorker()
         {
+            try { SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_AWAYMODE_REQUIRED); } catch { }
             ulong lastFrameHash = 0;
             int staticFrameCount = 0;
             while (isScreenStreamingActive)

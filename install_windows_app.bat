@@ -1,6 +1,11 @@
 @echo off
 TITLE jDroid-X-Desk Windows Universal App Installer
 cd /d "%~dp0"
+:: Strangler Forwarder: Delegate to encapsulated scripts/install-windows-app.bat
+if exist "scripts\install-windows-app.bat" (
+    call "scripts\install-windows-app.bat" %*
+    exit /b %ERRORLEVEL%
+)
 ECHO ========================================================
 ECHO    jDroid-X-Desk Universal Windows Installer
 ECHO    Architecture: Authorized & Whitelisted Standalone App

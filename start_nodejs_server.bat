@@ -2,7 +2,11 @@
 setlocal
 TITLE jDroid-X Gateway & Node.js Server Launcher (Port 8080)
 cd /d "%~dp0"
-
+:: Strangler Forwarder: Delegate to encapsulated scripts/start_nodejs_server.bat
+if exist "scripts\start_nodejs_server.bat" (
+    call "scripts\start_nodejs_server.bat" %*
+    exit /b %ERRORLEVEL%
+)
 echo ========================================================
 echo   jDroid-X-Desk Unified Gateway & Node.js Server
 echo ========================================================

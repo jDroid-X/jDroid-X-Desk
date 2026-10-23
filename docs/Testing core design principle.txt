@@ -1,0 +1,361 @@
+1. The core design principle
+Every user activity should follow this sequence:
+1. Trigger
+
+User action, system event, or timer
+
+
+2. Validate
+
+State, identity, permissions, input, dependencies
+
+
+3. Execute
+
+Call the required service or operating-system API
+
+
+4. Confirm
+
+Check the actual result, not just the function return
+
+
+5. Update
+
+State, UI, notifications, logs and next permitted actions
+
+
+If a required step fails, the workflow must enter an appropriate error or recovery state. It must not simply continue to the next step.
+
+Parallel execution rule: independent operations may run in parallel, such as loading user preferences and checking local device capabilities. Security-sensitive operations, including authorization, session establishment and enabling remote input, must respect their dependencies and complete in the correct order.
+2. Master lifecycle: installation to disconnection
+This is the recommended chronological sequence for a standard attended remote-control session between two Windows computers.
+
+Computer A = Controller. Computer B = Host, whose desktop will be controlled.
+1. Installation readiness
+   
+   Download, verify, install, launch and check application health on both computers.
+2. Device initialization
+   
+   Load configuration, initialize the networking subsystem, generate or retrieve device identity, and register online status.
+3. Connection request
+   
+   A enters B's device ID. Validate the ID, resolve the device and initiate signaling.
+4. Host notification
+   
+   B displays an incoming request with requester identity, device information and requested access type.
+5. Authorization
+   
+   B accepts or rejects. If additional authentication is required, complete it before continuing.
+6. Secure session establishment
+   
+   Authenticate both endpoints as required, negotiate a secure channel and verify session parameters.
+7. Capability and permission negotiation
+   
+   Determine supported display, input, clipboard, file transfer, audio and other features. Apply approved permissions.
+8. Remote desktop initialization
+   
+   Start screen capture, negotiate resolution and frame format, send the initial frame and render the remote desktop on A.
+9. Control activation
+   
+   Enable mouse and keyboard forwarding only after the session and input permissions are confirmed.
+10. Active session
+    
+    Handle input, screen updates, clipboard, file transfer, monitor switching and permitted session tools.
+11. Control handoff or permission change
+    
+    Revoke the previous control lease, update permissions and grant the new controller access only after authorization.
+12. Disconnect and cleanup
+    
+    Stop input and media streams, close transfers safely, revoke session credentials, update device status and record the session result.
+
+Important: installation, connection and session workflows should be implemented as explicit state transitions, not as a single long function that assumes every operation succeeds.
+3. Workflow A: installation on both devices
+A1. Download and verify
+Sequence	Action	Required validation
+A1.1	Open the official jDroid-X-Desk download page	HTTPS and approved domain
+A1.2	Select the correct operating system and architecture	Supported platform
+A1.3	Download the installer	Download completed
+A1.4	Verify publisher signature and package integrity	Signature trusted; hash matches published value where available
+A1.5	Check the application version	Compatible release
+A1.6	Run the installer	Installer starts without corruption
+A1.7	Review installation options	User understands startup and service options
+A1.8	Approve elevated permissions only when required	Publisher and requested privilege verified
+A1.9	Complete installation	Installer reports success
+A1.10	Launch the application	Main window or setup wizard opens
+
+Repeat on both A and B. If installation fails on either device, stop that device's workflow and troubleshoot before attempting to connect.
+A2. First launch and initialization
+1. Load application configuration.
+2. Validate required configuration and supported version.
+3. Initialize logging and crash reporting.
+4. Initialize secure credential storage.
+5. Load or generate the device's persistent identity.
+6. Initialize network connectivity.
+7. Check firewall and required permissions.
+8. Initialize supported capture and input components.
+9. Register the device with the service, if the architecture requires registration.
+10. Retrieve its connection status.
+11. Display the device ID and status on the dashboard.
+12. Enable connection actions only when their prerequisites are satisfied.
+Expected UI states:
+- Initializing: setup is in progress.
+- Ready / Online: the device can accept or initiate supported connections.
+- Offline: connectivity or registration is unavailable.
+- Permission required: a necessary operating-system permission is missing.
+- Update required: the current version cannot establish a compatible session.
+Do not show "Online" merely because the application window has opened. Confirm the relevant service registration or connectivity check first.
+4. Workflow B: connection request and authorization
+This is the most security-sensitive part of the application.
+B1. Controller A initiates a connection
+1. A opens the dashboard.
+2. A verifies its own device status.
+3. A enters B's device ID.
+4. A selects the connection type, if the product supports multiple types.
+5. A clicks Connect.
+6. The client validates the ID format.
+7. The client checks that the request is not a duplicate.
+8. The client submits the connection request to the signaling service.
+9. The service resolves B's device identity and availability.
+10. A displays Connecting while the request is pending.
+11. A starts the request timeout.
+12. The service sends the incoming request to B.
+If B is offline, the ID is invalid, the user is blocked, or the request times out, A must receive the appropriate result rather than remain indefinitely in "Connecting."
+B2. Host B receives the request
+The incoming request should show:
+- Requester's verified account or device identity, when available.
+- Requested access mode.
+- Requested capabilities.
+- Authentication status.
+- A clear Accept and Reject choice.
+- A request expiry or timeout indicator.
+Then:
+1. B receives the signaling event.
+2. B verifies the request is still pending and has not expired.
+3. B checks local security policies.
+4. B displays the incoming request.
+5. B reviews the requester and requested access.
+6. B chooses Accept or Reject.
+7. The application sends the decision to the session service.
+8. The service validates that the decision is from the correct host and request.
+9. The service changes the request state.
+10. A receives the decision and updates its UI.
+If B rejects
+- The request becomes rejected.
+- A receives a rejection message.
+- No remote desktop stream is started.
+- No remote input is enabled.
+- Any temporary request credentials are invalidated.
+- The event is logged according to the privacy policy.
+If B accepts
+Acceptance is not the same as a fully established session. The application must still complete required authentication, secure negotiation and permission checks.
+B3. Authentication and secure session
+1. Verify the host and controller identities according to the selected authentication policy.
+2. Complete any required one-time password, account authentication or multifactor challenge.
+3. Reject expired, replayed or invalid authentication responses.
+4. Negotiate supported protocol and feature versions.
+5. Establish and verify the encrypted communication channel.
+6. Negotiate the allowed session capabilities.
+7. Apply the host's approved permission profile.
+8. Create a unique session ID and session-scoped credentials.
+9. Initialize screen capture and the display channel.
+10. Receive and render the initial desktop frame.
+11. Enable permitted remote input.
+12. Change both devices' session status to Connected.
+The UI must not show Connected until the required connection checks succeed. A secure connection must use established, vetted cryptographic protocols and libraries rather than custom cryptography.
+5. Workflow C: active remote desktop and user actions
+Once connected, every remote operation must be checked against the session's current permissions.
+C1. Remote mouse and keyboard
+Sequence	Action	Required behaviour
+C1.1	User moves the pointer	Convert coordinates to the remote display's coordinate space
+C1.2	User clicks	Validate input permission and send the input event
+C1.3	Host receives the event	Validate session ID, controller lease and event sequence
+C1.4	Host applies the input	Inject input using the approved OS interface
+C1.5	Host captures resulting screen change	Capture the updated display
+C1.6	Controller renders the update	Display the latest received frame
+C1.7	Controller observes the result	Confirm the action had the expected visible effect
+
+Keyboard handling requires additional checks:
+- Key-down and key-up events must remain paired.
+- Modifier keys must not become stuck after disconnect.
+- Keyboard layouts must be handled consistently.
+- Secure operating-system screens may require special handling.
+- Remote input must stop immediately when control permission is revoked.
+Test case: Click a harmless test application on B from A. Confirm that the click reaches B and that the updated screen is visible on A. Then revoke input permission and confirm further clicks are rejected.
+C2. Clipboard synchronization
+1. Verify that clipboard sharing is enabled for the session.
+2. Verify that both endpoints support the clipboard format.
+3. Wait for a local clipboard-change event.
+4. Check the current session permission.
+5. Send the clipboard payload over the secure channel.
+6. Validate the receiving message's session and sequence.
+7. Apply the payload to the destination clipboard.
+8. Confirm completion or report failure.
+9. Prevent clipboard-change loops between the two devices.
+10. Clear transient buffers when the session ends, according to policy.
+If clipboard access is disabled, the user must see a clear explanation. Do not silently bypass the restriction.
+C3. File transfer
+File transfer should be an independent permission, even when remote mouse and keyboard control are allowed.
+1. User opens File Transfer.
+2. Application checks the file-transfer permission.
+3. User chooses the source device and file.
+4. Application displays the filename, size and destination.
+5. User confirms the operation.
+6. Application checks path permissions and available storage.
+7. The transfer service creates a session-bound transfer ID.
+8. File data is transmitted over the protected channel.
+9. The receiver validates the transfer ID, size and integrity.
+10. The receiver writes to a temporary destination.
+11. The receiver verifies the completed file.
+12. The receiver commits the file to the intended destination.
+13. The UI displays Completed or a specific error.
+14. Temporary files and transfer credentials are cleaned up.
+For interruption, cancellation or disk-full conditions, the application must not report success for an incomplete file.
+C4. Switching monitors and extended desktop
+These are different operations and should have distinct UI controls.
+
+Switching a remote monitor
+1. Query the remote monitor layout.
+2. Display the available monitor names or numbers.
+3. User selects a monitor.
+4. Validate that the selected monitor still exists.
+5. Request the new display stream or viewport.
+6. Update the remote coordinate mapping.
+7. Render the selected display.
+8. Confirm that mouse input maps to the correct monitor.
+Viewing all monitors
+1. Check support for multi-monitor mode.
+2. Obtain the current monitor layout and resolutions.
+3. User selects All Monitors.
+4. Negotiate the combined layout or individual streams.
+5. Render the monitors in the selected arrangement.
+6. Maintain correct coordinate mapping for each monitor.
+7. Recalculate the layout if a monitor is added, removed or resized.
+Extended desktop means the host operating system has multiple display areas. It does not mean the remote-control application has permission to change the host's display configuration. Changing display resolution or enabling an extended display should be a separate, explicitly authorized operation.
+6. Workflow D: giving back, transferring or taking control
+The product should distinguish three behaviours.
+
+D1. Give control back to the host
+
+The controller releases remote input. The session may remain connected for viewing if viewing is allowed.
+
+
+
+
+D2. Transfer control to another authorized user
+
+The current controller releases its lease, the host authorizes the next controller, and the service grants a new lease.
+
+
+
+
+D3. Host revokes control
+
+The host disables remote input or terminates the session. The controller cannot silently regain access.
+
+
+
+Correct sequence for control transfer
+1. Identify the active controller and current permission lease.
+2. Receive the release or transfer request.
+3. Verify that the request is authorized.
+4. Stop accepting new input from the current controller.
+5. Flush or safely discard pending input events.
+6. Release held keys and buttons where possible.
+7. Invalidate the old control lease.
+8. Update the host and controller UI.
+9. If another controller is requested, display an approval prompt to the host.
+10. Validate the new controller's identity and permissions.
+11. Issue a new, session-scoped control lease.
+12. Enable input only for the newly authorized controller.
+13. Record the transition in the audit log.
+If any step fails, the safe outcome is no controller with active input privileges, not two competing controllers.
+7. Workflow E: disconnect, network failure and recovery
+E1. Normal disconnect
+1. User selects Disconnect.
+2. Application asks for confirmation only if required by the current workflow.
+3. Stop accepting new remote input.
+4. Release held input states.
+5. Finish or cancel active file transfers according to the user's choice.
+6. Stop audio and screen streams.
+7. Close the session's data channels.
+8. Revoke temporary session credentials and control leases.
+9. Notify the other endpoint that the session has ended.
+10. Update both UIs to Disconnected.
+11. Store the session end reason and permitted audit data.
+12. Return the user to the dashboard.
+E2. Unexpected connection loss
+1. Detect a heartbeat timeout or transport failure.
+2. Stop forwarding input until the session is verified healthy.
+3. Display Connection interrupted.
+4. Preserve only the session state needed for safe recovery.
+5. Attempt reconnection within a configured retry policy.
+6. Reauthenticate or revalidate the session as required.
+7. Reestablish the secure channel.
+8. Renegotiate capabilities and permissions.
+9. Reinitialize display streams.
+10. Resume input only after the host's authorization remains valid.
+11. Otherwise, require a fresh approval.
+12. If recovery fails, expire the session and clean up resources.
+Never interpret a lost network connection as permission to reconnect indefinitely. Reconnection must be bounded by policy and must not bypass revoked authorization.
+8. The correct order for automated testing
+Your QA agent should execute tests in dependency order. Tests that depend on a real connection cannot run successfully before installation and device initialization have passed.
+Test group	Test scope	Gate to proceed
+T01	Installer, upgrade and uninstall	Installation state verified
+T02	First launch and device identity	Both devices initialized
+T03	Network and signaling	Devices discoverable
+T04	Request, notification and rejection	Request states correct
+T05	Authentication and authorization	Unauthorized access denied
+T06	Secure session establishment	Secure channel verified
+T07	Display streaming	Initial frame rendered
+T08	Mouse and keyboard	Input correctly applied
+T09	Clipboard and file transfer	Permissions and integrity verified
+T10	Monitor switching and extended desktop	Correct display and coordinates
+T11	Control release and transfer	Only authorized controller active
+T12	Disconnect and reconnection	Session cleanup and recovery correct
+T13	Security, performance and stress	Release criteria met
+T14	Regression and release	All required tests pass
+
+Which operations can run in parallel?
+Safe to parallelize when isolated
+- Static code analysis and dependency scanning
+- Loading UI preferences and checking local hardware capabilities
+- Independent unit tests
+- Testing different isolated installations
+- Independent monitoring and log collection
+
+
+
+Keep in strict dependency order
+- Host approval before establishing an attended session
+- Authentication before granting session access
+- Permission validation before remote input or file transfer
+- File validation before committing a transferred file
+- Revoking old control before granting new control
+- Session cleanup before treating a session as fully terminated
+
+
+
+9. State machine the code must enforce
+These are the primary lifecycle states I recommend for jDroid-X-Desk.
+NOT_INSTALLED
+
+INSTALLED
+
+INITIALIZING
+
+READY
+
+REQUEST_PENDING
+
+AUTHENTICATING
+
+CONNECTING
+
+CONNECTED_VIEW_ONLY
+
+CONNECTED_CONTROL_ENABLED
+
+Additional transitions must support rejection, cancellation, permission revocation, timeout, network interruption, recovery and termination.
+
+The state machine must reject invalid transitions. For example, a command attempting to enable remote input while the session is still AUTHENTICATING must fail, even if the UI accidentally sends it.

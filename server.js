@@ -34,10 +34,15 @@ app.use((req, res, next) => {
 app.use('/jdroid-x-desk', express.static(__dirname));
 
 // Canonical OOPS MVC Route Mapping (Single Source of Truth)
-app.get(['/views/index.html', '/jdroid-x-desk/views/index.html'], (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get(['/views/admin.html', '/jdroid-x-desk/views/admin.html'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-app.get(['/controllers/app-controller.js', '/jdroid-x-desk/controllers/app-controller.js'], (req, res) => res.sendFile(path.join(__dirname, 'app.js')));
-app.get(['/styles/styles.css', '/jdroid-x-desk/styles/styles.css'], (req, res) => res.sendFile(path.join(__dirname, 'styles.css')));
+const CANONICAL_INDEX = fs.existsSync(path.join(__dirname, 'views', 'index.html')) ? path.join(__dirname, 'views', 'index.html') : path.join(__dirname, 'index.html');
+const CANONICAL_ADMIN = fs.existsSync(path.join(__dirname, 'views', 'admin.html')) ? path.join(__dirname, 'views', 'admin.html') : path.join(__dirname, 'admin.html');
+const CANONICAL_APP_JS = fs.existsSync(path.join(__dirname, 'controllers', 'app-controller.js')) ? path.join(__dirname, 'controllers', 'app-controller.js') : path.join(__dirname, 'app.js');
+const CANONICAL_STYLES = fs.existsSync(path.join(__dirname, 'styles', 'styles.css')) ? path.join(__dirname, 'styles', 'styles.css') : path.join(__dirname, 'styles.css');
+
+app.get(['/', '/index.html', '/views/index.html', '/jdroid-x-desk', '/jdroid-x-desk/', '/jdroid-x-desk/index.html', '/jdroid-x-desk/views/index.html'], (req, res) => res.sendFile(CANONICAL_INDEX));
+app.get(['/admin.html', '/views/admin.html', '/jdroid-x-desk/admin.html', '/jdroid-x-desk/views/admin.html'], (req, res) => res.sendFile(CANONICAL_ADMIN));
+app.get(['/app.js', '/controllers/app-controller.js', '/jdroid-x-desk/app.js', '/jdroid-x-desk/controllers/app-controller.js'], (req, res) => res.sendFile(CANONICAL_APP_JS));
+app.get(['/styles.css', '/styles/styles.css', '/jdroid-x-desk/styles.css', '/jdroid-x-desk/styles/styles.css'], (req, res) => res.sendFile(CANONICAL_STYLES));
 
 // Encapsulated Static Route Mounts (OOPS MVC View & Asset Standard)
 app.use(express.static(__dirname));

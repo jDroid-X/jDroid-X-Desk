@@ -27,3 +27,6 @@ native_compile.rsp
 NativeTest.exe
 *.mindmap*
 jdroid-x-desk-mindmap*
+
+# Ephemeral runtime file transfers
+transfers/

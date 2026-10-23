@@ -36,6 +36,14 @@ namespace JDroidXDesk.Native
         [DllImport("user32.dll", EntryPoint = "BlockInput")]
         private static extern bool BlockInput(bool fBlockIt);
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern uint SetThreadExecutionState(uint esFlags);
+
+        private const uint ES_SYSTEM_REQUIRED = 0x00000001;
+        private const uint ES_DISPLAY_REQUIRED = 0x00000002;
+        private const uint ES_CONTINUOUS = 0x80000000;
+        private const uint ES_AWAYMODE_REQUIRED = 0x00000040;
+
         private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
         private const uint MOUSEEVENTF_LEFTUP = 0x0004;
         private const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;

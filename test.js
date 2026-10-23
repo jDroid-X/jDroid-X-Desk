@@ -115,7 +115,14 @@ async function runTests() {
         'ad-conn-lan-discovery',
         'ad-conn-discovery-port',
         'remote-stream-canvas',
-        'gateway-entry-card'
+        'gateway-entry-card',
+        'stream-monitor-select',
+        'viewport-lifecycle-badge',
+        'file-transfer-modal',
+        'btn-upload-file-picker',
+        'btn-start-file-upload',
+        'btn-abort-file-transfer',
+        'file-transfer-input'
     ];
     for (const id of criticalDomIds) {
         assert(html.includes(`id="${id}"`), `DOM element exists: #${id}`);
@@ -487,6 +494,183 @@ async function runTests() {
 
         const pullInputRes = await makeRequest('GET', '/api/relay/input?targetId=TEST-DESK-1');
         assert(pullInputRes.statusCode === 200 && Array.isArray(pullInputRes.body.events), 'GET /api/relay/input retrieves and flushes queued input events');
+
+        // Stage 5 Security & Lifecycle Hardening (Desk-Mandetor Rules & Core Design Principles)
+        const unauthInputRes = await makeRequest('POST', '/api/relay/push_input', {
+            targetId: 'UNAUTHORIZED-ROGUE-DESK',
+            event: { type: 'mouse', action: 'click', x: 10, y: 10 }
+        });
+        assert(unauthInputRes.statusCode === 403, 'POST /api/relay/push_input blocks unauthorized remote input with HTTP 403');
+
+        const disconnectTeardownRes = await makeRequest('POST', '/api/relay/disconnect', {
+            targetId: 'TEST-DESK-1',
+            reason: 'Automated test suite session completion'
+        });
+        assert(disconnectTeardownRes.statusCode === 200 && disconnectTeardownRes.body.disconnected, 'POST /api/relay/disconnect safely cleanses frame cache without server exception');
+
+        const postDisconnectInputs = await makeRequest('GET', '/api/relay/input?targetId=TEST-DESK-1');
+        const hasSyntheticModifierRelease = Array.isArray(postDisconnectInputs.body.events) && 
+            postDisconnectInputs.body.events.some(e => e.type === 'key' && e.action === 'up' && e.syntheticRelease);
+        assert(hasSyntheticModifierRelease, 'POST /api/relay/disconnect releases synthetic modifier keys (Shift/Ctrl/Alt/Win) per Workflow C1');
+
+        const clipPost1 = await makeRequest('POST', '/api/relay/clipboard', {
+            targetId: 'TEST-DESK-1',
+            text: 'jDroid-X Secure Clipboard Data'
+        });
+        assert(clipPost1.statusCode === 200 && clipPost1.body.hash, 'POST /api/relay/clipboard registers clipboard synchronization payload');
+
+        const clipPost2 = await makeRequest('POST', '/api/relay/clipboard', {
+            targetId: 'TEST-DESK-1',
+            text: 'jDroid-X Secure Clipboard Data'
+        });
+        assert(clipPost2.statusCode === 200 && clipPost2.body.suppressed, 'POST /api/relay/clipboard suppresses recursive echo loops');
+
+        const monitorsRes = await makeRequest('GET', '/api/relay/monitors?targetId=TEST-DESK-1');
+        assert(monitorsRes.statusCode === 200 && Array.isArray(monitorsRes.body.monitors), 'GET /api/relay/monitors returns active display monitor layout');
+
+        const switchMonRes = await makeRequest('POST', '/api/relay/monitors/switch', {
+            targetId: 'TEST-DESK-1',
+            monitorIndex: 1
+        });
+        assert(switchMonRes.statusCode === 200 && switchMonRes.body.activeMonitor === 1, 'POST /api/relay/monitors/switch switches active display viewport');
+
+        // Desk-Mandetor Rules Rule 4: Reject Illegal State Transitions
+        await makeRequest('POST', '/api/lifecycle/transition', {
+            targetId: 'TEST-GUARD-DESK',
+            state: 'AUTHENTICATING'
+        });
+        const illegalTransRes = await makeRequest('POST', '/api/lifecycle/transition', {
+            targetId: 'TEST-GUARD-DESK',
+            state: 'CONNECTED_CONTROL_ENABLED'
+        });
+        assert(illegalTransRes.statusCode === 400 && illegalTransRes.body.error.includes('Illegal state transition'), 'POST /api/lifecycle/transition blocks illegal state jumps with HTTP 400');
+
+        const stateTransRes = await makeRequest('POST', '/api/lifecycle/transition', {
+            targetId: 'TEST-DESK-1',
+            state: 'CONNECTED_CONTROL_ENABLED'
+        });
+        assert(stateTransRes.statusCode === 200 && stateTransRes.body.state === 'CONNECTED_CONTROL_ENABLED', 'POST /api/lifecycle/transition enforces valid lifecycle state machine transitions');
+
+        const reconnTransRes = await makeRequest('POST', '/api/lifecycle/transition', {
+            targetId: 'TEST-DESK-1',
+            state: 'RECONNECTING'
+        });
+        assert(reconnTransRes.statusCode === 200 && reconnTransRes.body.state === 'RECONNECTING', 'POST /api/lifecycle/transition supports bounded RECONNECTING state per Workflow E2');
+
+        // Desk-Mandetor Rules Rule 5: Host permission policy is authoritative over controller
+        const hostInviteRes = await makeRequest('POST', '/api/invites', {
+            targetId: 'HOST-AUTH-DESK',
+            sourceId: 'CONTROLLER-A',
+            permissions: { screen: true, keyboard: true, clipboard: true }
+        });
+        const hostRespondRes = await makeRequest('PUT', `/api/invites/${hostInviteRes.body.data.id}/respond`, {
+            status: 'ACCEPTED',
+            permissions: { keyboard: false, clipboard: false } // Host overrides to View-Only!
+        });
+        assert(hostRespondRes.statusCode === 200 && hostRespondRes.body.session && hostRespondRes.body.session.permissions.keyboard === false, 'PUT /api/invites/:id/respond enforces authoritative host permission overrides per Rule 5');
+
+        // Desk-Mandetor Rules Rule 6: Clipboard capability gating
+        const revokedClipRes = await makeRequest('POST', '/api/relay/clipboard', {
+            targetId: 'HOST-AUTH-DESK',
+            text: 'Sensitive Clipboard Data'
+        });
+        assert(revokedClipRes.statusCode === 403 && revokedClipRes.body.error.includes('revoked'), 'POST /api/relay/clipboard blocks clipboard sync with HTTP 403 when revoked per Rule 6');
+
+        // Desk-Mandetor Rules Rule 8: Session termination cleanses relay buffers
+        const testTermSession = await makeRequest('POST', '/api/sessions', {
+            targetId: 'TERM-TEST-DESK',
+            remoteId: 'TERM-TEST-DESK',
+            targetName: 'Term Test Machine'
+        });
+        await makeRequest('POST', '/api/relay/push_frame', {
+            targetId: 'TERM-TEST-DESK',
+            b64: 'fake-frame-data-2026'
+        });
+        await makeRequest('PUT', `/api/sessions/${testTermSession.body.data.id}`, {
+            status: 'TERMINATED'
+        });
+        const stateAfterTerm = await makeRequest('GET', '/api/lifecycle/state?targetId=TERM-TEST-DESK');
+        assert(stateAfterTerm.statusCode === 200 && stateAfterTerm.body.state === 'TERMINATED', 'PUT /api/sessions/:id with TERMINATED state evicts relay buffers and marks lifecycle TERMINATED per Rule 8');
+
+        // File Transfer Protocol Verification (Section 5 C3)
+        const fileListRes = await makeRequest('GET', '/api/relay/files/list?targetId=TEST-DESK-1');
+        assert(fileListRes.statusCode === 200 && Array.isArray(fileListRes.body.files), 'GET /api/relay/files/list returns file transfer repository listing');
+
+        const testContent = Buffer.from('jDroid-X-Desk Test File Payload 2026').toString('base64');
+        const uploadRes = await makeRequest('POST', '/api/relay/files/upload', {
+            targetId: 'TEST-DESK-1',
+            filename: 'audit-test-log.txt',
+            content: testContent,
+            sessionTransferId: 'XFER-TEST-001'
+        });
+        assert(uploadRes.statusCode === 200 && uploadRes.body.committed || (uploadRes.body.status === 'COMPLETED'), 'POST /api/relay/files/upload verifies integrity and commits transferred file');
+
+        const downloadRes = await makeRequest('GET', '/api/relay/files/download?filename=audit-test-log.txt');
+        assert(downloadRes.statusCode === 200, 'GET /api/relay/files/download serves committed file payload');
+
+        const abortRes = await makeRequest('POST', '/api/relay/files/abort', {
+            transferId: 'XFER-IN-FLIGHT-099',
+            targetId: 'TEST-DESK-1',
+            reason: 'User cancelled during transmission'
+        });
+        assert(abortRes.statusCode === 200 && abortRes.body.status === 'ABORTED', 'POST /api/relay/files/abort cleanses in-flight partial transfer artifacts');
+
+        // Audio Streaming Capability Verification (Rule 6)
+        const audioToggleRes = await makeRequest('POST', '/api/relay/audio/toggle', {
+            targetId: 'TEST-DESK-1',
+            enabled: true
+        });
+        assert(audioToggleRes.statusCode === 200 && audioToggleRes.body.audioEnabled === true, 'POST /api/relay/audio/toggle toggles remote audio stream');
+
+        const audioStatusRes = await makeRequest('GET', '/api/relay/audio/status?targetId=TEST-DESK-1');
+        assert(audioStatusRes.statusCode === 200 && audioStatusRes.body.codec.includes('Opus'), 'GET /api/relay/audio/status reports active Opus 48kHz audio capability');
+
+        // Bandwidth Optimization & DeskRT Differential Delta Verification (AMBER-02)
+        await makeRequest('POST', '/api/relay/push_frame', {
+            targetId: 'TEST-DELTA-DESK',
+            b64: 'test-delta-frame-content-2026'
+        });
+        const firstFrameRes = await makeRequest('GET', '/api/relay/frame?targetId=TEST-DELTA-DESK');
+        const frameTimestamp = firstFrameRes.body.timestamp;
+        const deltaFrameRes = await makeRequest('GET', `/api/relay/frame?targetId=TEST-DELTA-DESK&since=${frameTimestamp}`);
+        assert(deltaFrameRes.statusCode === 304, 'GET /api/relay/frame with since timestamp returns HTTP 304 Not Modified for unchanged frames (AMBER-02)');
+
+        // Multi-Controller Control Lease Arbitration Verification (Workflow D2 & D3 / AMBER-03)
+        const leaseStatusRes = await makeRequest('GET', '/api/relay/lease/status?targetId=TEST-DESK-1');
+        assert(leaseStatusRes.statusCode === 200 && leaseStatusRes.body.holderId, 'GET /api/relay/lease/status reports active control lease holder (Workflow D1)');
+
+        const leaseTransferRes = await makeRequest('POST', '/api/relay/lease/transfer', {
+            targetId: 'TEST-DESK-1',
+            newHolderId: 'CONTROLLER-TECHNICIAN-C',
+            reason: 'Senior escalation handoff'
+        });
+        assert(leaseTransferRes.statusCode === 200 && leaseTransferRes.body.status === 'TRANSFERRED', 'POST /api/relay/lease/transfer arbitrates control handoff to secondary operator (Workflow D2)');
+
+        const leaseRevokeRes = await makeRequest('POST', '/api/relay/lease/revoke', {
+            targetId: 'TEST-DESK-1',
+            reason: 'Host revoked remote control'
+        });
+        assert(leaseRevokeRes.statusCode === 200 && leaseRevokeRes.body.status === 'REVOKED', 'POST /api/relay/lease/revoke revokes control lease and switches session to View-Only (Workflow D3)');
+
+        // Symmetric NAT Traversal & STUN Infrastructure Verification (AMBER-01)
+        const stunRes = await makeRequest('GET', '/api/relay/stun-servers');
+        assert(stunRes.statusCode === 200 && Array.isArray(stunRes.body.servers) && stunRes.body.servers.length >= 3, 'GET /api/relay/stun-servers exposes global STUN infrastructure for P2P hole-punching (AMBER-01)');
+
+        const natProbeRes = await makeRequest('POST', '/api/relay/nat-probe', {
+            localIp: '192.168.1.15',
+            externalIp: '103.21.244.2'
+        });
+        assert(natProbeRes.statusCode === 200 && natProbeRes.body.recommendedTransport === 'CLOUD_RELAY_MESH', 'POST /api/relay/nat-probe detects Symmetric NAT and automatically negotiates Cloud Relay Mesh fallback (AMBER-01)');
+
+        // Windows UAC Elevation & Power State Daemon Verification (RED-01 & RED-03)
+        const elevationRes = await makeRequest('GET', '/api/system/elevation/status');
+        assert(elevationRes.statusCode === 200 && elevationRes.body.isElevated && elevationRes.body.uiAccessAvailable, 'GET /api/system/elevation/status confirms high-integrity administrative UAC elevation capability (RED-01)');
+
+        const powerRes = await makeRequest('POST', '/api/system/power/keep-alive', {
+            enabled: true,
+            reason: 'Active Remote Maintenance Session'
+        });
+        assert(powerRes.statusCode === 200 && powerRes.body.sleepInhibited && powerRes.body.powerState.includes('ES_SYSTEM_REQUIRED'), 'POST /api/system/power/keep-alive inhibits OS sleep and laptop lid power collapse (RED-03)');
 
         // Stage 6 Holistic Gateway Mounting Verification
         const healthRes = await makeRequest('GET', '/api/health');

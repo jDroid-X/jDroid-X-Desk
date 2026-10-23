@@ -1,6 +1,11 @@
 @echo off
 title jDroid-X-Desk Universal Launcher
 cd /d "%~dp0"
+:: Strangler Forwarder: Delegate to encapsulated scripts/install-or-run.bat
+if exist "scripts\install-or-run.bat" (
+    call "scripts\install-or-run.bat" %*
+    exit /b %ERRORLEVEL%
+)
 echo ======================================================================
 echo   jDroid-X-Desk Portable Workstation Launcher (jDroid-X Studio)
 echo ======================================================================
