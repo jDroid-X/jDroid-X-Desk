@@ -1732,6 +1732,17 @@ class AppController {
                 }
             }
 
+            const activeId = this.systemModel.activeSession;
+            if (activeId) {
+                try {
+                    fetch('/api/relay/disconnect', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetId: activeId, reason: 'Viewer closed session' })
+                    }).catch(() => {});
+                } catch (_) {}
+            }
+
             this.stopRemoteStreamLoop();
             this.systemModel.activeSession = null;
             const statusText = document.getElementById('session-status-text');
@@ -2062,11 +2073,13 @@ class AppController {
         let frameCount = 0;
         let lastFpsCheck = performance.now();
         let bytesCount = 0;
+        let lastValidFrameTime = performance.now();
 
         const fetchFrame = async () => {
             if (!this._streamActive) return;
 
             const t0 = performance.now();
+            let gotFrame = false;
             try {
                 // High-Speed Binary Frame Pull (Wire-speed AnyDesk standard)
                 const res = await fetch(`/api/relay/frame_bin?targetId=${encodeURIComponent(targetId)}`, {
@@ -2078,6 +2091,8 @@ class AppController {
                     if (blob && blob.size > 100) {
                         bytesCount += blob.size;
                         frameCount++;
+                        gotFrame = true;
+                        lastValidFrameTime = performance.now();
 
                         const imgBitmap = await createImageBitmap(blob);
                         if (canvas && this._streamActive) {
@@ -2094,6 +2109,8 @@ class AppController {
                     const jsonRes = await fetch(`/api/relay/frame?targetId=${encodeURIComponent(targetId)}`);
                     const jsonData = await jsonRes.json();
                     if (jsonData && jsonData.frame) {
+                        gotFrame = true;
+                        lastValidFrameTime = performance.now();
                         const img = new Image();
                         img.onload = () => {
                             if (canvas && this._streamActive) {
@@ -2110,6 +2127,27 @@ class AppController {
                     }
                 }
             } catch (_) {}
+
+            // Anti-Freeze Radar: If host closed app or no frames received for > 6 seconds
+            if (!gotFrame && performance.now() - lastValidFrameTime > 6000) {
+                console.warn('[STREAM] Host stopped transmitting frames (Remote Desk closed or disconnected). Teardown active.');
+                this.stopRemoteStreamLoop();
+                this.systemModel.activeSession = null;
+                const statusText = document.getElementById('session-status-text');
+                if (statusText) {
+                    statusText.textContent = 'Connection Closed by Remote Desk';
+                    statusText.style.color = 'var(--accent-amber)';
+                }
+                const viewportBox = document.getElementById('remote-desktop-viewport-box');
+                if (viewportBox) viewportBox.style.display = 'none';
+                const quickDisconnectBtn = document.getElementById('quick-disconnect-btn');
+                if (quickDisconnectBtn) quickDisconnectBtn.style.display = 'none';
+                const launchCanvasBtn = document.getElementById('btn-launch-canvas');
+                if (launchCanvasBtn) launchCanvasBtn.disabled = true;
+
+                this.view.showToast('warning', 'Connection Closed', 'Remote Desk has closed the connection or ended the application. Screen returned to ready state.');
+                return;
+            }
 
             const t1 = performance.now();
             const rtt = Math.round(t1 - t0);

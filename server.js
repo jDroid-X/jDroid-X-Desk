@@ -64,12 +64,19 @@ app.get('/api/gateway/routes', (req, res) => {
 });
 
 app.get('/api/version', (req, res) => {
+    const exeFile = path.join(__dirname, 'jDroid-X-Desk.exe');
+    let exeSize = 0;
+    if (fs.existsSync(exeFile)) {
+        try { exeSize = fs.statSync(exeFile).size; } catch (_) {}
+    }
     res.status(200).json({
         success: true,
         name: 'jDroid-X-Desk',
         version: '2.0.0',
         author: 'jDroid-X',
         license: 'MIT',
+        exeSize: exeSize,
+        exeSizeKb: Math.round(exeSize / 1024),
         downloadUrl: '/api/download-exe',
         portalUrl: 'https://www.jdroid-x.com',
         customDomain: 'https://desk.jdroid-x.com',

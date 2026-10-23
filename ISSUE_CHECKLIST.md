@@ -237,6 +237,33 @@ When an active session fails or freezes, perform this quick triage first:
 
 ---
 
+## 9. Tethering, Multi-Desk Synchronization & Auto-Updater Checklist
+
+*Use when multiple Desks connect, disconnect, or exhibit feature/version divergence.*
+
+- [ ] **9.1 Graceful Disconnect & Anti-Frozen Screen Notification**:
+  - [ ] When Desk 1 closes the app (Window `X`, Tray Exit, or Taskkill), does Desk 2 immediately receive a toast notification: *"Connection Closed: Remote Desk has ended the session or closed the application."*?
+  - [ ] Verify `SendRemoteDisconnectSignal` sends a high-priority `session_close` event to candidate relay URLs (`/api/relay/push_input` and `/api/relay/disconnect`).
+  - [ ] Does Desk 2's viewport canvas instantly reset from the frozen last frame back to the Welcome/Dashboard Cards?
+  - [ ] Do symmetric connection ribbon buttons revert from `✕ Disconnect` back to `⚡ Connect` (green) automatically?
+  - [ ] Does the binary stream reader in `FrameReceiverWorker` detect socket EOF (`hRead < 8`) and tear down the session in <50ms without waiting for a timeout?
+  - [ ] If network is abruptly severed or host power is cut, does the 5-second failsafe radar (`DateTime.UtcNow - lastFrameReceivedUtc > 5.0`) cleanly abort the session and prevent indefinite freeze?
+
+- [ ] **9.2 Version & Binary Size Check (Automatic Desk Synchronization)**:
+  - [ ] When Desk 2 connects to Desk 1, does Desk 2 query Desk 1's `/api/version` endpoint (Port 8088 / 12345 / 7700)?
+  - [ ] Does the response contain the exact binary file size: `{ "exeSize": <bytes>, "exeSizeKb": <KB> }`?
+  - [ ] If Desk 1 has a newer/larger build (`remoteExeSize > localExeSize && diff >= 1024 bytes`), does Desk 2 initiate a background download via `/api/download-exe`?
+  - [ ] Is the update downloaded into `jDroid-X-Desk.exe.update` without interrupting the active UI?
+  - [ ] Does the background updater verify PE header validity (first 2 bytes `MZ` `0x4D 0x5A`) and exact byte size matching before prompting the user?
+  - [ ] When ready, does Desk 2 display the non-intrusive prompt: *"jDroid-X-Desk Auto-Update Ready: Restart now to synchronize features and functions with Remote Desk?"*?
+  - [ ] Upon selecting *"⚡ Restart & Sync Now"*, does `apply_update.bat` safely swap `jDroid-X-Desk.exe` and relaunch cleanly?
+
+- [ ] **9.3 Stale Relay Buffer Flushed on Session Teardown**:
+  - [ ] When a session is closed or aborted, does the relay delete stale frame buffers (`_binaryFrames.Remove(targetId)` and `relayFrames.delete(targetId)`)?
+  - [ ] Does this prevent subsequent viewers from seeing stale frozen frames from hours ago?
+
+---
+
 ## 8. Diagnostic CLI Toolkit (Rapid Execution)
 
 Run these diagnostic commands to gather immediate state across all subsystems:
@@ -244,6 +271,8 @@ Run these diagnostic commands to gather immediate state across all subsystems:
 | Target Domain | Diagnostic One-Liner Command |
 | :--- | :--- |
 | **Both Desks Online?** | `curl.exe -s http://127.0.0.1:12345/api/relay/devices` |
+| **Check App Version & Size** | `curl.exe -s http://127.0.0.1:12345/api/version` |
+| **Probe Embedded Relay (8088)** | `curl.exe -s http://127.0.0.1:8088/api/version` |
 | **LAN Desks Discovered?** | `curl.exe -s http://127.0.0.1:12345/api/discovered-desks` |
 | **Process Status** | `Get-Process -Name "jDroid-X-Desk", "node", "cloudflared" -ErrorAction SilentlyContinue \| Format-Table Id, ProcessName, CPU, WorkingSet64` |
 | **Port Listeners** | `netstat -ano \| findstr "LISTENING" \| findstr "12345 8088 7700 7070"` |
@@ -261,6 +290,8 @@ Run these diagnostic commands to gather immediate state across all subsystems:
 
 | Date | Defect Description | Root Cause | Preventive Check Added |
 | :--- | :--- | :--- | :--- |
+| 2026-10-23 | Screen frozen when one app closes / disconnects | No `session_close` signal was sent on close; `FrameReceiverWorker` looped indefinitely rendering stale bitmap without timeout | Section 9.1 (`SendRemoteDisconnectSignal`, `session_close` event, 5s radar timeout) |
+| 2026-10-23 | Desks out of sync / feature divergence across systems | Endpoints running differing executable versions/sizes without automatic background synchronization | Section 9.2 (Automatic `/api/version` size check, background staged download, `apply_update.bat` restart) |
 | 2026-10-23 | Screen frozen on remote side mid-session | Desk B was not confirmed active / Relay frame eviction (<30s) / Target ID format mismatch / Native input key contract (`inputs` vs `events`) | Section 0.1, 0.2, 2.4, 4.2 |
 | 2026-10-23 | Repeated incoming session dialogs (never dismisses) | Ephemeral TCP client port in `ep` changed on every HTTP request, failing `ep == lastApprovedViewerEndpoint` | Section 1.1, 1.2 |
 | 2026-10-23 | Input works but screen is frozen | Synchronous HTTP POST to external relays (`timeout=3500ms`) blocked host GDI capture thread to 0.2 FPS | Section 2.3 |
@@ -269,3 +300,4 @@ Run these diagnostic commands to gather immediate state across all subsystems:
 | *Open* | Windows UAC prompt causes black frame | Winlogon Secure Desktop boundary | Section 6.1 |
 | *Open* | Laptop lid closed stops capture | Windows OS display power management | Section 0.4 |
 | *Open* | Headless PC has 0x0 resolution | GPU disables display pipe without HDMI load | Section 6.3 |
+

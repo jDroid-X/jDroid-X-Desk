@@ -2822,6 +2822,75 @@ namespace JDroidXDesk.Native
                         return;
                     }
 
+                    if ((path == "/api/relay/disconnect" || path == "/api/relay/close_session") && method == "POST")
+                    {
+                        string bodyStr = System.Text.Encoding.UTF8.GetString(bodyBytes);
+                        Dictionary<string, object> payload = serializer.Deserialize<Dictionary<string, object>>(bodyStr);
+                        string target = payload != null && payload.ContainsKey("targetId") ? Convert.ToString(payload["targetId"]) : "";
+                        string reason = payload != null && payload.ContainsKey("reason") ? Convert.ToString(payload["reason"]) : "Remote desk closed connection";
+                        if (!string.IsNullOrEmpty(target))
+                        {
+                            lock (_syncLock)
+                            {
+                                _binaryFrames.Remove(target);
+                                _base64Frames.Remove(target);
+                                if (!_inputQueues.ContainsKey(target)) _inputQueues[target] = new List<Dictionary<string, object>>();
+                                Dictionary<string, object> closeEv = new Dictionary<string, object>();
+                                closeEv["type"] = "session_close";
+                                closeEv["reason"] = reason;
+                                closeEv["targetId"] = target;
+                                _inputQueues[target].Add(closeEv);
+                            }
+                        }
+                        SendJsonResponse(stream, 200, "{\"success\":true,\"message\":\"Session closed and frames flushed\"}");
+                        return;
+                    }
+
+                    if (path == "/api/version" || path == "/api/app-info")
+                    {
+                        string localExe = Application.ExecutablePath;
+                        long sz = 0;
+                        try { if (File.Exists(localExe)) sz = new FileInfo(localExe).Length; } catch { }
+                        Dictionary<string, object> vInfo = new Dictionary<string, object>();
+                        vInfo["success"] = true;
+                        vInfo["name"] = "jDroid-X-Desk";
+                        vInfo["version"] = "2.5.0";
+                        vInfo["exeSize"] = sz;
+                        vInfo["exeSizeKb"] = sz / 1024;
+                        vInfo["downloadUrl"] = "/api/download-exe";
+                        vInfo["timestamp"] = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+                        SendJsonResponse(stream, 200, serializer.Serialize(vInfo));
+                        return;
+                    }
+
+                    if (path == "/api/download-exe" || path == "/download/exe" || path == "/download-exe")
+                    {
+                        string localExe = Application.ExecutablePath;
+                        if (File.Exists(localExe))
+                        {
+                            byte[] exeBytes = null;
+                            using (FileStream fs = new FileStream(localExe, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                            {
+                                exeBytes = new byte[fs.Length];
+                                fs.Read(exeBytes, 0, exeBytes.Length);
+                            }
+                            string dlHeaders = "HTTP/1.1 200 OK\r\n" +
+                                               "Content-Type: application/octet-stream\r\n" +
+                                               "Content-Disposition: attachment; filename=\"jDroid-X-Desk.exe\"\r\n" +
+                                               "Content-Length: " + exeBytes.Length + "\r\n" +
+                                               "Cache-Control: no-cache, no-store\r\n" +
+                                               "Connection: close\r\n" +
+                                               "Access-Control-Allow-Origin: *\r\n\r\n";
+                            byte[] dh = System.Text.Encoding.ASCII.GetBytes(dlHeaders);
+                            stream.Write(dh, 0, dh.Length);
+                            stream.Write(exeBytes, 0, exeBytes.Length);
+                            stream.Flush();
+                            return;
+                        }
+                        SendSimpleResponse(stream, 404, "application/json", "{\"success\":false,\"error\":\"Executable not found\"}");
+                        return;
+                    }
+
                     if (path == "/view" || path.StartsWith("/view/") || path == "/web")
                     {
                         string tid = queryParams.ContainsKey("targetId") ? queryParams["targetId"] : "";
@@ -8258,6 +8327,9 @@ namespace JDroidXDesk.Native
                 StartFrameReceiver(connectedTargetDesktop.RemoteId);
                 StartScreenStreamer();
 
+                // Background Automatic Version & Executable Size Synchronization
+                CheckAndSyncAppVersion(connectedTargetDesktop.RemoteId);
+
                 db.AddLog("SESSION_ATTEMPT", "P2P_CONNECT", "Initiated connection to " + connectedTargetDesktop.Name + " [" + connectedTargetDesktop.RemoteId + "]");
                 viewportCanvas.Invalidate();
             }
@@ -8271,6 +8343,12 @@ namespace JDroidXDesk.Native
         private void AbortSessionConnection(string reason = null)
         {
             bool wasConnected = (currentConnectionState == SessionConnectionState.Connected);
+            string prevTarget = activeReceiverTargetId ?? (connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : null);
+            if (!string.IsNullOrEmpty(prevTarget))
+            {
+                SendRemoteDisconnectSignal(prevTarget, reason ?? "User Disconnected");
+            }
+
             currentConnectionState = SessionConnectionState.Disconnected;
             isSessionActive = false;
             if (connectingAnimationTimer != null) connectingAnimationTimer.Stop();
@@ -10914,6 +10992,30 @@ namespace JDroidXDesk.Native
                         ExecuteAdminCommand(cmd);
                     }
                 }
+                else if (type == "session_close" || type == "disconnect")
+                {
+                    string closeReason = ev.ContainsKey("reason") ? Convert.ToString(ev["reason"]) : "Remote desk closed the session.";
+                    if (this.IsHandleCreated && !this.IsDisposed)
+                    {
+                        this.BeginInvoke(new Action(() => {
+                            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
+                            {
+                                AbortSessionConnection("Connection Closed: " + closeReason);
+                                ShowToast("Connection Closed", closeReason, "warning");
+                            }
+                            else
+                            {
+                                EmbeddedRelayServer.Instance.DisconnectAllViewers();
+                                if (lblRemoteStatus != null)
+                                {
+                                    lblRemoteStatus.Text = "● Ready";
+                                    lblRemoteStatus.ForeColor = Color.FromArgb(148, 163, 184);
+                                }
+                                ShowToast("Viewer Disconnected", "Remote desk ended session: " + closeReason, "info");
+                            }
+                        }));
+                    }
+                }
             }
             catch { }
         }
@@ -11054,6 +11156,204 @@ namespace JDroidXDesk.Native
             SendRemoteInput("admin_cmd", ev);
         }
 
+        private void SendRemoteDisconnectSignal(string targetId, string reason = "User Disconnected")
+        {
+            if (string.IsNullOrEmpty(targetId)) return;
+            ThreadPool.QueueUserWorkItem(delegate {
+                try
+                {
+                    List<string> candidateUrls = GetRelayCandidateUrls(targetId);
+                    Dictionary<string, object> payload = new Dictionary<string, object>();
+                    payload["targetId"] = targetId;
+                    payload["reason"] = reason;
+                    payload["sender"] = currentHostDesktop != null ? currentHostDesktop.RemoteId : "Remote Desk";
+
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["type"] = "session_close";
+                    ev["reason"] = reason;
+                    ev["sender"] = payload["sender"];
+                    payload["event"] = ev;
+
+                    JavaScriptSerializer ser = new JavaScriptSerializer();
+                    string json = ser.Serialize(payload);
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+                    foreach (string rUrl in candidateUrls)
+                    {
+                        try
+                        {
+                            // 1. Send session_close input event
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_input");
+                            req.Method = "POST";
+                            req.ContentType = "application/json";
+                            req.Timeout = 800;
+                            req.ContentLength = bytes.Length;
+                            using (Stream os = req.GetRequestStream())
+                            {
+                                os.Write(bytes, 0, bytes.Length);
+                            }
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse()) { }
+
+                            // 2. Clear relay buffers
+                            HttpWebRequest reqDisc = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/disconnect");
+                            reqDisc.Method = "POST";
+                            reqDisc.ContentType = "application/json";
+                            reqDisc.Timeout = 800;
+                            reqDisc.ContentLength = bytes.Length;
+                            using (Stream os = reqDisc.GetRequestStream())
+                            {
+                                os.Write(bytes, 0, bytes.Length);
+                            }
+                            using (HttpWebResponse respDisc = (HttpWebResponse)reqDisc.GetResponse()) { }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            });
+        }
+
+        private void CheckAndSyncAppVersion(string targetDeskId)
+        {
+            if (string.IsNullOrEmpty(targetDeskId)) return;
+            ThreadPool.QueueUserWorkItem(delegate {
+                try
+                {
+                    string localExePath = Application.ExecutablePath;
+                    if (!File.Exists(localExePath)) return;
+                    long localExeSize = new FileInfo(localExePath).Length;
+                    long localExeSizeKb = localExeSize / 1024;
+
+                    List<string> candidateUrls = GetRelayCandidateUrls(targetDeskId);
+                    foreach (string rUrl in candidateUrls)
+                    {
+                        try
+                        {
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/version");
+                            req.Method = "GET";
+                            req.Timeout = 2500;
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                            using (StreamReader sr = new StreamReader(resp.GetResponseStream()))
+                            {
+                                string json = sr.ReadToEnd();
+                                JavaScriptSerializer ser = new JavaScriptSerializer();
+                                Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(json);
+                                if (dict != null && dict.ContainsKey("exeSize"))
+                                {
+                                    long remoteExeSize = Convert.ToInt64(dict["exeSize"]);
+                                    long remoteExeSizeKb = remoteExeSize / 1024;
+
+                                    // If remote desk is running a larger/newer application (diff >= 1024 bytes)
+                                    if (remoteExeSize > localExeSize && (remoteExeSize - localExeSize) >= 1024)
+                                    {
+                                        if (this.IsHandleCreated && !this.IsDisposed)
+                                        {
+                                            this.BeginInvoke(new Action(() => {
+                                                ShowToast("Updating Application", string.Format("Remote Desk is on a newer build ({0} KB vs {1} KB). Downloading update in background...", remoteExeSizeKb, localExeSizeKb), "info");
+                                            }));
+                                        }
+
+                                        string updateFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jDroid-X-Desk.exe.update");
+                                        string dlUrl = rUrl + "/api/download-exe";
+                                        using (WebClient wc = new WebClient())
+                                        {
+                                            wc.DownloadFile(dlUrl, updateFilePath);
+                                        }
+
+                                        if (File.Exists(updateFilePath))
+                                        {
+                                            FileInfo fi = new FileInfo(updateFilePath);
+                                            if (fi.Length == remoteExeSize)
+                                            {
+                                                byte[] mz = new byte[2];
+                                                using (FileStream fs = new FileStream(updateFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                                                {
+                                                    fs.Read(mz, 0, 2);
+                                                }
+
+                                                if (mz[0] == 0x4D && mz[1] == 0x5A) // 'MZ' PE header verification
+                                                {
+                                                    if (this.IsHandleCreated && !this.IsDisposed)
+                                                    {
+                                                        this.BeginInvoke(new Action(() => {
+                                                            PromptRestartForUpdate(updateFilePath, remoteExeSizeKb, localExeSizeKb);
+                                                        }));
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            });
+        }
+
+        private void PromptRestartForUpdate(string updateFilePath, long remoteKb, long localKb)
+        {
+            int choice = ModernMultiOptionDialog.Show(
+                this,
+                "jDroid-X-Desk Auto-Update Ready",
+                string.Format("Both Desks Synchronization:\n\nRemote Desk is running a newer synchronized build ({0} KB vs local {1} KB).\nThe update package has been downloaded in background.\n\nRestart now to synchronize features and functions with Remote Desk?", remoteKb, localKb),
+                new string[] { "⚡ Restart & Sync Now", "Later" }
+            );
+
+            if (choice == 0)
+            {
+                ApplyUpdateAndRestart(updateFilePath);
+            }
+        }
+
+        private void ApplyUpdateAndRestart(string updateFilePath)
+        {
+            try
+            {
+                string currentExe = Application.ExecutablePath;
+                string currentDir = AppDomain.CurrentDomain.BaseDirectory;
+                string batPath = Path.Combine(currentDir, "apply_update.bat");
+
+                string batScript = "@echo off\r\n" +
+                                   "title jDroid-X-Desk Auto-Updater\r\n" +
+                                   "echo Waiting for application to exit...\r\n" +
+                                   "timeout /t 1 /nobreak >nul\r\n" +
+                                   ":retry\r\n" +
+                                   "copy /y \"" + updateFilePath + "\" \"" + currentExe + "\" >nul 2>&1\r\n" +
+                                   "if errorlevel 1 (\r\n" +
+                                   "    timeout /t 1 /nobreak >nul\r\n" +
+                                   "    goto retry\r\n" +
+                                   ")\r\n" +
+                                   "del \"" + updateFilePath + "\" >nul 2>&1\r\n" +
+                                   "echo Launching updated jDroid-X-Desk...\r\n" +
+                                   "start \"\" \"" + currentExe + "\"\r\n" +
+                                   "del \"%~f0\" >nul 2>&1\r\n" +
+                                   "exit\r\n";
+
+                File.WriteAllText(batPath, batScript);
+
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = batPath,
+                    WorkingDirectory = currentDir,
+                    CreateNoWindow = true,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+
+                isSessionActive = false;
+                AbortSessionConnection("Application restarting for update");
+                Application.Exit();
+            }
+            catch (Exception ex)
+            {
+                ShowToast("Update Error", "Failed to apply update: " + ex.Message, "error");
+            }
+        }
+
         private void StartFrameReceiver(string targetRemoteId)
         {
             StopFrameReceiver();
@@ -11157,6 +11457,7 @@ namespace JDroidXDesk.Native
         private void FrameReceiverWorker()
         {
             DateTime workerStart = DateTime.Now;
+            DateTime lastFrameReceivedUtc = DateTime.UtcNow;
             while (isFrameReceiverActive && isSessionActive)
             {
                 bool successFrame = false;
@@ -11213,11 +11514,22 @@ namespace JDroidXDesk.Native
                                                 {
                                                     Stopwatch swStream = Stopwatch.StartNew();
                                                     int hRead = ReadExactBytes(ns, headerBuf, 0, 8);
-                                                    if (hRead < 8) break; // Stream ended or disconnected
+                                                    if (hRead < 8)
+                                                    {
+                                                        if (currentConnectionState == SessionConnectionState.Connected && this.IsHandleCreated && !this.IsDisposed)
+                                                        {
+                                                            this.BeginInvoke(new Action(() => {
+                                                                AbortSessionConnection("Connection Closed by Remote Desk (Stream Terminated).");
+                                                                ShowToast("Connection Closed", "Remote Desk disconnected or closed the application.", "warning");
+                                                            }));
+                                                        }
+                                                        break; // Stream ended or remote host closed
+                                                    }
 
                                                     // Keepalive heartbeat ping
                                                     if (headerBuf[0] == 'P' && headerBuf[1] == 'I' && headerBuf[2] == 'N' && headerBuf[3] == 'G')
                                                     {
+                                                        lastFrameReceivedUtc = DateTime.UtcNow;
                                                         continue;
                                                     }
 
@@ -11315,6 +11627,27 @@ namespace JDroidXDesk.Native
                         }
                     }
                 } catch { }
+
+                // Anti-Freeze Radar: Detect sudden disconnection or termination of remote host
+                if (currentConnectionState == SessionConnectionState.Connected)
+                {
+                    if (successFrame)
+                    {
+                        lastFrameReceivedUtc = DateTime.UtcNow;
+                    }
+                    else if ((DateTime.UtcNow - lastFrameReceivedUtc).TotalSeconds > 5.0)
+                    {
+                        if (this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            this.BeginInvoke(new Action(() => {
+                                AbortSessionConnection("Connection Lost: Remote Desk is no longer transmitting frames or closed the application.");
+                                ShowToast("Connection Closed", "Remote Desk stopped transmitting frames or closed the application.", "warning");
+                            }));
+                        }
+                        break;
+                    }
+                }
+
                 Thread.Sleep(successFrame ? 4 : 200);
             }
         }
@@ -11354,6 +11687,14 @@ namespace JDroidXDesk.Native
             trayMenu.MenuItems.Add("Copy Address", (s, e) => { if (currentHostDesktop != null) Clipboard.SetText(currentHostDesktop.RemoteId); });
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Exit", (s, e) => {
+                if (isSessionActive && !string.IsNullOrEmpty(activeReceiverTargetId))
+                {
+                    SendRemoteDisconnectSignal(activeReceiverTargetId, "Application closed by user.");
+                }
+                if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                {
+                    SendRemoteDisconnectSignal(currentHostDesktop.RemoteId, "Host application closed.");
+                }
                 StopHostDaemon();
                 StopScreenStreamer();
                 StopFrameReceiver();
@@ -11393,6 +11734,14 @@ namespace JDroidXDesk.Native
             }
             else
             {
+                if (isSessionActive && !string.IsNullOrEmpty(activeReceiverTargetId))
+                {
+                    SendRemoteDisconnectSignal(activeReceiverTargetId, "Application closed by user.");
+                }
+                if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                {
+                    SendRemoteDisconnectSignal(currentHostDesktop.RemoteId, "Host application closed.");
+                }
                 StopHostDaemon();
                 StopScreenStreamer();
                 StopFrameReceiver();

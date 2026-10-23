@@ -728,6 +728,43 @@ class ServerController {
             res.status(200).json({ success: true, queued: true, targetId });
         });
 
+        // Remote Session Teardown & Disconnect Signal (Invalidates stale frame buffers)
+        app.post(['/api/relay/disconnect', '/api/relay/session/close'], (req, res) => {
+            const targetId = (req.body && req.body.targetId) || req.query.targetId || 'DEFAULT';
+            const reason = (req.body && req.body.reason) || 'Connection closed by remote desk';
+
+            // Invalidate cached frames to avoid frozen screen artifacts
+            relayFrames.delete(targetId);
+            relayBinaryFrames.delete(targetId);
+
+            // Queue session_close event for the target desk
+            if (!relayInputs.has(targetId)) relayInputs.set(targetId, []);
+            relayInputs.get(targetId).push({
+                type: 'session_close',
+                reason: reason,
+                targetId: targetId,
+                receivedAt: Date.now()
+            });
+
+            // Proxy teardown signal to native relay port if local
+            const db = readDB();
+            const nativePort = (db.settings && db.settings.connection && db.settings.connection.relayPort) ? db.settings.connection.relayPort : 8088;
+            const postData = JSON.stringify({ targetId, reason, type: 'session_close' });
+            const pReq = http.request(`http://127.0.0.1:${nativePort}/api/relay/disconnect`, {
+                method: 'POST',
+                timeout: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(postData)
+                }
+            }, () => {});
+            pReq.on('error', () => {});
+            pReq.write(postData);
+            pReq.end();
+
+            res.status(200).json({ success: true, disconnected: true, targetId, message: 'Session closed and frame cache cleared.' });
+        });
+
         // Remote Input Pull (Host consumes Viewer mouse/keyboard inputs)
         app.get(['/api/relay/input', '/api/relay/pull_input/:targetId'], (req, res) => {
             const targetId = req.query.targetId || req.params.targetId || 'DEFAULT';
