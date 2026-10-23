@@ -1568,6 +1568,15 @@ class AppController {
                     return;
                 }
 
+                // Anti-Mirror Recursion: Prohibit self-connections to local host Desk ID
+                const localIdEl = document.getElementById('local-device-id') || document.getElementById('my-desk-id');
+                const myDeskId = (this.systemModel?.deviceId || (localIdEl ? localIdEl.textContent.trim() : '')).toUpperCase();
+                const cleanMyDeskId = myDeskId.replace(/\D/g, '');
+                if (myDeskId && (formattedId === myDeskId || (cleanOldId.length === 9 && cleanOldId === cleanMyDeskId))) {
+                    this.view.showToast('warning', 'Self-Connection Blocked', 'Cannot connect to your own Desk ID. Connect from another workstation to avoid infinite screen recursion.');
+                    return;
+                }
+
                 const origHtml = connectBtn.innerHTML;
                 connectBtn.disabled = true;
                 connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Establishing Connection...';
@@ -2040,6 +2049,16 @@ class AppController {
             this.bindCanvasInputInteractions(canvas);
         }
 
+        // Anti-Mirror Recursion: If target matches local Desk ID, display safety shield and abort recursive pull
+        const myDeskId = (this.systemModel?.deviceId || document.getElementById('local-device-id')?.textContent?.trim() || '').toUpperCase();
+        const cleanTarget = (targetId || '').replace(/\D/g, '');
+        const cleanHost = myDeskId.replace(/\D/g, '');
+        if (myDeskId && (targetId.toUpperCase() === myDeskId || (cleanTarget.length === 9 && cleanTarget === cleanHost))) {
+            console.warn('[STREAM] Self-connection / Mirror loop prevented for target:', targetId);
+            this.renderAntiRecursionShield(canvas, targetId);
+            return;
+        }
+
         let frameCount = 0;
         let lastFpsCheck = performance.now();
         let bytesCount = 0;
@@ -2129,6 +2148,80 @@ class AppController {
         const placeholder = document.getElementById('virtual-screen-placeholder');
         if (canvas) canvas.style.display = 'none';
         if (placeholder) placeholder.style.display = 'block';
+    }
+
+    renderAntiRecursionShield(canvas, targetId) {
+        if (!canvas) return;
+        canvas.style.display = 'block';
+        canvas.width = 1280;
+        canvas.height = 720;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Dark slate backdrop
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Futuristic grid pattern
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+
+        // Center Floating Card
+        const cardW = 680;
+        const cardH = 260;
+        const cardX = (canvas.width - cardW) / 2;
+        const cardY = (canvas.height - cardH) / 2;
+
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(cardX, cardY, cardW, cardH, 12);
+        } else {
+            ctx.rect(cardX, cardY, cardW, cardH);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 20px Segoe UI, sans-serif';
+        ctx.fillText('🛡️ ANTI-RECURSION SHIELD ACTIVE', cardX + 30, cardY + 45);
+
+        // Subtitle
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '14px Segoe UI, sans-serif';
+        ctx.fillText(`Self-Loopback Session Detected: ${targetId || 'Local Workstation'}`, cardX + 30, cardY + 80);
+
+        // Bullet 1
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '13px Consolas, monospace';
+        ctx.fillText('● Infinite Screen-in-Screen Mirror Loop Suppressed for Safety.', cardX + 30, cardY + 115);
+
+        // Info text
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '13px Segoe UI, sans-serif';
+        ctx.fillText('To test live remote desktop streaming without mirror recursion:', cardX + 30, cardY + 150);
+        ctx.fillText('  1. Connect from a secondary machine, laptop, or mobile browser.', cardX + 30, cardY + 175);
+        ctx.fillText('  2. Or open https://desk.jdroid-x.com on another monitor/device.', cardX + 30, cardY + 200);
+
+        // Action note
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 12px Consolas, monospace';
+        ctx.fillText("Relay pipelines remain active. Click 'Disconnect' to exit session.", cardX + 30, cardY + 235);
     }
 
     bindCanvasInputInteractions(canvas) {

@@ -7635,11 +7635,11 @@ namespace JDroidXDesk.Native
                 ShowToast("Scaling Mode: " + smartFitMode);
             });
 
-            Button btnMirror = CreateToolbarBtn("🎥 " + (isLiveScreenMirror ? "Live Mirror (Active)" : "Live Mirror"), (s, e) => {
+            Button btnMirror = CreateToolbarBtn("🛡️ " + (isLiveScreenMirror ? "Loopback Shield (ON)" : "Anti-Recursion Shield"), (s, e) => {
                 isLiveScreenMirror = !isLiveScreenMirror;
-                ((Button)s).Text = "🎥 " + (isLiveScreenMirror ? "Live Mirror (Active)" : "Live Mirror");
+                ((Button)s).Text = "🛡️ " + (isLiveScreenMirror ? "Loopback Shield (ON)" : "Anti-Recursion Shield");
                 viewportCanvas.Invalidate();
-                ShowToast("Engine: " + (isLiveScreenMirror ? "Live Local Screen Mirror (Active)" : "Remote Desktop Stream"));
+                ShowToast(isLiveScreenMirror ? "Loopback Shield Active: Infinite mirror recursion prevented." : "Direct Remote Stream Mode Active.");
             });
 
             Button btnCad = CreateToolbarBtn("⌨️ SAS", (s, e) => {
@@ -8163,6 +8163,16 @@ namespace JDroidXDesk.Native
                         }
                     }
 
+                    // Anti-Mirror Recursion: Prohibit self-connections to local host Desk ID
+                    if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                    {
+                        if (string.Equals(targetId, currentHostDesktop.RemoteId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            ShowToast("Self-Connection Blocked", "Cannot connect to your own Desk ID. Connect from another workstation to avoid infinite screen recursion.", "warning");
+                            return;
+                        }
+                    }
+
                     SimulatorDesktop matched = dynamicDesktops.Find(d => d.RemoteId == targetId || d.Name.ToUpper() == targetId.ToUpper());
                     if (matched != null) connectedTargetDesktop = matched;
                     else
@@ -8401,27 +8411,11 @@ namespace JDroidXDesk.Native
                     return;
                 }
 
-                // 2. Local Live Screen Mirror Mode (Loopback or Instant Preview)
+                // 2. Local Live Screen Loopback & Mirror Shield Mode (Zero Infinite Recursion)
                 if (isLiveScreenMirror || (currentHostDesktop != null && target.RemoteId == currentHostDesktop.RemoteId))
                 {
-                    try {
-                        using (Bitmap screenCapture = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height))
-                        {
-                            using (Graphics sG = Graphics.FromImage(screenCapture))
-                            {
-                                sG.CopyFromScreen(Screen.PrimaryScreen.Bounds.X, Screen.PrimaryScreen.Bounds.Y, 0, 0, screenCapture.Size);
-                            }
-                            DrawScaledImage(g, screenCapture, cw, ch);
-                        }
-                        using (SolidBrush bBg = new SolidBrush(Color.FromArgb(170, 15, 23, 42)))
-                        using (SolidBrush bBlue = new SolidBrush(Color.FromArgb(56, 189, 248)))
-                        using (Font fOverlay = new Font("Segoe UI", 8.5f, FontStyle.Bold))
-                        {
-                            g.FillRectangle(bBg, 12, 12, 360, 26);
-                            g.DrawString("🎥 LOCAL LIVE MIRROR: " + target.RemoteId, fOverlay, bBlue, 18, 16);
-                        }
-                        return;
-                    } catch { }
+                    RenderLoopbackShieldScreen(g, target, cw, ch);
+                    return;
                 }
 
                 // 3. Awaiting Live Video Stream Frames (Real Buffer Status - Zero Fake Icons)
@@ -8624,7 +8618,40 @@ namespace JDroidXDesk.Native
                 g.DrawString("● Tunnel: AES-256 End-to-End P2P Stream Active", fCode, bCyan, cardX + 24, cardY + 80);
                 g.DrawString("Awaiting video stream frames from remote host...", fSub, bMuted, cardX + 24, cardY + 110);
                 g.DrawString("Bytes Received: " + (bytesTransferred / (1024 * 1024.0)).ToString("0.0") + " MB | Total Frames: " + framesReceivedCount, fCode, bWhite, cardX + 24, cardY + 135);
-                g.DrawString("💡 Tip: Click '🎥 Live Mirror' above for instant local screen test.", fSub, bGreen, cardX + 24, cardY + 170);
+                g.DrawString("💡 Tip: Connect from another PC or mobile device to view remote desktop.", fSub, bGreen, cardX + 24, cardY + 170);
+            }
+        }
+
+        private void RenderLoopbackShieldScreen(Graphics g, SimulatorDesktop target, int cw, int ch)
+        {
+            using (LinearGradientBrush wallBrush = new LinearGradientBrush(new Rectangle(0, 0, cw, ch), ThemePalette.ColorBgWorkspace, ThemePalette.ColorBgCard, LinearGradientMode.Vertical))
+            {
+                g.FillRectangle(wallBrush, 0, 0, cw, ch);
+            }
+
+            int cardW = Math.Min(680, cw - 60);
+            int cardH = 260;
+            int cardX = (cw - cardW) / 2;
+            int cardY = Math.Max(40, (ch - cardH) / 2);
+
+            Rectangle rCard = new Rectangle(cardX, cardY, cardW, cardH);
+            ThemePalette.DrawFloatingCard(g, rCard, ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 12);
+
+            using (Font fTitle = new Font("Segoe UI", 13.5f, FontStyle.Bold))
+            using (Font fSub = new Font("Segoe UI", 9.5f))
+            using (Font fCode = new Font("Consolas", 9.5f))
+            using (SolidBrush bWhite = new SolidBrush(ThemePalette.ColorTextPrimary))
+            using (SolidBrush bAmber = new SolidBrush(Color.FromArgb(245, 158, 11)))
+            using (SolidBrush bCyan = new SolidBrush(ThemePalette.ColorPrimary))
+            using (SolidBrush bMuted = new SolidBrush(ThemePalette.ColorTextSecondary))
+            {
+                g.DrawString("🛡️ ANTI-RECURSION SHIELD ACTIVE", fTitle, bAmber, cardX + 24, cardY + 22);
+                g.DrawString("Self-Loopback / Same-Screen Session Detected: " + (target != null ? target.RemoteId : "Local Host"), fSub, bWhite, cardX + 24, cardY + 54);
+                g.DrawString("● Infinite Screen-in-Screen Mirror Loop Suppressed for Safety.", fCode, bCyan, cardX + 24, cardY + 86);
+                g.DrawString("To test live remote desktop streaming without mirror recursion:", fSub, bMuted, cardX + 24, cardY + 118);
+                g.DrawString("  1. Connect from a secondary machine, laptop, or mobile browser.", fSub, bMuted, cardX + 24, cardY + 140);
+                g.DrawString("  2. Or open https://desk.jdroid-x.com on another monitor/device.", fSub, bMuted, cardX + 24, cardY + 162);
+                g.DrawString("Keyboard/mouse relay pipelines remain active. Click '✕ Disconnect' to return.", fCode, bAmber, cardX + 24, cardY + 196);
             }
         }
 
