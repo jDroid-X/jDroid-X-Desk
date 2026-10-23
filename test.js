@@ -192,7 +192,7 @@ async function runTests() {
         console.log('  [INFO] Connected to active jDroid-X-Desk server on port ' + TEST_PORT);
     }
 
-    function makeRequest(method, pathName, body = null) {
+    function makeRequest(method, pathName, body = null, customHeaders = {}) {
         return new Promise((resolve, reject) => {
             const req = http.request({
                 hostname: '127.0.0.1',
@@ -200,7 +200,8 @@ async function runTests() {
                 path: pathName,
                 method: method,
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...customHeaders
                 }
             }, res => {
                 let data = '';
@@ -671,6 +672,36 @@ async function runTests() {
             reason: 'Active Remote Maintenance Session'
         });
         assert(powerRes.statusCode === 200 && powerRes.body.sleepInhibited && powerRes.body.powerState.includes('ES_SYSTEM_REQUIRED'), 'POST /api/system/power/keep-alive inhibits OS sleep and laptop lid power collapse (RED-03)');
+
+        // Audio Loopback Chunk Transfer & Permission Tests (GAP-02 & Rule 6)
+        const sampleWavBase64 = 'UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+        const audioPushRes = await makeRequest('POST', '/api/relay/audio/chunk', {
+            targetId: 'TEST-DESK-AUDIO',
+            chunk: sampleWavBase64
+        });
+        assert(audioPushRes.statusCode === 200 && audioPushRes.body.queued, 'POST /api/relay/audio/chunk successfully queues loopback audio slice');
+
+        const audioPullRes = await makeRequest('GET', '/api/relay/audio/chunk?targetId=TEST-DESK-AUDIO', null, {
+            'Accept': 'application/json'
+        });
+        assert(audioPullRes.statusCode === 200 && audioPullRes.body.chunk === sampleWavBase64, 'GET /api/relay/audio/chunk retrieves queued audio slice with exact data');
+
+        // Multi-Monitor Enumeration & Viewport Switching (GAP-07 & Section 5 C4)
+        const monRes = await makeRequest('GET', '/api/relay/monitors?targetId=TEST-DESK-AUDIO');
+        assert(monRes.statusCode === 200 && Array.isArray(monRes.body.monitors) && monRes.body.monitors.length > 0, 'GET /api/relay/monitors returns active display devices');
+
+        const monSwitchRes = await makeRequest('POST', '/api/relay/monitors/switch', {
+            targetId: 'TEST-DESK-AUDIO',
+            monitorIndex: 1
+        });
+        assert(monSwitchRes.statusCode === 200 && monSwitchRes.body.activeMonitor === 1, 'POST /api/relay/monitors/switch successfully switches active viewport to secondary monitor');
+
+        // UAC Elevation Status & Trigger Verification (GAP-01 & RED-01)
+        const elevStatusRes = await makeRequest('GET', '/api/system/elevation/status');
+        assert(elevStatusRes.statusCode === 200 && elevStatusRes.body.isElevated, 'GET /api/system/elevation/status reports OS integrity level and UI access capability');
+
+        const elevTriggerRes = await makeRequest('POST', '/api/system/elevation/elevate');
+        assert(elevTriggerRes.statusCode === 200 && elevTriggerRes.body.success, 'POST /api/system/elevation/elevate handles UAC elevation trigger route');
 
         // Stage 6 Holistic Gateway Mounting Verification
         const healthRes = await makeRequest('GET', '/api/health');

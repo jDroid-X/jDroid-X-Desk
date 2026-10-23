@@ -1871,6 +1871,7 @@ class AppController {
                     }).catch(() => {});
                 } catch (_) {}
             }
+            if (this._stopAudioPlayback) this._stopAudioPlayback();
 
             if (this.sessionInvitePollInterval) {
                 clearInterval(this.sessionInvitePollInterval);
@@ -3445,7 +3446,7 @@ class AppController {
             };
         }
 
-        // Remote Audio Toggle (Rule 6 & Section 7)
+        // Remote Audio Toggle with Real Web Audio API Loopback Playback (Rule 6 & Section 7)
         const audioBtn = document.getElementById('btn-toggle-audio');
         if (audioBtn) {
             audioBtn.onclick = async () => {
@@ -3461,8 +3462,15 @@ class AppController {
                         body: JSON.stringify({ targetId, enabled: this._audioActive })
                     });
                 } catch (_) {}
+
+                if (this._audioActive) {
+                    this._startAudioPlayback(targetId);
+                } else {
+                    this._stopAudioPlayback();
+                }
+
                 this.view.showToast(this._audioActive ? 'success' : 'info', 'Remote Audio', 
-                    this._audioActive ? 'Remote audio stream unmuted (Opus Codec 48kHz).' : 'Remote audio stream muted.');
+                    this._audioActive ? 'Remote audio stream unmuted (WASAPI Loopback 16-bit PCM/WAV).' : 'Remote audio stream muted.');
                 this.traceModel.addLog('AUDIO', 'STREAM_TOGGLE', `Audio streaming ${this._audioActive ? 'enabled' : 'disabled'} for Desk ${targetId}`);
             };
         }
@@ -3643,6 +3651,49 @@ class AppController {
                 const modal = document.getElementById('audit-report-modal');
                 if (modal) modal.classList.add('active');
             };
+        }
+    }
+
+    _startAudioPlayback(targetId) {
+        this._stopAudioPlayback();
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!this._audioCtx) {
+                this._audioCtx = new AudioCtx();
+            }
+            if (this._audioCtx.state === 'suspended') {
+                this._audioCtx.resume().catch(() => {});
+            }
+            this._audioLoopTimer = setInterval(async () => {
+                if (!this._audioActive || !this.systemModel.isLiveStreaming) {
+                    this._stopAudioPlayback();
+                    return;
+                }
+                try {
+                    const res = await fetch(`/api/relay/audio/chunk?targetId=${encodeURIComponent(targetId)}`, {
+                        headers: { 'Accept': 'audio/wav' },
+                        cache: 'no-cache'
+                    });
+                    if (res.status === 200) {
+                        const arrayBuf = await res.arrayBuffer();
+                        if (arrayBuf && arrayBuf.byteLength > 44) {
+                            const audioBuffer = await this._audioCtx.decodeAudioData(arrayBuf);
+                            const source = this._audioCtx.createBufferSource();
+                            source.buffer = audioBuffer;
+                            source.connect(this._audioCtx.destination);
+                            source.start(0);
+                        }
+                    }
+                } catch (_) {}
+            }, 120);
+        } catch (_) {}
+    }
+
+    _stopAudioPlayback() {
+        if (this._audioLoopTimer) {
+            clearInterval(this._audioLoopTimer);
+            this._audioLoopTimer = null;
         }
     }
 }

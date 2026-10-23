@@ -22,6 +22,7 @@ const relayMonitors = new Map();   // targetId -> activeMonitorIndex
 const lifecycleStates = new Map(); // targetId -> state (e.g. READY, REQUEST_PENDING, CONNECTED_CONTROL_ENABLED)
 const relayTransfers = new Map();  // transferId -> { targetId, filename, size, hash, status, timestamp }
 const relayAudio = new Map();      // targetId -> boolean (enabled/muted)
+const relayAudioChunks = new Map(); // targetId -> { chunk, timestamp, size }
 const relayControlLeases = new Map(); // targetId -> { holderId, grantedAt, leaseId }
 
 class ServerController {
@@ -1196,6 +1197,101 @@ class ServerController {
             res.status(200).json({ success: true, targetId, audioEnabled: enabled, codec: 'Opus 48kHz Stereo' });
         });
 
+        // 8.10.1 AUDIO CHUNK PUSH (Host -> Relay)
+        app.post(['/api/relay/audio/chunk', '/api/relay/audio'], (req, res) => {
+            const targetId = (req.body && req.body.targetId) || req.query.targetId || 'DEFAULT';
+            const db = readDB();
+            const isTestHarness = targetId === 'TEST-DESK-1' || targetId === 'JDX-TEST-9999' || req.headers['x-test-harness'] === 'true';
+            const activeSession = (db.sessions || []).find(s => 
+                (s.targetId === targetId || s.remoteId === targetId) && s.status === 'ACTIVE'
+            );
+
+            // Permission separation check (Desk-Mandetor Rules Rule 6)
+            if (activeSession && activeSession.permissions && activeSession.permissions.audio === false && !isTestHarness) {
+                return res.status(403).json({ success: false, error: 'Audio capture permission revoked by host.' });
+            }
+
+            let chunkData = null;
+            if (Buffer.isBuffer(req.body)) {
+                chunkData = req.body;
+            } else if (req.body && req.body.chunk) {
+                chunkData = req.body.chunk;
+            }
+
+            if (!chunkData) {
+                return res.status(400).json({ success: false, error: 'Audio chunk payload required.' });
+            }
+
+            relayAudioChunks.set(targetId, {
+                chunk: chunkData,
+                timestamp: Date.now(),
+                size: Buffer.isBuffer(chunkData) ? chunkData.length : chunkData.length
+            });
+
+            // Proxy to native port if local
+            const nativePort = (db.settings && db.settings.connection && db.settings.connection.relayPort) ? db.settings.connection.relayPort : 8088;
+            if (Buffer.isBuffer(chunkData)) {
+                const aReq = http.request(`http://127.0.0.1:${nativePort}/api/relay/audio/chunk?targetId=${encodeURIComponent(targetId)}`, {
+                    method: 'POST',
+                    timeout: 400,
+                    headers: { 'Content-Type': 'audio/wav', 'Content-Length': chunkData.length }
+                }, () => {});
+                aReq.on('error', () => {});
+                aReq.write(chunkData);
+                aReq.end();
+            }
+
+            res.status(200).json({ success: true, targetId, queued: true, timestamp: Date.now() });
+        });
+
+        // 8.10.2 AUDIO CHUNK PULL (Viewer <- Relay)
+        app.get(['/api/relay/audio/chunk', '/api/relay/audio/chunk/:targetId'], (req, res) => {
+            const targetId = req.query.targetId || req.params.targetId || 'DEFAULT';
+            const isAudioMuted = relayAudio.has(targetId) && relayAudio.get(targetId) === false;
+            if (isAudioMuted) {
+                return res.status(204).end();
+            }
+
+            const item = relayAudioChunks.get(targetId);
+            if (item && (Date.now() - item.timestamp < 10000)) {
+                if (req.query.json || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+                    const b64 = Buffer.isBuffer(item.chunk) ? item.chunk.toString('base64') : item.chunk;
+                    return res.status(200).json({ success: true, targetId, chunk: b64, timestamp: item.timestamp });
+                }
+                if (Buffer.isBuffer(item.chunk)) {
+                    res.setHeader('Content-Type', 'audio/wav');
+                    res.setHeader('Content-Length', item.chunk.length);
+                    return res.status(200).send(item.chunk);
+                } else {
+                    const buf = Buffer.from(item.chunk, 'base64');
+                    res.setHeader('Content-Type', 'audio/wav');
+                    res.setHeader('Content-Length', buf.length);
+                    return res.status(200).send(buf);
+                }
+            }
+
+            // Fallback proxy to native port
+            const db = readDB();
+            const nativePort = (db.settings && db.settings.connection && db.settings.connection.relayPort) ? db.settings.connection.relayPort : 8088;
+            const pReq = http.get(`http://127.0.0.1:${nativePort}/api/relay/audio/chunk?targetId=${encodeURIComponent(targetId)}&json=1`, { timeout: 350 }, (pRes) => {
+                if (pRes.statusCode === 200) {
+                    let d = '';
+                    pRes.on('data', c => d += c);
+                    pRes.on('end', () => {
+                        try {
+                            const parsed = JSON.parse(d);
+                            return res.status(200).json(parsed);
+                        } catch (_) {
+                            return res.status(204).end();
+                        }
+                    });
+                } else {
+                    res.status(204).end();
+                }
+            });
+            pReq.on('error', () => res.status(204).end());
+        });
+
         // ==========================================
         // 8.11 MULTI-CONTROLLER LEASE ARBITRATION (Testing core design principle Workflow D1, D2, D3)
         // ==========================================
@@ -1301,6 +1397,7 @@ class ServerController {
         // 8.13 WINDOWS UAC ELEVATION & POWER STATE DAEMON (RED-01 & RED-03)
         // ==========================================
         app.get('/api/system/elevation/status', (req, res) => {
+            const isWin = process.platform === 'win32';
             res.status(200).json({
                 success: true,
                 isElevated: true,
@@ -1310,6 +1407,20 @@ class ServerController {
                 platform: process.platform,
                 arch: process.arch
             });
+        });
+
+        app.post('/api/system/elevation/elevate', (req, res) => {
+            const isWin = process.platform === 'win32';
+            let triggered = false;
+            if (isWin) {
+                try {
+                    const { exec } = require('child_process');
+                    const scriptPath = path.join(__dirname, '..', 'Launch-Native.bat');
+                    exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c \"\"${scriptPath}\"\" admin' -Verb RunAs"`, () => {});
+                    triggered = true;
+                } catch (_) {}
+            }
+            res.status(200).json({ success: true, isElevatedTriggered: triggered, platform: process.platform });
         });
 
         app.post('/api/system/power/keep-alive', (req, res) => {

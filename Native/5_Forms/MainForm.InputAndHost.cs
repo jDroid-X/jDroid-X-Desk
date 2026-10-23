@@ -98,6 +98,7 @@ namespace JDroidXDesk.Native
         {
             isScreenStreamingActive = false;
             try { SetThreadExecutionState(ES_CONTINUOUS); } catch { }
+            try { WasapiAudioCaptureService.Instance.Stop(); } catch { }
             if (screenStreamerThread != null && screenStreamerThread.IsAlive)
             {
                 try { screenStreamerThread.Join(300); } catch { }
@@ -108,8 +109,10 @@ namespace JDroidXDesk.Native
         private void ScreenStreamerWorker()
         {
             try { SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_AWAYMODE_REQUIRED); } catch { }
+            try { WasapiAudioCaptureService.Instance.Start(); } catch { }
             ulong lastFrameHash = 0;
             int staticFrameCount = 0;
+            byte[] lastWavChunk = null;
             while (isScreenStreamingActive)
             {
                 bool pushSuccess = false;
@@ -118,17 +121,67 @@ namespace JDroidXDesk.Native
                     {
                         List<string> candidateUrls = GetRelayCandidateUrls();
 
-                        int sw = Screen.PrimaryScreen.Bounds.Width;
-                        int sh = Screen.PrimaryScreen.Bounds.Height;
-                        int tw = Math.Min(1280, sw);
+                        // Multi-Monitor resolution & bounds targeting
+                        Screen targetScreen = (activeHostMonitorIndex >= 0 && activeHostMonitorIndex < Screen.AllScreens.Length) ? Screen.AllScreens[activeHostMonitorIndex] : Screen.PrimaryScreen;
+                        Rectangle screenRect = targetScreen.Bounds;
+                        int sw = screenRect.Width;
+                        int sh = screenRect.Height;
+                        // 4K Downscale Clamp: preserve aspect ratio while bounding memory & CPU usage
+                        int tw = Math.Min(1920, sw);
                         int th = (int)(sh * ((float)tw / sw));
+
+                        // Audio Loopback Chunk Sync
+                        try {
+                            byte[] curWav = WasapiAudioCaptureService.Instance.GetLatestWavChunk();
+                            if (curWav != null && curWav != lastWavChunk)
+                            {
+                                lastWavChunk = curWav;
+                                EmbeddedRelayServer.Instance.UpdateAudioChunk(currentHostDesktop.RemoteId, curWav);
+                                byte[] localWav = curWav;
+                                string aTargetId = currentHostDesktop.RemoteId;
+                                ThreadPool.QueueUserWorkItem(delegate {
+                                    foreach (string rUrl in candidateUrls)
+                                    {
+                                        try {
+                                            HttpWebRequest aReq = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/audio/chunk?targetId=" + aTargetId);
+                                            aReq.Method = "POST";
+                                            aReq.ContentType = "audio/wav";
+                                            aReq.Timeout = 800;
+                                            aReq.ContentLength = localWav.Length;
+                                            using (Stream aOs = aReq.GetRequestStream()) { aOs.Write(localWav, 0, localWav.Length); }
+                                            using (HttpWebResponse aResp = (HttpWebResponse)aReq.GetResponse()) { break; }
+                                        } catch { }
+                                    }
+                                });
+                            }
+                        } catch { }
 
                         string b64 = null;
                         using (Bitmap fullBmp = new Bitmap(sw, sh))
                         {
                             using (Graphics g = Graphics.FromImage(fullBmp))
                             {
-                                g.CopyFromScreen(0, 0, 0, 0, fullBmp.Size);
+                                g.CopyFromScreen(screenRect.Left, screenRect.Top, 0, 0, screenRect.Size);
+
+                                // Real OS Hardware Cursor Blitting
+                                try {
+                                    CURSORINFO pci;
+                                    pci.cbSize = Marshal.SizeOf(typeof(CURSORINFO));
+                                    if (GetCursorInfo(out pci) && pci.flags == CURSOR_SHOWING)
+                                    {
+                                        int cursorX = pci.ptScreenPos.x - screenRect.Left;
+                                        int cursorY = pci.ptScreenPos.y - screenRect.Top;
+                                        if (cursorX >= 0 && cursorX < sw && cursorY >= 0 && cursorY < sh)
+                                        {
+                                            IntPtr hdc = g.GetHdc();
+                                            try {
+                                                DrawIcon(hdc, cursorX, cursorY, pci.hCursor);
+                                            } finally {
+                                                g.ReleaseHdc(hdc);
+                                            }
+                                        }
+                                    }
+                                } catch { }
                             }
 
                             using (Bitmap scaledBmp = new Bitmap(tw, th))
@@ -344,10 +397,21 @@ namespace JDroidXDesk.Native
                     return;
 
                 List<string> candidateUrls = GetRelayCandidateUrls();
-                int sw = Screen.PrimaryScreen.Bounds.Width;
-                int sh = Screen.PrimaryScreen.Bounds.Height;
-                int tw = Math.Min(1280, sw);
+                Screen targetScreen = (activeHostMonitorIndex >= 0 && activeHostMonitorIndex < Screen.AllScreens.Length) ? Screen.AllScreens[activeHostMonitorIndex] : Screen.PrimaryScreen;
+                Rectangle screenRect = targetScreen.Bounds;
+                int sw = screenRect.Width;
+                int sh = screenRect.Height;
+                int tw = Math.Min(1920, sw);
                 int th = (int)(sh * ((float)tw / sw));
+
+                // Audio chunk update
+                try {
+                    byte[] curWav = WasapiAudioCaptureService.Instance.GetLatestWavChunk();
+                    if (curWav != null && curWav.Length > 0)
+                    {
+                        EmbeddedRelayServer.Instance.UpdateAudioChunk(currentHostDesktop.RemoteId, curWav);
+                    }
+                } catch { }
 
                 string b64 = null;
                 byte[] rawBytes = null;
@@ -355,7 +419,27 @@ namespace JDroidXDesk.Native
                 {
                     using (Graphics g = Graphics.FromImage(fullBmp))
                     {
-                        g.CopyFromScreen(0, 0, 0, 0, fullBmp.Size);
+                        g.CopyFromScreen(screenRect.Left, screenRect.Top, 0, 0, screenRect.Size);
+
+                        // Real OS Hardware Cursor Blitting
+                        try {
+                            CURSORINFO pci;
+                            pci.cbSize = Marshal.SizeOf(typeof(CURSORINFO));
+                            if (GetCursorInfo(out pci) && pci.flags == CURSOR_SHOWING)
+                            {
+                                int cursorX = pci.ptScreenPos.x - screenRect.Left;
+                                int cursorY = pci.ptScreenPos.y - screenRect.Top;
+                                if (cursorX >= 0 && cursorX < sw && cursorY >= 0 && cursorY < sh)
+                                {
+                                    IntPtr hdc = g.GetHdc();
+                                    try {
+                                        DrawIcon(hdc, cursorX, cursorY, pci.hCursor);
+                                    } finally {
+                                        g.ReleaseHdc(hdc);
+                                    }
+                                }
+                            }
+                        } catch { }
                     }
 
                     using (Bitmap scaledBmp = new Bitmap(tw, th))
@@ -472,15 +556,17 @@ namespace JDroidXDesk.Native
                     int ry = ev.ContainsKey("y") ? Convert.ToInt32(ev["y"]) : 0;
                     string btn = ev.ContainsKey("btn") ? (ev["btn"] as string) : "Left";
 
-                    int hostSw = Screen.PrimaryScreen.Bounds.Width;
-                    int hostSh = Screen.PrimaryScreen.Bounds.Height;
-                    int tw = Math.Min(1280, hostSw);
+                    Screen targetScreen = (activeHostMonitorIndex >= 0 && activeHostMonitorIndex < Screen.AllScreens.Length) ? Screen.AllScreens[activeHostMonitorIndex] : Screen.PrimaryScreen;
+                    Rectangle sRect = targetScreen.Bounds;
+                    int hostSw = sRect.Width;
+                    int hostSh = sRect.Height;
+                    int tw = Math.Min(1920, hostSw);
                     int th = (int)(hostSh * ((float)tw / hostSw));
                     int realX = tw > 0 ? (int)((float)rx / tw * hostSw) : rx;
                     int realY = th > 0 ? (int)((float)ry / th * hostSh) : ry;
 
-                    realX = Math.Max(0, Math.Min(hostSw - 1, realX));
-                    realY = Math.Max(0, Math.Min(hostSh - 1, realY));
+                    realX = sRect.Left + Math.Max(0, Math.Min(hostSw - 1, realX));
+                    realY = sRect.Top + Math.Max(0, Math.Min(hostSh - 1, realY));
 
                     SetCursorPos(realX, realY);
 
@@ -574,7 +660,15 @@ namespace JDroidXDesk.Native
                 else if (type == "admin_cmd")
                 {
                     string cmd = ev.ContainsKey("cmd") ? (ev["cmd"] as string) : "";
-                    if (cmd == "switch_sides")
+                    if (cmd.StartsWith("switch_monitor"))
+                    {
+                        int mIdx = 0;
+                        if (cmd.Contains(":")) int.TryParse(cmd.Substring(cmd.IndexOf(':') + 1), out mIdx);
+                        else if (cmd.Contains("_")) int.TryParse(cmd.Substring(cmd.LastIndexOf('_') + 1), out mIdx);
+                        SetActiveHostMonitorIndex(mIdx);
+                        ShowToast("🖥️ Switched to Display " + (mIdx + 1));
+                    }
+                    else if (cmd == "switch_sides")
                     {
                         string viewerDeskId = ev.ContainsKey("viewerDeskId") ? (ev["viewerDeskId"] as string) : "";
                         HandleSwitchSidesRequested(viewerDeskId);

@@ -53,6 +53,36 @@ namespace JDroidXDesk.Native
         private const uint MOUSEEVENTF_WHEEL = 0x0800;
         private const uint KEYEVENTF_KEYUP = 0x0002;
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int x;
+            public int y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CURSORINFO
+        {
+            public int cbSize;
+            public int flags;
+            public IntPtr hCursor;
+            public POINT ptScreenPos;
+        }
+
+        private const int CURSOR_SHOWING = 0x00000001;
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorInfo(out CURSORINFO pci);
+
+        [DllImport("user32.dll")]
+        private static extern bool DrawIcon(IntPtr hdc, int x, int y, IntPtr hIcon);
+
+        private static int activeHostMonitorIndex = 0;
+        public static void SetActiveHostMonitorIndex(int idx)
+        {
+            if (idx >= 0 && idx < Screen.AllScreens.Length) activeHostMonitorIndex = idx;
+        }
+
         private DatabaseContext db;
         private List<SimulatorDesktop> dynamicDesktops;
         private SimulatorDesktop currentHostDesktop;

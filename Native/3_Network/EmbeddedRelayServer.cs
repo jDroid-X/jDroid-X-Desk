@@ -35,6 +35,7 @@ namespace JDroidXDesk.Native
         private readonly object _syncLock = new object();
         private readonly Dictionary<string, byte[]> _binaryFrames = new Dictionary<string, byte[]>();
         private readonly Dictionary<string, string> _base64Frames = new Dictionary<string, string>();
+        private readonly Dictionary<string, byte[]> _audioChunks = new Dictionary<string, byte[]>();
         private readonly Dictionary<string, Dictionary<string, object>> _registeredDevices = new Dictionary<string, Dictionary<string, object>>();
         private readonly Dictionary<string, List<Dictionary<string, object>>> _inputQueues = new Dictionary<string, List<Dictionary<string, object>>>();
         private readonly DateTime _startTime = DateTime.UtcNow;
@@ -247,6 +248,26 @@ namespace JDroidXDesk.Native
                     _base64Frames[targetId] = b64;
                 }
             }
+        }
+
+        public void UpdateAudioChunk(string targetId, byte[] wavBytes)
+        {
+            if (string.IsNullOrEmpty(targetId) || wavBytes == null || wavBytes.Length == 0) return;
+            lock (_syncLock)
+            {
+                _audioChunks[targetId] = wavBytes;
+            }
+        }
+
+        public byte[] GetAudioChunk(string targetId)
+        {
+            if (string.IsNullOrEmpty(targetId)) return null;
+            lock (_syncLock)
+            {
+                if (_audioChunks.ContainsKey(targetId))
+                    return _audioChunks[targetId];
+            }
+            return null;
         }
 
         public List<Dictionary<string, object>> GetPendingInputEvents(string targetId)
@@ -815,6 +836,155 @@ namespace JDroidXDesk.Native
                             }
                         }
                         SendJsonResponse(stream, 200, "{\"success\":true,\"message\":\"Session closed and frames flushed\"}");
+                        return;
+                    }
+
+                    // Audio Loopback Chunk Push & Pull Endpoints
+                    if ((path == "/api/relay/audio/chunk" || path == "/api/relay/audio") && method == "POST")
+                    {
+                        string tid = queryParams.ContainsKey("targetId") ? queryParams["targetId"] : "DEFAULT";
+                        byte[] audioData = null;
+                        if (headers.ContainsKey("content-type") && headers["content-type"].Contains("application/json"))
+                        {
+                            try {
+                                string bStr = System.Text.Encoding.UTF8.GetString(bodyBytes);
+                                Dictionary<string, object> aPayload = serializer.Deserialize<Dictionary<string, object>>(bStr);
+                                if (aPayload != null)
+                                {
+                                    if (aPayload.ContainsKey("targetId")) tid = Convert.ToString(aPayload["targetId"]);
+                                    if (aPayload.ContainsKey("chunk")) audioData = Convert.FromBase64String(Convert.ToString(aPayload["chunk"]));
+                                }
+                            } catch { }
+                        }
+                        else
+                        {
+                            audioData = bodyBytes;
+                        }
+
+                        if (audioData != null && audioData.Length > 0)
+                        {
+                            UpdateAudioChunk(tid, audioData);
+                            SendJsonResponse(stream, 200, string.Format("{{\"success\":true,\"targetId\":\"{0}\",\"bytes\":{1}}}", tid, audioData.Length));
+                        }
+                        else
+                        {
+                            SendJsonResponse(stream, 400, "{\"success\":false,\"error\":\"No audio payload provided\"}");
+                        }
+                        return;
+                    }
+
+                    if (path == "/api/relay/audio/chunk" || path.StartsWith("/api/relay/audio/chunk/") || path == "/api/relay/audio")
+                    {
+                        string tid = queryParams.ContainsKey("targetId") ? queryParams["targetId"] : "";
+                        if (string.IsNullOrEmpty(tid) && path.StartsWith("/api/relay/audio/chunk/"))
+                        {
+                            tid = path.Substring("/api/relay/audio/chunk/".Length).Trim('/');
+                        }
+                        if (string.IsNullOrEmpty(tid)) tid = "DEFAULT";
+
+                        byte[] chunk = GetAudioChunk(tid);
+                        if (chunk != null && chunk.Length > 0)
+                        {
+                            if (queryParams.ContainsKey("json") || (headers.ContainsKey("accept") && headers["accept"].Contains("application/json")))
+                            {
+                                string cJson = string.Format("{{\"success\":true,\"targetId\":\"{0}\",\"chunk\":\"{1}\",\"size\":{2}}}", tid, Convert.ToBase64String(chunk), chunk.Length);
+                                SendJsonResponse(stream, 200, cJson);
+                            }
+                            else
+                            {
+                                string rawResp = "HTTP/1.1 200 OK\r\n" +
+                                                 "Content-Type: audio/wav\r\n" +
+                                                 "Content-Length: " + chunk.Length + "\r\n" +
+                                                 "Access-Control-Allow-Origin: *\r\n" +
+                                                 "Cache-Control: no-cache\r\n\r\n";
+                                byte[] rawHead = System.Text.Encoding.ASCII.GetBytes(rawResp);
+                                stream.Write(rawHead, 0, rawHead.Length);
+                                stream.Write(chunk, 0, chunk.Length);
+                                stream.Flush();
+                            }
+                        }
+                        else
+                        {
+                            SendJsonResponse(stream, 204, "");
+                        }
+                        return;
+                    }
+
+                    // Multi-Monitor Enumeration & Switching Endpoints
+                    if (path == "/api/relay/monitors" && method == "GET")
+                    {
+                        List<Dictionary<string, object>> mons = new List<Dictionary<string, object>>();
+                        Screen[] allScreens = Screen.AllScreens;
+                        for (int mi = 0; mi < allScreens.Length; mi++)
+                        {
+                            Dictionary<string, object> mInfo = new Dictionary<string, object>();
+                            mInfo["id"] = mi;
+                            mInfo["index"] = mi;
+                            mInfo["name"] = allScreens[mi].DeviceName;
+                            mInfo["isPrimary"] = allScreens[mi].Primary;
+                            mInfo["width"] = allScreens[mi].Bounds.Width;
+                            mInfo["height"] = allScreens[mi].Bounds.Height;
+                            mInfo["left"] = allScreens[mi].Bounds.Left;
+                            mInfo["top"] = allScreens[mi].Bounds.Top;
+                            mInfo["resolution"] = allScreens[mi].Bounds.Width + "x" + allScreens[mi].Bounds.Height;
+                            mons.Add(mInfo);
+                        }
+                        Dictionary<string, object> mResp = new Dictionary<string, object>();
+                        mResp["success"] = true;
+                        mResp["monitors"] = mons;
+                        SendJsonResponse(stream, 200, serializer.Serialize(mResp));
+                        return;
+                    }
+
+                    if (path == "/api/relay/monitors/switch" && method == "POST")
+                    {
+                        int targetIdx = 0;
+                        try {
+                            string bStr = System.Text.Encoding.UTF8.GetString(bodyBytes);
+                            Dictionary<string, object> mDict = serializer.Deserialize<Dictionary<string, object>>(bStr);
+                            if (mDict != null && mDict.ContainsKey("monitorIndex"))
+                            {
+                                targetIdx = Convert.ToInt32(mDict["monitorIndex"]);
+                            }
+                        } catch { }
+                        MainForm.SetActiveHostMonitorIndex(targetIdx);
+                        SendJsonResponse(stream, 200, string.Format("{{\"success\":true,\"activeMonitor\":{0}}}", targetIdx));
+                        return;
+                    }
+
+                    // UAC Elevation Status & Elevation Trigger
+                    if (path == "/api/system/elevation/status" && method == "GET")
+                    {
+                        bool isElevated = false;
+                        try {
+                            System.Security.Principal.WindowsPrincipal p = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent());
+                            isElevated = p.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                        } catch { }
+
+                        Dictionary<string, object> elResp = new Dictionary<string, object>();
+                        elResp["success"] = true;
+                        elResp["isElevated"] = isElevated;
+                        elResp["integrityLevel"] = isElevated ? "High" : "Medium";
+                        elResp["uiAccessAvailable"] = isElevated;
+                        elResp["secureDesktopCapable"] = isElevated;
+                        elResp["platform"] = "win32";
+                        SendJsonResponse(stream, 200, serializer.Serialize(elResp));
+                        return;
+                    }
+
+                    if (path == "/api/system/elevation/elevate" && method == "POST")
+                    {
+                        bool ok = false;
+                        try {
+                            string exe = Application.ExecutablePath;
+                            ProcessStartInfo psi = new ProcessStartInfo(exe);
+                            psi.UseShellExecute = true;
+                            psi.Verb = "runas";
+                            Process.Start(psi);
+                            ok = true;
+                        } catch { }
+
+                        SendJsonResponse(stream, 200, string.Format("{{\"success\":{0},\"elevateTriggered\":{1}}}", ok ? "true" : "false", ok ? "true" : "false"));
                         return;
                     }
 
