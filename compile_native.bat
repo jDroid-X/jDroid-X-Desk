@@ -14,7 +14,19 @@ echo [1/2] Generating C# compiler arguments file...
     echo /optimize+
     echo /debug-
     echo /win32manifest:app.manifest
+    echo /win32icon:assets\app.ico
     echo /r:System.dll,System.Windows.Forms.dll,System.Drawing.dll,System.Web.Extensions.dll,System.Net.dll,System.Data.dll,System.Xml.dll,System.Core.dll
+    echo /res:database.json,database.json
+    echo /res:version.json,version.json
+    echo /res:colab_relay_server.py,colab_relay_server.py
+    echo /res:jDroid-X-Enterprise.cer,jDroid_X_Enterprise.cer
+    echo /res:jDroid-X-Desk.exe.config,jDroid_X_Desk.exe.config
+    echo /res:app.manifest,app.manifest
+    echo /res:assets\app.ico,assets.app.ico
+    echo /res:assets\jdroidxlogo_trans.png,assets.jdroidxlogo_trans.png
+    echo /res:assets\jdroid-x-desk-presentation.png,assets.jdroid_x_desk_presentation.png
+    echo /res:scripts\configure-smart-app-control.bat,configure_smart_app_control.bat
+    echo /res:scripts\trust-root-cert.bat,trust_root_cert.bat
     echo /out:jDroid-X-Desk.exe
 ) > native_compile.rsp
 

@@ -424,15 +424,51 @@ namespace JDroidXDesk.Native
                         return;
                     }
 
+                    // Self-healing: Ensure essential files exist in working directory
+                    InstallationManager.EnsureEssentialFiles(AppDomain.CurrentDomain.BaseDirectory);
+
                     // Handle installation flag if requested via CLI
-                if (args != null && args.Length > 0 && (args[0] == "--install" || args[0] == "/install"))
-                {
-                    string err;
-                    bool ok = InstallationManager.InstallToStandardDirectory(out err);
-                    if (ok) MessageBox.Show("jDroid-X-Desk installed successfully to standard user folder:\n" + InstallationManager.GetStandardInstallDirectory(), "Installation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    else MessageBox.Show("Installation failed: " + err, "Installation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                    if (args != null && args.Length > 0 && (args[0] == "--install" || args[0] == "/install"))
+                    {
+                        string err;
+                        bool ok = InstallationManager.InstallToStandardDirectory(out err);
+                        if (ok) MessageBox.Show("jDroid-X-Desk installed successfully to standard user folder:\n" + InstallationManager.GetStandardInstallDirectory(), "Installation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        else MessageBox.Show("Installation failed: " + err, "Installation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    // If running outside the installed directory and not in dev workspace, prompt to install
+                    bool isPortable = (args != null && args.Length > 0 && (args[0] == "--portable" || args[0] == "/portable"));
+                    if (!isPortable && !InstallationManager.IsRunningFromStandardDirectory() && !InstallationManager.IsDevWorkspaceDirectory())
+                    {
+                        DialogResult setupResult = MessageBox.Show(
+                            "Welcome to jDroid-X-Desk!\n\n" +
+                            "Would you like to install jDroid-X-Desk to your standard applications folder?\n\n" +
+                            "• Desktop & Start Menu Shortcuts\n" +
+                            "• Clean system uninstaller in Windows Settings\n" +
+                            "• Auto-healing background daemons & relays\n\n" +
+                            "Click 'Yes' to install and launch, or 'No' to continue portably.",
+                            "jDroid-X-Desk Universal Setup",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question
+                        );
+
+                        if (setupResult == DialogResult.Yes)
+                        {
+                            string err;
+                            bool ok = InstallationManager.InstallToStandardDirectory(out err);
+                            if (ok)
+                            {
+                                string targetExe = Path.Combine(InstallationManager.GetStandardInstallDirectory(), "jDroid-X-Desk.exe");
+                                Process.Start(new ProcessStartInfo(targetExe) { WorkingDirectory = InstallationManager.GetStandardInstallDirectory() });
+                                return;
+                            }
+                            else
+                            {
+                                MessageBox.Show("Installation encountered an issue: " + err + "\nContinuing in current location.", "Setup Notice", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }
+                        }
+                    }
 
                 // Determine startup mode (Default: Mini Desk)
                 string chosenMode = "mini";

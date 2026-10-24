@@ -44,6 +44,11 @@ namespace JDroidXDesk.Native
 
         public void Load()
         {
+            if (!File.Exists(DbPath))
+            {
+                InstallationManager.ExtractEmbeddedResource("database.json", DbPath, false);
+            }
+
             if (File.Exists(DbPath))
             {
                 try
