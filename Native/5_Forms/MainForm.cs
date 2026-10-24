@@ -534,16 +534,43 @@ namespace JDroidXDesk.Native
             SwitchWorkspaceView(tabKey);
         }
 
-        public void InitiateRemoteConnection(string targetId)
+        public void InitiateRemoteConnection(string targetId, bool keepMiniActive = false)
         {
             if (string.IsNullOrEmpty(targetId)) return;
-            ShowFullConsole();
-            SwitchWorkspaceView("Console");
+            if (!keepMiniActive)
+            {
+                ShowFullConsole();
+                SwitchWorkspaceView("Console");
+            }
             if (txtTargetId != null) txtTargetId.Text = targetId;
             if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
             if (modernCardTargetBox != null) modernCardTargetBox.Text = targetId;
             ToggleSessionConnection();
         }
+
+        public Image GetLatestRemoteFrameClone()
+        {
+            lock (frameLock)
+            {
+                if (latestRemoteFrame == null) return null;
+                try { return (Image)latestRemoteFrame.Clone(); } catch { return null; }
+            }
+        }
+
+        public void ForwardRemoteInput(string eventType, System.Collections.Generic.Dictionary<string, object> details)
+        {
+            SendRemoteInput(eventType, details);
+        }
+
+        public void ForwardRemoteAdminCommand(string cmd)
+        {
+            SendRemoteAdminCommand(cmd);
+        }
+
+        public float CurrentMeasuredFps { get { return currentMeasuredFps; } }
+        public int LastMeasuredRttMs { get { return lastMeasuredRttMs; } }
+        public SessionConnectionState CurrentConnectionState { get { return currentConnectionState; } }
+        public string ActiveReceiverTargetId { get { return activeReceiverTargetId; } }
 
         public void DisconnectActiveSession()
         {
@@ -762,12 +789,20 @@ namespace JDroidXDesk.Native
                 headerHeartbeatPulseFrame++;
                 if (panelMetaHeartbeat != null && !panelMetaHeartbeat.IsDisposed) panelMetaHeartbeat.Invalidate();
 
-                // Periodic Host Security Alert (Incoming jDroid-X Viewer Detection)
-                if (headerHeartbeatPulseFrame % 4 == 0 && pnlHostViewerAlert != null && !pnlHostViewerAlert.IsDisposed)
+                // Periodic Host Security Alert (Incoming jDroid-X Viewer Detection on Host Desk2)
+                // Gated: A connecting client (Desk1) must NEVER prompt itself to accept an incoming session
+                if (currentConnectionState == SessionConnectionState.Disconnected &&
+                    headerHeartbeatPulseFrame % 4 == 0 && pnlHostViewerAlert != null && !pnlHostViewerAlert.IsDisposed)
                 {
                     bool hasViewer = EmbeddedRelayServer.Instance.HasActiveViewers();
                     string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
                     string clientIp = ExtractClientIp(ep);
+
+                    // Suppress loopback self-triggers
+                    if (clientIp == "127.0.0.1" || clientIp == "::1" || clientIp == "localhost")
+                    {
+                        hasViewer = false;
+                    }
 
                     if (!hasViewer)
                     {
@@ -3069,10 +3104,17 @@ namespace JDroidXDesk.Native
                 }
             }
 
-            // 5. Cloudflare Ingress & Local ports (8088 is official Colab relay port) - Instant loopback
+            // 5. Online Cloud Middle Bridge & Cloudflare Ingress
+            if (!candidateUrls.Contains("https://jdroidx.freemodels.club")) candidateUrls.Add("https://jdroidx.freemodels.club");
             if (!candidateUrls.Contains("https://desk.jdroid-x.com")) candidateUrls.Add("https://desk.jdroid-x.com");
-            if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
-            if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
+
+            // Local loopback is ONLY permitted when targetId is explicitly localhost or 127.0.0.1
+            bool isExplicitLoopback = !string.IsNullOrEmpty(targetId) && (targetId.Contains("127.0.0.1") || targetId.ToLower().Contains("localhost"));
+            if (isExplicitLoopback)
+            {
+                if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
+                if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
+            }
 
             // 6. YAML fallbacks
             try

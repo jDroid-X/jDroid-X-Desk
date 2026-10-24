@@ -489,7 +489,7 @@ namespace JDroidXDesk.Native
             colabCloudRelay = true;
             proxyServer = "";
             idServer = "relay.jdroid-x.net:21116";
-            relayServer = "http://127.0.0.1:8088";
+            relayServer = "https://jdroidx.freemodels.club";
             customDomain = "https://desk.jdroid-x.com";
             webRepoUrl = "https://github.com/jDroid-X/jDroid-X-Web";
             colabNotebookUrl = "https://colab.research.google.com/drive/1pQW73zTBEOWPpm0IffnrQrybB8khhLai";

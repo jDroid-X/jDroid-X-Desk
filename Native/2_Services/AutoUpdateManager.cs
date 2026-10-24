@@ -45,6 +45,7 @@ namespace JDroidXDesk.Native
                 long remoteSize = 0;
                 string remoteVer = null;
                 string notes = null;
+                string remoteSha = null;
 
                 // 1. Try reading version.json
                 try
@@ -60,6 +61,7 @@ namespace JDroidXDesk.Native
                             if (dict.ContainsKey("version")) remoteVer = Convert.ToString(dict["version"]);
                             if (dict.ContainsKey("description")) notes = Convert.ToString(dict["description"]);
                             if (dict.ContainsKey("exeUrl")) res.DownloadUrl = Convert.ToString(dict["exeUrl"]);
+                            if (dict.ContainsKey("sha256")) remoteSha = Convert.ToString(dict["sha256"]);
                         }
                     }
                 }
@@ -83,21 +85,50 @@ namespace JDroidXDesk.Native
                 res.RemoteVersion = !string.IsNullOrEmpty(remoteVer) ? remoteVer : "2.5.0.0";
                 res.ReleaseNotes = notes;
 
-                // Anti-Downgrade Protection: Only offer updates if remote version is strictly newer,
-                // or if versions are identical but remote binary size indicates a newer published release.
+                // Cryptographic validation: If remoteSha matches local binary hash, NO update needed!
+                if (!string.IsNullOrEmpty(remoteSha) && File.Exists(localExePath))
+                {
+                    try
+                    {
+                        using (var sha = System.Security.Cryptography.SHA256.Create())
+                        using (var fs = File.OpenRead(localExePath))
+                        {
+                            byte[] h = sha.ComputeHash(fs);
+                            string localHex = BitConverter.ToString(h).Replace("-", "").ToLowerInvariant();
+                            if (string.Equals(remoteSha.Trim(), localHex, StringComparison.OrdinalIgnoreCase))
+                            {
+                                res.UpdateAvailable = false;
+                                return res;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // Anti-Downgrade & Cryptographic Build Verification
+                // Guard: Do not prompt if remote and local binaries are the same size and hash!
                 bool isVersionNewer = false;
                 bool isSameVersionDifferentSize = false;
                 try
                 {
                     Version locV = new Version(res.LocalVersion);
                     Version remV = new Version(res.RemoteVersion);
+
                     if (remV > locV)
                     {
-                        isVersionNewer = true;
+                        // If sizes are identical and > 50KB, check if this is actually the same binary image
+                        if (remoteSize > 50000 && res.LocalFileSize > 50000 && remoteSize == res.LocalFileSize)
+                        {
+                            isVersionNewer = false; // Identical byte size indicates same compiled release
+                        }
+                        else
+                        {
+                            isVersionNewer = true;
+                        }
                     }
                     else if (remV == locV && remoteSize > 50000 && remoteSize != res.LocalFileSize)
                     {
-                        // Check if remote is actually different build of same version
+                        // Same version tag but remote publisher released an updated binary size
                         isSameVersionDifferentSize = true;
                     }
                 }

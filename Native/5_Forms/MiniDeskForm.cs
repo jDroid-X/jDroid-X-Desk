@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace JDroidXDesk.Native
 {
@@ -13,14 +14,16 @@ namespace JDroidXDesk.Native
         private MainForm mainForm;
         private ToolTip toolTip;
 
-        // UI Controls
+        // --- UI Panels ---
         private Panel headerPanel;
         private Label lblHeaderTitle;
         private Label lblStatusDot;
         private Button btnHamburger;
         private ContextMenuStrip menuHamburger;
-        private Button btnMaxToFull;
+        private Button btnHeaderFullScreen;
 
+        // Pre-Connection View
+        private Panel pnlPreConnect;
         private ModernCardPanel cardThisDesk;
         private Label lblMyDeskId;
         private ModernButton btnCopyMyId;
@@ -38,9 +41,28 @@ namespace JDroidXDesk.Native
         private Button btnIconFullScreen;
         private Button btnIconClose;
 
+        // Connected View (Remote Screen Viewport within THIS Screen)
+        private Panel pnlConnectedViewport;
+        private Panel pnlSessionControls;
+        private Label lblSessionTarget;
+        private Label lblSessionTelemetry;
+        private Button btnSessionDisconnect;
+        private Button btnSessionFullScreen;
+        private Button btnSessionCad;
+        private Button btnSessionClipboard;
+        private Button btnSessionDetails;
+        private PictureBox remoteCanvas;
+
+        // Footer & Timers
         private Panel footerStatusBar;
         private Label lblFooterStatus;
-        private Timer refreshTimer;
+        private Timer liveUpdateTimer;
+
+        // Fullscreen state tracking
+        private bool isFullScreenMode = false;
+        private FormWindowState previousWindowState = FormWindowState.Normal;
+        private FormBorderStyle previousBorderStyle = FormBorderStyle.Sizable;
+        private Rectangle previousBounds = Rectangle.Empty;
 
         public MiniDeskForm(MainForm main)
         {
@@ -53,29 +75,30 @@ namespace JDroidXDesk.Native
                 ShowAlways = true
             };
 
-            this.Text = "jDroid-X-Desk Mini | Remote Connection";
-            this.Size = new Size(500, 360);
-            this.MinimumSize = new Size(460, 340);
+            // Master Screen Configuration: Generous, modern workspace, Default Light Theme
+            this.Text = "jDroid-X-Desk Mini | Remote Desktop Console";
+            this.Size = new Size(1024, 720);
+            this.MinimumSize = new Size(800, 560);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.Sizable;
-            this.BackColor = ThemePalette.ColorBgWorkspace;
-            this.ForeColor = ThemePalette.ColorTextPrimary;
+            this.BackColor = Color.FromArgb(248, 250, 252); // Light Theme Workspace
+            this.ForeColor = Color.FromArgb(15, 23, 42);
             this.Font = new Font("Segoe UI", 9f);
+            this.KeyPreview = true;
 
             BuildMiniUi();
 
-            // Hook state refresh timer
-            refreshTimer = new Timer { Interval = 1000 };
-            refreshTimer.Tick += (s, e) => UpdateLiveState();
-            refreshTimer.Start();
+            // Refresh state periodically
+            liveUpdateTimer = new Timer { Interval = 500 };
+            liveUpdateTimer.Tick += (s, e) => UpdateLiveState();
+            liveUpdateTimer.Start();
 
             this.FormClosing += (s, e) => {
                 if (e.CloseReason == CloseReason.UserClosing)
                 {
-                    // If session active, prompt
                     if (mainForm != null && mainForm.IsSessionActive)
                     {
-                        DialogResult dr = MessageBox.Show(this, "A remote connection is currently active. Do you want to disconnect and close?", "Active Session", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        DialogResult dr = MessageBox.Show(this, "A remote desktop connection is currently active.\nDo you want to disconnect and exit?", "Active Remote Connection", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                         if (dr != DialogResult.Yes)
                         {
                             e.Cancel = true;
@@ -83,7 +106,7 @@ namespace JDroidXDesk.Native
                         }
                         mainForm.DisconnectActiveSession();
                     }
-                    // Hide to background tray instead of killing daemon
+                    // Hide to system tray
                     e.Cancel = true;
                     this.Hide();
                 }
@@ -94,39 +117,45 @@ namespace JDroidXDesk.Native
         {
             this.Controls.Clear();
 
-            // 1. TOP HEADER BAR (With Left Hamburger Menu Button)
+            // 1. TOP HEADER PANEL
             headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 44,
-                BackColor = ThemePalette.ColorBgSidebarHeader,
+                Height = 46,
+                BackColor = Color.FromArgb(255, 255, 255),
                 Padding = new Padding(8, 4, 8, 4)
+            };
+            headerPanel.Paint += (s, e) => {
+                using (Pen p = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    e.Graphics.DrawLine(p, 0, headerPanel.Height - 1, headerPanel.Width, headerPanel.Height - 1);
+                }
             };
 
             // Top-left Menu [☰] Button
             btnHamburger = new Button
             {
                 Text = "☰",
-                Size = new Size(36, 34),
+                Size = new Size(38, 36),
                 Location = new Point(6, 5),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 12f, FontStyle.Bold),
-                ForeColor = ThemePalette.ColorTextPrimary,
+                ForeColor = Color.FromArgb(30, 41, 59),
                 BackColor = Color.Transparent,
                 Cursor = Cursors.Hand
             };
             btnHamburger.FlatAppearance.BorderSize = 0;
             toolTip.SetToolTip(btnHamburger, "Options & Connect Details Menu");
 
-            // Build Drop-down Context Menu
+            // Drop-down Context Menu
             menuHamburger = new ContextMenuStrip();
-            menuHamburger.Items.Add("📋 Connect Detail (Full Desk Console)", null, (s, e) => OpenFullDeskDetails());
+            menuHamburger.Items.Add("📋 Connect Detail (Full Console)", null, (s, e) => OpenFullDeskDetails());
             menuHamburger.Items.Add("🗄️ Address Book / Fleet", null, (s, e) => { mainForm.ShowFullConsole(); mainForm.SwitchToTab("Fleet"); });
             menuHamburger.Items.Add("⚙️ Settings Studio", null, (s, e) => { mainForm.ShowFullConsole(); mainForm.SwitchToTab("Settings"); });
             menuHamburger.Items.Add("🔄 Check for Updates...", null, (s, e) => mainForm.CheckForUpdates(false));
             menuHamburger.Items.Add("📦 Install to User Folder...", null, (s, e) => mainForm.InstallToUserFolder());
             menuHamburger.Items.Add(new ToolStripSeparator());
-            menuHamburger.Items.Add("❌ Exit Application", null, (s, e) => this.Close());
+            menuHamburger.Items.Add("❌ Exit Application", null, (s, e) => Application.Exit());
 
             btnHamburger.Click += (s, e) => {
                 menuHamburger.Show(btnHamburger, new Point(0, btnHamburger.Height));
@@ -136,7 +165,7 @@ namespace JDroidXDesk.Native
             {
                 Text = "🟢",
                 Font = new Font("Segoe UI Emoji", 10f),
-                Location = new Point(48, 12),
+                Location = new Point(50, 13),
                 AutoSize = true,
                 BackColor = Color.Transparent
             };
@@ -144,74 +173,58 @@ namespace JDroidXDesk.Native
             lblHeaderTitle = new Label
             {
                 Text = "jDroid-X-Desk Mini",
-                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
-                ForeColor = ThemePalette.ColorTextPrimary,
-                Location = new Point(72, 10),
+                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                Location = new Point(74, 11),
                 AutoSize = true,
                 BackColor = Color.Transparent
             };
 
-            btnMaxToFull = new Button
+            btnHeaderFullScreen = new Button
             {
-                Text = "🗖 Details",
-                Size = new Size(74, 28),
+                Text = "⛶ Full Screen",
+                Size = new Size(110, 32),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(this.Width - 110, 8),
+                Location = new Point(this.Width - 140, 7),
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                ForeColor = ThemePalette.ColorTextSecondary,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                BackColor = Color.FromArgb(241, 245, 249),
                 Cursor = Cursors.Hand
             };
-            btnMaxToFull.FlatAppearance.BorderSize = 0;
-            toolTip.SetToolTip(btnMaxToFull, "Open Full Desk Console (Connect Detail)");
-            btnMaxToFull.Click += (s, e) => OpenFullDeskDetails();
+            btnHeaderFullScreen.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
+            toolTip.SetToolTip(btnHeaderFullScreen, "Toggle Fullscreen Viewport");
+            btnHeaderFullScreen.Click += (s, e) => ActionToggleFullScreen();
 
             headerPanel.Controls.Add(btnHamburger);
             headerPanel.Controls.Add(lblStatusDot);
             headerPanel.Controls.Add(lblHeaderTitle);
-            headerPanel.Controls.Add(btnMaxToFull);
+            headerPanel.Controls.Add(btnHeaderFullScreen);
 
-            // 2. BOTTOM STATUS BAR
-            footerStatusBar = new Panel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 28,
-                BackColor = ThemePalette.ColorBgSidebarHeader,
-                Padding = new Padding(10, 5, 10, 5)
-            };
-            lblFooterStatus = new Label
-            {
-                Text = "🟢 Ready | Local Port: 8088 | Direct & Relay Active",
-                Font = new Font("Segoe UI", 8.2f),
-                ForeColor = ThemePalette.ColorTextSecondary,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            footerStatusBar.Controls.Add(lblFooterStatus);
-
-            // 3. CENTER CONTENT
-            Panel pnlCenter = new Panel
+            // 2. PRE-CONNECTION VIEW (Light Theme Cards + Icon Toolbar)
+            pnlPreConnect = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                Padding = new Padding(14, 10, 14, 6),
+                BackColor = Color.FromArgb(248, 250, 252),
+                Padding = new Padding(24, 20, 24, 20),
                 AutoScroll = true
             };
 
-            // CARD 1: THIS DESK
+            // CARD 1: THIS DESK CODE
             cardThisDesk = new ModernCardPanel
             {
                 Dock = DockStyle.Top,
-                Height = 84,
-                BorderColor = ThemePalette.ColorBorderCard,
-                Margin = new Padding(0, 0, 0, 10)
+                Height = 95,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                BackColor = Color.White,
+                Margin = new Padding(0, 0, 0, 16)
             };
             Label lblThisTitle = new Label
             {
-                Text = "THIS DESK CODE (Share to allow remote control):",
-                Font = new Font("Segoe UI", 7.8f, FontStyle.Bold),
-                ForeColor = ThemePalette.ColorTextSecondary,
-                Location = new Point(12, 10),
+                Text = "THIS DESK CODE (Share with partner to allow remote control):",
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(16, 12),
                 AutoSize = true,
                 BackColor = Color.Transparent
             };
@@ -220,9 +233,9 @@ namespace JDroidXDesk.Native
             lblMyDeskId = new Label
             {
                 Text = myId,
-                Font = new Font("Consolas", 15f, FontStyle.Bold),
-                ForeColor = ThemePalette.ColorAccentSky,
-                Location = new Point(12, 30),
+                Font = new Font("Consolas", 18f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(2, 132, 199), // Accent Sky
+                Location = new Point(16, 32),
                 AutoSize = true,
                 BackColor = Color.Transparent,
                 Cursor = Cursors.Hand
@@ -232,12 +245,12 @@ namespace JDroidXDesk.Native
 
             btnCopyMyId = new ModernButton
             {
-                Text = "📋 Copy",
-                Size = new Size(74, 30),
-                Location = new Point(240, 28),
-                NormalColor = Color.FromArgb(51, 65, 85),
-                HoverColor = Color.FromArgb(71, 85, 105),
-                TextColor = Color.White,
+                Text = "📋 Copy Code",
+                Size = new Size(110, 34),
+                Location = new Point(280, 32),
+                NormalColor = Color.FromArgb(241, 245, 249),
+                HoverColor = Color.FromArgb(226, 232, 240),
+                TextColor = Color.FromArgb(15, 23, 42),
                 Font = new Font("Segoe UI", 8.5f, FontStyle.Bold)
             };
             toolTip.SetToolTip(btnCopyMyId, "Copy your Desk ID to clipboard");
@@ -245,10 +258,10 @@ namespace JDroidXDesk.Native
 
             lblMyDeskStatus = new Label
             {
-                Text = "🟢 Active & Ready for Incoming Connections",
-                Font = new Font("Segoe UI", 7.8f),
-                ForeColor = ThemePalette.ColorAccentEmerald,
-                Location = new Point(12, 60),
+                Text = "🟢 Ready for Incoming Connections via Cloud Middle Bridge",
+                Font = new Font("Segoe UI", 8.5f),
+                ForeColor = Color.FromArgb(16, 185, 129),
+                Location = new Point(16, 70),
                 AutoSize = true,
                 BackColor = Color.Transparent
             };
@@ -262,24 +275,25 @@ namespace JDroidXDesk.Native
             cardRemoteDesk = new ModernCardPanel
             {
                 Dock = DockStyle.Top,
-                Height = 88,
-                BorderColor = ThemePalette.ColorAccentSky,
-                Margin = new Padding(0, 8, 0, 10)
+                Height = 100,
+                BorderColor = Color.FromArgb(2, 132, 199),
+                BackColor = Color.White,
+                Margin = new Padding(0, 16, 0, 16)
             };
             Label lblRemoteTitle = new Label
             {
-                Text = "REMOTE DESK (Enter partner Desk ID to connect):",
-                Font = new Font("Segoe UI", 7.8f, FontStyle.Bold),
-                ForeColor = ThemePalette.ColorTextSecondary,
-                Location = new Point(12, 8),
+                Text = "REMOTE DESK (Enter partner Desk ID to control remote machine):",
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(16, 12),
                 AutoSize = true,
                 BackColor = Color.Transparent
             };
 
             txtRemoteDeskCode = new ModernTextBox
             {
-                Location = new Point(12, 28),
-                Size = new Size(240, 42),
+                Location = new Point(16, 36),
+                Size = new Size(280, 44),
                 PlaceholderText = "XXX-XXX-XXX",
                 AutoFormatDeskId = true
             };
@@ -290,27 +304,27 @@ namespace JDroidXDesk.Native
             btnConnect = new ModernButton
             {
                 Text = "⚡ Connect",
-                Size = new Size(116, 42),
-                Location = new Point(262, 28),
-                NormalColor = ThemePalette.ColorAccentEmerald,
+                Size = new Size(130, 44),
+                Location = new Point(310, 36),
+                NormalColor = Color.FromArgb(16, 185, 129),
                 HoverColor = Color.FromArgb(5, 150, 105),
                 TextColor = Color.White,
-                Font = new Font("Segoe UI", 10f, FontStyle.Bold)
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold)
             };
-            toolTip.SetToolTip(btnConnect, "Initiate Remote Desktop Connection");
+            toolTip.SetToolTip(btnConnect, "Initiate Remote Connection within this screen");
             btnConnect.Click += (s, e) => TriggerConnect();
 
             cardRemoteDesk.Controls.Add(lblRemoteTitle);
             cardRemoteDesk.Controls.Add(txtRemoteDeskCode);
             cardRemoteDesk.Controls.Add(btnConnect);
 
-            // 4. MANDATORY ICON TOOLBAR (Add, Start, Stop, Details, Full Screen, Close)
+            // 3. MANDATORY ICON TOOLBAR
             pnlIconToolbar = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 54,
+                Height = 60,
                 BackColor = Color.Transparent,
-                Padding = new Padding(4, 6, 4, 6)
+                Padding = new Padding(0, 10, 0, 10)
             };
 
             FlowLayoutPanel flowIcons = new FlowLayoutPanel
@@ -325,24 +339,23 @@ namespace JDroidXDesk.Native
                 Button btn = new Button
                 {
                     Text = iconText,
-                    Size = new Size(68, 40),
+                    Size = new Size(88, 42),
                     FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI Emoji", 11f),
-                    BackColor = ThemePalette.ColorBgCard,
-                    ForeColor = ThemePalette.ColorTextPrimary,
+                    Font = new Font("Segoe UI Emoji", 9.5f, FontStyle.Bold),
+                    BackColor = Color.White,
+                    ForeColor = Color.FromArgb(15, 23, 42),
                     Cursor = Cursors.Hand,
-                    Margin = new Padding(4, 0, 4, 0)
+                    Margin = new Padding(0, 0, 10, 0)
                 };
-                btn.FlatAppearance.BorderColor = ThemePalette.ColorBorderCard;
+                btn.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
                 btn.FlatAppearance.BorderSize = 1;
                 toolTip.SetToolTip(btn, tip);
                 btn.Click += (s, e) => action();
                 return btn;
             };
 
-            // Mandatory Options in Icon format:
             btnIconAdd = makeIconButton("➕ Add", "Add remote Desk ID to Contacts / Address Book", () => ActionAddContact());
-            btnIconStart = makeIconButton("▶️ Start", "Start / Resume Host Screen Broadcasting Daemon", () => ActionStartHosting());
+            btnIconStart = makeIconButton("▶️ Start", "Start / Resume Host Screen Broadcasting", () => ActionStartHosting());
             btnIconStop = makeIconButton("⏹️ Stop", "Stop Active Session or Disconnect Remote Link", () => ActionStopSession());
             btnIconDetails = makeIconButton("ℹ️ Details", "Connect Detail: Open Full Detailed Workspace", () => OpenFullDeskDetails());
             btnIconFullScreen = makeIconButton("⛶ Full", "Toggle Full Screen Remote Viewport", () => ActionToggleFullScreen());
@@ -356,14 +369,313 @@ namespace JDroidXDesk.Native
             flowIcons.Controls.Add(btnIconClose);
             pnlIconToolbar.Controls.Add(flowIcons);
 
-            // Assemble into Center
-            pnlCenter.Controls.Add(pnlIconToolbar);
-            pnlCenter.Controls.Add(cardRemoteDesk);
-            pnlCenter.Controls.Add(cardThisDesk);
+            pnlPreConnect.Controls.Add(pnlIconToolbar);
+            pnlPreConnect.Controls.Add(cardRemoteDesk);
+            pnlPreConnect.Controls.Add(cardThisDesk);
 
-            this.Controls.Add(pnlCenter);
+            // 4. CONNECTED VIEWPORT (Remote Screen displayed right within THIS screen!)
+            pnlConnectedViewport = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(10, 15, 26),
+                Visible = false
+            };
+
+            // Top Session Floating Control Bar
+            pnlSessionControls = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 44,
+                BackColor = Color.FromArgb(24, 32, 47),
+                Padding = new Padding(8, 4, 8, 4)
+            };
+
+            lblSessionTarget = new Label
+            {
+                Text = "Connected: ---",
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(248, 250, 252),
+                Location = new Point(12, 12),
+                AutoSize = true
+            };
+
+            lblSessionTelemetry = new Label
+            {
+                Text = "⚡ 60 FPS | 12 ms RTT | GPU Accelerated",
+                Font = new Font("Consolas", 9f),
+                ForeColor = Color.FromArgb(16, 185, 129),
+                Location = new Point(220, 13),
+                AutoSize = true
+            };
+
+            Func<string, string, Action, Color, Button> makeBarButton = (text, tip, action, bg) => {
+                Button btn = new Button
+                {
+                    Text = text,
+                    Size = new Size(100, 32),
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI Emoji", 8.5f, FontStyle.Bold),
+                    ForeColor = Color.White,
+                    BackColor = bg,
+                    Cursor = Cursors.Hand,
+                    Dock = DockStyle.Right,
+                    Margin = new Padding(4, 0, 4, 0)
+                };
+                btn.FlatAppearance.BorderSize = 0;
+                toolTip.SetToolTip(btn, tip);
+                btn.Click += (s, e) => action();
+                return btn;
+            };
+
+            btnSessionDisconnect = makeBarButton("⏹️ Disconnect", "Disconnect and End Remote Session", () => ActionStopSession(), Color.FromArgb(239, 68, 68));
+            btnSessionFullScreen = makeBarButton("⛶ Full Screen", "Toggle Borderless Full Screen Viewport", () => ActionToggleFullScreen(), Color.FromArgb(51, 65, 85));
+            btnSessionCad = makeBarButton("⌨️ Ctrl+Alt+Del", "Send Ctrl+Alt+Del Administrative Command", () => {
+                if (mainForm != null) mainForm.ForwardRemoteAdminCommand("cad");
+            }, Color.FromArgb(71, 85, 105));
+            btnSessionClipboard = makeBarButton("📋 Clipboard", "Synchronize Clipboard with Remote Desk", () => {
+                try {
+                    string clip = Clipboard.GetText();
+                    if (!string.IsNullOrEmpty(clip) && mainForm != null)
+                    {
+                        var ev = new Dictionary<string, object> { { "text", clip } };
+                        mainForm.ForwardRemoteInput("clipboard", ev);
+                        MessageBox.Show(this, "Local clipboard synced to remote workstation.", "Clipboard Synced", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                } catch { }
+            }, Color.FromArgb(71, 85, 105));
+            btnSessionDetails = makeBarButton("ℹ️ Details", "Switch to Full Console", () => OpenFullDeskDetails(), Color.FromArgb(71, 85, 105));
+
+            pnlSessionControls.Controls.Add(lblSessionTarget);
+            pnlSessionControls.Controls.Add(lblSessionTelemetry);
+            pnlSessionControls.Controls.Add(btnSessionDetails);
+            pnlSessionControls.Controls.Add(btnSessionClipboard);
+            pnlSessionControls.Controls.Add(btnSessionCad);
+            pnlSessionControls.Controls.Add(btnSessionFullScreen);
+            pnlSessionControls.Controls.Add(btnSessionDisconnect);
+
+            // Double-Buffered Remote Viewport Canvas
+            remoteCanvas = new DoubleBufferedCanvas
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(10, 15, 26)
+            };
+            remoteCanvas.Paint += RemoteCanvas_Paint;
+            remoteCanvas.MouseDown += RemoteCanvas_MouseDown;
+            remoteCanvas.MouseUp += RemoteCanvas_MouseUp;
+            remoteCanvas.MouseMove += RemoteCanvas_MouseMove;
+            remoteCanvas.MouseClick += RemoteCanvas_MouseClick;
+            remoteCanvas.MouseDoubleClick += RemoteCanvas_MouseDoubleClick;
+
+            pnlConnectedViewport.Controls.Add(remoteCanvas);
+            pnlConnectedViewport.Controls.Add(pnlSessionControls);
+
+            // 5. FOOTER STATUS BAR
+            footerStatusBar = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 28,
+                BackColor = Color.FromArgb(255, 255, 255),
+                Padding = new Padding(12, 4, 12, 4)
+            };
+            footerStatusBar.Paint += (s, e) => {
+                using (Pen p = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    e.Graphics.DrawLine(p, 0, 0, footerStatusBar.Width, 0);
+                }
+            };
+
+            lblFooterStatus = new Label
+            {
+                Text = "🟢 Ready | Cloud Middle Bridge Connected | Zero Loopback",
+                Font = new Font("Segoe UI", 8.2f),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            footerStatusBar.Controls.Add(lblFooterStatus);
+
+            // Assemble into Form
+            this.Controls.Add(pnlConnectedViewport);
+            this.Controls.Add(pnlPreConnect);
             this.Controls.Add(footerStatusBar);
             this.Controls.Add(headerPanel);
+        }
+
+        // --- Frame Arrival Notification from MainForm ---
+        public void OnRemoteFrameReceived(int frameBytes)
+        {
+            if (this.IsDisposed || !this.IsHandleCreated) return;
+            try
+            {
+                this.BeginInvoke(new Action(() => {
+                    if (remoteCanvas != null && !remoteCanvas.IsDisposed)
+                    {
+                        remoteCanvas.Invalidate();
+                    }
+                }));
+            }
+            catch { }
+        }
+
+        // --- Remote Canvas Rendering ---
+        private void RemoteCanvas_Paint(object sender, PaintEventArgs e)
+        {
+            if (mainForm == null) return;
+            Image frame = mainForm.GetLatestRemoteFrameClone();
+            if (frame == null)
+            {
+                using (Brush b = new SolidBrush(Color.FromArgb(148, 163, 184)))
+                using (Font f = new Font("Segoe UI", 12f, FontStyle.Bold))
+                {
+                    string msg = "Connecting to Remote Workstation...\nAwaiting Video Keyframe...";
+                    SizeF sz = e.Graphics.MeasureString(msg, f);
+                    e.Graphics.DrawString(msg, f, b, (remoteCanvas.Width - sz.Width) / 2, (remoteCanvas.Height - sz.Height) / 2);
+                }
+                return;
+            }
+
+            try
+            {
+                int cw = remoteCanvas.Width;
+                int ch = remoteCanvas.Height;
+                int imgW = frame.Width;
+                int imgH = frame.Height;
+
+                float ratio = Math.Min((float)cw / imgW, (float)ch / imgH);
+                int targetW = (int)(imgW * ratio);
+                int targetH = (int)(imgH * ratio);
+                int targetX = (cw - targetW) / 2;
+                int targetY = (ch - targetH) / 2;
+
+                e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                e.Graphics.DrawImage(frame, targetX, targetY, targetW, targetH);
+            }
+            catch { }
+            finally
+            {
+                frame.Dispose();
+            }
+        }
+
+        // --- Input Translation & Forwarding ---
+        private bool MapClientToRemote(int clientX, int clientY, out int remoteX, out int remoteY)
+        {
+            remoteX = 0;
+            remoteY = 0;
+            if (remoteCanvas == null || remoteCanvas.Width <= 0 || remoteCanvas.Height <= 0) return false;
+
+            int cw = remoteCanvas.Width;
+            int ch = remoteCanvas.Height;
+            int imgW = 1280;
+            int imgH = 720;
+
+            Image frame = mainForm != null ? mainForm.GetLatestRemoteFrameClone() : null;
+            if (frame != null)
+            {
+                imgW = frame.Width;
+                imgH = frame.Height;
+                frame.Dispose();
+            }
+
+            float ratio = Math.Min((float)cw / imgW, (float)ch / imgH);
+            int targetW = (int)(imgW * ratio);
+            int targetH = (int)(imgH * ratio);
+            int targetX = (cw - targetW) / 2;
+            int targetY = (ch - targetH) / 2;
+
+            if (clientX < targetX || clientX > targetX + targetW || clientY < targetY || clientY > targetY + targetH)
+                return false;
+
+            remoteX = (int)((clientX - targetX) / ratio);
+            remoteY = (int)((clientY - targetY) / ratio);
+            return true;
+        }
+
+        private void RemoteCanvas_MouseDown(object sender, MouseEventArgs e)
+        {
+            int rx, ry;
+            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
+            {
+                string btn = (e.Button == MouseButtons.Right) ? "right" : (e.Button == MouseButtons.Middle ? "middle" : "left");
+                var ev = new Dictionary<string, object> { { "act", "down" }, { "btn", btn }, { "x", rx }, { "y", ry } };
+                mainForm.ForwardRemoteInput("mouse", ev);
+            }
+        }
+
+        private void RemoteCanvas_MouseUp(object sender, MouseEventArgs e)
+        {
+            int rx, ry;
+            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
+            {
+                string btn = (e.Button == MouseButtons.Right) ? "right" : (e.Button == MouseButtons.Middle ? "middle" : "left");
+                var ev = new Dictionary<string, object> { { "act", "up" }, { "btn", btn }, { "x", rx }, { "y", ry } };
+                mainForm.ForwardRemoteInput("mouse", ev);
+            }
+        }
+
+        private void RemoteCanvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            int rx, ry;
+            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
+            {
+                var ev = new Dictionary<string, object> { { "act", "move" }, { "x", rx }, { "y", ry } };
+                mainForm.ForwardRemoteInput("mouse", ev);
+            }
+        }
+
+        private void RemoteCanvas_MouseClick(object sender, MouseEventArgs e)
+        {
+            int rx, ry;
+            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
+            {
+                string btn = (e.Button == MouseButtons.Right) ? "right" : (e.Button == MouseButtons.Middle ? "middle" : "left");
+                var ev = new Dictionary<string, object> { { "act", "click" }, { "btn", btn }, { "x", rx }, { "y", ry } };
+                mainForm.ForwardRemoteInput("mouse", ev);
+            }
+        }
+
+        private void RemoteCanvas_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            int rx, ry;
+            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
+            {
+                var ev = new Dictionary<string, object> { { "act", "dblclick" }, { "btn", "left" }, { "x", rx }, { "y", ry } };
+                mainForm.ForwardRemoteInput("mouse", ev);
+            }
+        }
+
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            if (mainForm != null && mainForm.IsSessionActive && pnlConnectedViewport.Visible)
+            {
+                var ev = new Dictionary<string, object> { { "act", "down" }, { "key", (int)keyData }, { "name", keyData.ToString() } };
+                mainForm.ForwardRemoteInput("key", ev);
+                return true;
+            }
+            return base.ProcessDialogKey(keyData);
+        }
+
+        // --- Connection Triggers & Actions ---
+        private void TriggerConnect()
+        {
+            string target = txtRemoteDeskCode.Text.Trim();
+            if (string.IsNullOrEmpty(target))
+            {
+                MessageBox.Show(this, "Please enter a valid remote Desk ID or IP address to connect.", "Enter Remote Desk Code", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtRemoteDeskCode.Focus();
+                return;
+            }
+
+            if (mainForm != null)
+            {
+                lblFooterStatus.Text = "🟡 Connecting to " + target + " via Cloud Middle Bridge...";
+                btnConnect.Text = "Connecting...";
+                btnConnect.NormalColor = Color.FromArgb(245, 158, 11);
+
+                // Initiate connection while KEEPING MiniDeskForm active as the primary viewport
+                mainForm.InitiateRemoteConnection(target, keepMiniActive: true);
+            }
         }
 
         private void CopyDeskIdToClipboard()
@@ -378,26 +690,6 @@ namespace JDroidXDesk.Native
                 }
             }
             catch { }
-        }
-
-        private void TriggerConnect()
-        {
-            string target = txtRemoteDeskCode.Text.Trim();
-            if (string.IsNullOrEmpty(target))
-            {
-                MessageBox.Show(this, "Please enter a valid remote Desk ID or IP address to connect.", "Enter Remote Desk Code", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtRemoteDeskCode.Focus();
-                return;
-            }
-
-            if (mainForm != null)
-            {
-                lblFooterStatus.Text = "🟡 Connecting to " + target + "...";
-                btnConnect.Text = "Connecting...";
-                btnConnect.NormalColor = Color.FromArgb(245, 158, 11);
-
-                mainForm.InitiateRemoteConnection(target);
-            }
         }
 
         private void ActionAddContact()
@@ -421,8 +713,8 @@ namespace JDroidXDesk.Native
             if (mainForm != null)
             {
                 mainForm.StartHostDaemon();
-                lblMyDeskStatus.Text = "🟢 Host Broadcast Active & Streaming";
-                lblMyDeskStatus.ForeColor = ThemePalette.ColorAccentEmerald;
+                lblMyDeskStatus.Text = "🟢 Host Broadcast Active & Streaming via Cloud Relay";
+                lblMyDeskStatus.ForeColor = Color.FromArgb(16, 185, 129);
                 MessageBox.Show(this, "Host screening daemon is active and listening for authorized connections.", "Host Streaming Active", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
@@ -436,7 +728,7 @@ namespace JDroidXDesk.Native
                     mainForm.DisconnectActiveSession();
                     lblFooterStatus.Text = "🟢 Session Disconnected | Ready";
                     btnConnect.Text = "⚡ Connect";
-                    btnConnect.NormalColor = ThemePalette.ColorAccentEmerald;
+                    btnConnect.NormalColor = Color.FromArgb(16, 185, 129);
                     MessageBox.Show(this, "Active remote session has been disconnected.", "Session Ended", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
@@ -448,9 +740,32 @@ namespace JDroidXDesk.Native
 
         private void ActionToggleFullScreen()
         {
-            if (mainForm != null)
+            if (!isFullScreenMode)
             {
-                mainForm.ToggleFullScreen();
+                previousWindowState = this.WindowState;
+                previousBorderStyle = this.FormBorderStyle;
+                previousBounds = this.Bounds;
+
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.WindowState = FormWindowState.Normal;
+                this.Bounds = Screen.FromControl(this).Bounds;
+                headerPanel.Visible = false;
+                footerStatusBar.Visible = false;
+                isFullScreenMode = true;
+                btnSessionFullScreen.Text = "🗗 Restore";
+            }
+            else
+            {
+                this.FormBorderStyle = previousBorderStyle;
+                this.WindowState = previousWindowState;
+                if (previousWindowState == FormWindowState.Normal && !previousBounds.IsEmpty)
+                {
+                    this.Bounds = previousBounds;
+                }
+                headerPanel.Visible = true;
+                footerStatusBar.Visible = true;
+                isFullScreenMode = false;
+                btnSessionFullScreen.Text = "⛶ Full Screen";
             }
         }
 
@@ -476,23 +791,49 @@ namespace JDroidXDesk.Native
 
                 if (mainForm.IsSessionActive)
                 {
+                    // Seamless Switch: Display Remote Viewport within THIS Screen
+                    if (!pnlConnectedViewport.Visible)
+                    {
+                        pnlPreConnect.Visible = false;
+                        pnlConnectedViewport.Visible = true;
+                    }
+
                     lblStatusDot.Text = "🔴";
-                    btnConnect.Text = "Disconnect";
-                    btnConnect.NormalColor = ThemePalette.ColorAccentRose;
-                    lblFooterStatus.Text = "🔴 Connected | Active Stream | 60 FPS";
+                    string tid = mainForm.ActiveReceiverTargetId ?? "Remote Desk";
+                    lblSessionTarget.Text = "Connected: " + tid;
+                    lblSessionTelemetry.Text = string.Format("⚡ {0:F0} FPS | {1} ms RTT | GPU Accelerated", mainForm.CurrentMeasuredFps, mainForm.LastMeasuredRttMs);
+                    lblFooterStatus.Text = "🔴 Connected to " + tid + " | Active Stream | 60 FPS";
                 }
                 else
                 {
+                    // Return to Pre-Connection Cards View
+                    if (!pnlPreConnect.Visible)
+                    {
+                        pnlConnectedViewport.Visible = false;
+                        pnlPreConnect.Visible = true;
+                    }
+
                     lblStatusDot.Text = "🟢";
-                    if (btnConnect.Text == "Disconnect")
+                    if (btnConnect.Text == "Connecting...")
                     {
                         btnConnect.Text = "⚡ Connect";
-                        btnConnect.NormalColor = ThemePalette.ColorAccentEmerald;
-                        lblFooterStatus.Text = "🟢 Ready | Local Port: 8088 | Direct & Relay Active";
+                        btnConnect.NormalColor = Color.FromArgb(16, 185, 129);
+                        lblFooterStatus.Text = "🟢 Ready | Cloud Middle Bridge Connected";
                     }
                 }
             }
             catch { }
+        }
+    }
+
+    // Helper Double-Buffered PictureBox to eliminate rendering flicker
+    public class DoubleBufferedCanvas : PictureBox
+    {
+        public DoubleBufferedCanvas()
+        {
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            this.UpdateStyles();
         }
     }
 }

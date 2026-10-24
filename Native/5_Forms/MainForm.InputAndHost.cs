@@ -1136,6 +1136,11 @@ namespace JDroidXDesk.Native
                 {
                     viewportCanvas.BeginInvoke(new Action(() => viewportCanvas.Invalidate()));
                 }
+
+                if (miniDeskForm != null && !miniDeskForm.IsDisposed && miniDeskForm.Visible)
+                {
+                    miniDeskForm.OnRemoteFrameReceived(imgBytes.Length);
+                }
             }
             catch { }
         }
