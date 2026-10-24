@@ -31,7 +31,7 @@ del native_compile.rsp 2>nul
 if %RESULT% EQU 0 (
     echo Compilation Succeeded: jDroid-X-Desk.exe
     if exist "%~dp0scripts\sign-exe.ps1" (
-        echo [3/3] Applying Microsoft Authenticode code signature...
+        echo [3/3] Checking Microsoft Authenticode & Code Integrity Whitelist...
         powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\sign-exe.ps1" -TargetExe "%~dp0jDroid-X-Desk.exe"
     )
 ) else (

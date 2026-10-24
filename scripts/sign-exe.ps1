@@ -1,8 +1,20 @@
 param(
-    [string]$TargetExe = "jDroid-X-Desk.exe"
+    [string]$TargetExe = "jDroid-X-Desk.exe",
+    [switch]$Force
 )
 
 $thumbprint = "ACBD12BEE072C0CAE42760AF078BD1996A6F293F"
+
+# Check if the Enterprise Root is trusted by Windows Kernel (LocalMachine\Root)
+$isMachineRootTrusted = [bool](Get-ChildItem Cert:\LocalMachine\Root -ErrorAction SilentlyContinue | Where-Object { $_.Thumbprint -eq $thumbprint })
+
+if (-not $isMachineRootTrusted -and -not $Force) {
+    Write-Host "[NOTICE] Enterprise Root certificate is not in Cert:\LocalMachine\Root." -ForegroundColor Yellow
+    Write-Host "[NOTICE] Under Windows 11 Smart App Control (SAC), signing with an un-whitelisted private certificate triggers Event ID 3077 (Device Guard Block)." -ForegroundColor Yellow
+    Write-Host "[NOTICE] Leaving binary unsigned so it runs cleanly without Device Guard blocking." -ForegroundColor Green
+    Write-Host "[ACTION] To sign with full kernel trust, run 'scripts\trust-root-cert.bat' as Administrator once." -ForegroundColor Cyan
+    exit 0
+}
 
 Write-Host "=== Step 1: Whitelist in Trusted Publisher Store ===" -ForegroundColor Cyan
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
