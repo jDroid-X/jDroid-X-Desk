@@ -627,18 +627,43 @@ namespace JDroidXDesk.Native
                 {
                     if (hostPermissionAllowClipboard)
                     {
-                        string text = ev.ContainsKey("text") ? (ev["text"] as string) : "";
-                        if (!string.IsNullOrEmpty(text) && text != lastReceivedClipboardText)
+                        string format = ev.ContainsKey("format") ? (ev["format"] as string) : "text";
+                        if (format == "image" && ev.ContainsKey("data"))
                         {
-                            lastReceivedClipboardText = text;
-                            lastLocalClipboardText = text;
-                            Thread t = new Thread(() => {
-                                try { Clipboard.SetText(text); } catch { }
-                            });
-                            t.SetApartmentState(ApartmentState.STA);
-                            t.IsBackground = true;
-                            t.Start();
-                            ShowToast("📋 Remote clipboard received and synced to host.");
+                            string b64 = ev["data"] as string;
+                            if (!string.IsNullOrEmpty(b64))
+                            {
+                                Thread t = new Thread(() => {
+                                    try {
+                                        byte[] imgBytes = Convert.FromBase64String(b64);
+                                        using (MemoryStream ms = new MemoryStream(imgBytes))
+                                        using (Image img = Image.FromStream(ms))
+                                        {
+                                            Clipboard.SetImage(new Bitmap(img));
+                                        }
+                                        ShowToast("📋 Remote screenshot/image copied to host clipboard.");
+                                    } catch { }
+                                });
+                                t.SetApartmentState(ApartmentState.STA);
+                                t.IsBackground = true;
+                                t.Start();
+                            }
+                        }
+                        else
+                        {
+                            string text = ev.ContainsKey("text") ? (ev["text"] as string) : "";
+                            if (!string.IsNullOrEmpty(text) && text != lastReceivedClipboardText)
+                            {
+                                lastReceivedClipboardText = text;
+                                lastLocalClipboardText = text;
+                                Thread t = new Thread(() => {
+                                    try { Clipboard.SetText(text); } catch { }
+                                });
+                                t.SetApartmentState(ApartmentState.STA);
+                                t.IsBackground = true;
+                                t.Start();
+                                ShowToast("📋 Remote clipboard received and synced to host.");
+                            }
                         }
                     }
                 }

@@ -367,6 +367,14 @@ namespace JDroidXDesk.Native
             flowIcons.Controls.Add(btnIconDetails);
             flowIcons.Controls.Add(btnIconFullScreen);
             flowIcons.Controls.Add(btnIconClose);
+
+            if (!MainForm.IsRunningElevated())
+            {
+                Button btnIconElevate = makeIconButton("🛡️ Admin", "Elevate to Administrator (Enables UAC & Secure Desktop control)", () => MainForm.RequestProcessElevation());
+                btnIconElevate.ForeColor = Color.FromArgb(234, 88, 12);
+                flowIcons.Controls.Add(btnIconElevate);
+            }
+
             pnlIconToolbar.Controls.Add(flowIcons);
 
             pnlPreConnect.Controls.Add(pnlIconToolbar);
@@ -432,22 +440,30 @@ namespace JDroidXDesk.Native
             btnSessionCad = makeBarButton("⌨️ Ctrl+Alt+Del", "Send Ctrl+Alt+Del Administrative Command", () => {
                 if (mainForm != null) mainForm.ForwardRemoteAdminCommand("cad");
             }, Color.FromArgb(71, 85, 105));
-            btnSessionClipboard = makeBarButton("📋 Clipboard", "Synchronize Clipboard with Remote Desk", () => {
-                try {
-                    string clip = Clipboard.GetText();
-                    if (!string.IsNullOrEmpty(clip) && mainForm != null)
-                    {
-                        var ev = new Dictionary<string, object> { { "text", clip } };
-                        mainForm.ForwardRemoteInput("clipboard", ev);
-                        MessageBox.Show(this, "Local clipboard synced to remote workstation.", "Clipboard Synced", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                } catch { }
+            int currentClientMonitorIdx = 0;
+            Button btnSessionMonitor = null;
+            btnSessionMonitor = makeBarButton("🖥️ Display", "Switch Active Remote Monitor / Display", () => {
+                if (mainForm != null)
+                {
+                    currentClientMonitorIdx = (currentClientMonitorIdx + 1) % 4;
+                    mainForm.ForwardRemoteAdminCommand("switch_monitor:" + currentClientMonitorIdx);
+                    btnSessionMonitor.Text = "🖥️ Mon " + (currentClientMonitorIdx + 1);
+                }
+            }, Color.FromArgb(71, 85, 105));
+
+            btnSessionClipboard = makeBarButton("📋 Clipboard", "Synchronize Clipboard (Text & Screenshots) with Remote Desk", () => {
+                if (mainForm != null)
+                {
+                    mainForm.SynchronizeClipboardNow();
+                    ModernNotificationToast.ShowToast("📋 Clipboard Synced", "Text & Image sync triggered to remote desk.", "info");
+                }
             }, Color.FromArgb(71, 85, 105));
             btnSessionDetails = makeBarButton("ℹ️ Details", "Switch to Full Console", () => OpenFullDeskDetails(), Color.FromArgb(71, 85, 105));
 
             pnlSessionControls.Controls.Add(lblSessionTarget);
             pnlSessionControls.Controls.Add(lblSessionTelemetry);
             pnlSessionControls.Controls.Add(btnSessionDetails);
+            pnlSessionControls.Controls.Add(btnSessionMonitor);
             pnlSessionControls.Controls.Add(btnSessionClipboard);
             pnlSessionControls.Controls.Add(btnSessionCad);
             pnlSessionControls.Controls.Add(btnSessionFullScreen);

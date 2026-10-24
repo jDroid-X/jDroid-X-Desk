@@ -580,6 +580,77 @@ namespace JDroidXDesk.Native
             }
         }
 
+        public static bool IsRunningElevated()
+        {
+            try
+            {
+                var p = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent());
+                return p.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            }
+            catch { return false; }
+        }
+
+        public static void RequestProcessElevation()
+        {
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo(Application.ExecutablePath)
+                {
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+                Process.Start(psi);
+                Application.Exit();
+            }
+            catch { }
+        }
+
+        public void SynchronizeClipboardNow()
+        {
+            ThreadPool.QueueUserWorkItem(delegate {
+                try
+                {
+                    Thread ct = new Thread(() => {
+                        try
+                        {
+                            if (Clipboard.ContainsImage())
+                            {
+                                Image img = Clipboard.GetImage();
+                                if (img != null)
+                                {
+                                    using (MemoryStream ms = new MemoryStream())
+                                    {
+                                        img.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                                        string b64 = Convert.ToBase64String(ms.ToArray());
+                                        Dictionary<string, object> clipEv = new Dictionary<string, object>();
+                                        clipEv["format"] = "image";
+                                        clipEv["data"] = b64;
+                                        SendRemoteInput("clipboard", clipEv);
+                                    }
+                                }
+                            }
+                            else if (Clipboard.ContainsText())
+                            {
+                                string curClip = Clipboard.GetText();
+                                if (!string.IsNullOrEmpty(curClip) && curClip.Length < 150000)
+                                {
+                                    Dictionary<string, object> clipEv = new Dictionary<string, object>();
+                                    clipEv["format"] = "text";
+                                    clipEv["text"] = curClip;
+                                    SendRemoteInput("clipboard", clipEv);
+                                }
+                            }
+                        }
+                        catch { }
+                    });
+                    ct.SetApartmentState(ApartmentState.STA);
+                    ct.IsBackground = true;
+                    ct.Start();
+                }
+                catch { }
+            });
+        }
+
         public void QuickAddContact(string targetId)
         {
             if (string.IsNullOrEmpty(targetId) || db == null) return;

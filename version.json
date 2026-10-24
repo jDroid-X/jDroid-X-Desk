@@ -1,8 +1,8 @@
 {
   "version": "2.5.0.0",
   "releaseDate": "2026-10-24",
-  "exeSize": 409080,
-  "sha256": "501996421164fe58d6df3d922774688ff0e6ffe25bf6dd8e128d22fde04bbd50",
+  "exeSize": 411128,
+  "sha256": "5d1964d0a70ec557663f813dd61294dce6b5c795e4930b3fa073c3777a43c220",
   "minDeskSupported": true,
   "exeUrl": "https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/jDroid-X-Desk.exe",
   "description": "jDroid-X-Desk Mini Full Viewport Console, Auto-Update Verification & Loop-Free Direct P2P Relay"
