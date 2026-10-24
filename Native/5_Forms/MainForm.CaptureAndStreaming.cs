@@ -398,74 +398,28 @@ namespace JDroidXDesk.Native
 
         private void ViewportCanvas_MouseDown(object sender, MouseEventArgs e)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
-            {
-                int rx, ry;
-                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
-                {
-                    Dictionary<string, object> ev = new Dictionary<string, object>();
-                    ev["action"] = "down";
-                    ev["x"] = rx;
-                    ev["y"] = ry;
-                    ev["btn"] = e.Button == MouseButtons.Right ? "Right" : (e.Button == MouseButtons.Middle ? "Middle" : "Left");
-                    SendRemoteInput("mouse", ev);
-                }
-            }
+            DispatchRemoteMouseDown(e.X, e.Y, e.Button);
         }
 
         private void ViewportCanvas_MouseUp(object sender, MouseEventArgs e)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
-            {
-                int rx, ry;
-                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
-                {
-                    Dictionary<string, object> ev = new Dictionary<string, object>();
-                    ev["action"] = "up";
-                    ev["x"] = rx;
-                    ev["y"] = ry;
-                    ev["btn"] = e.Button == MouseButtons.Right ? "Right" : (e.Button == MouseButtons.Middle ? "Middle" : "Left");
-                    SendRemoteInput("mouse", ev);
-                }
-            }
+            DispatchRemoteMouseUp(e.X, e.Y, e.Button);
         }
 
         private DateTime lastMouseMoveSent = DateTime.MinValue;
         private void ViewportCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
-            {
-                if ((DateTime.Now - lastMouseMoveSent).TotalMilliseconds < 33) return;
-                lastMouseMoveSent = DateTime.Now;
-
-                int rx, ry;
-                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
-                {
-                    Dictionary<string, object> ev = new Dictionary<string, object>();
-                    ev["action"] = "move";
-                    ev["x"] = rx;
-                    ev["y"] = ry;
-                    ev["btn"] = "None";
-                    SendRemoteInput("mouse", ev);
-                }
-            }
+            DispatchRemoteMouseMove(e.X, e.Y);
         }
 
         private void ViewportCanvas_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
-            {
-                int rx, ry;
-                if (MapCanvasToRemote(e.X, e.Y, out rx, out ry))
-                {
-                    Dictionary<string, object> ev = new Dictionary<string, object>();
-                    ev["action"] = "dblclick";
-                    ev["x"] = rx;
-                    ev["y"] = ry;
-                    ev["btn"] = e.Button == MouseButtons.Right ? "Right" : "Left";
-                    SendRemoteInput("mouse", ev);
-                }
-            }
+            DispatchRemoteMouseDoubleClick(e.X, e.Y, e.Button);
+        }
+
+        private void ViewportCanvas_MouseWheel(object sender, MouseEventArgs e)
+        {
+            DispatchRemoteMouseWheel(e.Delta, e.X, e.Y);
         }
 
     }

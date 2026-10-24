@@ -551,7 +551,7 @@ namespace JDroidXDesk.Native
                     if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
                     if (approvedViewerIps.Count == 0 && !EmbeddedRelayServer.Instance.HasApprovedViewers()) return; // Gated until host accepts
 
-                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : (type == "wheel" ? "wheel" : "move");
+                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : (ev.ContainsKey("act") ? (ev["act"] as string) : (type == "wheel" ? "wheel" : "move"));
                     int rx = ev.ContainsKey("x") ? Convert.ToInt32(ev["x"]) : 0;
                     int ry = ev.ContainsKey("y") ? Convert.ToInt32(ev["y"]) : 0;
                     string btn = ev.ContainsKey("btn") ? (ev["btn"] as string) : "Left";
@@ -570,21 +570,21 @@ namespace JDroidXDesk.Native
 
                     SetCursorPos(realX, realY);
 
-                    if (action == "down")
+                    if (string.Equals(action, "down", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (btn == "Right") mouse_event(MOUSEEVENTF_RIGHTDOWN, (uint)realX, (uint)realY, 0, 0);
-                        else if (btn == "Middle") mouse_event(MOUSEEVENTF_MIDDLEDOWN, (uint)realX, (uint)realY, 0, 0);
+                        if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_RIGHTDOWN, (uint)realX, (uint)realY, 0, 0);
+                        else if (string.Equals(btn, "Middle", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_MIDDLEDOWN, (uint)realX, (uint)realY, 0, 0);
                         else mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
                     }
-                    else if (action == "up")
+                    else if (string.Equals(action, "up", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (btn == "Right") mouse_event(MOUSEEVENTF_RIGHTUP, (uint)realX, (uint)realY, 0, 0);
-                        else if (btn == "Middle") mouse_event(MOUSEEVENTF_MIDDLEUP, (uint)realX, (uint)realY, 0, 0);
+                        if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_RIGHTUP, (uint)realX, (uint)realY, 0, 0);
+                        else if (string.Equals(btn, "Middle", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_MIDDLEUP, (uint)realX, (uint)realY, 0, 0);
                         else mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
                     }
-                    else if (action == "click")
+                    else if (string.Equals(action, "click", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (btn == "Right")
+                        if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase))
                         {
                             mouse_event(MOUSEEVENTF_RIGHTDOWN, (uint)realX, (uint)realY, 0, 0);
                             mouse_event(MOUSEEVENTF_RIGHTUP, (uint)realX, (uint)realY, 0, 0);
@@ -595,7 +595,7 @@ namespace JDroidXDesk.Native
                             mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
                         }
                     }
-                    else if (action == "dblclick")
+                    else if (string.Equals(action, "dblclick", StringComparison.OrdinalIgnoreCase))
                     {
                         mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
                         mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
@@ -603,7 +603,7 @@ namespace JDroidXDesk.Native
                         mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
                         mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
                     }
-                    else if (action == "wheel")
+                    else if (string.Equals(action, "wheel", StringComparison.OrdinalIgnoreCase))
                     {
                         int delta = ev.ContainsKey("delta") ? Convert.ToInt32(ev["delta"]) : (ev.ContainsKey("deltaY") ? -Convert.ToInt32(ev["deltaY"]) : 120);
                         mouse_event(MOUSEEVENTF_WHEEL, (uint)realX, (uint)realY, (uint)delta, 0);
@@ -614,13 +614,13 @@ namespace JDroidXDesk.Native
                     if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
                     if (approvedViewerIps.Count == 0 && !EmbeddedRelayServer.Instance.HasApprovedViewers()) return; // Gated until host accepts
 
-                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : "down";
-                    int keyCode = ev.ContainsKey("keyCode") ? Convert.ToInt32(ev["keyCode"]) : 0;
+                    string action = ev.ContainsKey("action") ? (ev["action"] as string) : (ev.ContainsKey("act") ? (ev["act"] as string) : "down");
+                    int keyCode = ev.ContainsKey("keyCode") ? Convert.ToInt32(ev["keyCode"]) : (ev.ContainsKey("key") ? Convert.ToInt32(ev["key"]) : 0);
                     if (keyCode > 0 && keyCode < 256)
                     {
                         byte vk = (byte)keyCode;
-                        if (action == "down") keybd_event(vk, 0, 0, 0);
-                        else if (action == "up") keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
+                        if (string.Equals(action, "down", StringComparison.OrdinalIgnoreCase)) keybd_event(vk, 0, 0, 0);
+                        else if (string.Equals(action, "up", StringComparison.OrdinalIgnoreCase)) keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
                     }
                 }
                 else if (type == "clipboard")
@@ -750,13 +750,11 @@ namespace JDroidXDesk.Native
             catch { }
         }
 
-        private bool MapCanvasToRemote(int clientX, int clientY, out int remoteX, out int remoteY)
+        public bool MapCanvasToRemote(int clientX, int clientY, int cw, int ch, out int remoteX, out int remoteY)
         {
             remoteX = 0;
             remoteY = 0;
-            if (viewportCanvas == null || viewportCanvas.Width <= 0 || viewportCanvas.Height <= 0) return false;
-            int cw = viewportCanvas.Width;
-            int ch = viewportCanvas.Height;
+            if (cw <= 0 || ch <= 0) return false;
             int imgW = 1280;
             int imgH = 720;
             lock (frameLock)
@@ -791,6 +789,13 @@ namespace JDroidXDesk.Native
                 remoteY = (int)((float)clientY / ch * imgH);
             }
             return true;
+        }
+
+        public bool MapCanvasToRemote(int clientX, int clientY, out int remoteX, out int remoteY)
+        {
+            int cw = (viewportCanvas != null) ? viewportCanvas.Width : 0;
+            int ch = (viewportCanvas != null) ? viewportCanvas.Height : 0;
+            return MapCanvasToRemote(clientX, clientY, cw, ch, out remoteX, out remoteY);
         }
 
         private void SendRemoteInput(string eventType, Dictionary<string, object> details)
@@ -833,6 +838,146 @@ namespace JDroidXDesk.Native
                 }
                 catch { }
             });
+        }
+
+        public void DispatchRemoteMouseDown(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
+                int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
+                int rx, ry;
+                if (MapCanvasToRemote(clientX, clientY, w, h, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "down";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = btn == MouseButtons.Right ? "Right" : (btn == MouseButtons.Middle ? "Middle" : "Left");
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        public void DispatchRemoteMouseUp(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
+                int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
+                int rx, ry;
+                if (MapCanvasToRemote(clientX, clientY, w, h, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "up";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = btn == MouseButtons.Right ? "Right" : (btn == MouseButtons.Middle ? "Middle" : "Left");
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        public void DispatchRemoteMouseMove(int clientX, int clientY, int cw = -1, int ch = -1)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                if ((DateTime.Now - lastMouseMoveSent).TotalMilliseconds < 33) return;
+                lastMouseMoveSent = DateTime.Now;
+
+                int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
+                int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
+                int rx, ry;
+                if (MapCanvasToRemote(clientX, clientY, w, h, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "move";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = "None";
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        public void DispatchRemoteMouseClick(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
+                int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
+                int rx, ry;
+                if (MapCanvasToRemote(clientX, clientY, w, h, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "click";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = btn == MouseButtons.Right ? "Right" : (btn == MouseButtons.Middle ? "Middle" : "Left");
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        public void DispatchRemoteMouseDoubleClick(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
+                int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
+                int rx, ry;
+                if (MapCanvasToRemote(clientX, clientY, w, h, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "dblclick";
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    ev["btn"] = btn == MouseButtons.Right ? "Right" : "Left";
+                    SendRemoteInput("mouse", ev);
+                }
+            }
+        }
+
+        public void DispatchRemoteMouseWheel(int delta, int clientX, int clientY, int cw = -1, int ch = -1)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
+                int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
+                int rx, ry;
+                if (MapCanvasToRemote(clientX, clientY, w, h, out rx, out ry))
+                {
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["action"] = "wheel";
+                    ev["delta"] = delta;
+                    ev["x"] = rx;
+                    ev["y"] = ry;
+                    SendRemoteInput("wheel", ev);
+                }
+            }
+        }
+
+        public bool DispatchRemoteKey(Keys keyData)
+        {
+            if (currentConnectionState == SessionConnectionState.Connected)
+            {
+                Keys pureKey = keyData & Keys.KeyCode;
+                Dictionary<string, object> ev = new Dictionary<string, object>();
+                ev["action"] = "down";
+                ev["keyCode"] = (int)pureKey;
+                SendRemoteInput("key", ev);
+
+                ThreadPool.QueueUserWorkItem(delegate {
+                    Thread.Sleep(60);
+                    Dictionary<string, object> upEv = new Dictionary<string, object>();
+                    upEv["action"] = "up";
+                    upEv["keyCode"] = (int)pureKey;
+                    SendRemoteInput("key", upEv);
+                });
+
+                return true;
+            }
+            return false;
         }
 
         private void SendRemoteAdminCommand(string cmd)

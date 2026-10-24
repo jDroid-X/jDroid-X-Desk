@@ -245,6 +245,7 @@ namespace JDroidXDesk.Native
             viewportCanvas.MouseUp += ViewportCanvas_MouseUp;
             viewportCanvas.MouseMove += ViewportCanvas_MouseMove;
             viewportCanvas.MouseDoubleClick += ViewportCanvas_MouseDoubleClick;
+            viewportCanvas.MouseWheel += ViewportCanvas_MouseWheel;
 
             viewConsole.Controls.Add(sessionFloatingToolbar);
             viewConsole.Controls.Add(pnlHostViewerAlert);

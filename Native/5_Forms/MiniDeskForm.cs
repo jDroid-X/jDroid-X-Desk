@@ -465,6 +465,7 @@ namespace JDroidXDesk.Native
             remoteCanvas.MouseMove += RemoteCanvas_MouseMove;
             remoteCanvas.MouseClick += RemoteCanvas_MouseClick;
             remoteCanvas.MouseDoubleClick += RemoteCanvas_MouseDoubleClick;
+            remoteCanvas.MouseWheel += RemoteCanvas_MouseWheel;
 
             pnlConnectedViewport.Controls.Add(remoteCanvas);
             pnlConnectedViewport.Controls.Add(pnlSessionControls);
@@ -558,100 +559,60 @@ namespace JDroidXDesk.Native
             }
         }
 
-        // --- Input Translation & Forwarding ---
+        // --- Input Translation & Forwarding (OOPS MVC Call-by-Reference to MainForm Background Logic) ---
         private bool MapClientToRemote(int clientX, int clientY, out int remoteX, out int remoteY)
         {
+            if (mainForm != null && remoteCanvas != null)
+            {
+                return mainForm.MapCanvasToRemote(clientX, clientY, remoteCanvas.Width, remoteCanvas.Height, out remoteX, out remoteY);
+            }
             remoteX = 0;
             remoteY = 0;
-            if (remoteCanvas == null || remoteCanvas.Width <= 0 || remoteCanvas.Height <= 0) return false;
-
-            int cw = remoteCanvas.Width;
-            int ch = remoteCanvas.Height;
-            int imgW = 1280;
-            int imgH = 720;
-
-            Image frame = mainForm != null ? mainForm.GetLatestRemoteFrameClone() : null;
-            if (frame != null)
-            {
-                imgW = frame.Width;
-                imgH = frame.Height;
-                frame.Dispose();
-            }
-
-            float ratio = Math.Min((float)cw / imgW, (float)ch / imgH);
-            int targetW = (int)(imgW * ratio);
-            int targetH = (int)(imgH * ratio);
-            int targetX = (cw - targetW) / 2;
-            int targetY = (ch - targetH) / 2;
-
-            if (clientX < targetX || clientX > targetX + targetW || clientY < targetY || clientY > targetY + targetH)
-                return false;
-
-            remoteX = (int)((clientX - targetX) / ratio);
-            remoteY = (int)((clientY - targetY) / ratio);
-            return true;
+            return false;
         }
 
         private void RemoteCanvas_MouseDown(object sender, MouseEventArgs e)
         {
-            int rx, ry;
-            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
-            {
-                string btn = (e.Button == MouseButtons.Right) ? "right" : (e.Button == MouseButtons.Middle ? "middle" : "left");
-                var ev = new Dictionary<string, object> { { "act", "down" }, { "btn", btn }, { "x", rx }, { "y", ry } };
-                mainForm.ForwardRemoteInput("mouse", ev);
-            }
+            if (mainForm != null && remoteCanvas != null)
+                mainForm.DispatchRemoteMouseDown(e.X, e.Y, e.Button, remoteCanvas.Width, remoteCanvas.Height);
         }
 
         private void RemoteCanvas_MouseUp(object sender, MouseEventArgs e)
         {
-            int rx, ry;
-            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
-            {
-                string btn = (e.Button == MouseButtons.Right) ? "right" : (e.Button == MouseButtons.Middle ? "middle" : "left");
-                var ev = new Dictionary<string, object> { { "act", "up" }, { "btn", btn }, { "x", rx }, { "y", ry } };
-                mainForm.ForwardRemoteInput("mouse", ev);
-            }
+            if (mainForm != null && remoteCanvas != null)
+                mainForm.DispatchRemoteMouseUp(e.X, e.Y, e.Button, remoteCanvas.Width, remoteCanvas.Height);
         }
 
         private void RemoteCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            int rx, ry;
-            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
-            {
-                var ev = new Dictionary<string, object> { { "act", "move" }, { "x", rx }, { "y", ry } };
-                mainForm.ForwardRemoteInput("mouse", ev);
-            }
+            if (mainForm != null && remoteCanvas != null)
+                mainForm.DispatchRemoteMouseMove(e.X, e.Y, remoteCanvas.Width, remoteCanvas.Height);
         }
 
         private void RemoteCanvas_MouseClick(object sender, MouseEventArgs e)
         {
-            int rx, ry;
-            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
-            {
-                string btn = (e.Button == MouseButtons.Right) ? "right" : (e.Button == MouseButtons.Middle ? "middle" : "left");
-                var ev = new Dictionary<string, object> { { "act", "click" }, { "btn", btn }, { "x", rx }, { "y", ry } };
-                mainForm.ForwardRemoteInput("mouse", ev);
-            }
+            if (mainForm != null && remoteCanvas != null)
+                mainForm.DispatchRemoteMouseClick(e.X, e.Y, e.Button, remoteCanvas.Width, remoteCanvas.Height);
         }
 
         private void RemoteCanvas_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            int rx, ry;
-            if (MapClientToRemote(e.X, e.Y, out rx, out ry) && mainForm != null)
-            {
-                var ev = new Dictionary<string, object> { { "act", "dblclick" }, { "btn", "left" }, { "x", rx }, { "y", ry } };
-                mainForm.ForwardRemoteInput("mouse", ev);
-            }
+            if (mainForm != null && remoteCanvas != null)
+                mainForm.DispatchRemoteMouseDoubleClick(e.X, e.Y, e.Button, remoteCanvas.Width, remoteCanvas.Height);
+        }
+
+        private void RemoteCanvas_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (mainForm != null && remoteCanvas != null)
+                mainForm.DispatchRemoteMouseWheel(e.Delta, e.X, e.Y, remoteCanvas.Width, remoteCanvas.Height);
         }
 
         protected override bool ProcessDialogKey(Keys keyData)
         {
             if (mainForm != null && mainForm.IsSessionActive && pnlConnectedViewport.Visible)
             {
-                var ev = new Dictionary<string, object> { { "act", "down" }, { "key", (int)keyData }, { "name", keyData.ToString() } };
-                mainForm.ForwardRemoteInput("key", ev);
-                return true;
+                if (mainForm.DispatchRemoteKey(keyData))
+                    return true;
             }
             return base.ProcessDialogKey(keyData);
         }
