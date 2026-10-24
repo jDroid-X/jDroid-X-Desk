@@ -33,9 +33,16 @@ if not exist "%SOURCE_DIR%\jDroid-X-Desk.exe" (
 
 :: [2/7] Create standard user installation folder structure
 ECHO [1/6] Creating standard application directories...
+taskkill /f /im jDroid-X-Desk.exe >nul 2>&1
+timeout /t 1 /nobreak >nul 2>&1
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 if not exist "%INSTALL_DIR%\assets" mkdir "%INSTALL_DIR%\assets"
 ECHO [+] Target directory verified: %INSTALL_DIR%
+
+:: Ensure binary is signed before deploying
+if exist "%SOURCE_DIR%\scripts\sign-exe.ps1" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%SOURCE_DIR%\scripts\sign-exe.ps1" -TargetExe "%SOURCE_DIR%\jDroid-X-Desk.exe" >nul 2>&1
+)
 
 :: [3/7] Copy application binaries, configs, and assets
 ECHO [2/6] Deploying application files to %INSTALL_DIR%...
@@ -126,7 +133,7 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\jDroid-X-Desk"
 
 ECHO.
 ECHO ========================================================
-ECHO [SUCCESS] Installation & Registration Complete!
+ECHO [SUCCESS] Installation and Registration Complete!
 ECHO Location: %INSTALL_DIR%
 ECHO Zero SmartScreen Roadblocks. Desktop Icon Active.
 ECHO Launching jDroid-X-Desk from installed standard folder...
