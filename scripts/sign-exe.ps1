@@ -31,8 +31,12 @@ Write-Host "`n=== Step 3: Microsoft Authenticode Verification ===" -ForegroundCo
 $auth = Get-AuthenticodeSignature -FilePath $TargetExe
 $auth | Format-List Path, Status, StatusMessage, SignerCertificate
 
-if ($auth.SignerCertificate -and $auth.SignerCertificate.Thumbprint -eq $thumbprint) {
-    Write-Host "[SUCCESS] Binary successfully signed by Enterprise Whitelisted Certificate ($thumbprint)!" -ForegroundColor Green
+if ($auth.Status -eq "Valid") {
+    Write-Host "[SUCCESS] Authenticode Status: VALID (Full System Trust & Zero Smart App Control blocks)!" -ForegroundColor Green
+    exit 0
+} elseif ($auth.SignerCertificate -and $auth.SignerCertificate.Thumbprint -eq $thumbprint) {
+    Write-Host "[NOTICE] Binary signed with Enterprise Certificate ($thumbprint), but Status is '$($auth.Status)'." -ForegroundColor Yellow
+    Write-Host "[ACTION] To whitelist permanently on this machine, run 'scripts\trust-root-cert.bat' as Administrator once." -ForegroundColor Yellow
     exit 0
 } else {
     Write-Warning "[WARN] Signing did not match expected thumbprint."

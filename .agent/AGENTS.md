@@ -7,7 +7,7 @@ Follow the best practice OOPS-based MVC process grouped by hierarchy. Never dupl
 ## 🏛️ WATERFALL ENCAPSULATION HIERARCHY (P0 -> P5)
 
 ```
-[TIER P0: SUPREME CONSTITUTION] -> Prime Directives 1-5, Chesterton's Fence, Circuit Breaker (Max 2 Cycles)
+[TIER P0: SUPREME CONSTITUTION] -> Prime Directives 1-6, Chesterton's Fence, Circuit Breaker (Max 2 Cycles)
        ↓
 [TIER P1: ADAPTIVE WATERFALL]   -> 3-Lane Dispatch, Ponytail Decision Ladder (1-7), 7-Stage Closed Loop
        ↓
