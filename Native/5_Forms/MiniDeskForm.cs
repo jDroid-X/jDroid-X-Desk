@@ -108,7 +108,7 @@ namespace JDroidXDesk.Native
                     }
                     // Hide to system tray
                     e.Cancel = true;
-                    this.Hide();
+                    HideToTray("jDroid-X-Desk Mini minimized to system tray. Double-click tray icon to restore.");
                 }
             };
         }
@@ -479,9 +479,15 @@ namespace JDroidXDesk.Native
             remoteCanvas.MouseDown += RemoteCanvas_MouseDown;
             remoteCanvas.MouseUp += RemoteCanvas_MouseUp;
             remoteCanvas.MouseMove += RemoteCanvas_MouseMove;
-            remoteCanvas.MouseClick += RemoteCanvas_MouseClick;
             remoteCanvas.MouseDoubleClick += RemoteCanvas_MouseDoubleClick;
             remoteCanvas.MouseWheel += RemoteCanvas_MouseWheel;
+            remoteCanvas.KeyDown += (s, e) => {
+                if (mainForm != null && mainForm.IsSessionActive)
+                {
+                    mainForm.DispatchRemoteKey(e.KeyData);
+                    e.Handled = true;
+                }
+            };
 
             pnlConnectedViewport.Controls.Add(remoteCanvas);
             pnlConnectedViewport.Controls.Add(pnlSessionControls);
@@ -589,6 +595,7 @@ namespace JDroidXDesk.Native
 
         private void RemoteCanvas_MouseDown(object sender, MouseEventArgs e)
         {
+            if (remoteCanvas != null) remoteCanvas.Focus();
             if (mainForm != null && remoteCanvas != null)
                 mainForm.DispatchRemoteMouseDown(e.X, e.Y, e.Button, remoteCanvas.Width, remoteCanvas.Height);
         }
@@ -746,6 +753,58 @@ namespace JDroidXDesk.Native
             }
         }
 
+        public void HideToTray(string reason = null)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action(() => HideToTray(reason)));
+                return;
+            }
+            this.Hide();
+            if (!string.IsNullOrEmpty(reason) && mainForm != null)
+            {
+                mainForm.ShowTrayNotification("jDroid-X-Desk Mini", reason, ToolTipIcon.Info);
+            }
+        }
+
+        public void RestoreFromTray()
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action(RestoreFromTray));
+                return;
+            }
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.BringToFront();
+            this.Activate();
+        }
+
+        public void NotifyHostSessionActive(string sourceId)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action(() => NotifyHostSessionActive(sourceId)));
+                return;
+            }
+            // Auto-hide popup window into system tray so remote user can see and control Desk 2's entire desktop!
+            HideToTray("Remote connection active with " + sourceId + ".\nWorkstation minimized to system tray for remote desktop control.");
+        }
+
+        public void NotifyHostSessionClosed()
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action(NotifyHostSessionClosed));
+                return;
+            }
+            if (mainForm != null)
+            {
+                mainForm.ShowTrayNotification("jDroid-X-Desk Mini", "Remote session ended. Workstation released.", ToolTipIcon.Info);
+            }
+            RestoreFromTray();
+        }
+
         public void OpenFullDeskDetails()
         {
             if (mainForm != null)
@@ -764,6 +823,13 @@ namespace JDroidXDesk.Native
                 if (mainForm.CurrentHostDesktop != null && lblMyDeskId.Text != mainForm.CurrentHostDesktop.RemoteId)
                 {
                     lblMyDeskId.Text = mainForm.CurrentHostDesktop.RemoteId;
+                }
+
+                // Desk 2 Check: If this machine is the Host being controlled remotely and window is visible, auto-hide to tray!
+                if (mainForm.IsHostServingRemoteClient && !mainForm.IsSessionActive && this.Visible)
+                {
+                    HideToTray("Remote connection active.\nMinimized to system tray for remote desktop control.");
+                    return;
                 }
 
                 if (mainForm.IsSessionActive)

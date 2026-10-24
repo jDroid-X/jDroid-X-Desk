@@ -178,6 +178,8 @@ namespace JDroidXDesk.Native
         private DateTime lastRejectedViewerTime = DateTime.MinValue;
         private readonly HashSet<string> approvedViewerIps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> rejectedViewerIps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private volatile bool isHostServingRemoteClient = false;
+        public bool IsHostServingRemoteClient { get { return isHostServingRemoteClient; } }
 
         private static string ExtractClientIp(string endpoint)
         {

@@ -581,6 +581,12 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
 
             session_id = f"SES-{int(time.time())}-{source_id}-{target_id}"
             ACTIVE_SESSIONS[session_id] = {'sessionId': session_id, 'sourceId': source_id, 'targetId': target_id, 'status': 'ACTIVE', 'createdAt': time.time()}
+
+            # Immediately notify target host of active session so it can minimize to tray and unlock input
+            if target_id not in INPUT_BUFFERS:
+                INPUT_BUFFERS[target_id] = []
+            INPUT_BUFFERS[target_id].append({'type': 'session_start', 'sourceId': source_id, 'sessionId': session_id, 'timestamp': time.time()})
+
             self.send_response(200)
             self._set_cors()
             self.send_header('Content-Type', 'application/json')

@@ -246,3 +246,21 @@ Viewport Screen:
      - Expanded test.js suite from 188 to 190 automated assertions.
      - All 190/190 tests pass with zero regressions (190 PASSED, 0 FAILED, 100% Green).
 
+[CHANGE LOG: 2026-10-24 - Dual-Desk Remote Control RCA: Host Popup Auto-Hide to System Tray & 60 FPS Mouse/Key Gating]
+- Forensic Root Cause Analysis on Both Desk 1 (Controller) and Desk 2 (Host):
+  1. Issue A: Pre-Connect Popup Window blocking Host Desktop on Desk 2:
+     - Root Cause: When Desk 1 connected to Desk 2 via Cloud Middle Bridge, Desk 2 started broadcasting its desktop, but MiniDeskForm remained visible in the center of Desk 2's screen because no incoming session hook told it to minimize.
+     - Fix: Injected automatic 'session_start' event handshake in colab-relay-service.py. MiniDeskForm implements HideToTray(), NotifyHostSessionActive(), and NotifyHostSessionClosed(), automatically minimizing to system tray with a balloon tip upon remote connection. In UpdateLiveState(), added a safety check: if IsHostServingRemoteClient is true and MiniDeskForm is visible, it automatically hides to tray.
+  2. Issue B: Mouse control, dragging, and keyboard not functioning from Desk 1:
+     - Root Cause 1 (Host Drop Gate): In MainForm.InputAndHost.cs lines 572 & 649, ExecuteRemoteInputEvent gated mouse and key inputs behind 'approvedViewerIps.Count > 0'. When connected via Cloud Middle Bridge, approvedViewerIps was empty, causing Desk 2 to silently drop every mouse move, down, up, and key event.
+     - Root Cause 2 (Host Daemon Throttle): In HostDaemonWorker line 387, isServingViewer only checked isSessionActive and EmbeddedRelayServer. On Desk 2 (which is being viewed, not viewing), isSessionActive is false. This triggered Thread.Sleep(500), causing Desk 2 to poll input and capture frames at only 2 FPS (0-2 FPS observed by user) with 600ms+ lag!
+     - Root Cause 3 (Duplicate Synthetic Clicks): remoteCanvas.MouseClick in MiniDeskForm sent synthetic duplicate MouseDown + MouseUp on every click, breaking drags and selections.
+     - Root Cause 4 (Client Dispatch Gate): DispatchRemoteMouseDown/Up checked currentConnectionState == Connected. When MainForm is backgrounded in Mini Desk mode, its handle isn't created, preventing the check from passing.
+     - Fixes Applied:
+       * Host Gate: Updated to check isHostServingRemoteClient and db.Settings.access.unattendedAccess.
+       * Host Throttle: Added isHostServingRemoteClient to isServingViewer, setting sleep to 16ms (60 FPS) for instant, lag-free input processing.
+       * Client Canvas: Removed duplicate MouseClick; added remoteCanvas.Focus() on MouseDown and KeyDown forwarding.
+       * Client Dispatch: Gated on (isSessionActive || currentConnectionState == SessionConnectionState.Connected).
+  3. Empirical Verification:
+     - Recompiled native solution via compile_native.bat: Exit Code 0 (Success).
+     - Deployed via scripts/install-windows-app.bat: Zero SmartScreen roadblocks, installed to %LOCALAPPDATA%\Programs\jDroid-X-Desk.

@@ -383,9 +383,9 @@ namespace JDroidXDesk.Native
                 }
                 catch { }
 
-                // Dynamic throttle: 33ms (30 FPS) when actively serving viewer, 500ms when idling
-                bool isServingViewer = isSessionActive || EmbeddedRelayServer.Instance.HasActiveViewers();
-                Thread.Sleep(isServingViewer ? 33 : 500);
+                // Dynamic throttle: 16ms (60 FPS) when actively serving viewer, 500ms when idling
+                bool isServingViewer = isSessionActive || isHostServingRemoteClient || EmbeddedRelayServer.Instance.HasActiveViewers();
+                Thread.Sleep(isServingViewer ? 16 : 500);
             }
         }
 
@@ -546,10 +546,44 @@ namespace JDroidXDesk.Native
                 if (!ev.ContainsKey("type")) return;
                 string type = ev["type"] as string;
 
+                if (type == "session_start")
+                {
+                    isHostServingRemoteClient = true;
+                    string src = ev.ContainsKey("sourceId") ? (ev["sourceId"] as string) : "Remote Desk";
+                    if (miniDeskForm != null && !miniDeskForm.IsDisposed && !isSessionActive)
+                    {
+                        miniDeskForm.NotifyHostSessionActive(src);
+                    }
+                    return;
+                }
+                else if (type == "session_close")
+                {
+                    isHostServingRemoteClient = false;
+                    if (miniDeskForm != null && !miniDeskForm.IsDisposed && !isSessionActive)
+                    {
+                        miniDeskForm.NotifyHostSessionClosed();
+                    }
+                    return;
+                }
+
                 if (type == "mouse" || type == "wheel")
                 {
                     if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
-                    if (approvedViewerIps.Count == 0 && !EmbeddedRelayServer.Instance.HasApprovedViewers()) return; // Gated until host accepts
+                    bool hasApprovedViewer = (approvedViewerIps.Count > 0) ||
+                                             EmbeddedRelayServer.Instance.HasApprovedViewers() ||
+                                             isHostServingRemoteClient ||
+                                             (db != null && db.Settings != null && db.Settings.access != null && db.Settings.access.unattendedAccess);
+                    if (!hasApprovedViewer) return;
+
+                    // Ensure host knows it is actively serving client
+                    if (!isHostServingRemoteClient)
+                    {
+                        isHostServingRemoteClient = true;
+                        if (miniDeskForm != null && !miniDeskForm.IsDisposed && !isSessionActive)
+                        {
+                            miniDeskForm.NotifyHostSessionActive("Remote Desk");
+                        }
+                    }
 
                     string action = ev.ContainsKey("action") ? (ev["action"] as string) : (ev.ContainsKey("act") ? (ev["act"] as string) : (type == "wheel" ? "wheel" : "move"));
                     int rx = ev.ContainsKey("x") ? Convert.ToInt32(ev["x"]) : 0;
@@ -572,47 +606,51 @@ namespace JDroidXDesk.Native
 
                     if (string.Equals(action, "down", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_RIGHTDOWN, (uint)realX, (uint)realY, 0, 0);
-                        else if (string.Equals(btn, "Middle", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_MIDDLEDOWN, (uint)realX, (uint)realY, 0, 0);
-                        else mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
+                        if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+                        else if (string.Equals(btn, "Middle", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0);
+                        else mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
                     }
                     else if (string.Equals(action, "up", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_RIGHTUP, (uint)realX, (uint)realY, 0, 0);
-                        else if (string.Equals(btn, "Middle", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_MIDDLEUP, (uint)realX, (uint)realY, 0, 0);
-                        else mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                        if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
+                        else if (string.Equals(btn, "Middle", StringComparison.OrdinalIgnoreCase)) mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0);
+                        else mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
                     }
                     else if (string.Equals(action, "click", StringComparison.OrdinalIgnoreCase))
                     {
                         if (string.Equals(btn, "Right", StringComparison.OrdinalIgnoreCase))
                         {
-                            mouse_event(MOUSEEVENTF_RIGHTDOWN, (uint)realX, (uint)realY, 0, 0);
-                            mouse_event(MOUSEEVENTF_RIGHTUP, (uint)realX, (uint)realY, 0, 0);
+                            mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+                            mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
                         }
                         else
                         {
-                            mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
-                            mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
                         }
                     }
                     else if (string.Equals(action, "dblclick", StringComparison.OrdinalIgnoreCase))
                     {
-                        mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
-                        mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
                         Thread.Sleep(30);
-                        mouse_event(MOUSEEVENTF_LEFTDOWN, (uint)realX, (uint)realY, 0, 0);
-                        mouse_event(MOUSEEVENTF_LEFTUP, (uint)realX, (uint)realY, 0, 0);
+                        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
                     }
                     else if (string.Equals(action, "wheel", StringComparison.OrdinalIgnoreCase))
                     {
                         int delta = ev.ContainsKey("delta") ? Convert.ToInt32(ev["delta"]) : (ev.ContainsKey("deltaY") ? -Convert.ToInt32(ev["deltaY"]) : 120);
-                        mouse_event(MOUSEEVENTF_WHEEL, (uint)realX, (uint)realY, (uint)delta, 0);
+                        mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)delta, 0);
                     }
                 }
                 else if (type == "key")
                 {
                     if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
-                    if (approvedViewerIps.Count == 0 && !EmbeddedRelayServer.Instance.HasApprovedViewers()) return; // Gated until host accepts
+                    bool hasApprovedViewer = (approvedViewerIps.Count > 0) ||
+                                             EmbeddedRelayServer.Instance.HasApprovedViewers() ||
+                                             isHostServingRemoteClient ||
+                                             (db != null && db.Settings != null && db.Settings.access != null && db.Settings.access.unattendedAccess);
+                    if (!hasApprovedViewer) return;
 
                     string action = ev.ContainsKey("action") ? (ev["action"] as string) : (ev.ContainsKey("act") ? (ev["act"] as string) : "down");
                     int keyCode = ev.ContainsKey("keyCode") ? Convert.ToInt32(ev["keyCode"]) : (ev.ContainsKey("key") ? Convert.ToInt32(ev["key"]) : 0);
@@ -867,7 +905,7 @@ namespace JDroidXDesk.Native
 
         public void DispatchRemoteMouseDown(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
+            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
             {
                 int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
                 int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
@@ -886,7 +924,7 @@ namespace JDroidXDesk.Native
 
         public void DispatchRemoteMouseUp(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
+            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
             {
                 int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
                 int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
@@ -905,7 +943,7 @@ namespace JDroidXDesk.Native
 
         public void DispatchRemoteMouseMove(int clientX, int clientY, int cw = -1, int ch = -1)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
+            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
             {
                 if ((DateTime.Now - lastMouseMoveSent).TotalMilliseconds < 33) return;
                 lastMouseMoveSent = DateTime.Now;
@@ -927,7 +965,7 @@ namespace JDroidXDesk.Native
 
         public void DispatchRemoteMouseClick(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
+            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
             {
                 int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
                 int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
@@ -946,7 +984,7 @@ namespace JDroidXDesk.Native
 
         public void DispatchRemoteMouseDoubleClick(int clientX, int clientY, MouseButtons btn, int cw = -1, int ch = -1)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
+            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
             {
                 int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
                 int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
@@ -965,7 +1003,7 @@ namespace JDroidXDesk.Native
 
         public void DispatchRemoteMouseWheel(int delta, int clientX, int clientY, int cw = -1, int ch = -1)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
+            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
             {
                 int w = (cw > 0) ? cw : (viewportCanvas != null ? viewportCanvas.Width : 0);
                 int h = (ch > 0) ? ch : (viewportCanvas != null ? viewportCanvas.Height : 0);
@@ -984,7 +1022,7 @@ namespace JDroidXDesk.Native
 
         public bool DispatchRemoteKey(Keys keyData)
         {
-            if (currentConnectionState == SessionConnectionState.Connected)
+            if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
             {
                 Keys pureKey = keyData & Keys.KeyCode;
                 Dictionary<string, object> ev = new Dictionary<string, object>();
@@ -1546,7 +1584,7 @@ namespace JDroidXDesk.Native
                 } catch { }
 
                 // Anti-Freeze Radar: Detect sudden disconnection or termination of remote host
-                if (currentConnectionState == SessionConnectionState.Connected)
+                if (isSessionActive || currentConnectionState == SessionConnectionState.Connected)
                 {
                     if (successFrame)
                     {
@@ -1600,9 +1638,20 @@ namespace JDroidXDesk.Native
         private void SetupTraySupervisor()
         {
             trayMenu = new ContextMenu();
-            trayMenu.MenuItems.Add("📱 Open Mini Desk", (s, e) => { ShowMiniDesk(); });
+            trayMenu.MenuItems.Add("📱 Open Mini Desk", (s, e) => {
+                if (miniDeskForm != null) miniDeskForm.RestoreFromTray();
+                else ShowMiniDesk();
+            });
             trayMenu.MenuItems.Add("🖥️ Open Full Desk Console", (s, e) => { ShowFullConsole(); });
             trayMenu.MenuItems.Add("📋 Copy My Desk ID", (s, e) => { if (currentHostDesktop != null) Clipboard.SetText(currentHostDesktop.RemoteId); });
+            trayMenu.MenuItems.Add("🛑 Disconnect Remote Session", (s, e) => {
+                if (isSessionActive) DisconnectActiveSession();
+                if (isHostServingRemoteClient)
+                {
+                    isHostServingRemoteClient = false;
+                    if (miniDeskForm != null) miniDeskForm.RestoreFromTray();
+                }
+            });
             trayMenu.MenuItems.Add("🔄 Check for Updates...", (s, e) => { CheckForUpdates(false); });
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Exit Application", (s, e) => {
@@ -1616,10 +1665,9 @@ namespace JDroidXDesk.Native
                 Visible = true
             };
             trayIcon.DoubleClick += (s, e) => {
-                if (miniDeskForm != null && miniDeskForm.Visible)
+                if (miniDeskForm != null)
                 {
-                    miniDeskForm.WindowState = FormWindowState.Normal;
-                    miniDeskForm.BringToFront();
+                    miniDeskForm.RestoreFromTray();
                 }
                 else if (this.Visible && this.WindowState != FormWindowState.Minimized)
                 {
@@ -1631,6 +1679,18 @@ namespace JDroidXDesk.Native
                     ShowMiniDesk();
                 }
             };
+        }
+
+        public void ShowTrayNotification(string title, string message, ToolTipIcon icon = ToolTipIcon.Info)
+        {
+            try
+            {
+                if (trayIcon != null)
+                {
+                    trayIcon.ShowBalloonTip(2500, title, message, icon);
+                }
+            }
+            catch { }
         }
 
         private void ShowToast(string message)
