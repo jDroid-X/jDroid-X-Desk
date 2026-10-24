@@ -375,7 +375,7 @@ namespace JDroidXDesk.Native
         }
 
         [STAThread]
-        public static void Main()
+        public static void Main(string[] args)
         {
             try
             {
@@ -390,13 +390,235 @@ namespace JDroidXDesk.Native
                 } catch { }
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new MainForm());
+
+                // Handle installation flag if requested via CLI
+                if (args != null && args.Length > 0 && (args[0] == "--install" || args[0] == "/install"))
+                {
+                    string err;
+                    bool ok = InstallationManager.InstallToStandardDirectory(out err);
+                    if (ok) MessageBox.Show("jDroid-X-Desk installed successfully to standard user folder:\n" + InstallationManager.GetStandardInstallDirectory(), "Installation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    else MessageBox.Show("Installation failed: " + err, "Installation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Determine startup mode (Default: Mini Desk)
+                string chosenMode = "mini";
+                bool cliForced = false;
+                if (args != null && args.Length > 0)
+                {
+                    if (args[0] == "--mini" || args[0] == "/mini") { chosenMode = "mini"; cliForced = true; }
+                    else if (args[0] == "--desk" || args[0] == "/desk" || args[0] == "--full") { chosenMode = "desk"; cliForced = true; }
+                }
+
+                DatabaseContext tempDb = new DatabaseContext();
+                string savedStartupMode = (tempDb.Settings != null && tempDb.Settings.general != null) ? tempDb.Settings.general.startupMode : "ask";
+
+                if (!cliForced && savedStartupMode == "ask")
+                {
+                    bool remember;
+                    chosenMode = StartupModeDialog.PromptStartupMode(null, out remember);
+                    if (remember && tempDb.Settings != null && tempDb.Settings.general != null)
+                    {
+                        tempDb.Settings.general.startupMode = chosenMode;
+                        tempDb.Save();
+                    }
+                }
+                else if (!cliForced && !string.IsNullOrEmpty(savedStartupMode) && savedStartupMode != "ask")
+                {
+                    chosenMode = savedStartupMode;
+                }
+
+                MainForm mainApp = new MainForm();
+
+                if (chosenMode == "mini")
+                {
+                    // Mini Desk mode: mainApp runs in background with all daemons active, MiniDeskForm is visible
+                    mainApp.WindowState = FormWindowState.Minimized;
+                    mainApp.ShowInTaskbar = false;
+                    mainApp.Visible = false;
+
+                    MiniDeskForm miniForm = new MiniDeskForm(mainApp);
+                    mainApp.RegisterMiniDeskForm(miniForm);
+                    Application.Run(miniForm);
+                }
+                else
+                {
+                    Application.Run(mainApp);
+                }
             }
             catch (Exception ex)
             {
                 File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "native_error.log"), ex.ToString());
             }
         }
+        // ======================================================================
+        // JDROID-X-DESKMINI & EXTERNAL INTEGRATION API (CALL BY REFERENCE)
+        // ======================================================================
+        private MiniDeskForm miniDeskForm;
+        public MiniDeskForm MiniDesk { get { return miniDeskForm; } }
+        public SimulatorDesktop CurrentHostDesktop { get { return currentHostDesktop; } }
+        public DatabaseContext Database { get { return db; } }
+        public bool IsSessionActive { get { return isSessionActive; } }
+
+        public void RegisterMiniDeskForm(MiniDeskForm mini)
+        {
+            this.miniDeskForm = mini;
+        }
+
+        public void ShowFullConsole()
+        {
+            if (this.IsDisposed) return;
+            if (this.miniDeskForm != null && !this.miniDeskForm.IsDisposed)
+            {
+                this.miniDeskForm.Hide();
+            }
+            this.ShowInTaskbar = true;
+            this.Visible = true;
+            this.WindowState = FormWindowState.Normal;
+            this.Show();
+            this.BringToFront();
+        }
+
+        public void ShowMiniDesk()
+        {
+            if (miniDeskForm == null || miniDeskForm.IsDisposed)
+            {
+                miniDeskForm = new MiniDeskForm(this);
+            }
+            this.WindowState = FormWindowState.Minimized;
+            this.ShowInTaskbar = false;
+            this.Visible = false;
+            miniDeskForm.Show();
+            miniDeskForm.WindowState = FormWindowState.Normal;
+            miniDeskForm.BringToFront();
+        }
+
+        public void SwitchToTab(string tabKey)
+        {
+            if (this.IsDisposed) return;
+            ShowFullConsole();
+            SwitchWorkspaceView(tabKey);
+        }
+
+        public void InitiateRemoteConnection(string targetId)
+        {
+            if (string.IsNullOrEmpty(targetId)) return;
+            ShowFullConsole();
+            SwitchWorkspaceView("Console");
+            if (txtTargetId != null) txtTargetId.Text = targetId;
+            if (txtCardTargetId != null) txtCardTargetId.Text = targetId;
+            if (modernCardTargetBox != null) modernCardTargetBox.Text = targetId;
+            ToggleSessionConnection();
+        }
+
+        public void DisconnectActiveSession()
+        {
+            if (isSessionActive)
+            {
+                ToggleSessionConnection();
+            }
+        }
+
+        public void QuickAddContact(string targetId)
+        {
+            if (string.IsNullOrEmpty(targetId) || db == null) return;
+            targetId = targetId.Trim();
+            if (db.Contacts == null) db.Contacts = new List<ContactItem>();
+            ContactItem existing = db.Contacts.Find(delegate(ContactItem x) { return x.remoteId == targetId; });
+            if (existing == null)
+            {
+                ContactItem ci = new ContactItem
+                {
+                    id = Guid.NewGuid().ToString("N"),
+                    name = "Workstation " + targetId,
+                    remoteId = targetId,
+                    group = "Quick Connect"
+                };
+                db.Contacts.Add(ci);
+                db.Save();
+                db.AddLog("CONTACT_ADD", "MINI_DESK", "Added contact " + targetId);
+                SyncDynamicDesktopsFromDatabase();
+            }
+        }
+
+        public void ToggleFullScreen()
+        {
+            ShowFullConsole();
+            if (this.WindowState == FormWindowState.Maximized && this.FormBorderStyle == FormBorderStyle.None)
+            {
+                this.FormBorderStyle = FormBorderStyle.Sizable;
+                this.WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.WindowState = FormWindowState.Maximized;
+            }
+        }
+
+        public void CheckForUpdates(bool silent)
+        {
+            string url = (db != null && db.Settings != null && db.Settings.connection != null) ? db.Settings.connection.githubBackendUrl : null;
+            AutoUpdateManager.CheckForUpdatesInteractive(this, url, silent);
+        }
+
+        public void InstallToUserFolder()
+        {
+            if (InstallationManager.IsRunningFromStandardDirectory())
+            {
+                MessageBox.Show(this, "jDroid-X-Desk is already running from the standard user application folder:\n\n" + InstallationManager.GetStandardInstallDirectory(), "Already Installed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DialogResult dr = MessageBox.Show(this,
+                "Would you like to install jDroid-X-Desk to the standard Windows user application directory?\n\n" +
+                "• Target Folder: " + InstallationManager.GetStandardInstallDirectory() + "\n" +
+                "• Creates Desktop Shortcut & Start Menu entry\n" +
+                "• Configures Firewall & Defender exceptions\n" +
+                "• Registers in Windows Installed Apps\n",
+                "Install jDroid-X-Desk", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (dr == DialogResult.Yes)
+            {
+                string err;
+                bool ok = InstallationManager.InstallToStandardDirectory(out err);
+                if (ok)
+                {
+                    MessageBox.Show(this, "jDroid-X-Desk installed successfully to your user application folder!\nDesktop shortcut and Start Menu shortcuts created.", "Installation Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show(this, "Installation encountered an issue: " + err, "Installation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        public void CleanShutdown()
+        {
+            try
+            {
+                if (isSessionActive && !string.IsNullOrEmpty(activeReceiverTargetId))
+                {
+                    SendRemoteDisconnectSignal(activeReceiverTargetId, "Application closed by user.");
+                }
+                if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
+                {
+                    SendRemoteDisconnectSignal(currentHostDesktop.RemoteId, "Host application closed.");
+                }
+                StopHostDaemon();
+            }
+            catch { }
+            try
+            {
+                if (miniDeskForm != null && !miniDeskForm.IsDisposed)
+                {
+                    miniDeskForm.Dispose();
+                }
+            }
+            catch { }
+            Application.Exit();
+        }
+
 
         public MainForm()
         {
@@ -1120,8 +1342,17 @@ namespace JDroidXDesk.Native
             rightLayoutControls.Controls.Add(btnToggleLeftDrawer);
             rightLayoutControls.Controls.Add(btnToggleBottomDock);
             rightLayoutControls.Controls.Add(btnToggleRightInspector);
+            Button btnSwitchMini = CreateLayoutIconBtn("📱", "Switch to Mini Desk View", (s, e) => {
+                ShowMiniDesk();
+            }, false);
+            Button btnCheckUpdates = CreateLayoutIconBtn("🔄", "Check for Updates", (s, e) => {
+                CheckForUpdates(false);
+            }, false);
+
             rightLayoutControls.Controls.Add(cbHeaderThemeSelector);
             rightLayoutControls.Controls.Add(btnThemeToggle);
+            rightLayoutControls.Controls.Add(btnSwitchMini);
+            rightLayoutControls.Controls.Add(btnCheckUpdates);
 
             topHeaderBar.Controls.Add(leftBrand);
             topHeaderBar.Controls.Add(centerColabTelemetry);

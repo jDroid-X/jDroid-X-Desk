@@ -448,6 +448,7 @@ namespace JDroidXDesk.Native
         public bool openAddressBookOnStartup { get; set; }
         public bool autoUpdate { get; set; }
         public string updateChannel { get; set; }
+        public string startupMode { get; set; }
         public GeneralSettings()
         {
             hideLocalTaskbar = false;
@@ -455,6 +456,7 @@ namespace JDroidXDesk.Native
             openAddressBookOnStartup = true;
             autoUpdate = true;
             updateChannel = "stable";
+            startupMode = "ask";
         }
     }
 
