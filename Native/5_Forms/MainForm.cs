@@ -24,6 +24,15 @@ namespace JDroidXDesk.Native
         [DllImport("user32.dll")]
         private static extern bool SetProcessDPIAware();
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
 
@@ -391,7 +400,31 @@ namespace JDroidXDesk.Native
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
-                // Handle installation flag if requested via CLI
+                // Single-Instance Mutex Guard: Prevent dual-instance port collisions & zombies
+                bool isFirstInstance = false;
+                using (Mutex singleMutex = new Mutex(true, @"Global\jDroid-X-Desk-SingleInstance-Mutex-2026", out isFirstInstance))
+                {
+                    if (!isFirstInstance)
+                    {
+                        IntPtr hWndMini = FindWindow(null, "jDroid-X-Desk Mini | Remote Connection");
+                        if (hWndMini != IntPtr.Zero)
+                        {
+                            ShowWindow(hWndMini, 9); // SW_RESTORE
+                            SetForegroundWindow(hWndMini);
+                            return;
+                        }
+                        IntPtr hWndFull = FindWindow(null, "jDroid-X-Desk | Remote Desktop Workspace");
+                        if (hWndFull != IntPtr.Zero)
+                        {
+                            ShowWindow(hWndFull, 9); // SW_RESTORE
+                            SetForegroundWindow(hWndFull);
+                            return;
+                        }
+                        MessageBox.Show("jDroid-X-Desk is already running in the background or system tray.\nCheck the notification area or double-click the shield icon.", "Already Running", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    // Handle installation flag if requested via CLI
                 if (args != null && args.Length > 0 && (args[0] == "--install" || args[0] == "/install"))
                 {
                     string err;
@@ -445,6 +478,7 @@ namespace JDroidXDesk.Native
                 {
                     Application.Run(mainApp);
                 }
+                } // End Single-Instance Mutex Guard
             }
             catch (Exception ex)
             {

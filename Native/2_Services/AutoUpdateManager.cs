@@ -37,7 +37,8 @@ namespace JDroidXDesk.Native
                 res.LocalVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
                 string baseUrl = !string.IsNullOrEmpty(backendUrl) ? backendUrl.TrimEnd('/') : DEFAULT_SSOT_URL;
-                string versionManifestUrl = baseUrl + "/version.json";
+                string cacheBust = "?t=" + DateTime.UtcNow.Ticks.ToString();
+                string versionManifestUrl = baseUrl + "/version.json" + cacheBust;
                 string exeDownloadUrl = baseUrl + "/jDroid-X-Desk.exe";
                 res.DownloadUrl = exeDownloadUrl;
 
@@ -82,18 +83,31 @@ namespace JDroidXDesk.Native
                 res.RemoteVersion = !string.IsNullOrEmpty(remoteVer) ? remoteVer : "2.5.0.0";
                 res.ReleaseNotes = notes;
 
-                // Compare version and size
-                bool isSizeDifferent = (remoteSize > 50000 && remoteSize != res.LocalFileSize);
+                // Anti-Downgrade Protection: Only offer updates if remote version is strictly newer,
+                // or if versions are identical but remote binary size indicates a newer published release.
                 bool isVersionNewer = false;
+                bool isSameVersionDifferentSize = false;
                 try
                 {
                     Version locV = new Version(res.LocalVersion);
                     Version remV = new Version(res.RemoteVersion);
-                    if (remV > locV) isVersionNewer = true;
+                    if (remV > locV)
+                    {
+                        isVersionNewer = true;
+                    }
+                    else if (remV == locV && remoteSize > 50000 && remoteSize != res.LocalFileSize)
+                    {
+                        // Check if remote is actually different build of same version
+                        isSameVersionDifferentSize = true;
+                    }
                 }
-                catch { }
+                catch
+                {
+                    if (remoteSize > 50000 && remoteSize > res.LocalFileSize)
+                        isVersionNewer = true;
+                }
 
-                if (isVersionNewer || isSizeDifferent)
+                if (isVersionNewer || isSameVersionDifferentSize)
                 {
                     res.UpdateAvailable = true;
                 }
