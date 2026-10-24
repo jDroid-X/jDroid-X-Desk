@@ -138,9 +138,18 @@ namespace JDroidXDesk.Native
                         {
                             if (!silentIfNoUpdate)
                             {
-                                MessageBox.Show(owner,
-                                    string.Format("Your jDroid-X-Desk is up-to-date!\n\nLocal Version: {0}\nExecutable Size: {1:N0} bytes\nRemote Status: Verified matching SSOT release.", res.LocalVersion, res.LocalFileSize),
-                                    "jDroid-X-Desk Up to Date", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                if (!string.IsNullOrEmpty(res.ErrorMessage))
+                                {
+                                    MessageBox.Show(owner,
+                                        string.Format("Could not verify updates at this time:\n{0}\n\nPlease verify internet connectivity.", res.ErrorMessage),
+                                        "Update Check Notice", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                }
+                                else
+                                {
+                                    MessageBox.Show(owner,
+                                        string.Format("Your jDroid-X-Desk is up-to-date!\n\nLocal Version: {0}\nExecutable Size: {1:N0} bytes\nRemote Status: Verified matching SSOT release.", res.LocalVersion, res.LocalFileSize),
+                                        "jDroid-X-Desk Up to Date", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                }
                             }
                         }
                     }));

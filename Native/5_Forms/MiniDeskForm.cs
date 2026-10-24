@@ -75,18 +75,17 @@ namespace JDroidXDesk.Native
                     // If session active, prompt
                     if (mainForm != null && mainForm.IsSessionActive)
                     {
-                        DialogResult dr = MessageBox.Show(this, "A remote connection is currently active. Do you want to disconnect and exit?", "Active Session", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        DialogResult dr = MessageBox.Show(this, "A remote connection is currently active. Do you want to disconnect and close?", "Active Session", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                         if (dr != DialogResult.Yes)
                         {
                             e.Cancel = true;
                             return;
                         }
+                        mainForm.DisconnectActiveSession();
                     }
-                    // Exit whole application cleanly
-                    if (mainForm != null && !mainForm.IsDisposed)
-                    {
-                        mainForm.CleanShutdown();
-                    }
+                    // Hide to background tray instead of killing daemon
+                    e.Cancel = true;
+                    this.Hide();
                 }
             };
         }

@@ -1425,35 +1425,37 @@ namespace JDroidXDesk.Native
         private void SetupTraySupervisor()
         {
             trayMenu = new ContextMenu();
-            trayMenu.MenuItems.Add("Open Antigravity RDS Workspace", (s, e) => { this.WindowState = FormWindowState.Normal; this.Show(); this.BringToFront(); });
-            trayMenu.MenuItems.Add("Copy Address", (s, e) => { if (currentHostDesktop != null) Clipboard.SetText(currentHostDesktop.RemoteId); });
+            trayMenu.MenuItems.Add("📱 Open Mini Desk", (s, e) => { ShowMiniDesk(); });
+            trayMenu.MenuItems.Add("🖥️ Open Full Desk Console", (s, e) => { ShowFullConsole(); });
+            trayMenu.MenuItems.Add("📋 Copy My Desk ID", (s, e) => { if (currentHostDesktop != null) Clipboard.SetText(currentHostDesktop.RemoteId); });
+            trayMenu.MenuItems.Add("🔄 Check for Updates...", (s, e) => { CheckForUpdates(false); });
             trayMenu.MenuItems.Add("-");
-            trayMenu.MenuItems.Add("Exit", (s, e) => {
-                if (isSessionActive && !string.IsNullOrEmpty(activeReceiverTargetId))
-                {
-                    SendRemoteDisconnectSignal(activeReceiverTargetId, "Application closed by user.");
-                }
-                if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
-                {
-                    SendRemoteDisconnectSignal(currentHostDesktop.RemoteId, "Host application closed.");
-                }
-                StopHostDaemon();
-                StopScreenStreamer();
-                StopFrameReceiver();
-                StopLocalPythonRelay();
-                EmbeddedRelayServer.Instance.Stop();
-                LanDiscoveryEngine.Instance.Stop();
-                trayIcon.Visible = false;
-                Application.Exit();
+            trayMenu.MenuItems.Add("Exit Application", (s, e) => {
+                CleanShutdown();
             });
 
             trayIcon = new NotifyIcon {
-                Text = "jDroid-X-Desk Console",
+                Text = "jDroid-X-Desk Remote Workstation",
                 Icon = SystemIcons.Shield,
                 ContextMenu = trayMenu,
                 Visible = true
             };
-            trayIcon.DoubleClick += (s, e) => { this.WindowState = FormWindowState.Normal; this.Show(); this.BringToFront(); };
+            trayIcon.DoubleClick += (s, e) => {
+                if (miniDeskForm != null && miniDeskForm.Visible)
+                {
+                    miniDeskForm.WindowState = FormWindowState.Normal;
+                    miniDeskForm.BringToFront();
+                }
+                else if (this.Visible && this.WindowState != FormWindowState.Minimized)
+                {
+                    this.WindowState = FormWindowState.Normal;
+                    this.BringToFront();
+                }
+                else
+                {
+                    ShowMiniDesk();
+                }
+            };
         }
 
         private void ShowToast(string message)
