@@ -3200,22 +3200,26 @@ namespace JDroidXDesk.Native
             if (db != null && db.Settings != null && db.Settings.connection != null)
             {
                 string configuredRelay = db.Settings.connection.relayServer;
-                if (!string.IsNullOrEmpty(configuredRelay) && configuredRelay.StartsWith("http"))
+                if (!string.IsNullOrEmpty(configuredRelay) && configuredRelay.Contains("freemodels.club"))
+                {
+                    configuredRelay = "https://desk.jdroid-x.com";
+                    db.Settings.connection.relayServer = configuredRelay;
+                }
+                if (!string.IsNullOrEmpty(configuredRelay) && configuredRelay.StartsWith("http") && !configuredRelay.Contains("freemodels.club"))
                 {
                     configuredRelay = configuredRelay.TrimEnd('/');
                     if (!candidateUrls.Contains(configuredRelay)) candidateUrls.Add(configuredRelay);
                 }
                 string cd = db.Settings.connection.customDomain;
-                if (!string.IsNullOrEmpty(cd) && cd.StartsWith("http"))
+                if (!string.IsNullOrEmpty(cd) && cd.StartsWith("http") && !cd.Contains("freemodels.club"))
                 {
                     cd = cd.TrimEnd('/');
                     if (!candidateUrls.Contains(cd)) candidateUrls.Add(cd);
                 }
             }
 
-            // 5. Online Cloud Middle Bridge & Cloudflare Ingress
-            if (!candidateUrls.Contains("https://jdroidx.freemodels.club")) candidateUrls.Add("https://jdroidx.freemodels.club");
-            if (!candidateUrls.Contains("https://desk.jdroid-x.com")) candidateUrls.Add("https://desk.jdroid-x.com");
+            // 5. Online Cloud Middle Bridge & Cloudflare Ingress (Primary Cloud Relay for jDroid-X)
+            if (!candidateUrls.Contains("https://desk.jdroid-x.com")) candidateUrls.Insert(0, "https://desk.jdroid-x.com");
 
             // Local loopback is ONLY permitted when targetId is explicitly localhost or 127.0.0.1
             bool isExplicitLoopback = !string.IsNullOrEmpty(targetId) && (targetId.Contains("127.0.0.1") || targetId.ToLower().Contains("localhost"));

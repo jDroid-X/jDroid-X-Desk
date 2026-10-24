@@ -359,9 +359,10 @@ namespace JDroidXDesk.Native
                                     string jsonStr = reader.ReadToEnd();
                                     JavaScriptSerializer ser = new JavaScriptSerializer();
                                     Dictionary<string, object> dict = ser.Deserialize<Dictionary<string, object>>(jsonStr);
-                                    if (dict != null && dict.ContainsKey("success") && Convert.ToBoolean(dict["success"]) && dict.ContainsKey("inputs"))
+                                    if (dict != null && dict.ContainsKey("success") && Convert.ToBoolean(dict["success"]))
                                     {
-                                        System.Collections.IEnumerable list = dict["inputs"] as System.Collections.IEnumerable;
+                                        object rawList = dict.ContainsKey("inputs") ? dict["inputs"] : (dict.ContainsKey("events") ? dict["events"] : null);
+                                        System.Collections.IEnumerable list = rawList as System.Collections.IEnumerable;
                                         if (list != null)
                                         {
                                             foreach (object item in list)
@@ -868,7 +869,7 @@ namespace JDroidXDesk.Native
             ThreadPool.QueueUserWorkItem(delegate {
                 try
                 {
-                    List<string> candidateUrls = GetRelayCandidateUrls();
+                    List<string> candidateUrls = GetRelayCandidateUrls(activeReceiverTargetId);
                     details["type"] = eventType;
                     Dictionary<string, object> payload = new Dictionary<string, object>();
                     payload["targetId"] = activeReceiverTargetId;
@@ -1248,11 +1249,54 @@ namespace JDroidXDesk.Native
             }
         }
 
+        private void SendRemoteConnectSignal(string targetId)
+        {
+            if (string.IsNullOrEmpty(targetId)) return;
+            ThreadPool.QueueUserWorkItem(delegate {
+                try
+                {
+                    List<string> candidateUrls = GetRelayCandidateUrls(targetId);
+                    Dictionary<string, object> payload = new Dictionary<string, object>();
+                    payload["targetId"] = targetId;
+                    payload["sender"] = currentHostDesktop != null ? currentHostDesktop.RemoteId : "Remote Desk";
+
+                    Dictionary<string, object> ev = new Dictionary<string, object>();
+                    ev["type"] = "session_start";
+                    ev["sourceId"] = payload["sender"];
+                    payload["event"] = ev;
+
+                    JavaScriptSerializer ser = new JavaScriptSerializer();
+                    string json = ser.Serialize(payload);
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+                    foreach (string rUrl in candidateUrls)
+                    {
+                        try
+                        {
+                            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(rUrl + "/api/relay/push_input");
+                            req.Method = "POST";
+                            req.ContentType = "application/json";
+                            req.Timeout = 1000;
+                            req.ContentLength = bytes.Length;
+                            using (Stream os = req.GetRequestStream())
+                            {
+                                os.Write(bytes, 0, bytes.Length);
+                            }
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse()) { break; }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            });
+        }
+
         private void StartFrameReceiver(string targetRemoteId)
         {
             StopFrameReceiver();
             isFrameReceiverActive = true;
             activeReceiverTargetId = targetRemoteId;
+            SendRemoteConnectSignal(targetRemoteId);
             frameReceiverThread = new Thread(new ThreadStart(FrameReceiverWorker)) { IsBackground = true };
             frameReceiverThread.Start();
         }
