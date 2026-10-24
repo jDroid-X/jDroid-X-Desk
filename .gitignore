@@ -30,3 +30,4 @@ jdroid-x-desk-mindmap*
 
 # Ephemeral runtime file transfers
 transfers/
+cloudflared*.exe
