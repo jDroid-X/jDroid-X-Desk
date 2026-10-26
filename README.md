@@ -4,7 +4,7 @@
 
 # jDroid-X-Desk
 ### Enterprise Remote Desktop & Machine Administration Workspace
-#### Senior Dynamic OOPS MVC Architecture | AnyDesk Parity Master Standard | Cloudflare Edge Ingress
+#### Senior Dynamic OOPS MVC Architecture | jDroid-X Wire-Speed Master Standard | Cloudflare Edge Ingress
 
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%207%20%7C%208%20%7C%2010%20%7C%2011%20%7C%20Server-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/jDroid-X/jDroid-X-Desk)
 [![Runtime: .NET 4.0 - 4.8](https://img.shields.io/badge/.NET-Modular%20Native%20C%23%20(Any%20CPU)-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://github.com/jDroid-X/jDroid-X-Desk)
@@ -38,23 +38,23 @@
 
 ## 📥 Direct Download & Universal Deployment
 
-**jDroid-X-Desk** is an enterprise remote desktop solution architected to the **AnyDesk Master Parity Baseline Requirement (BRD)**. Built and verified as a **single universal Windows executable**, it runs on all Windows versions (Windows 7, 8, 8.1, 10, 11, and Windows Server) on AnyCPU (x86, x64, ARM64) with zero external runtime dependencies:
+**jDroid-X-Desk** is an enterprise remote desktop solution architected to the **jDroid-X Wire-Speed Baseline Requirement (BRD)**. Built and verified as a **single universal Windows executable**, it runs on all Windows versions (Windows 7, 8, 8.1, 10, 11, and Windows Server) on AnyCPU (x86, x64, ARM64) with zero external runtime dependencies:
 
 | Artifact | Type | Size | Direct Download Link | Specification & Authority |
 |---|---|---|---|---|
-| **jDroid-X-Desk.exe** | **Single Universal Windows Executable** | **387 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single Canonical Executable**: Modular C# Windows Forms architecture (`Native/`), embedded manifest (DPI-aware, Win 7–11), multi-target .NET 4.0–4.8.1 runtime fallback. Direct execution from USB or network shares with zero installer required. |
-| **jDroid-X-Desk-Universal.zip** | **Portable Distribution Archive** | **1.3 MB** | [📥 **Download Universal ZIP**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Universal.zip) | Standalone distribution package containing the unified executable, manifest, configs, scripts, certificates, and unblock launchers. |
+| **jDroid-X-Desk.exe** | **Single Universal Windows Executable** | **682 KB** | [📥 **Download jDroid-X-Desk.exe**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe) | **Single Canonical Executable**: Modular C# Windows Forms architecture (`Native/`), embedded manifest (DPI-aware, Win 7–11), embedded presentation assets, multi-target .NET 4.0–4.8.1 runtime fallback. Direct execution from USB or network shares with zero installer required. |
+| **jDroid-X-Desk-Universal.zip** | **Portable Distribution Archive** | **460 KB** | [📥 **Download Universal ZIP**](https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk-Universal.zip) | Standalone distribution package containing the unified executable, manifest, configs, scripts, certificates, and unblock launchers. |
 | **Install-Or-Run.bat** | **1-Click SmartScreen Unblock Launcher** | **1.2 KB** | [📥 **Download Install-Or-Run.bat**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/Install-Or-Run.bat) | 1-click batch launcher that removes Windows SmartScreen Mark-of-the-Web (MOTW) attribute and boots the native executable. |
 | **TRUST_ENTERPRISE_CERT_AS_ADMIN.bat** | **Kernel Trust & Root Certificate Installer** | **1.8 KB** | [📥 **Download Certificate Installer**](https://raw.githubusercontent.com/jDroid-X/jDroid-X-Desk/main/TRUST_ENTERPRISE_CERT_AS_ADMIN.bat) | Administrator batch script that trusts the enterprise Authenticode root certificate into `Cert:\LocalMachine\Root` for Windows 11 Smart App Control (SAC) compliance. |
 | **Installation Guide** | **Markdown Guide** | **3.2 KB** | [📖 **INSTALL_GUIDE_WINDOWS.md**](INSTALL_GUIDE_WINDOWS.md) | Comprehensive Windows setup, UAC elevation, firewall whitelist, and multi-tenant setup instructions. |
-| **Parity Master BRD** | **Architectural Specification** | **28 KB** | [📖 **JDROID_X_BRD_ANYDESK_PARITY_MASTER.md**](docs/JDROID_X_BRD_ANYDESK_PARITY_MASTER.md) | Official 8-Phase AnyDesk Parity Lifecycle, state transitions, validation logic, and Mermaid flowcharts. |
+| **jDroid-X Master BRD** | **Architectural Specification** | **28 KB** | [📖 **JDROID_X_BRD_MASTER.md**](docs/JDROID_X_BRD_MASTER.md) | Official 8-Phase jDroid-X Remote Lifecycle, state transitions, validation logic, and Mermaid flowcharts. |
 | **Cloudflare Edge Gateway** | **Live Ingress Endpoint** | — | [🌐 **https://desk.jdroid-x.com**](https://desk.jdroid-x.com) | Central signaling directory, public presence heartbeat, and secure WebRTC tunnel broker. |
 
 ---
 
-## 🏛️ AnyDesk Parity Master Architecture (8-Phase Lifecycle)
+## 🏛️ jDroid-X Wire-Speed Master Architecture (8-Phase Lifecycle)
 
-jDroid-X-Desk implements the complete 8-phase operational lifecycle defined in the **[AnyDesk Parity Master BRD](docs/JDROID_X_BRD_ANYDESK_PARITY_MASTER.md)**:
+jDroid-X-Desk implements the complete 8-phase operational lifecycle defined in the **[jDroid-X Master BRD](docs/JDROID_X_BRD_MASTER.md)**:
 
 ```
 [Phase 1: Client Startup] ➔ Deterministic SHA-256 Hardware ID & Local Listener
@@ -67,7 +67,7 @@ jDroid-X-Desk implements the complete 8-phase operational lifecycle defined in t
          ↓
 [Phase 5: Authorization & Consent] ➔ 5-Checkbox Host Permission Modal & 45s Polling Timeout
          ↓
-[Phase 6: Media Pipeline & DeskRT] ➔ DXGI Desktop Duplication + Tile Codec (<16ms, 60 FPS)
+[Phase 6: Media Pipeline & TileCodec] ➔ DXGI Desktop Duplication + Tile Codec (<16ms, 60 FPS)
          ↓
 [Phase 7: Active Controls & Lease] ➔ Low-Latency RTCDataChannel Input + UAC Elevation
          ↓
@@ -94,7 +94,7 @@ The user experience has been streamlined into an intuitive **2-Step Interface**:
   3. `[✔] Allow Audio Transmission`
   4. `[✔] Allow File Transfer`
   5. `[ ] Lock Local Physical Keyboard & Mouse`
-- **Floating Top HUD**: Real-time display of FPS, latency (ms), bandwidth, cipher suite, and the 14 AnyDesk-parity quick actions (Ctrl+Alt+Del, UAC Elevation, Monitor Switch, In-Session Chat, Whiteboard, Session Recording).
+- **Floating Top HUD**: Real-time display of FPS, latency (ms), bandwidth, cipher suite, and the 14 jDroid-X quick actions (Ctrl+Alt+Del, UAC Elevation, Monitor Switch, In-Session Chat, Whiteboard, Session Recording).
 
 ---
 
@@ -107,7 +107,7 @@ The user experience has been streamlined into an intuitive **2-Step Interface**:
     - `2_Services/`: DXGI Desktop Duplication capture service, TileCodec differential rendering, and installation managers.
     - `3_Network/`: High-performance P2P UDP engine, embedded relay server, and socket listeners.
     - `4_UI_Controls/`: Native dialogs, consent popups, and HUD widgets.
-    - `5_Forms/`: `MainForm.cs` (Enterprise Suite) and `MiniDeskForm.cs` (2-Step Parity Workspace).
+    - `5_Forms/`: `MainForm.cs` (Enterprise Suite) and `MiniDeskForm.cs` (2-Step jDroid-X Workspace).
   - Single-command compilation via `compile_native.bat` using standard Windows built-in `csc.exe`.
 - **Full-Stack Web Gateway (`server.js` + `controllers/` + `models/`)**:
   - Node.js Express server running on port `7700` (fallback `12345`).
@@ -123,7 +123,7 @@ The user experience has been streamlined into an intuitive **2-Step Interface**:
   - Digit-normalized discovery via `/api/signaling/lookup/:deskId` resolves partner IPs, UDP ports, and presence instantly.
 
 ### 3. Database & Relational Schema (19 Collections)
-The data layer in [`models/db-context.js`](models/db-context.js) maintains complete AnyDesk parity across 19 relational entities:
+The data layer in [`models/db-context.js`](models/db-context.js) maintains complete jDroid-X relational parity across 19 entities:
 - `clients`: Hardware client identities, OS versions, and fingerprints.
 - `certificates`: Cryptographic trust store and X.509 fingerprints.
 - `permission_profiles`: Master access presets (`Full Control`, `View Only`).
@@ -154,9 +154,9 @@ jDroid-X-Desk/
 ├── views/                              # Presentation Layer
 │   └── index.html                      # 2-Step Interface & System Studio View
 ├── docs/                               # Specifications & Blueprints
-│   ├── JDROID_X_BRD_ANYDESK_PARITY_MASTER.md # Master 8-Phase Parity Blueprint
+│   ├── JDROID_X_BRD_MASTER.md          # Master 8-Phase jDroid-X Blueprint
 │   ├── JDROID_X_BRD_BASELINE.md        # Architectural Baseline Specification
-│   └── ANYDESK_RECONSTRUCTION_DOSSIER.md    # Reverse Engineering Analysis
+│   └── RECONSTRUCTION_DOSSIER.md       # Competitive Analysis & Reconstruction Dossier
 ├── requirement/                        # Requirements & Telemetry Change Logs
 │   ├── Task_35.md                      # Task 35 Parity Completion Ledger
 │   └── unified-screen-contract.txt     # Screen-Action-Affordance Contract
@@ -166,8 +166,8 @@ jDroid-X-Desk/
 ├── app.js                              # Canonical Frontend Mirror
 ├── index.html                          # Root Presentation Gateway
 ├── test.js                             # Comprehensive 223-Test Verification Suite
-├── jDroid-X-Desk.exe                   # Single Universal Windows Executable (387 KB)
-└── jDroid-X-Desk-Universal.zip         # Portable Distribution Archive (1.3 MB)
+├── jDroid-X-Desk.exe                   # Single Universal Windows Executable (682 KB)
+└── jDroid-X-Desk-Universal.zip         # Portable Distribution Archive (460 KB)
 ```
 
 ---
@@ -219,7 +219,7 @@ node test.js
 [4/4] Starting Server & Testing API Endpoints...  [PASS]
   - Signaling Heartbeat & Peer Discovery:        [PASS]
   - WebRTC SDP & ICE Candidate Exchange:         [PASS]
-  - DeskRT Tile Stream & HTTP 304 Caching:       [PASS]
+  - TileCodec Stream & HTTP 304 Caching:         [PASS]
   - Permission Profiles & Client Identities:     [PASS]
   - In-Session Chat & Certificates Store:        [PASS]
   - Active & Historical Session Separation:      [PASS]

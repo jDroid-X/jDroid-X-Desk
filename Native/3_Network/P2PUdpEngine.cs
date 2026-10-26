@@ -17,7 +17,7 @@ namespace JDroidXDesk.Native
 
     /// <summary>
     /// Senior Dynamic OOPS P2P UDP & STUN Traversal Engine.
-    /// Implements AnyDesk wire-speed direct socket streaming with zero middleman latency.
+    /// Implements jDroid-X wire-speed direct socket streaming with zero middleman latency.
     /// </summary>
     public sealed class P2PUdpEngine : IDisposable
     {

@@ -17,7 +17,7 @@ namespace JDroidXDesk.Native
 
     /// <summary>
     /// Senior Dynamic OOPS Screen Capture Service (DXGI 1.2 Desktop Duplication with GDI+ Fallback).
-    /// Adheres to AnyDesk BRD baseline requirement: sub-16ms screen frame acquisition.
+    /// Adheres to jDroid-X BRD baseline requirement: sub-16ms screen frame acquisition.
     /// </summary>
     public sealed class DxgiCaptureService : IDisposable
     {

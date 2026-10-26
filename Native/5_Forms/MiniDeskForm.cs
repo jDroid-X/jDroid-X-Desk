@@ -14,13 +14,13 @@ namespace JDroidXDesk.Native
         private MainForm mainForm;
         private ToolTip toolTip;
 
-        // --- AnyDesk Parity Top Header & Sub-Bar Controls ---
+        // --- jDroid-X Top Header & Sub-Bar Controls ---
         private Panel topContainerPanel;
 
-        // Row 1: AnyDesk Tab Header
+        // Row 1: jDroid-X Tab Header
         private Panel headerPanel;
-        private Label lblAnyDeskLogo;
-        private Label lblAnyDeskTitle;
+        private Label lblJDroidLogo;
+        private Label lblJDroidTitle;
         private Panel tabChip;
         private Label lblTabIcon;
         private Label lblTabTitle;
@@ -30,7 +30,7 @@ namespace JDroidXDesk.Native
         private Button btnHeaderFullScreen;
         private ContextMenuStrip menuHamburger;
 
-        // Row 2: AnyDesk Sub-Bar / Action Toolbar
+        // Row 2: jDroid-X Sub-Bar / Action Toolbar
         private Panel toolbarPanel;
         private Label lblToolbarStatusDot;
         private Label lblToolbarScreenIcon;
@@ -38,7 +38,7 @@ namespace JDroidXDesk.Native
         private Label lblToolbarDeskId;
         private FlowLayoutPanel pnlActionIcons;
 
-        // The 14 AnyDesk Parity Action Buttons
+        // The 14 jDroid-X Action Buttons
         private Button btnPrivacy;        // 1. ⦸
         private Button btnDiagnostics;    // 2. ⌛
         private Button btnFiles;          // 3. 🗄️
@@ -137,7 +137,7 @@ namespace JDroidXDesk.Native
             };
         }
 
-        private Button CreateAnyDeskIconBtn(string text, string tooltip, Action onClick, int width = 30)
+        private Button CreateToolbarIconBtn(string text, string tooltip, Action onClick, int width = 30)
         {
             Button btn = new Button
             {
@@ -163,7 +163,7 @@ namespace JDroidXDesk.Native
         {
             this.Controls.Clear();
 
-            // 1. TOP DUAL-BAR CONTAINER (Row 1: AnyDesk Tab Bar, Row 2: Action Toolbar)
+            // 1. TOP DUAL-BAR CONTAINER (Row 1: jDroid-X Tab Bar, Row 2: Action Toolbar)
             topContainerPanel = new Panel
             {
                 Dock = DockStyle.Top,
@@ -171,7 +171,7 @@ namespace JDroidXDesk.Native
                 BackColor = Color.White
             };
 
-            // ROW 1: AnyDesk Tab Header
+            // ROW 1: jDroid-X Tab Header
             headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
@@ -186,7 +186,7 @@ namespace JDroidXDesk.Native
                 }
             };
 
-            lblAnyDeskLogo = new Label
+            lblJDroidLogo = new Label
             {
                 Text = "⚡",
                 Font = new Font("Segoe UI Symbol", 12f, FontStyle.Bold),
@@ -196,7 +196,7 @@ namespace JDroidXDesk.Native
                 BackColor = Color.Transparent
             };
 
-            lblAnyDeskTitle = new Label
+            lblJDroidTitle = new Label
             {
                 Text = "jDroid-X",
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -328,14 +328,14 @@ namespace JDroidXDesk.Native
             toolTip.SetToolTip(btnHeaderFullScreen, "Toggle Fullscreen Viewport (F11)");
             btnHeaderFullScreen.Click += (s, e) => ActionToggleFullScreen();
 
-            headerPanel.Controls.Add(lblAnyDeskLogo);
-            headerPanel.Controls.Add(lblAnyDeskTitle);
+            headerPanel.Controls.Add(lblJDroidLogo);
+            headerPanel.Controls.Add(lblJDroidTitle);
             headerPanel.Controls.Add(tabChip);
             headerPanel.Controls.Add(btnTabAdd);
             headerPanel.Controls.Add(btnHeaderProfile);
             headerPanel.Controls.Add(btnHeaderFullScreen);
 
-            // ROW 2: AnyDesk Action Sub-Bar / Toolbar
+            // ROW 2: jDroid-X Action Sub-Bar / Toolbar
             toolbarPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
@@ -402,63 +402,63 @@ namespace JDroidXDesk.Native
                 Margin = new Padding(0)
             };
 
-            // The 14 AnyDesk Parity Icons
-            btnPrivacy = CreateAnyDeskIconBtn("⦸", "Privacy Mode - Blank remote physical monitor", () => {
+            // The 14 jDroid-X Action Icons
+            btnPrivacy = CreateToolbarIconBtn("⦸", "Privacy Mode - Blank remote physical monitor", () => {
                 if (mainForm != null) mainForm.TogglePrivacyMode();
             }, 30);
 
-            btnDiagnostics = CreateAnyDeskIconBtn("⌛", "Session Telemetry HUD (RTT, FPS, Relay Status)", () => {
+            btnDiagnostics = CreateToolbarIconBtn("⌛", "Session Telemetry HUD (RTT, FPS, Relay Status)", () => {
                 if (mainForm != null) MessageBox.Show(this, mainForm.GetSessionDiagnostics(), "Session Telemetry & HUD", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }, 30);
 
-            btnFiles = CreateAnyDeskIconBtn("🗄️", "File Transfer - Remote File Manager", () => {
+            btnFiles = CreateToolbarIconBtn("🗄️", "File Transfer - Remote File Manager", () => {
                 if (mainForm != null) mainForm.OpenRemoteFileManager();
             }, 30);
 
-            btnFavorite = CreateAnyDeskIconBtn("★", "Add to Favorites / Fleet Address Book", () => {
+            btnFavorite = CreateToolbarIconBtn("★", "Add to Favorites / Fleet Address Book", () => {
                 if (mainForm != null) mainForm.AddCurrentTargetToFavorites();
             }, 30);
 
-            btnSwitchSides = CreateAnyDeskIconBtn("⇄", "Switch Sides - Reverse session control direction", () => {
+            btnSwitchSides = CreateToolbarIconBtn("⇄", "Switch Sides - Reverse session control direction", () => {
                 if (mainForm != null) mainForm.RequestSwitchSides();
             }, 30);
 
-            btnDisplay = CreateAnyDeskIconBtn("🖵 1", "Switch Active Display / Monitor", () => {
+            btnDisplay = CreateToolbarIconBtn("🖵 1", "Switch Active Display / Monitor", () => {
                 if (mainForm != null) {
                     mainForm.SwitchActiveDisplay();
                     btnDisplay.Text = "🖵 " + (mainForm.CurrentClientMonitorIdx == 3 ? "All" : (mainForm.CurrentClientMonitorIdx + 1).ToString());
                 }
             }, 38);
 
-            btnViewMode = CreateAnyDeskIconBtn("🖥️", "Display Scaling (SmartFit / 1:1 / Stretch)", () => {
+            btnViewMode = CreateToolbarIconBtn("🖥️", "Display Scaling (SmartFit / 1:1 / Stretch)", () => {
                 if (mainForm != null) mainForm.ToggleSmartFitMode();
             }, 30);
 
-            btnChat = CreateAnyDeskIconBtn("💬", "In-Session Chat", () => {
+            btnChat = CreateToolbarIconBtn("💬", "In-Session Chat", () => {
                 if (mainForm != null) mainForm.OpenInSessionChat();
             }, 30);
 
-            btnActions = CreateAnyDeskIconBtn("⚡", "Actions (Ctrl+Alt+Del, Lock, TaskMgr, Restart)", () => {
+            btnActions = CreateToolbarIconBtn("⚡", "Actions (Ctrl+Alt+Del, Lock, TaskMgr, Restart)", () => {
                 if (mainForm != null) mainForm.ShowActionsMenu(btnActions, new Point(0, btnActions.Height));
             }, 30);
 
-            btnKeyboard = CreateAnyDeskIconBtn("⌨️", "Keyboard (Send Win key, Alt+Tab, 1:1 Scancodes)", () => {
+            btnKeyboard = CreateToolbarIconBtn("⌨️", "Keyboard (Send Win key, Alt+Tab, 1:1 Scancodes)", () => {
                 if (mainForm != null) mainForm.ShowKeyboardMenu(btnKeyboard, new Point(0, btnKeyboard.Height));
             }, 30);
 
-            btnElevation = CreateAnyDeskIconBtn("🛡️", "Security (Request UAC Elevation)", () => {
+            btnElevation = CreateToolbarIconBtn("🛡️", "Security (Request UAC Elevation)", () => {
                 if (mainForm != null) mainForm.ShowElevationMenu(btnElevation, new Point(0, btnElevation.Height));
             }, 30);
 
-            btnRecord = CreateAnyDeskIconBtn("📹 PRO", "Session Recording", () => {
+            btnRecord = CreateToolbarIconBtn("📹 PRO", "Session Recording", () => {
                 if (mainForm != null) mainForm.ToggleSessionRecording();
             }, 54);
 
-            btnWhiteboard = CreateAnyDeskIconBtn("✏️", "Whiteboard Annotation Tool", () => {
+            btnWhiteboard = CreateToolbarIconBtn("✏️", "Whiteboard Annotation Tool", () => {
                 if (mainForm != null) mainForm.ToggleWhiteboard();
             }, 30);
 
-            btnMenu = CreateAnyDeskIconBtn("☰", "Session Options & Disconnect", () => {
+            btnMenu = CreateToolbarIconBtn("☰", "Session Options & Disconnect", () => {
                 if (mainForm != null) mainForm.ShowSessionOptionsMenu(btnMenu, new Point(0, btnMenu.Height));
             }, 30);
 
@@ -1052,7 +1052,7 @@ namespace JDroidXDesk.Native
                     if (lblTabTitle != null) lblTabTitle.Text = tid;
                     if (lblFooterStatus != null) lblFooterStatus.Text = string.Format("🔴 Connected to {0} | ⚡ {1:F0} FPS | {2} ms RTT | GPU Accelerated", tid, mainForm.CurrentMeasuredFps, mainForm.LastMeasuredRttMs);
 
-                    // Dynamic State Parity Updates for the 14 AnyDesk action buttons
+                    // Dynamic State Updates for the 14 jDroid-X action buttons
                     if (btnDisplay != null)
                         btnDisplay.Text = "🖵 " + (mainForm.CurrentClientMonitorIdx == 3 ? "All" : (mainForm.CurrentClientMonitorIdx + 1).ToString());
 

@@ -813,7 +813,7 @@ namespace JDroidXDesk.Native
             });
             Button btnImmersive = CreateToolbarBtn("⛶ Immersive (F11)", (s, e) => ToggleImmersiveZenMode());
 
-            // AnyDesk Features
+            // jDroid-X Features
             Button btnSyncClip = CreateToolbarBtn("📋 Sync Clip", (s, e) => SyncLocalClipboardToRemote());
             Button btnScreenshot = CreateToolbarBtn("📸 Screenshot", (s, e) => CaptureRemoteScreenshot());
             Button btnBlockInput = CreateToolbarBtn("🚫 Block Input", (s, e) => ToggleBlockRemoteUserInput((Button)s));
@@ -873,7 +873,7 @@ namespace JDroidXDesk.Native
         }
 
         // ======================================================================
-        // ANYDESK COMPONENT HELPERS (SCREENSHOT, CLIPBOARD, INPUT LOCK, SWITCH SIDES)
+        // JDROID-X COMPONENT HELPERS (SCREENSHOT, CLIPBOARD, INPUT LOCK, SWITCH SIDES)
         // ======================================================================
 
         private void CaptureRemoteScreenshot()

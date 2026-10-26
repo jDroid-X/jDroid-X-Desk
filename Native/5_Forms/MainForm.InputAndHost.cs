@@ -600,7 +600,7 @@ namespace JDroidXDesk.Native
 
                 if (type == "mouse" || type == "wheel")
                 {
-                    if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
+                    if (!hostPermissionAllowInput) return; // jDroid-X Permission Gate
                     bool hasApprovedViewer = (approvedViewerIps.Count > 0) ||
                                              EmbeddedRelayServer.Instance.HasApprovedViewers() ||
                                              isHostServingRemoteClient ||
@@ -677,7 +677,7 @@ namespace JDroidXDesk.Native
                 }
                 else if (type == "key")
                 {
-                    if (!hostPermissionAllowInput) return; // AnyDesk Permission Gate
+                    if (!hostPermissionAllowInput) return; // jDroid-X Permission Gate
                     bool hasApprovedViewer = (approvedViewerIps.Count > 0) ||
                                              EmbeddedRelayServer.Instance.HasApprovedViewers() ||
                                              isHostServingRemoteClient ||

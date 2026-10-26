@@ -14,7 +14,7 @@ Google Colab fills this gap by acting as an **Out-of-Band High-Bandwidth Cloud R
 1. **Zero-Configuration NAT Traversal**: Host and client both make outbound HTTPS connections to the Colab relay. Because all connections are outbound, firewalls and router NATs do not block the stream.
 2. **In-Memory Frame Buffer & Input Router**: Host pushes compressed screen frames (`/api/relay/push_frame`); Viewer pulls them (`/api/relay/pull_frame/<id>`). Mouse and keyboard keystrokes are enqueued in reverse (`/api/relay/push_input` -> `/api/relay/pull_input/<id>`).
 3. **Public Ingress via Cloudflare Tunnel (`cloudflared`)**: The Colab runtime exposes port `8088` through an SSL-encrypted Cloudflare tunnel (`https://*.trycloudflare.com` or custom domain `https://www.jdroid-x.com`).
-4. **Zero-Cost High-RAM Cloud Infrastructure**: No cloud server costs, AWS bills, or third-party TeamViewer/AnyDesk subscriptions needed.
+4. **Zero-Cost High-RAM Cloud Infrastructure**: No cloud server costs, AWS bills, or third-party subscription fees needed.
 
 ---
 

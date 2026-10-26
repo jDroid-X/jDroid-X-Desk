@@ -644,7 +644,7 @@ namespace JDroidXDesk.Native
         }
 
         // ======================================================================
-        // ANYDESK IN-SESSION FEATURES & 14-ACTION SUITE (OFFICIAL ANYDESK TOP BAR)
+        // JDROID-X IN-SESSION FEATURES & 14-ACTION SUITE (OFFICIAL JDROID-X TOP BAR)
         // ======================================================================
         public string SmartFitMode { get { return smartFitMode; } set { smartFitMode = value; } }
         private bool isPrivacyModeActive = false;
@@ -1073,7 +1073,7 @@ namespace JDroidXDesk.Native
                     UpdateLiveTelemetry();
                     if (viewportCanvas != null && !viewportCanvas.IsDisposed) viewportCanvas.Invalidate();
 
-                    // Automatic Bi-directional Clipboard Sync (AnyDesk Feature)
+                    // Automatic Bi-directional Clipboard Sync (jDroid-X Feature)
                     if (isSessionActive && autoSyncClipboard)
                     {
                         try
@@ -3049,7 +3049,7 @@ namespace JDroidXDesk.Native
                     else if (engId == "rustdesk")
                     {
                         engName = "🦀 RustDesk Remote Desktop (rustdesk/rustdesk)";
-                        engTagline = "Best direct open-source match to TeamViewer/AnyDesk with P2P NAT Traversal, NaCl encryption, and self-hosting support.";
+                        engTagline = "Best direct open-source match to enterprise remote desktop with P2P NAT Traversal, NaCl encryption, and self-hosting support.";
                         engPrereq = "• Cloned source in: jDroid-X-Desk-Server\\Github\\rustdesk-master\n• Official standalone RustDesk executable or self-hosted hbbs/hbbr server";
                         engSteps = "1. FREE PUBLIC SERVER USAGE (Zero-Config Mode):\n" +
                                    "   - RustDesk works out-of-the-box with official public rendezvous servers (relay.rustdesk.com).\n" +
@@ -3356,7 +3356,7 @@ namespace JDroidXDesk.Native
                 }
             }
 
-            // 0b. Zero-Config LAN P2P Auto-Discovery resolution (AnyDesk style via UDP beacon)
+            // 0b. Zero-Config LAN P2P Auto-Discovery resolution (jDroid-X style via UDP beacon)
             if (!string.IsNullOrEmpty(targetId))
             {
                 string lanEp;

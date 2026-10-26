@@ -1135,7 +1135,7 @@ class ServerController {
             // Capability & Permission Separation (Desk-Mandetor Rules Rule 6 & Section 5 C2)
             const db = readDB();
             const isTestHarness = targetId === 'TEST-DESK-1' || targetId === 'JDX-TEST-9999' || req.headers['x-test-harness'] === 'true';
-            const activeSession = (db.sessions || []).find(s => 
+            const activeSession = (db.sessions || []).slice().reverse().find(s => 
                 (s.targetId === targetId || s.remoteId === targetId) && s.status === 'ACTIVE'
             );
             if (activeSession && activeSession.permissions && activeSession.permissions.clipboard === false && !isTestHarness) {

@@ -1226,7 +1226,7 @@ namespace JDroidXDesk.Native
     }
 
     // ==========================================================================
-    // 2.6 NATIVE P2P LAN DISCOVERY ENGINE (ZERO-CONFIG ANYDESK-STYLE UDP BEACON)
+    // 2.6 NATIVE P2P LAN DISCOVERY ENGINE (ZERO-CONFIG JDROID-X STYLE UDP BEACON)
     // ==========================================================================
 
 }
