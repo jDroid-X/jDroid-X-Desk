@@ -109,7 +109,8 @@ namespace JDroidXDesk.Native
                     { Path.Combine(targetAssets, "jdroidxlogo_trans.png"), "assets.jdroidxlogo_trans.png" },
                     { Path.Combine(targetAssets, "jdroid-x-desk-presentation.png"), "assets.jdroid_x_desk_presentation.png" },
                     { Path.Combine(targetScripts, "configure-smart-app-control.bat"), "configure_smart_app_control.bat" },
-                    { Path.Combine(targetScripts, "trust-root-cert.bat"), "trust_root_cert.bat" }
+                    { Path.Combine(targetScripts, "trust-root-cert.bat"), "trust_root_cert.bat" },
+                    { Path.Combine(targetDir, "TRUST_ENTERPRISE_CERT_AS_ADMIN.bat"), "TRUST_ENTERPRISE_CERT_AS_ADMIN.bat" }
                 };
 
                 foreach (KeyValuePair<string, string> kvp in map)
@@ -186,7 +187,8 @@ namespace JDroidXDesk.Native
                     { Path.Combine("assets", "jdroidxlogo_trans.png"), "assets.jdroidxlogo_trans.png" },
                     { Path.Combine("assets", "jdroid-x-desk-presentation.png"), "assets.jdroid_x_desk_presentation.png" },
                     { Path.Combine("scripts", "configure-smart-app-control.bat"), "configure_smart_app_control.bat" },
-                    { Path.Combine("scripts", "trust-root-cert.bat"), "trust_root_cert.bat" }
+                    { Path.Combine("scripts", "trust-root-cert.bat"), "trust_root_cert.bat" },
+                    { "TRUST_ENTERPRISE_CERT_AS_ADMIN.bat", "TRUST_ENTERPRISE_CERT_AS_ADMIN.bat" }
                 };
 
                 foreach (KeyValuePair<string, string> item in filesToDeploy)

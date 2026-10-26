@@ -973,14 +973,14 @@ namespace JDroidXDesk.Native
             ShowToast(isRemoteInputBlockedByViewer ? "🚫 Remote user input disabled." : "🔓 Remote user input restored.");
         }
 
-        private void OpenRemoteFileManager()
+        public void OpenRemoteFileManager()
         {
             string targetId = !string.IsNullOrEmpty(activeReceiverTargetId) ? activeReceiverTargetId : (connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "");
             SwitchWorkspaceView("FileTransfer");
             ShowToast("📁 File Transfer Workspace activated for Desk: " + targetId);
         }
 
-        private void RequestSwitchSides()
+        public void RequestSwitchSides()
         {
             string localDeskId = currentHostDesktop != null ? currentHostDesktop.RemoteId : "";
             Dictionary<string, object> ev = new Dictionary<string, object>();
@@ -1012,7 +1012,7 @@ namespace JDroidXDesk.Native
             });
         }
 
-        private void OpenInSessionChat()
+        public void OpenInSessionChat()
         {
             using (Form prompt = new Form())
             {

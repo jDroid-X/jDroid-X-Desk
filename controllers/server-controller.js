@@ -25,6 +25,10 @@ const relayAudio = new Map();      // targetId -> boolean (enabled/muted)
 const relayAudioChunks = new Map(); // targetId -> { chunk, timestamp, size }
 const relayControlLeases = new Map(); // targetId -> { holderId, grantedAt, leaseId }
 
+// jDroid-X Central Signaling Directory & Cloudflare Edge Tunnel Heartbeat Map
+const signalingDirectory = new Map(); // deskId -> { deskId, name, publicIp, localIp, tunnelUrl, status, lastHeartbeat, os, version }
+const signalingMessages = new Map();  // toDeskId -> Array of pending signals { fromDeskId, type, payload, timestamp }
+
 class ServerController {
     static registerRoutes(app, dbContext) {
         const {
@@ -301,6 +305,92 @@ class ServerController {
         app.post('/api/settings', saveSettingsHandler);
 
         // ==========================================
+        // 5b. PERMISSION PROFILES & CLIENTS (BRD AnyDesk Parity)
+        // ==========================================
+        app.get('/api/permission-profiles', (req, res) => {
+            const db = readDB();
+            res.json({ success: true, data: db.permission_profiles || [] });
+        });
+
+        app.get('/api/clients', (req, res) => {
+            const db = readDB();
+            res.json({ success: true, count: (db.clients || []).length, data: db.clients || [] });
+        });
+
+        app.post('/api/clients', (req, res) => {
+            const db = readDB();
+            const client = req.body || {};
+            if (!client.deskId) {
+                return res.status(400).json({ success: false, error: 'deskId is required' });
+            }
+            if (!Array.isArray(db.clients)) db.clients = [];
+            const idx = db.clients.findIndex(c => c.deskId === client.deskId);
+            if (idx >= 0) {
+                db.clients[idx] = { ...db.clients[idx], ...client, lastSeen: new Date().toISOString() };
+            } else {
+                db.clients.push({ ...client, firstSeen: new Date().toISOString(), lastSeen: new Date().toISOString() });
+            }
+            writeDB(db);
+            res.json({ success: true, data: client });
+        });
+
+        // ==========================================
+        // 5c. CERTIFICATES & TRUST STORE (BRD Section 3 Cryptographic Handshake)
+        // ==========================================
+        app.get('/api/certificates', (req, res) => {
+            const db = readDB();
+            res.json({ success: true, count: (db.certificates || []).length, data: db.certificates || [] });
+        });
+
+        app.post('/api/certificates', (req, res) => {
+            const db = readDB();
+            const cert = req.body || {};
+            if (!cert.fingerprint && !cert.deskId) {
+                return res.status(400).json({ success: false, error: 'fingerprint or deskId is required' });
+            }
+            if (!Array.isArray(db.certificates)) db.certificates = [];
+            const certRecord = {
+                id: cert.id || `CERT-${Date.now()}`,
+                deskId: cert.deskId || 'LOCAL-DESK',
+                fingerprint: cert.fingerprint || 'SHA256:MOCK-FINGERPRINT',
+                trusted: cert.trusted !== false,
+                issuedAt: cert.issuedAt || new Date().toISOString(),
+                expiresAt: cert.expiresAt || new Date(Date.now() + 365*24*3600*1000).toISOString()
+            };
+            db.certificates.push(certRecord);
+            writeDB(db);
+            res.json({ success: true, data: certRecord });
+        });
+
+        // ==========================================
+        // 5d. IN-SESSION CHAT API (BRD Phase 6 Active Session Tools)
+        // ==========================================
+        app.get('/api/chat/:sessionId', (req, res) => {
+            const db = readDB();
+            const msgs = (db.chat_messages || []).filter(m => m.sessionId === req.params.sessionId);
+            res.json({ success: true, count: msgs.length, data: msgs });
+        });
+
+        app.post('/api/chat/:sessionId', (req, res) => {
+            const db = readDB();
+            const text = (req.body.text || req.body.message || '').trim();
+            if (!text) {
+                return res.status(400).json({ success: false, error: 'Message text is required' });
+            }
+            if (!Array.isArray(db.chat_messages)) db.chat_messages = [];
+            const msg = {
+                id: `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                sessionId: req.params.sessionId,
+                senderId: req.body.senderId || 'OPERATOR',
+                text,
+                timestamp: new Date().toISOString()
+            };
+            db.chat_messages.push(msg);
+            writeDB(db);
+            res.json({ success: true, data: msg });
+        });
+
+        // ==========================================
         // 6. LOGS & AUDIT API
         // ==========================================
         app.get('/api/logs', (req, res) => {
@@ -390,6 +480,20 @@ class ServerController {
             res.json({ success: true, data: db.sessions || [] });
         });
 
+        app.get('/api/sessions/active', (req, res) => {
+            const db = readDB();
+            const active = (db.sessions || []).filter(s => s.status === 'ACTIVE');
+            res.json({ success: true, count: active.length, data: active });
+        });
+
+        app.get('/api/sessions/history', (req, res) => {
+            const db = readDB();
+            const history = (db.sessions_history && db.sessions_history.length > 0) 
+                ? db.sessions_history 
+                : (db.sessions || []).filter(s => s.status === 'TERMINATED' || s.status === 'CLOSED');
+            res.json({ success: true, count: history.length, data: history });
+        });
+
         app.post('/api/sessions', (req, res) => {
             const targetId = req.body.targetId || req.body.remoteId;
             if (!targetId || typeof targetId !== 'string' || targetId.trim().length === 0) {
@@ -414,6 +518,8 @@ class ServerController {
             };
             if (!Array.isArray(db.sessions)) db.sessions = [];
             db.sessions.push(session);
+            if (!Array.isArray(db.sessions_active)) db.sessions_active = [];
+            db.sessions_active.push(session);
             writeDB(db);
             res.json({ success: true, data: session });
         });
@@ -445,6 +551,11 @@ class ServerController {
 
             // Complete Session Teardown Parity (Desk-Mandetor Rules Rule 8 & Section 7 E1)
             if (req.body.status === 'TERMINATED') {
+                if (!Array.isArray(db.sessions_history)) db.sessions_history = [];
+                db.sessions_history.unshift(db.sessions[idx]);
+                if (Array.isArray(db.sessions_active)) {
+                    db.sessions_active = db.sessions_active.filter(s => s.id !== req.params.id);
+                }
                 const targetId = existing.targetId || existing.remoteId;
                 if (targetId) {
                     relayFrames.delete(targetId);
@@ -1630,6 +1741,169 @@ class ServerController {
                 activeDevices: relayDevices.size,
                 cachedFrames: relayFrames.size,
                 nativePort,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        // ======================================================================
+        // 8.1 jDroid-X CENTRAL SIGNALING SERVER & CLOUDFLARE EDGE HEARTBEAT MAP
+        // ======================================================================
+
+        // 1. Live Heartbeat Registration (Web & Desktop nodes report presence every 15s)
+        app.post(['/api/signaling/heartbeat', '/api/relay/heartbeat'], (req, res) => {
+            const { deskId, name, localIp, tunnelUrl, os, version, capabilities } = req.body || {};
+            const cleanId = (deskId || '').trim();
+            if (!cleanId) {
+                return res.status(400).json({ success: false, error: 'Field "deskId" is required for signaling registration.' });
+            }
+
+            const clientPublicIp = (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || '').replace('::ffff:', '').split(',')[0].trim();
+            const edgeTunnel = tunnelUrl || (fs.existsSync(path.join(ROOT_DIR, 'colab_tunnel.txt')) ? fs.readFileSync(path.join(ROOT_DIR, 'colab_tunnel.txt'), 'utf8').trim() : 'https://desk.jdroid-x.com');
+
+            const nodeRecord = {
+                deskId: cleanId,
+                name: name || `jDroid-X-${cleanId.replace(/\D/g, '').slice(-4) || 'Desk'}`,
+                publicIp: clientPublicIp || '127.0.0.1',
+                localIp: localIp || '127.0.0.1',
+                tunnelUrl: edgeTunnel,
+                status: 'ONLINE',
+                lastHeartbeat: Date.now(),
+                os: os || 'Windows',
+                version: version || '2.0.0',
+                capabilities: capabilities || { webrtc: true, p2p: true, dxgi: true, audio: true }
+            };
+
+            signalingDirectory.set(cleanId, nodeRecord);
+            // Also register into backward-compatible relay devices
+            relayDevices.set(cleanId, {
+                id: cleanId,
+                name: nodeRecord.name,
+                ip: nodeRecord.publicIp,
+                lastSeen: nodeRecord.lastHeartbeat,
+                os: nodeRecord.os
+            });
+
+            res.status(200).json({
+                success: true,
+                status: 'ONLINE',
+                deskId: cleanId,
+                tunnelUrl: edgeTunnel,
+                publicIp: clientPublicIp,
+                activeDirectoryCount: signalingDirectory.size,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        // 2. Active Directory Query (Filter stale nodes > 45 seconds)
+        app.get(['/api/signaling/directory', '/api/signaling/nodes'], (req, res) => {
+            const now = Date.now();
+            const activeNodes = [];
+            for (const [id, node] of signalingDirectory.entries()) {
+                if (now - node.lastHeartbeat < 45000) {
+                    activeNodes.push(node);
+                } else {
+                    node.status = 'OFFLINE';
+                }
+            }
+            res.status(200).json({ success: true, count: activeNodes.length, data: activeNodes });
+        });
+
+        // 3. Desk ID Presence Lookup (Instant Partner Discovery)
+        app.get(['/api/signaling/lookup/:deskId', '/api/relay/lookup/:deskId'], (req, res) => {
+            const queryId = (req.params.deskId || '').trim();
+            const cleanQuery = normalizeId(queryId);
+            let foundNode = null;
+
+            for (const [id, node] of signalingDirectory.entries()) {
+                if (id.toLowerCase() === queryId.toLowerCase() || (cleanQuery && normalizeId(id) === cleanQuery)) {
+                    foundNode = node;
+                    break;
+                }
+            }
+
+            if (foundNode && (Date.now() - foundNode.lastHeartbeat < 45000)) {
+                return res.status(200).json({
+                    success: true,
+                    online: true,
+                    deskId: foundNode.deskId,
+                    name: foundNode.name,
+                    publicIp: foundNode.publicIp,
+                    tunnelUrl: foundNode.tunnelUrl,
+                    capabilities: foundNode.capabilities,
+                    lastSeenSecondsAgo: Math.round((Date.now() - foundNode.lastHeartbeat) / 1000)
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                online: false,
+                deskId: queryId,
+                message: 'Workstation is currently offline or awaiting heartbeat.'
+            });
+        });
+
+        // 4. Send P2P Signaling Message (SDP Offer / Answer / ICE Candidate)
+        app.post(['/api/signaling/send', '/api/relay/signal'], (req, res) => {
+            const { fromDeskId, toDeskId, type, payload } = req.body || {};
+            if (!fromDeskId || !toDeskId || !type) {
+                return res.status(400).json({ success: false, error: 'Fields fromDeskId, toDeskId, and type are required.' });
+            }
+
+            const cleanTo = normalizeId(toDeskId) || toDeskId;
+            if (!signalingMessages.has(cleanTo)) {
+                signalingMessages.set(cleanTo, []);
+            }
+
+            const signalEntry = {
+                id: `SIG-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                fromDeskId,
+                toDeskId,
+                type: type.toUpperCase(), // OFFER, ANSWER, ICE, REQ_PERMS, ACCEPT, DISMISS
+                payload: payload || {},
+                timestamp: Date.now()
+            };
+
+            const queue = signalingMessages.get(cleanTo);
+            queue.push(signalEntry);
+            if (queue.length > 50) queue.shift(); // Bound memory buffer
+
+            res.status(200).json({ success: true, queued: true, signalId: signalEntry.id, target: toDeskId });
+        });
+
+        // 5. Drain Received P2P Signaling Messages
+        app.get(['/api/signaling/messages/:deskId', '/api/relay/signals/:deskId'], (req, res) => {
+            const deskId = (req.params.deskId || '').trim();
+            const cleanId = normalizeId(deskId) || deskId;
+
+            let messages = [];
+            if (signalingMessages.has(cleanId)) {
+                messages = signalingMessages.get(cleanId).splice(0);
+            }
+            if (signalingMessages.has(deskId) && deskId !== cleanId) {
+                messages = messages.concat(signalingMessages.get(deskId).splice(0));
+            }
+
+            res.status(200).json({ success: true, count: messages.length, messages });
+        });
+
+        // 6. Overall Central Signaling Server & Cloudflare Edge Status
+        app.get(['/api/signaling/status', '/api/signaling/health'], (req, res) => {
+            const edgeTunnel = (fs.existsSync(path.join(ROOT_DIR, 'colab_tunnel.txt')) ? fs.readFileSync(path.join(ROOT_DIR, 'colab_tunnel.txt'), 'utf8').trim() : 'https://desk.jdroid-x.com');
+            const now = Date.now();
+            let liveCount = 0;
+            for (const [, node] of signalingDirectory.entries()) {
+                if (now - node.lastHeartbeat < 45000) liveCount++;
+            }
+
+            res.status(200).json({
+                success: true,
+                service: 'jDroid-X Central Signaling Engine',
+                brand: 'jDroid-X',
+                cloudflareEdgeTunnel: edgeTunnel,
+                publicDomain: 'https://desk.jdroid-x.com',
+                liveHeartbeatNodes: liveCount,
+                totalMappedNodes: signalingDirectory.size,
+                pendingSignalsQueued: Array.from(signalingMessages.values()).reduce((sum, q) => sum + q.length, 0),
                 timestamp: new Date().toISOString()
             });
         });

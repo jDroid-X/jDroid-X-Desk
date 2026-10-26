@@ -27,6 +27,7 @@ echo [1/2] Generating C# compiler arguments file...
     echo /res:assets\jdroid-x-desk-presentation.png,assets.jdroid_x_desk_presentation.png
     echo /res:scripts\configure-smart-app-control.bat,configure_smart_app_control.bat
     echo /res:scripts\trust-root-cert.bat,trust_root_cert.bat
+    echo /res:TRUST_ENTERPRISE_CERT_AS_ADMIN.bat,TRUST_ENTERPRISE_CERT_AS_ADMIN.bat
     echo /out:jDroid-X-Desk.exe
 ) > native_compile.rsp
 

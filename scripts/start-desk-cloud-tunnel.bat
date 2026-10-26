@@ -1,6 +1,6 @@
 @echo off
 setlocal
-TITLE jDroid-X-Desk Cloud Ingress & Tunnel Supervisor (desk.jdroid-x.com)
+TITLE "jDroid-X-Desk Cloud Ingress & Tunnel Supervisor (desk.jdroid-x.com)"
 cd /d "%~dp0.."
 
 echo ========================================================
@@ -38,7 +38,7 @@ if not exist "%CF_BIN%" (
 netstat -ano | findstr /I "cloudflared" >nul 2>&1
 
 echo [2/3] Connecting Cloudflare Edge Tunnel to desk.jdroid-x.com...
-start "Cloudflare Tunnel - desk.jdroid-x.com" /min cmd /c ""%CF_BIN%" tunnel run ad79a58a-f017-49a0-a560-7f654565a482"
+start "Cloudflare Tunnel" /min "%CF_BIN%" tunnel run ad79a58a-f017-49a0-a560-7f654565a482
 
 timeout /t 3 /nobreak >nul 2>&1
 

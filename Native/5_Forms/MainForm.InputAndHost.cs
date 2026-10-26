@@ -22,7 +22,7 @@ namespace JDroidXDesk.Native
     public partial class MainForm
     {
         // ======================================================================
-        // GOOGLE COLAB CENTRAL CLOUD RELAY BROKER
+        // GOOGLE COLAB CENTRAL CLOUD RELAY & jDroid-X SIGNALING BROKER
         // ======================================================================
 
         private void RegisterWithColabRelay()
@@ -35,6 +35,17 @@ namespace JDroidXDesk.Native
                     string json = string.Format("{{\"id\":\"{0}\",\"name\":\"{1}\",\"role\":\"{2}\",\"passcode\":\"{3}\"}}",
                         currentHostDesktop.RemoteId, currentHostDesktop.Name, currentHostDesktop.Role, currentHostDesktop.Passcode);
                     byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+                    if (!P2PUdpEngine.Instance.IsRunning)
+                    {
+                        P2PUdpEngine.Instance.Start(0);
+                    }
+                    int p2pPort = P2PUdpEngine.Instance.LocalPort;
+                    string p2pEp = P2PUdpEngine.Instance.PublicReflexiveEndPoint != null ? P2PUdpEngine.Instance.PublicReflexiveEndPoint.ToString() : "";
+
+                    string hbJson = string.Format("{{\"deskId\":\"{0}\",\"name\":\"{1}\",\"os\":\"Windows\",\"version\":\"2.0.0\",\"tunnelUrl\":\"https://desk.jdroid-x.com\",\"p2pPort\":{2},\"publicEp\":\"{3}\"}}",
+                        currentHostDesktop.RemoteId, currentHostDesktop.Name, p2pPort, p2pEp);
+                    byte[] hbBytes = System.Text.Encoding.UTF8.GetBytes(hbJson);
 
                     foreach (string rUrl in candidateUrls)
                     {
@@ -49,12 +60,22 @@ namespace JDroidXDesk.Native
                             {
                                 os.Write(bytes, 0, bytes.Length);
                             }
-                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse()) { }
+
+                            // Register presence with jDroid-X Central Signaling & Heartbeat Engine
+                            string hbEndpoint = rUrl.TrimEnd('/') + "/api/signaling/heartbeat";
+                            HttpWebRequest hbReq = (HttpWebRequest)WebRequest.Create(hbEndpoint);
+                            hbReq.Method = "POST";
+                            hbReq.ContentType = "application/json";
+                            hbReq.Timeout = 1500;
+                            hbReq.ContentLength = hbBytes.Length;
+                            using (Stream os = hbReq.GetRequestStream())
                             {
-                                if ((int)resp.StatusCode == 200)
-                                {
-                                    break;
-                                }
+                                os.Write(hbBytes, 0, hbBytes.Length);
+                            }
+                            using (HttpWebResponse hbResp = (HttpWebResponse)hbReq.GetResponse())
+                            {
+                                if ((int)hbResp.StatusCode == 200) break;
                             }
                         } catch { }
                     }
@@ -157,12 +178,10 @@ namespace JDroidXDesk.Native
                         } catch { }
 
                         string b64 = null;
-                        using (Bitmap fullBmp = new Bitmap(sw, sh))
+                        using (Bitmap fullBmp = DxgiCaptureService.Instance.CaptureScreen(screenRect))
                         {
                             using (Graphics g = Graphics.FromImage(fullBmp))
                             {
-                                g.CopyFromScreen(screenRect.Left, screenRect.Top, 0, 0, screenRect.Size);
-
                                 // Real OS Hardware Cursor Blitting
                                 try {
                                     CURSORINFO pci;
@@ -213,7 +232,19 @@ namespace JDroidXDesk.Native
                                     b64 = Convert.ToBase64String(ms.ToArray());
                                     byte[] rawJpgBytes = ms.ToArray();
 
-                                    // Static Frame & Bandwidth Optimization (AnyDesk Dirty-Rect Equivalence)
+                                    // Differential Tile Delta Optimization (32x32 DeskRT Dirty-Rect Codec)
+                                    TileFrameDiffResult tileDiff = TileCodecService.Instance.EncodeDifferentialFrame(scaledBmp, false);
+                                    if (tileDiff != null && tileDiff.DirtyCount == 0 && staticFrameCount < 18)
+                                    {
+                                        staticFrameCount++;
+                                    }
+
+                                    // P2P UDP Direct Peer Broadcast (Zero-Proxy UDP Pipeline)
+                                    if (P2PUdpEngine.Instance.IsRunning && rawJpgBytes != null && rawJpgBytes.Length > 0)
+                                    {
+                                        P2PUdpEngine.Instance.SendPacket(rawJpgBytes);
+                                    }
+
                                     ulong frameHash = 14695981039346656037UL;
                                     int step = Math.Max(1, rawJpgBytes.Length / 512);
                                     for (int i = 0; i < rawJpgBytes.Length; i += step)

@@ -64,6 +64,12 @@ async function runTests() {
     assert(fs.existsSync('scripts/gateway_routes.json'), 'scripts/gateway_routes.json (Unified Gateway routes registry) exists');
     assert(fs.existsSync('start_nodejs_server.bat'), 'start_nodejs_server.bat (Holistic gateway launcher) exists');
     assert(fs.existsSync('requirement/unified-screen-contract.txt'), 'requirement/unified-screen-contract.txt (Stage 1 Screen Contract) exists');
+    assert(fs.existsSync('docs/JDROID_X_BRD_BASELINE.md'), 'docs/JDROID_X_BRD_BASELINE.md (Master AnyDesk BRD & Rebuilt Plan) exists');
+    assert(fs.existsSync('docs/ANYDESK_RECONSTRUCTION_DOSSIER.md'), 'docs/ANYDESK_RECONSTRUCTION_DOSSIER.md (Master REA Dossier) exists');
+    assert(fs.existsSync('Native/2_Services/DxgiCaptureService.cs'), 'Native/2_Services/DxgiCaptureService.cs (VRAM Zero-Copy 60 FPS Capture) exists');
+    assert(fs.existsSync('Native/2_Services/TileCodecService.cs'), 'Native/2_Services/TileCodecService.cs (DeskRT 32x32 Differential Delta Codec) exists');
+    assert(fs.existsSync('Native/3_Network/P2PUdpEngine.cs'), 'Native/3_Network/P2PUdpEngine.cs (STUN NAT Traversal & Direct Peer Socket) exists');
+    assert(fs.existsSync('TRUST_ENTERPRISE_CERT_AS_ADMIN.bat'), 'TRUST_ENTERPRISE_CERT_AS_ADMIN.bat (Enterprise Certificate Whitelister) exists');
 
 
     // 2. DATABASE SCHEMA INTEGRITY
@@ -147,50 +153,27 @@ async function runTests() {
 
     // 4. BACKEND API INTEGRATION TEST (EPHEMERAL PORT)
     console.log('\n[4/4] Starting Server & Testing API Endpoints...');
-    let TEST_PORT = 12345;
-    let serverProc = null;
-
-    const isLive = await new Promise(res => {
-        const pingReq = http.get('http://127.0.0.1:12345/api/health', (r) => {
-            let d = '';
-            r.on('data', c => d += c);
-            r.on('end', () => {
-                try {
-                    const j = JSON.parse(d);
-                    res(r.statusCode === 200 && j.appSlug === 'jdroid-x-desk');
-                } catch (_) {
-                    res(false);
-                }
-            });
-        });
-        pingReq.on('error', () => res(false));
-        pingReq.setTimeout(1000, () => { pingReq.destroy(); res(false); });
+    let TEST_PORT = 12399;
+    let serverProc = spawn(process.execPath, [path.join(__dirname, 'server.js')], {
+        cwd: __dirname,
+        env: { ...process.env, PORT: String(TEST_PORT), NO_DUAL_PORT: '1' },
+        stdio: 'pipe'
     });
 
-    if (!isLive) {
-        TEST_PORT = 12399;
-        serverProc = spawn(process.execPath, [path.join(__dirname, 'server.js')], {
-            cwd: __dirname,
-            env: { ...process.env, PORT: String(TEST_PORT) },
-            stdio: 'pipe'
-        });
+    serverProc.on('error', err => {
+        console.error('  [FAIL] Failed to start test server process:', err.message);
+    });
 
-        serverProc.on('error', err => {
-            console.error('  [FAIL] Failed to start test server process:', err.message);
+    await new Promise(res => {
+        let booted = false;
+        serverProc.stdout.on('data', d => {
+            if (d.toString().includes('running on http')) {
+                if (!booted) { booted = true; res(); }
+            }
         });
-
-        await new Promise(res => {
-            let booted = false;
-            serverProc.stdout.on('data', d => {
-                if (d.toString().includes('running on http')) {
-                    if (!booted) { booted = true; res(); }
-                }
-            });
-            setTimeout(() => { if (!booted) res(); }, 4000);
-        });
-    } else {
-        console.log('  [INFO] Connected to active jDroid-X-Desk server on port ' + TEST_PORT);
-    }
+        setTimeout(() => { if (!booted) res(); }, 4000);
+    });
+    console.log('  [INFO] Fresh test server instance running on port ' + TEST_PORT);
 
     function makeRequest(method, pathName, body = null, customHeaders = {}) {
         return new Promise((resolve, reject) => {
@@ -715,6 +698,116 @@ async function runTests() {
 
         const gwPageRes = await makeRequest('GET', '/jdroid-x-desk/index.html');
         assert(gwPageRes.statusCode === 200, 'GET /jdroid-x-desk/index.html serves application through mounted gateway');
+
+        // Central Signaling Server & Cloudflare Edge Heartbeat Tests
+        const hbRes = await makeRequest('POST', '/api/signaling/heartbeat', {
+            deskId: '984-102-391',
+            name: 'jDroid-X-Host-Alpha',
+            tunnelUrl: 'https://desk.jdroid-x.com'
+        });
+        assert(hbRes.statusCode === 200 && hbRes.body.status === 'ONLINE' && hbRes.body.deskId === '984-102-391', 'POST /api/signaling/heartbeat registers live presence');
+
+        const dirRes = await makeRequest('GET', '/api/signaling/directory');
+        assert(dirRes.statusCode === 200 && Array.isArray(dirRes.body.data) && dirRes.body.data.some(d => d.deskId === '984-102-391'), 'GET /api/signaling/directory lists active nodes');
+
+        const lookupRes = await makeRequest('GET', '/api/signaling/lookup/984102391');
+        assert(lookupRes.statusCode === 200 && lookupRes.body.online && lookupRes.body.deskId === '984-102-391', 'GET /api/signaling/lookup resolves desk presence with normalized digits');
+
+        const sigSendRes = await makeRequest('POST', '/api/signaling/send', {
+            fromDeskId: '984-102-391',
+            toDeskId: '582-109-431',
+            type: 'OFFER',
+            payload: { sdp: 'v=0\r\no=...' }
+        });
+        assert(sigSendRes.statusCode === 200 && sigSendRes.body.queued, 'POST /api/signaling/send queues P2P signal message');
+
+        const sigMsgRes = await makeRequest('GET', '/api/signaling/messages/582-109-431');
+        assert(sigMsgRes.statusCode === 200 && Array.isArray(sigMsgRes.body.messages) && sigMsgRes.body.messages.length > 0, 'GET /api/signaling/messages retrieves queued signals');
+
+        const sigStatusRes = await makeRequest('GET', '/api/signaling/status');
+        assert(sigStatusRes.statusCode === 200 && sigStatusRes.body.brand === 'jDroid-X' && sigStatusRes.body.liveHeartbeatNodes > 0, 'GET /api/signaling/status confirms live engine metrics');
+
+        // Bidirectional WebRTC Signaling: Host Answer and ICE Candidate Exchange
+        const sigAnsSendRes = await makeRequest('POST', '/api/signaling/send', {
+            fromDeskId: '582-109-431',
+            toDeskId: '984-102-391',
+            type: 'ANSWER',
+            payload: { sdp: 'v=0\r\na=crypto:...' }
+        });
+        assert(sigAnsSendRes.statusCode === 200 && sigAnsSendRes.body.queued, 'POST /api/signaling/send queues WebRTC SDP Answer');
+
+        const sigIceSendRes = await makeRequest('POST', '/api/signaling/send', {
+            fromDeskId: '582-109-431',
+            toDeskId: '984-102-391',
+            type: 'ICE',
+            payload: { candidate: { candidate: 'candidate:1 1 UDP 2130706431 192.168.1.100 50000 typ host' } }
+        });
+        assert(sigIceSendRes.statusCode === 200 && sigIceSendRes.body.queued, 'POST /api/signaling/send queues WebRTC ICE Candidate');
+
+        const initiatorMsgsRes = await makeRequest('GET', '/api/signaling/messages/984-102-391');
+        assert(initiatorMsgsRes.statusCode === 200 && initiatorMsgsRes.body.count >= 2, 'GET /api/signaling/messages delivers both ANSWER and ICE candidate to initiator');
+
+        // Pre-Flight Gate 3 Offline Desk Lookup Verification
+        const offlineLookupRes = await makeRequest('GET', '/api/signaling/lookup/000-000-000');
+        assert(offlineLookupRes.statusCode === 200 && offlineLookupRes.body.online === false, 'GET /api/signaling/lookup correctly identifies offline target desk');
+
+        // P2P UDP Endpoint Registration via Signaling Heartbeat
+        const p2pHbRes = await makeRequest('POST', '/api/signaling/heartbeat', {
+            deskId: '712-409-583',
+            name: 'jDroid-X-P2P-Node',
+            os: 'Windows',
+            p2pPort: 51820,
+            publicEp: '198.51.100.25:51820',
+            tunnelUrl: 'https://desk.jdroid-x.com'
+        });
+        assert(p2pHbRes.statusCode === 200 && p2pHbRes.body.status === 'ONLINE', 'POST /api/signaling/heartbeat registers P2P UDP endpoint');
+
+        const p2pLookupRes = await makeRequest('GET', '/api/signaling/lookup/712-409-583');
+        assert(p2pLookupRes.statusCode === 200 && p2pLookupRes.body.online === true, 'GET /api/signaling/lookup confirms P2P node presence');
+
+        // Master AnyDesk-Parity Permission Profiles Verification
+        const permProfilesRes = await makeRequest('GET', '/api/permission-profiles');
+        assert(permProfilesRes.statusCode === 200 && Array.isArray(permProfilesRes.body.data) && permProfilesRes.body.data.length >= 2, 'GET /api/permission-profiles returns master permission presets');
+
+        // Master AnyDesk-Parity Clients Registry Verification
+        const clientRegRes = await makeRequest('POST', '/api/clients', {
+            deskId: '984-102-391',
+            alias: 'operator@jdx',
+            hardwareGuid: 'hw-guid-test-123',
+            osVersion: 'Windows 11'
+        });
+        assert(clientRegRes.statusCode === 200 && clientRegRes.body.success === true, 'POST /api/clients registers hardware client identity');
+
+        const clientsListRes = await makeRequest('GET', '/api/clients');
+        assert(clientsListRes.statusCode === 200 && clientsListRes.body.count >= 1, 'GET /api/clients retrieves registered client list');
+
+        // Master AnyDesk-Parity Certificates Verification
+        const certRegRes = await makeRequest('POST', '/api/certificates', {
+            deskId: '984-102-391',
+            fingerprint: 'SHA256:7b:99:a4:fe:55:01:cb',
+            trusted: true
+        });
+        assert(certRegRes.statusCode === 200 && certRegRes.body.success === true, 'POST /api/certificates registers cryptographic certificate');
+
+        const certListRes = await makeRequest('GET', '/api/certificates');
+        assert(certListRes.statusCode === 200 && certListRes.body.count >= 1, 'GET /api/certificates retrieves certificate store');
+
+        // Master AnyDesk-Parity In-Session Chat Verification
+        const chatSendRes = await makeRequest('POST', '/api/chat/SES-TEST-001', {
+            senderId: 'OPERATOR-JEET',
+            text: 'Hello from remote operator console'
+        });
+        assert(chatSendRes.statusCode === 200 && chatSendRes.body.success === true, 'POST /api/chat/:sessionId posts in-session chat message');
+
+        const chatGetRes = await makeRequest('GET', '/api/chat/SES-TEST-001');
+        assert(chatGetRes.statusCode === 200 && chatGetRes.body.count >= 1, 'GET /api/chat/:sessionId returns message history');
+
+        // Master AnyDesk-Parity Active/History Sessions Verification
+        const activeSessRes = await makeRequest('GET', '/api/sessions/active');
+        assert(activeSessRes.statusCode === 200 && Array.isArray(activeSessRes.body.data), 'GET /api/sessions/active returns active session array');
+
+        const historySessRes = await makeRequest('GET', '/api/sessions/history');
+        assert(historySessRes.statusCode === 200 && Array.isArray(historySessRes.body.data), 'GET /api/sessions/history returns historical session array');
     } catch (err) {
         assert(false, `API integration error: ${err.message}`);
     } finally {

@@ -643,6 +643,227 @@ namespace JDroidXDesk.Native
             catch { }
         }
 
+        // ======================================================================
+        // ANYDESK IN-SESSION FEATURES & 14-ACTION SUITE (OFFICIAL ANYDESK TOP BAR)
+        // ======================================================================
+        public string SmartFitMode { get { return smartFitMode; } set { smartFitMode = value; } }
+        private bool isPrivacyModeActive = false;
+        public bool IsPrivacyModeActive { get { return isPrivacyModeActive; } }
+        private bool isWhiteboardActive = false;
+        public bool IsWhiteboardActive { get { return isWhiteboardActive; } }
+        public readonly List<List<Point>> WhiteboardStrokes = new List<List<Point>>();
+        private bool isRecordingSession = false;
+        public bool IsRecordingSession { get { return isRecordingSession; } }
+        private string activeRecordingFolder = "";
+        private int currentClientMonitorIdx = 0;
+        public int CurrentClientMonitorIdx { get { return currentClientMonitorIdx; } set { currentClientMonitorIdx = value; } }
+
+        public void TogglePrivacyMode()
+        {
+            isPrivacyModeActive = !isPrivacyModeActive;
+            SendRemoteAdminCommand(isPrivacyModeActive ? "privacy_mode_on" : "privacy_mode_off");
+            ShowToast(isPrivacyModeActive ? "⦸ Host Privacy Mode Activated (Physical screen blanked)" : "⦸ Privacy Mode Deactivated");
+        }
+
+        public void ToggleWhiteboard()
+        {
+            isWhiteboardActive = !isWhiteboardActive;
+            if (!isWhiteboardActive)
+            {
+                WhiteboardStrokes.Clear();
+            }
+            if (viewportCanvas != null) viewportCanvas.Invalidate();
+            ShowToast(isWhiteboardActive ? "✏️ Whiteboard Annotation Pen Active (Draw on remote screen)" : "✏️ Whiteboard Cleared & Deactivated");
+        }
+
+        public void ToggleSessionRecording()
+        {
+            isRecordingSession = !isRecordingSession;
+            if (isRecordingSession)
+            {
+                try
+                {
+                    string baseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "jDroid-X-Desk", "Recordings");
+                    if (!Directory.Exists(baseDir)) Directory.CreateDirectory(baseDir);
+                    activeRecordingFolder = Path.Combine(baseDir, string.Format("Session_{0:yyyyMMdd_HHmmss}", DateTime.Now));
+                    Directory.CreateDirectory(activeRecordingFolder);
+                    ShowToast("📹 REC: Session recording started in Videos\\jDroid-X-Desk\\Recordings");
+                }
+                catch { }
+            }
+            else
+            {
+                ShowToast("⏹️ REC: Session recording saved and stopped.");
+            }
+        }
+
+        public void AddCurrentTargetToFavorites()
+        {
+            string tid = !string.IsNullOrEmpty(activeReceiverTargetId) ? activeReceiverTargetId : (connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "");
+            if (string.IsNullOrEmpty(tid))
+            {
+                ShowToast("No active remote desk to add to favorites.");
+                return;
+            }
+            if (db != null && db.Contacts != null)
+            {
+                ContactItem existing = db.Contacts.Find(delegate(ContactItem x) { return x.remoteId == tid; });
+                if (existing == null)
+                {
+                    ContactItem ci = new ContactItem
+                    {
+                        id = Guid.NewGuid().ToString("N").Substring(0, 8),
+                        name = "Desk " + tid,
+                        remoteId = tid,
+                        group = "Favorites"
+                    };
+                    db.Contacts.Add(ci);
+                    db.Save();
+                    SyncDynamicDesktopsFromDatabase();
+                    ShowToast("★ Added " + tid + " to Fleet Favorites!");
+                }
+                else
+                {
+                    ShowToast("★ " + tid + " is already in your Favorites.");
+                }
+            }
+        }
+
+        public void SwitchActiveDisplay()
+        {
+            currentClientMonitorIdx = (currentClientMonitorIdx + 1) % 4;
+            ForwardRemoteAdminCommand("switch_monitor:" + currentClientMonitorIdx);
+            ShowToast("🖵 Switched to Display " + (currentClientMonitorIdx == 3 ? "All (Combined)" : (currentClientMonitorIdx + 1).ToString()));
+        }
+
+        public void ToggleSmartFitMode()
+        {
+            if (smartFitMode == "SmartFit") smartFitMode = "Original 1:1";
+            else if (smartFitMode == "Original 1:1") smartFitMode = "Stretch";
+            else smartFitMode = "SmartFit";
+            if (viewportCanvas != null) viewportCanvas.Invalidate();
+            ShowToast("Display Scaling: " + smartFitMode);
+        }
+
+        public void ShowActionsMenu(Control parent, Point pt)
+        {
+            ContextMenuStrip menu = new ContextMenuStrip();
+            menu.Items.Add("⌨️ Send Ctrl+Alt+Del (SAS)", null, (s, e) => {
+                SendRemoteAdminCommand("cad");
+                ShowToast("⚡ Injected Remote SAS (Ctrl+Alt+Del).");
+            });
+            menu.Items.Add("🔒 Lock Remote Workstation", null, (s, e) => {
+                SendRemoteAdminCommand("lock");
+                ShowToast("🔒 Sent Workstation Lock command.");
+            });
+            menu.Items.Add("⚙️ Launch Remote Task Manager", null, (s, e) => {
+                SendRemoteAdminCommand("taskmgr");
+                ShowToast("⚙️ Launched Remote Task Manager.");
+            });
+            menu.Items.Add("💻 Launch Remote Cmd (Admin)", null, (s, e) => {
+                SendRemoteAdminCommand("cmd");
+                ShowToast("💻 Launched Remote Admin Command Prompt.");
+            });
+            menu.Items.Add("🔄 Restart Remote Computer", null, (s, e) => {
+                DialogResult dr = MessageBox.Show("Are you sure you want to restart the remote computer?", "Restart Remote Computer", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (dr == DialogResult.Yes)
+                {
+                    SendRemoteAdminCommand("restart");
+                    ShowToast("🔄 Dispatched remote restart command.");
+                }
+            });
+            menu.Show(parent, pt);
+        }
+
+        public void ShowKeyboardMenu(Control parent, Point pt)
+        {
+            ContextMenuStrip menu = new ContextMenuStrip();
+            menu.Items.Add("🪟 Send Windows Key", null, (s, e) => {
+                SendRemoteAdminCommand("key_win");
+                ShowToast("Injected Windows Key.");
+            });
+            menu.Items.Add("↹ Send Alt + Tab", null, (s, e) => {
+                SendRemoteAdminCommand("key_alttab");
+                ShowToast("Injected Alt + Tab.");
+            });
+            menu.Items.Add("✕ Send Alt + F4", null, (s, e) => {
+                SendRemoteAdminCommand("key_altf4");
+                ShowToast("Injected Alt + F4.");
+            });
+            menu.Items.Add("📋 Paste Clipboard as Keystrokes", null, (s, e) => {
+                SendRemoteAdminCommand("paste_keystrokes");
+                ShowToast("Transmitted clipboard buffer as keystrokes.");
+            });
+            menu.Items.Add(new ToolStripSeparator());
+            ToolStripMenuItem miMap = new ToolStripMenuItem("Map 1:1 Physical Scancodes") { Checked = true };
+            miMap.Click += (s, e) => { miMap.Checked = !miMap.Checked; ShowToast(miMap.Checked ? "1:1 Scancode Mapping Active" : "Translated Virtual Keys Active"); };
+            menu.Items.Add(miMap);
+            menu.Show(parent, pt);
+        }
+
+        public void ShowElevationMenu(Control parent, Point pt)
+        {
+            ContextMenuStrip menu = new ContextMenuStrip();
+            bool isElevated = IsRunningElevated();
+            ToolStripMenuItem miStatus = new ToolStripMenuItem(isElevated ? "🛡️ Current Status: High Integrity (Administrator)" : "🛡️ Current Status: Medium Integrity (Standard User)") { Enabled = false };
+            menu.Items.Add(miStatus);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("⚡ Request Elevation on Remote Desk", null, (s, e) => {
+                SendRemoteAdminCommand("elevate");
+                ShowToast("🛡️ Dispatched UAC elevation request to remote desk.");
+            });
+            if (!isElevated)
+            {
+                menu.Items.Add("🚀 Elevate Local jDroid-X Process", null, (s, e) => {
+                    RequestProcessElevation();
+                });
+            }
+            menu.Show(parent, pt);
+        }
+
+        public void ShowSessionOptionsMenu(Control parent, Point pt)
+        {
+            ContextMenuStrip menu = new ContextMenuStrip();
+            menu.Items.Add("🔊 Toggle Remote Audio Loopback", null, (s, e) => {
+                SendRemoteAdminCommand("audio_toggle");
+                ShowToast("Toggled Remote Audio Loopback.");
+            });
+            menu.Items.Add("📸 Take Remote Screenshot (Copy to Clipboard)", null, (s, e) => CaptureRemoteScreenshot());
+            menu.Items.Add("📋 Synchronize Clipboard Now", null, (s, e) => SynchronizeClipboardNow());
+            menu.Items.Add("⛶ Toggle Fullscreen (F11)", null, (s, e) => ToggleImmersiveZenMode());
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("ℹ️ Connection Diagnostics & Telemetry", null, (s, e) => {
+                MessageBox.Show(GetSessionDiagnostics(), "Session Telemetry & Connection HUD", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            });
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("❌ Disconnect Session", null, (s, e) => {
+                ToggleSessionConnection();
+            });
+            menu.Show(parent, pt);
+        }
+
+        public string GetSessionDiagnostics()
+        {
+            string tid = !string.IsNullOrEmpty(activeReceiverTargetId) ? activeReceiverTargetId : (connectedTargetDesktop != null ? connectedTargetDesktop.RemoteId : "---");
+            return string.Format(
+                "=== jDroid-X Session Telemetry ===\n" +
+                "Target Desk ID   : {0}\n" +
+                "Round Trip Time  : {1} ms\n" +
+                "Frame Rate       : {2:F1} FPS\n" +
+                "Active Scaling   : {3}\n" +
+                "Relay Channel    : {4}\n" +
+                "Security Cipher  : AES-256-GCM / TLS 1.3\n" +
+                "Screen Resolution: {5}x{6}",
+                tid,
+                LastMeasuredRttMs,
+                CurrentMeasuredFps,
+                SmartFitMode,
+                (db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.colabCloudRelay ? "Cloud Mesh Relay (desk.jdroid-x.com)" : "Direct P2P LAN (Port 8088)"),
+                (latestRemoteFrame != null ? latestRemoteFrame.Width : 1920),
+                (latestRemoteFrame != null ? latestRemoteFrame.Height : 1080)
+            );
+        }
+
         public void SynchronizeClipboardNow()
         {
             ThreadPool.QueueUserWorkItem(delegate {

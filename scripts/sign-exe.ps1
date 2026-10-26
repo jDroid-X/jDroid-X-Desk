@@ -12,7 +12,7 @@ if (-not $isMachineRootTrusted -and -not $Force) {
     Write-Host "[NOTICE] Enterprise Root certificate is not in Cert:\LocalMachine\Root." -ForegroundColor Yellow
     Write-Host "[NOTICE] Under Windows 11 Smart App Control (SAC), signing with an un-whitelisted private certificate triggers Event ID 3077 (Device Guard Block)." -ForegroundColor Yellow
     Write-Host "[NOTICE] Leaving binary unsigned so it runs cleanly without Device Guard blocking." -ForegroundColor Green
-    Write-Host "[ACTION] To sign with full kernel trust, run 'scripts\trust-root-cert.bat' as Administrator once." -ForegroundColor Cyan
+    Write-Host "[ACTION] To sign with full kernel trust, run 'TRUST_ENTERPRISE_CERT_AS_ADMIN.bat' as Administrator once." -ForegroundColor Cyan
     exit 0
 }
 
@@ -48,7 +48,7 @@ if ($auth.Status -eq "Valid") {
     exit 0
 } elseif ($auth.SignerCertificate -and $auth.SignerCertificate.Thumbprint -eq $thumbprint) {
     Write-Host "[NOTICE] Binary signed with Enterprise Certificate ($thumbprint), but Status is '$($auth.Status)'." -ForegroundColor Yellow
-    Write-Host "[ACTION] To whitelist permanently on this machine, run 'scripts\trust-root-cert.bat' as Administrator once." -ForegroundColor Yellow
+    Write-Host "[ACTION] To whitelist permanently on this machine, run 'TRUST_ENTERPRISE_CERT_AS_ADMIN.bat' as Administrator once." -ForegroundColor Yellow
     exit 0
 } else {
     Write-Warning "[WARN] Signing did not match expected thumbprint."

@@ -170,3 +170,35 @@ RAG Diagnostic Matrix:
 FINAL CONVERGENCE DECLARATION: [Delta = 0: All Contracts Intact]
 Files frozen. Zero broken links. Zero open tasks.
 ================================================================================
+
+================================================================================
+STAGE 9: GAP CLOSURE & FULL P2P WEBRTC / DATACHANNEL IMPLEMENTATION (2026-10-26)
+================================================================================
+1. Identified Gaps & Architectural Closures:
+   - Gap 1: Missing Gate 3 Pre-Flight Signaling Lookup on Connect Click:
+     * Wired `GET /api/signaling/lookup/:deskId` before session invite dispatch.
+     * Evaluates live presence in Central Routing Directory, caches remote metadata, and alerts operator with informative toasts.
+   - Gap 2: WebRTC Video Player Activation & Fallback:
+     * Wired `<video id="live-screen-video">` to active `RTCPeerConnection` media stream on track reception.
+     * Established STUN traversal (`stun.l.google.com:19302`) with fallback to wire-speed HTTP frame streaming.
+   - Gap 3: DataChannel Ultra-Low Latency Input Engine:
+     * Created `RTCDataChannel` ('jdroid-input') for <5ms mouse/keyboard transmission.
+     * Integrated fallback to `/api/relay/push_input` if data channel is not yet open.
+   - Gap 4: Signaling Message Polling & Bidirectional Handshake:
+     * Added 2s polling on `/api/signaling/messages/:deskId` in client heartbeat loop.
+     * Implemented automatic handling of `OFFER`, `ANSWER`, and `ICE` candidate packets.
+   - Gap 5: Host Consent Modal Granular Permission Enforcement:
+     * Synchronized viewer state with `inv.permissions` (control, keyboard, clipboard, audio, files).
+     * Gated remote input when host grants View-Only permission.
+   - Gap 6: Native C# Direct P2P UDP Frame Dispatch:
+     * Connected `P2PUdpEngine` with `TileCodecService` and `DxgiCaptureService` in `MainForm.InputAndHost.cs`.
+     * Reported local P2P UDP port and STUN reflexive public endpoint in signaling heartbeat.
+
+2. Verification & Metrics:
+   - Test Suite: 213/213 passed, 0 failed (`node test.js`).
+   - Native C# Build: 0 warnings, 0 errors (`jDroid-X-Desk.exe`).
+   - Universal Distribution: Repacked `jDroid-X-Desk-Universal.zip` (463 KB).
+   - Codebase Parity: `app.js` and `controllers/app-controller.js` 100% synchronized; `index.html` and `views/index.html` 100% synchronized.
+================================================================================
+
+

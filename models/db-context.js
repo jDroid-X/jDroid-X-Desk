@@ -199,6 +199,17 @@ const DEFAULT_SCHEMA = {
         { id: "grp-2", name: "Field Fleet", description: "Mobile client workstations and support endpoints", members: 1 }
     ],
     sessions: [],
+    sessions_active: [],
+    sessions_history: [],
+    clients: [],
+    certificates: [],
+    permission_profiles: [
+        { id: "prof-full", name: "Full Control", allowInput: true, allowClipboard: true, allowAudio: true, allowFiles: true, lockLocalInput: false },
+        { id: "prof-screen-only", name: "View Only", allowInput: false, allowClipboard: false, allowAudio: true, allowFiles: false, lockLocalInput: false }
+    ],
+    file_transfers: [],
+    chat_messages: [],
+    invitation_tokens: [],
     invites: [],
     devices: [
         { id: "dev-1", name: "HQ Primary Workstation", ip: "192.168.1.44", groupId: "grp-1", group: "Core Workstations", status: "ONLINE", accessLevel: "Admin" },
@@ -273,8 +284,8 @@ function readDB() {
         const parsed = JSON.parse(raw);
         let dirty = false;
         for (const key of Object.keys(DEFAULT_SCHEMA)) {
-            if (!parsed[key]) {
-                parsed[key] = Array.isArray(DEFAULT_SCHEMA[key]) ? [] : { ...DEFAULT_SCHEMA[key] };
+            if (!parsed[key] || (Array.isArray(parsed[key]) && parsed[key].length === 0 && Array.isArray(DEFAULT_SCHEMA[key]) && DEFAULT_SCHEMA[key].length > 0)) {
+                parsed[key] = Array.isArray(DEFAULT_SCHEMA[key]) ? [...DEFAULT_SCHEMA[key]] : { ...DEFAULT_SCHEMA[key] };
                 dirty = true;
             }
         }
