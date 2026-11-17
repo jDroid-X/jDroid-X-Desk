@@ -463,6 +463,7 @@ namespace JDroidXDesk.Native
     public class ConnectionSettings
     {
         public int localPort { get; set; }
+        public int tunnelPort { get; set; }
         public int relayPort { get; set; }
         public int discoveryPort { get; set; }
         public bool lanDiscovery { get; set; }
@@ -481,6 +482,7 @@ namespace JDroidXDesk.Native
         public ConnectionSettings()
         {
             localPort = 7070;
+            tunnelPort = 7700;
             relayPort = 8088;
             discoveryPort = 8089;
             lanDiscovery = true;

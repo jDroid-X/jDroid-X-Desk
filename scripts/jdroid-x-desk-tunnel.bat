@@ -15,6 +15,15 @@ set "LOCAL_PORT=7700"
 set "PUBLIC_URL=https://desk.jdroid-x.com"
 set "CF_BIN=%WORKSPACE%\cloudflared.exe"
 
+:: Dynamic Settings Model Binding (Eliminates hardcoded values via database.json)
+if exist "%WORKSPACE%\database.json" (
+    for /f "tokens=1,2,3 delims=|" %%A in ('node -e "try{const d=require('./database.json');const c=(d.settings&&d.settings.connection)||{};const p=c.tunnelPort||7700;const u=c.customDomain||'https://desk.jdroid-x.com';const t=c.tunnelId||c.tunnelToken||'ad79a58a-f017-49a0-a560-7f654565a482';console.log(p+'|'+u+'|'+t)}catch(e){console.log('7700|https://desk.jdroid-x.com|ad79a58a-f017-49a0-a560-7f654565a482')}" 2^>nul') do (
+        set "LOCAL_PORT=%%A"
+        set "PUBLIC_URL=%%B"
+        set "TUNNEL_ID=%%C"
+    )
+)
+
 if not exist "!CF_BIN!" (
     where cloudflared >nul 2>&1
     if !ERRORLEVEL! EQU 0 (

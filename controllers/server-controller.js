@@ -132,7 +132,12 @@ class ServerController {
             if (!Array.isArray(db.groups)) db.groups = [];
             const i = db.groups.findIndex(g => g.id === req.params.id);
             if (i === -1) return res.status(404).json({ success: false, error: 'Group not found.' });
-            db.groups[i] = { ...db.groups[i], name: req.body.name.trim(), description: (req.body.description || '').trim(), updatedAt: new Date().toISOString() };
+            const newName = req.body.name.trim();
+            db.groups[i] = { ...db.groups[i], name: newName, description: (req.body.description || '').trim(), updatedAt: new Date().toISOString() };
+            // Relational Integrity: Cascade group rename to all associated devices
+            if (Array.isArray(db.devices)) {
+                db.devices = db.devices.map(d => d.groupId === req.params.id ? { ...d, group: newName } : d);
+            }
             writeDB(db);
             res.json({ success: true, data: db.groups[i] });
         });
@@ -141,8 +146,9 @@ class ServerController {
             const db = readDB();
             if (!Array.isArray(db.groups)) db.groups = [];
             db.groups = db.groups.filter(g => g.id !== req.params.id);
+            // Relational Integrity: Detach deleted group from devices gracefully
             if (Array.isArray(db.devices)) {
-                db.devices = db.devices.map(d => d.groupId === req.params.id ? { ...d, groupId: null } : d);
+                db.devices = db.devices.map(d => d.groupId === req.params.id ? { ...d, groupId: null, group: 'Unassigned' } : d);
             }
             writeDB(db);
             res.json({ success: true });
@@ -163,8 +169,8 @@ class ServerController {
                 return {
                     ...d,
                     ip: d.ip || '127.0.0.1',
-                    group: grp ? grp.name : (d.group || 'Default'),
-                    groupName: grp ? grp.name : (d.group || 'Default')
+                    group: grp ? grp.name : (d.group || 'Unassigned'),
+                    groupName: grp ? grp.name : (d.group || 'Unassigned')
                 };
             });
             res.json({ success: true, data: populated });
@@ -173,6 +179,7 @@ class ServerController {
         app.post('/api/devices', validateBody(['name']), (req, res) => {
             const db = readDB();
             if (!Array.isArray(db.devices)) db.devices = [];
+            const groups = Array.isArray(db.groups) ? db.groups : [];
             const newId = Date.now().toString();
             const ip = req.body.ip ? req.body.ip.trim() : '127.0.0.1';
             let mac = (req.body.mac || '').trim().toUpperCase();
@@ -180,12 +187,26 @@ class ServerController {
                 const hash = crypto.createHash('md5').update(`${newId}-${ip}`).digest('hex');
                 mac = `02:${hash.slice(0, 2)}:${hash.slice(2, 4)}:${hash.slice(4, 6)}:${hash.slice(6, 8)}:${hash.slice(8, 10)}`.toUpperCase();
             }
+
+            // Relational Integrity Validation: Verify groupId exists in groups
+            let targetGroupId = req.body.groupId || null;
+            let targetGroupName = 'Unassigned';
+            if (targetGroupId) {
+                const matchedGroup = groups.find(g => g.id === targetGroupId);
+                if (matchedGroup) {
+                    targetGroupName = matchedGroup.name;
+                } else {
+                    targetGroupId = null; // Unlink invalid foreign key
+                }
+            }
+
             const d = {
                 id: newId,
                 name: req.body.name.trim(),
                 ip,
                 mac,
-                groupId: req.body.groupId || null,
+                groupId: targetGroupId,
+                group: targetGroupName,
                 status: req.body.status || 'STANDBY',
                 accessLevel: req.body.accessLevel || 'Standard',
                 addedAt: new Date().toISOString()
@@ -198,12 +219,31 @@ class ServerController {
         app.put('/api/devices/:id', (req, res) => {
             const db = readDB();
             if (!Array.isArray(db.devices)) db.devices = [];
+            const groups = Array.isArray(db.groups) ? db.groups : [];
             const i = db.devices.findIndex(d => d.id === req.params.id);
             if (i === -1) return res.status(404).json({ success: false, error: 'Device not found.' });
             const updatedData = { ...req.body };
             if (updatedData.mac) {
                 updatedData.mac = updatedData.mac.trim().toUpperCase();
             }
+
+            // Relational Integrity Validation: Verify and synchronize groupId/group
+            if (updatedData.groupId !== undefined) {
+                if (updatedData.groupId) {
+                    const matchedGroup = groups.find(g => g.id === updatedData.groupId);
+                    if (matchedGroup) {
+                        updatedData.groupId = matchedGroup.id;
+                        updatedData.group = matchedGroup.name;
+                    } else {
+                        updatedData.groupId = null;
+                        updatedData.group = 'Unassigned';
+                    }
+                } else {
+                    updatedData.groupId = null;
+                    updatedData.group = 'Unassigned';
+                }
+            }
+
             db.devices[i] = { ...db.devices[i], ...updatedData, updatedAt: new Date().toISOString() };
             writeDB(db);
             res.json({ success: true, data: db.devices[i] });

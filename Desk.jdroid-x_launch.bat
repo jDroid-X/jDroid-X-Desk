@@ -17,6 +17,14 @@ set "PUBLIC_URL=https://desk.jdroid-x.com"
 set "EXE_PATH=%WORKSPACE%jDroid-X-Desk.exe"
 set "TUNNEL_SCRIPT=%WORKSPACE%scripts\jdroid-x-desk-tunnel.bat"
 
+:: Dynamic Settings Model Binding (Eliminates hardcoded values via database.json)
+if exist "%WORKSPACE%database.json" (
+    for /f "tokens=1,2 delims=|" %%A in ('node -e "try{const d=require('./database.json');const c=(d.settings&&d.settings.connection)||{};console.log((c.tunnelPort||7700)+'|'+(c.customDomain||'https://desk.jdroid-x.com'))}catch(e){console.log('7700|https://desk.jdroid-x.com')}" 2^>nul') do (
+        set "PORT=%%A"
+        set "PUBLIC_URL=%%B"
+    )
+)
+
 echo ========================================================
 echo   jDroid-X Desktop Launcher (desk.jdroid-x.com)
 echo   Enterprise Remote Desktop & Ingress Orchestrator

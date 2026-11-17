@@ -305,6 +305,13 @@ async function runTests() {
 
         const postDevice = await makeRequest('POST', '/api/devices', { name: 'Test-Workstation-99', accessLevel: 'Admin', groupId: testGroupId });
         assert(postDevice.statusCode === 200 && postDevice.body.data.id, 'POST /api/devices registers new machine with groupId');
+        assert(postDevice.body.data.group === 'Updated QA Group', 'POST /api/devices synchronizes relative corresponding group name dynamically');
+
+        const postInvalidGroupDev = await makeRequest('POST', '/api/devices', { name: 'Test-Orphan-Guard', groupId: 'non-existent-grp-999' });
+        assert(postInvalidGroupDev.statusCode === 200 && postInvalidGroupDev.body.data.groupId === null && postInvalidGroupDev.body.data.group === 'Unassigned', 'POST /api/devices sanitizes unlinked groupId to null to preserve relational integrity');
+        if (postInvalidGroupDev.body.data?.id) {
+            await makeRequest('DELETE', `/api/devices/${postInvalidGroupDev.body.data.id}`);
+        }
         const testDeviceId = postDevice.body.data?.id;
         if (testDeviceId) {
             const putDevice = await makeRequest('PUT', `/api/devices/${testDeviceId}`, { name: 'Test-Workstation-Updated', accessLevel: 'Standard' });

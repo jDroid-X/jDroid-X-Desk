@@ -147,30 +147,47 @@ namespace JDroidXDesk.Native
         {
             try
             {
-                UpdateFooter("Auditing Port 7700 Ingress Gateway...");
+                // Dynamic Settings Model Resolution from DatabaseContext (OOPS MVC Standard)
+                int gatewayPort = 7700;
+                int relayPort = 8088;
+                string customDomain = "https://desk.jdroid-x.com";
+
+                try
+                {
+                    DatabaseContext db = new DatabaseContext();
+                    if (db.Settings != null && db.Settings.connection != null)
+                    {
+                        if (db.Settings.connection.tunnelPort > 0) gatewayPort = db.Settings.connection.tunnelPort;
+                        if (db.Settings.connection.relayPort > 0) relayPort = db.Settings.connection.relayPort;
+                        if (!string.IsNullOrEmpty(db.Settings.connection.customDomain)) customDomain = db.Settings.connection.customDomain.Trim();
+                    }
+                }
+                catch { }
+
+                UpdateFooter(string.Format("Auditing Port {0} Ingress Gateway...", gatewayPort));
                 Thread.Sleep(200);
 
-                // 1. Probe Port 7700
-                bool gwOk = ProbePort(7700);
+                // 1. Probe Dynamic Gateway Port
+                bool gwOk = ProbePort(gatewayPort);
                 if (!gwOk)
                 {
-                    UpdateFooter("Starting Node.js Gateway on Port 7700...");
-                    UpdateCheck(lblStatusGateway, "🟡  Central Ingress Gateway (Port 7700) - Starting...", ThemePalette.ColorWarning);
+                    UpdateFooter(string.Format("Starting Node.js Gateway on Port {0}...", gatewayPort));
+                    UpdateCheck(lblStatusGateway, string.Format("🟡  Central Ingress Gateway (Port {0}) - Starting...", gatewayPort), ThemePalette.ColorWarning);
                     AutostartBackgroundGateway();
                     for (int i = 0; i < 8; i++)
                     {
                         Thread.Sleep(500);
-                        if (ProbePort(7700)) { gwOk = true; break; }
+                        if (ProbePort(gatewayPort)) { gwOk = true; break; }
                     }
                 }
 
                 if (gwOk)
                 {
-                    UpdateCheck(lblStatusGateway, "🟢  Central Ingress Gateway (Port 7700) - Active (HTTP 200)", ThemePalette.ColorSuccess);
+                    UpdateCheck(lblStatusGateway, string.Format("🟢  Central Ingress Gateway (Port {0}) - Active (HTTP 200)", gatewayPort), ThemePalette.ColorSuccess);
                 }
                 else
                 {
-                    UpdateCheck(lblStatusGateway, "⚠️  Central Ingress Gateway (Port 7700) - Standalone Mode", ThemePalette.ColorWarning);
+                    UpdateCheck(lblStatusGateway, string.Format("⚠️  Central Ingress Gateway (Port {0}) - Standalone Mode", gatewayPort), ThemePalette.ColorWarning);
                 }
 
                 // 2. Probe Cloudflare Tunnel
@@ -179,7 +196,7 @@ namespace JDroidXDesk.Native
                 bool cfProcess = IsProcessActive("cloudflared");
                 if (cfProcess)
                 {
-                    UpdateCheck(lblStatusTunnel, "🟢  Cloudflare Edge Tunnel - Connected (desk.jdroid-x.com)", ThemePalette.ColorSuccess);
+                    UpdateCheck(lblStatusTunnel, string.Format("🟢  Cloudflare Edge Tunnel - Connected ({0})", customDomain), ThemePalette.ColorSuccess);
                 }
                 else
                 {
@@ -189,7 +206,7 @@ namespace JDroidXDesk.Native
                 // 3. Local Relay Engine
                 UpdateFooter("Initializing Local Embedded Relay...");
                 Thread.Sleep(150);
-                UpdateCheck(lblStatusRelay, "🟢  Local Embedded Relay Engine (Port 8088) - Ready", ThemePalette.ColorSuccess);
+                UpdateCheck(lblStatusRelay, string.Format("🟢  Local Embedded Relay Engine (Port {0}) - Ready", relayPort), ThemePalette.ColorSuccess);
 
                 // 4. P2P NAT Mesh
                 UpdateFooter("Initializing P2P Signaling Engine...");
