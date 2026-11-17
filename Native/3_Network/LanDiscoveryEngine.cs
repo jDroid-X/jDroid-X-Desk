@@ -54,7 +54,29 @@ namespace JDroidXDesk.Native
 
         public void Start(string localDeskId, int localHttpPort = 8088, int discoveryPort = 8089)
         {
-            if (_isRunning) return;
+            if (!string.IsNullOrEmpty(localDeskId)) _localDeskId = localDeskId;
+            if (localHttpPort > 0) _localHttpPort = localHttpPort;
+            if (discoveryPort > 0) _discoveryPort = discoveryPort;
+            if (_isRunning)
+            {
+                if (_listenThread == null || !_listenThread.IsAlive)
+                {
+                    try
+                    {
+                        _listenThread = new Thread(new ThreadStart(ListenLoop)) { IsBackground = true, Name = "jDroid-X-LanDiscovery-Listen" };
+                        _listenThread.Start();
+                    } catch { }
+                }
+                if (_broadcastThread == null || !_broadcastThread.IsAlive)
+                {
+                    try
+                    {
+                        _broadcastThread = new Thread(new ThreadStart(BroadcastLoop)) { IsBackground = true, Name = "jDroid-X-LanDiscovery-Broadcast" };
+                        _broadcastThread.Start();
+                    } catch { }
+                }
+                return;
+            }
             _localDeskId = localDeskId ?? "";
             _localHttpPort = localHttpPort > 0 ? localHttpPort : 8088;
             _discoveryPort = discoveryPort > 0 ? discoveryPort : 8089;
@@ -217,6 +239,10 @@ namespace JDroidXDesk.Native
             {
                 try
                 {
+                    if (_udpBroadcastSender == null)
+                    {
+                        try { _udpBroadcastSender = new UdpClient(); _udpBroadcastSender.EnableBroadcast = true; } catch { }
+                    }
                     if (!string.IsNullOrEmpty(_localDeskId) && _udpBroadcastSender != null)
                     {
                         string localIp = GetPrimaryLocalIp();
@@ -241,7 +267,15 @@ namespace JDroidXDesk.Native
             {
                 try
                 {
-                    if (_udpListener == null) break;
+                    if (_udpListener == null)
+                    {
+                        try {
+                            _udpListener = new UdpClient();
+                            _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                            _udpListener.Client.Bind(new IPEndPoint(IPAddress.Any, _discoveryPort));
+                            _udpListener.EnableBroadcast = true;
+                        } catch { Thread.Sleep(1000); continue; }
+                    }
                     byte[] bytes = _udpListener.Receive(ref remoteEp);
                     if (bytes != null && bytes.Length > 0)
                     {
@@ -299,7 +333,9 @@ namespace JDroidXDesk.Native
                 catch
                 {
                     if (!_isRunning) break;
-                    Thread.Sleep(100);
+                    try { if (_udpListener != null) _udpListener.Close(); } catch { }
+                    _udpListener = null;
+                    Thread.Sleep(500);
                 }
             }
         }
@@ -348,6 +384,44 @@ namespace JDroidXDesk.Native
             }
             catch { }
             return "127.0.0.1";
+        }
+
+        /// <summary>
+        /// Transmits a Wake-on-LAN (WOL) magic packet (6x 0xFF followed by 16x MAC address)
+        /// across the subnet to wake a sleeping remote host (UltraViewer VWakeUp parity).
+        /// </summary>
+        public bool SendWakeOnLan(string macAddress, int port = 9)
+        {
+            if (string.IsNullOrEmpty(macAddress)) return false;
+            try
+            {
+                string cleanMac = Regex.Replace(macAddress, @"[:\.-]", "");
+                if (cleanMac.Length != 12) return false;
+
+                byte[] macBytes = new byte[6];
+                for (int i = 0; i < 6; i++)
+                {
+                    macBytes[i] = Convert.ToByte(cleanMac.Substring(i * 2, 2), 16);
+                }
+
+                byte[] packet = new byte[102];
+                for (int i = 0; i < 6; i++) packet[i] = 0xFF;
+                for (int i = 1; i <= 16; i++)
+                {
+                    Buffer.BlockCopy(macBytes, 0, packet, i * 6, 6);
+                }
+
+                using (UdpClient client = new UdpClient())
+                {
+                    client.EnableBroadcast = true;
+                    client.Send(packet, packet.Length, new IPEndPoint(IPAddress.Broadcast, port > 0 ? port : 9));
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 

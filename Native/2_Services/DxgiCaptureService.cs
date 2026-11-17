@@ -138,31 +138,49 @@ namespace JDroidXDesk.Native
 
         /// <summary>
         /// Fast Win32 GDI BitBlt directly into DIB bitmap memory for sub-10ms capture.
+        /// Automatically attaches to Secure Desktop when elevated to bridge UAC prompt black screens.
         /// </summary>
         private bool CaptureViaGdiFast(Bitmap targetBmp, Rectangle bounds)
         {
-            IntPtr hdcScreen = GetDC(IntPtr.Zero);
-            if (hdcScreen == IntPtr.Zero) return false;
-
+            IntPtr hInputDesk = IntPtr.Zero;
+            bool attached = false;
             try
             {
-                using (Graphics g = Graphics.FromImage(targetBmp))
+                if (SessionElevationService.Instance.IsElevated() && SessionElevationService.Instance.IsSecureDesktopActive())
                 {
-                    IntPtr hdcDest = g.GetHdc();
-                    try
+                    attached = SessionElevationService.Instance.TryAttachToInputDesktop(out hInputDesk);
+                }
+
+                IntPtr hdcScreen = GetDC(IntPtr.Zero);
+                if (hdcScreen == IntPtr.Zero) return false;
+
+                try
+                {
+                    using (Graphics g = Graphics.FromImage(targetBmp))
                     {
-                        bool success = BitBlt(hdcDest, 0, 0, bounds.Width, bounds.Height, hdcScreen, bounds.Left, bounds.Top, SRCCOPY | CAPTUREBLT);
-                        return success;
+                        IntPtr hdcDest = g.GetHdc();
+                        try
+                        {
+                            bool success = BitBlt(hdcDest, 0, 0, bounds.Width, bounds.Height, hdcScreen, bounds.Left, bounds.Top, SRCCOPY | CAPTUREBLT);
+                            return success;
+                        }
+                        finally
+                        {
+                            g.ReleaseHdc(hdcDest);
+                        }
                     }
-                    finally
-                    {
-                        g.ReleaseHdc(hdcDest);
-                    }
+                }
+                finally
+                {
+                    ReleaseDC(IntPtr.Zero, hdcScreen);
                 }
             }
             finally
             {
-                ReleaseDC(IntPtr.Zero, hdcScreen);
+                if (attached && hInputDesk != IntPtr.Zero)
+                {
+                    SessionElevationService.Instance.RestoreDefaultDesktop(hInputDesk);
+                }
             }
         }
 

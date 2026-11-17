@@ -618,7 +618,12 @@ namespace JDroidXDesk.Native
                     } catch (Exception ex) { ShowToast("Failed to copy report: " + ex.Message); }
                 });
                 addBtn("🌐 Open Online Help & RCA Guide", () => {
-                    try { Process.Start("http://localhost:12345/#system-settings"); } catch {}
+                    try {
+                        int aPort = (EmbeddedRelayServer.Instance != null && EmbeddedRelayServer.Instance.AdminPort > 0)
+                            ? EmbeddedRelayServer.Instance.AdminPort
+                            : ((db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.localPort > 0) ? db.Settings.connection.localPort : 12345);
+                        Process.Start("http://localhost:" + aPort + "/#system-settings");
+                    } catch {}
                 });
             }
             else if (category == "About")
@@ -688,8 +693,11 @@ namespace JDroidXDesk.Native
             btnWebBackup.FlatAppearance.BorderSize = 0;
             btnWebBackup.Click += (s, e) => {
                 try {
-                    Process.Start("http://localhost:12345/admin.html");
-                    ShowToast("Launched Web Admin Backup in Browser (Port 12345)");
+                    int aPort = (EmbeddedRelayServer.Instance != null && EmbeddedRelayServer.Instance.AdminPort > 0)
+                        ? EmbeddedRelayServer.Instance.AdminPort
+                        : ((db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.localPort > 0) ? db.Settings.connection.localPort : 12345);
+                    Process.Start("http://localhost:" + aPort + "/admin.html");
+                    ShowToast("Launched Web Admin Backup in Browser (Port " + aPort + ")");
                 } catch (Exception ex) {
                     ShowToast("Browser Launch Error: " + ex.Message);
                 }
@@ -1547,7 +1555,10 @@ namespace JDroidXDesk.Native
             ThreadPool.QueueUserWorkItem(delegate {
                 bool synced = false;
                 try {
-                    string endpoint = "http://127.0.0.1:12345/api/admin/engine/switch";
+                    int aPort = (EmbeddedRelayServer.Instance != null && EmbeddedRelayServer.Instance.AdminPort > 0)
+                        ? EmbeddedRelayServer.Instance.AdminPort
+                        : ((db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.localPort > 0) ? db.Settings.connection.localPort : 12345);
+                    string endpoint = "http://127.0.0.1:" + aPort + "/api/admin/engine/switch";
                     HttpWebRequest req = (HttpWebRequest)WebRequest.Create(endpoint);
                     req.Method = "POST";
                     req.ContentType = "application/json";

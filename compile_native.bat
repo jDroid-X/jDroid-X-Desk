@@ -1,13 +1,18 @@
 @echo off
 setlocal
+cd /d "%~dp0"
+
 set CSC=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe
 
 if not exist "%CSC%" (
-    echo Error: .NET Framework csc.exe compiler not found at %CSC%
+    echo [ERROR] .NET Framework csc.exe compiler not found at %CSC%
     exit /b 1
 )
 
-echo [1/2] Generating C# compiler arguments file...
+:: Terminate running instance to prevent CS0016 file lock
+taskkill /F /IM jDroid-X-Desk.exe >nul 2>&1
+
+echo [1/3] Generating C# compiler arguments file...
 (
     echo /target:winexe
     echo /platform:anycpu
@@ -28,26 +33,35 @@ echo [1/2] Generating C# compiler arguments file...
     echo /res:scripts\configure-smart-app-control.bat,configure_smart_app_control.bat
     echo /res:scripts\trust-root-cert.bat,trust_root_cert.bat
     echo /res:TRUST_ENTERPRISE_CERT_AS_ADMIN.bat,TRUST_ENTERPRISE_CERT_AS_ADMIN.bat
-    echo /out:jDroid-X-Desk.exe
+    if "%~1"=="" (
+        echo /out:jDroid-X-Desk.exe
+    ) else (
+        echo /out:%~1
+    )
 ) > native_compile.rsp
 
 for /R "Native" %%F in (*.cs) do (
     echo %%F >> native_compile.rsp
 )
 
-echo [2/2] Compiling jDroid-X-Desk Modular Native Solution...
+echo [2/3] Compiling jDroid-X-Desk Modular Native Solution...
 "%CSC%" @native_compile.rsp
 set RESULT=%ERRORLEVEL%
 
 del native_compile.rsp 2>nul
 
 if %RESULT% EQU 0 (
-    echo Compilation Succeeded: jDroid-X-Desk.exe
+    echo [SUCCESS] Compilation Succeeded.
     if exist "%~dp0scripts\sign-exe.ps1" (
-        echo [3/3] Checking Microsoft Authenticode & Code Integrity Whitelist...
-        powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\sign-exe.ps1" -TargetExe "%~dp0jDroid-X-Desk.exe"
+        echo [3/3] Authenticode Signing ^& Integrity Whitelist...
+        if "%~1"=="" (
+            powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\sign-exe.ps1" -TargetExe "%~dp0jDroid-X-Desk.exe" -Force
+        ) else (
+            powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\sign-exe.ps1" -TargetExe "%~dp0%~1" -Force
+        )
     )
 ) else (
-    echo Compilation Failed with error code %RESULT%
+    echo [ERROR] Compilation Failed with error code %RESULT%
 )
+
 exit /b %RESULT%

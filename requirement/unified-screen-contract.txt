@@ -200,5 +200,238 @@ STAGE 9: GAP CLOSURE & FULL P2P WEBRTC / DATACHANNEL IMPLEMENTATION (2026-10-26)
    - Universal Distribution: Repacked `jDroid-X-Desk-Universal.zip` (463 KB).
    - Codebase Parity: `app.js` and `controllers/app-controller.js` 100% synchronized; `index.html` and `views/index.html` 100% synchronized.
 ================================================================================
+STAGE 10: OXAAM-STYLE HERO PORTAL, VIBGYOR PALETTE & GOLD BORDER (2026-10-29)
+================================================================================
+1. Screen Affordance & UI Modernization:
+   - Upgraded First Interface (`views/index.html`, `index.html`, `MainForm.ConsoleView.cs`):
+     * Oxaam-Style Hero Portal Card (`#hero-portal-card`): Luxury Gold Border (`2px solid #FFD700`), subtle glass backdrop, and rounded 24px borders.
+     * Top Bar VIBGYOR 7-Color Palette: Violet, Indigo, Blue, Green, Yellow, Orange, Red swatches. Hovering or clicking dynamically changes page theme and highlights the active swatch with Gold border.
+     * Left Column (Branding & Feature Pointers):
+       - Project Logo (`assets/jdroidxlogo_trans.png`) & Hero text: "Welcome to jDroid-X 👋".
+       - 5 Feature Pointer Badges: 1-Click 60 FPS, 100% P2P Encrypted, Built-in UAC Admin Bypass, Zero-Install Mesh, 24x7 Instant Support.
+     * Right Column (Self & Remote Desk Controls):
+       - Self Desk: `#local-device-id`, One-Time Passcode `#local-device-pass`, Copy, Edit, and Invite triggers.
+       - Remote Desk: `#target-id-input`, Password `#target-pass-input` clearly annotated "(Password is not mandatory)", and Connect button `#connect-session-btn`.
+     * Bottom Line Marquee (`.portal-marquee-bar`):
+       - Real-time continuous scrolling ticker with Support email (`support@jdroid-x.com`, `admin@jdroid-x.com`), Copyright slogan ("© 2026 All Rights Reserved by jDroid-X Studio Enterprise"), and P2P mesh status.
+2. Cross-Platform Native Sync:
+   - Native C# App (`MainForm.ConsoleView.cs`): Implemented identical `pnlOxaamPortal` with VIBGYOR hover color changes, Gold border, feature pointers, and bottom marquee.
+   - Compiled with Authenticode signature `CN=jDroid-X Studio Enterprise` (Status: `VALID`).
+3. Verification & Metrics:
+   - Full Test Suite: 238 PASSED, 0 FAILED (`node test.js`).
+   - Parity: `views/index.html` <-> `index.html` 100% synchronized; `controllers/app-controller.js` <-> `app.js` 100% synchronized; `styles/styles.css` <-> `styles.css` 100% synchronized.
+================================================================================
+STAGE 11: DATABASE BACKUP PREVENTION, RETENTION & REGULATORY COMPLIANCE (2026-10-29)
+================================================================================
+1. Uncontrolled Backup Cessation & Disk Cleanup:
+   - Fixed crash-recovery fallback in `models/db-context.js`:
+     * Ceased automatic unpruned `.backup_<timestamp>` generation during read collisions.
+     * Introduced fallback read to secondary mirror `models/database.json`.
+     * Added log retention count cap (`MAX_LOGS_COUNT = 500`) alongside time cutoff (7 days) to stop JSON bloat.
+     * Compacted `database.json` from 1.83 MB down to 234 KB (87% reduction).
+     * Purged 19 orphaned `database.json.backup_*` files from root workspace, recovering ~25 MB disk space.
+2. Regulatory Process & Standard Architecture:
+   - Dedicated Folder: `backups/database/` (isolated from application root, excluded from Git).
+   - Rolling Retention Policy (FIFO): `MAX_REGULATORY_BACKUPS = 3`. Older snapshots automatically pruned upon new creation.
+   - Trigger Conditions: On-demand manual admin export or pre-migration snapshot ONLY. Zero automatic backup generation during routine read/write queries.
+3. Verification:
+   - Test Suite: 238 PASSED, 0 FAILED (`node test.js`).
+================================================================================
+STAGE 12: NATIVE SINGLE-INSTANCE IPC RESTORE & SYSTEM TRAY VISIBILITY (2026-10-29)
+================================================================================
+1. Single-Instance Restore & Window Visibility Fix:
+   - Root Cause Diagnosed:
+     * Typos in `FindWindow`: `"jDroid-X-Desk Mini | Remote Connection"` mismatched real window title `"jDroid-X-Desk Mini | Remote Desktop Console"`.
+     * No cross-process IPC: When user clicked `jDroid-X-Desk.exe` while an instance was in the tray, it popped up an unhelpful blocking MessageBox.
+     * System tray icon used generic `SystemIcons.Shield` which Windows collapsed into the hidden `^` overflow chevron.
+   - Engineering Resolution:
+     * Implemented real-time cross-process IPC using `EventWaitHandle` (`Global\jDroid-X-Desk-Restore-Event-2026`). Clicking `jDroid-X-Desk.exe` now instantly signals the running instance to pop up and focus on screen.
+     * Bound genuine branded `app.ico` (extracted from executable/assets) with both single-click and double-click restore handlers.
+     * Enhanced `MiniDeskForm.RestoreFromTray()` to explicitly enforce `ShowInTaskbar = true` and `Visible = true`.
+2. Verification & Metrics:
+   - Compilation: 0 errors, 0 warnings (`jDroid-X-Desk.exe`).
+   - Authenticode Code Signing: Status `VALID` (Signed with `CN=jDroid-X Studio Enterprise`).
+   - Full Test Suite: 238 PASSED, 0 FAILED (`node test.js`).
+   - Universal Distribution: Repacked `jDroid-X-Desk-Universal.zip` (475 KB).
+================================================================================
+STAGE 13: ULTRA-COMPACT PORTAL LAYOUT, VIBGYOR SPINE & DESK CODE SYNC (2026-10-29)
+================================================================================
+1. Ultra-Compact Connect Portal (Login.html Paradigm):
+   - Created `#landing-portal-wrapper` with 3-column split:
+     * Left Column: Branding, watermarked logo, v2.5 PRO badge, Welcome thumbs-up animation, and 5 key feature pills.
+     * Middle Column: Vertical VIBGYOR theme spine with White/Black mode tickboxes, 7-color swatches, and ambient wash tint sync.
+     * Right Column: Dual distinct boxes for Desk 1 (Your Desk ID with UAC Ready, Edit, Copy, Invite) and Desk 2 (Partner Desk ID with optional password) + Single Primary Connect Button (`Connect & Control Screen ➔`).
+     * Bottom Bar: Continuous running slogan marquee with support email & copyright.
+   - Initial View State on desk.jdroid-x.com:
+     * `body.portal-mode`: Zero sidebar, zero topbar, zero footer, zero page scrollbars. Only the compact glowing card is visible.
+   - Post-Connect Transition:
+     * Clicking Connect transitions `body` to `console-mode`, revealing the full console layout with maximized remote screen viewport in the body.
+     * Added `#btn-return-portal` in topbar allowing smooth return to the compact portal at any time.
+2. Desk Code Synchronization Root Cause & Resolution:
+   - Diagnosed why web page picked `430-908-124` while native app registered `370-328-437`:
+     * Cloudflare Tunnel Header Divergence: `/api/relay/register` used `req.headers['x-forwarded-for'] || req.ip` (picking Cloudflare internal proxy IP), while `/api/hardware-id` checked `cf-connecting-ip`.
+     * Normalized `clientPublicIp` in `/api/relay/register` to extract the true client public IP via `cf-connecting-ip` and first comma-split token.
+     * Added Fast 300ms Local Probe: Browser probes `http://127.0.0.1:7070/api/hardware-id` on load. If native app is active on the same machine, web page instantly acquires the native app's Desk ID (`370-328-437`) and caches it in `localStorage.jdx_local_desk_id`.
+     * Added ✏️ Edit Desk ID button (`#portal-btn-edit-desk-id` / `#btn-edit-desk-id`) for manual override and instant sync across portal and console.
+3. Verification & Compliance:
+   - Full Test Suite: 238 PASSED, 0 FAILED (`node test.js`).
+   - C# Compilation: `jDroid-X-Desk.exe` compiled and Authenticode signed (`VALID`).
+   - Distribution Package: Repacked `jDroid-X-Desk-Universal.zip` (479 KB).
+   - Dual-file Parity: 100% matched across `views/index.html` <-> `index.html`, `controllers/app-controller.js` <-> `app.js`, `styles/styles.css` <-> `styles.css`.
+================================================================================
 
 
+
+================================================================================
+[2026-10-30 21:17:00] Screen Requirement Update: Landing Portal UI Parity with Login.html
+1. Left Panel 1st Line: Re-architected as a 3-column cluster (.brand-header-cluster)
+   - Left: Logo image (44x44, contain, drop-shadow, hover zoom 1.06) + fallback JX badge
+   - Center: "jDroid-X" title with metallic multi-color text clipping gradient
+   - Right: "v2.5 PRO" pill badge with dynamic accent border and background
+2. Dynamic Reactive Theme & Box Borders:
+   - Wired VIBGYOR Spectrum Raw RGB values (--rgb-v through --rgb-r)
+   - Set up data-theme and data-accent tokens on <html> and <body>
+   - Replaced static/hardcoded borders with var(--card-outer-border) and var(--card-inner-border)
+   - Added live hover preview (mouseenter / mouseleave) on VIBGYOR spine dots with seamless revert
+   - Added lock-on-click with persistent localStorage save
+   - Synchronized across views/index.html, index.html, styles.css, themes.css, app.js, and app-controller.js
+================================================================================
+
+================================================================================
+[2026-10-30 21:45:00] Screen Requirement Update: Stage 3 Shared Desktop Screen Redesign (Parity with media_1793376092426_c6d4b115.png)
+1. Archival:
+   - Legacy viewport archived to views/remote-desktop-viewport-box.arch.html (8,005 bytes)
+   - Pre-redesign templates archived to views/index.html.arch and index.html.arch
+2. Strict 3-Stage Closed-Loop Waterfall Flow:
+   - Stage 1: Splash Screen (#app-preloader) with Heartbeat radar pulse & background socket sync
+   - Stage 2: Connect Screen (#landing-portal-wrapper) with 3-column gold card & VIBGYOR theme spine
+   - Stage 3: Shared Desktop Screen (#remote-console-workspace) matching AnyDesk/RustDesk UI 1:1:
+     * Window Chrome titlebar (jDroid-X-Desk Mini | Remote Desktop Console + min/max/close)
+     * Browser Tab Bar (⚡ jDroid-X | 💻 [Partner Desk ID] ✕ | + | Avatar & Fullscreen)
+     * Secondary Ribbon (🌐 🖥️ [Partner Desk ID] + 14 action tool icons)
+     * Center Obsidian Black Viewport (Streaming remote canvas + "Connecting to Remote Workstation... Awaiting Video Keyframe...")
+     * Bottom Status Ribbon (Connected to [Partner Desk ID] | ⚡ 60 FPS | 14 ms RTT | GPU Accelerated)
+3. Bidirectional Navigation:
+   - Clicking '✕' on the tab or red disconnect icon gracefully closes session and returns to Stage 2 Connect Screen
+================================================================================
+
+================================================================================
+[2026-10-30 21:56:00] Screen Requirement Update: Sidebar Overlap Suppression on Stage 3 Console
+1. Root Cause: Legacy #sidebar-drawer inside #app-container remained active and rendered on top of Stage 3 Console at z-index: 9999.
+2. Fix Applied:
+   - Added style="display: none !important;" directly to #app-container in views/index.html & index.html.
+   - Enforced supreme z-index: 99999 !important on .remote-workspace-container.
+   - Applied global CSS rule suppressing #sidebar-drawer, aside.sidebar, and #app-container from rendering.
+   - Wired JS controllers (app-controller.js & app.js) to programmatically suppress legacy drawer when session is active.
+   - Cache buster updated to v=2026.10.30.16.
+================================================================================
+
+================================================================================
+[2026-10-31 15:19:00] Screen Requirement Update: Stage 3 Console Header 1 Removal, Header 3 Local Desk ID, and Slide In/Out Sidebar
+1. Header 1 Removal:
+   - Removed legacy window chrome titlebar (.remote-window-titlebar) to maximize vertical canvas viewport area.
+   - Header 2 (Browser Tab Bar) is now the top navigation ribbon.
+2. Header 3 (Action Toolbar Ribbon) Update:
+   - Added Left Sidebar Toggle Button (#btn-toggle-remote-sidebar) with hamburger icon.
+   - Replaced target desk id with Local Desk Number display:
+     * Label: 'Desk:'
+     * Span: #ribbon-local-desk-id (dynamically bound to local workstation Desk ID)
+     * Quick copy button: #btn-ribbon-copy-local-id
+3. Slide In / Out Left Sidebar Drawer:
+   - Implemented #remote-sidebar-drawer with GPU-accelerated CSS transform: translateX(-100%) to 0.
+   - Semi-transparent backdrop (#remote-sidebar-backdrop) for clean modal dismiss.
+   - Drawer features: Local Desk Card, Console Navigation Links, Session Chat, Fleet, and Disconnect button.
+   - Smooth 0.28s slide-in/out without permanently blocking the black remote desktop canvas.
+   - Cache buster updated to v=2026.10.31.01.
+================================================================================
+
+[2026-11-01] Screen Host Control Flow: Added automated post-acceptance native companion verification (port 8088). If jDroid-X-Desk.exe is not running on Desk 2, display #native-control-prompt-modal offering Yes/No options to download & run jDroid-X-Desk.exe with automatic polling on 127.0.0.1:8088.
+
+================================================================================
+[2026-11-01 16:20:00] Master HITL Parity & Universal Remote Control Audit Log
+1. Human-in-the-Loop (HITL) Desk 1 & Desk 2 Parity:
+   - App parity supervisor (#portal-app-parity-bar) actively monitors native companion status.
+   - If either Desk 1 (Controller) or Desk 2 (Host) runs in the browser, proactive modal prompts allow one-click local launch or GitHub download.
+   - Eliminated UI race conditions: Desk 1 setup card (#portal-desk1-control-card) remains visible until explicit user action.
+   - Added in-session native companion status button (#ribbon-btn-native-agent) on remote workspace ribbon.
+2. Native Executable Single-Instance Restoration:
+   - Multi-instance detection communicates via EmbeddedRelayServer (/api/window/show on port 8088) to wake and restore existing window/tray instances.
+   - Resolved false 'already running' notification by restoring tray and foreground state.
+3. Decoupled Architecture & Dynamic Settings:
+   - All ports, GitHub URLs, startup modes, and release versions are dynamically sourced from database.json (settings.general & settings.connection).
+   - Editable and persistable through Settings Studio (#ad-tab-general and #ad-tab-connection).
+   - Zero hardcoded ports or URLs across server and client controllers.
+================================================================================
+
+================================================================================
+[2026-11-17 15:10:00] Stage 15: Hardcode Elimination, Relational Database Integrity & Closed-Loop Convergence
+1. Relational Integrity & Group-by Hierarchy (P0/P4 Law):
+   - Synchronized database.json <-> models/database.json: Restored missing foreign key `grp-2` ('Field Fleet') matching `dev-3` (`Field Mobile Node`).
+   - Verified that all devices in `database.json` map 1:1 to registered, valid groups.
+2. Dynamic Valuebase & Hardcode Removal:
+   - Replaced all static 'https://desk.jdroid-x.com' occurrences in server.js, controllers/server-controller.js, controllers/app-controller.js, app.js, and MainForm.InputAndHost.cs with dynamic settings lookups (`settings.connection.customDomain` and `settings.connection.relayServer`).
+   - Single-instance wake port in MainForm.cs dynamically detects configured `relayPort` before falling back to 8088.
+   - DependencySupervisor.cs evaluates live ports dynamically from database.json.
+3. Win32 UAC Elevation & Input Teardown Parity:
+   - Wired SessionElevationService.Instance.ConfigureUIPIBypass() on MainForm startup.
+   - AbortSessionConnection() releases all synthetic modifier keys (Shift/Ctrl/Alt/Win) and resets host privacy curtain.
+4. Test Verification:
+   - Verification suite upgraded with explicit relational integrity test: 243 PASSED, 0 FAILED.
+   - C# Native solution compiled with Authenticode Status: VALID (CN=jDroid-X Studio Enterprise).
+================================================================================
+
+================================================================================
+[2026-11-17 15:52:00] Stage-Wide Process Hardening: Win32 Elevation, STUN Resilience & File Transfer Boundary
+1. Win32 Session 0 & Secure Desktop Elevation (Stage 13 & 14):
+   - SessionElevationService.cs upgraded with native P/Invoke bindings: OpenInputDesktop, CloseDesktop, SetThreadDesktop, GetUserObjectInformation, WTSQueryUserToken, DuplicateTokenEx, and CreateProcessAsUser.
+   - Added IsSecureDesktopActive() to detect Winlogon/Consent.exe prompts and TryAttachToInputDesktop() to bridge UAC prompt black screens during DxgiCaptureService capture loops.
+   - EmbeddedRelayServer /api/system/elevation/status and /elevate refactored to call SessionElevationService.Instance directly (Dynamic OOPS MVC call-by-reference).
+2. STUN Discovery & Multi-Candidate Resilience (Stage 4 & 5):
+   - P2PUdpEngine.cs upgraded with CustomStunServer configuration property, resolving custom STUN endpoints before probing Google STUN fallbacks.
+   - services/jdroid-x-signaling-service.js dynamically queries database.json connection configurations for tunnel and cloud relay URLs with zero hardcoding.
+3. Auxiliary File Transfer & Clean Teardown (Stage 8 & 9):
+   - POST /api/relay/files/abort in server-controller.js updated to dynamically read allowedDirectory configuration before purging temporary `.part` files.
+4. Dual-File Mirroring & Regression Verification:
+   - 100% parity verified across styles.css <-> styles/styles.css, app.js <-> controllers/app-controller.js, index.html <-> views/index.html, database.json <-> models/database.json.
+   - C# Native binary compiled and signed with Microsoft Authenticode: VALID (CN=jDroid-X Studio Enterprise).
+   - Node.js test suite: 243 PASSED, 0 FAILED with active HTTP 200 health probe.
+================================================================================
+
+================================================================================
+[2026-11-17 16:10:00] Stage 4/12: Cloudflare Bridge Hardening, Token-Based Tunnel Activation & REST API Convergence
+1. CloudflareTunnelEngine.cs Named Tunnel & Persistence Repair:
+   - Fixed token-based named tunnel activation: Detects "Registered tunnel connection" stdout/stderr lines and initializes ActiveTunnelUrl to configured customDomain (default https://desk.jdroid-x.com).
+   - Added automatic colab_tunnel.txt synchronization immediately upon tunnel URL discovery.
+   - Added SetConfiguredDomain() and dynamic database.json customDomain lookups.
+2. Python WAN Cloud Relay (colab-relay-service.py) URL Flexibility:
+   - Fixed strict substring check: Replaced `".trycloudflare.com" in t` with `(t.startswith("http://") or t.startswith("https://"))`, allowing custom enterprise domains in colab_tunnel.txt.
+   - Synchronized all mirrors: `jDroid-X-Colab Server/` and `jDroid-X-Desk-Server/colab-server/`.
+3. Dedicated Tunnel REST API Endpoints (server-controller.js):
+   - Implemented GET /api/tunnel/status, POST /api/tunnel/start, and POST /api/tunnel/stop.
+4. Supervisor Batch Script (jdroid-x-desk-tunnel.bat) Zero-Config Fallback:
+   - Added fallback to Quick Tunnel (`cloudflared tunnel --url http://127.0.0.1:!LOCAL_PORT!`) if `%USERPROFILE%\.cloudflared\config.yml` is missing on partner machines.
+5. Verification Pass:
+   - C# Native Build: Authenticode Status VALID (CN=jDroid-X Studio Enterprise).
+   - Automated Test Suite: Upgraded to 246 PASSED, 0 FAILED (100% Pass Rate).
+================================================================================
+
+================================================================================
+[2026-11-17 16:35:00] Stage 15/15: Zero-Hardcode Convergence, Relational Integrity & Feedback Loop Closure
+1. Dynamic Native Port & Relay Server Resolution (MainForm.cs & MainForm.Subviews.cs):
+   - MainForm.cs lines 3702-3726: Eliminated static URL and port fallbacks; dynamic relay URL resolved via `db.Settings.connection.relayServer` and candidate loopback endpoints dynamically bound to `db.Settings.connection.relayPort` and `db.Settings.connection.localPort`.
+   - MainForm.Subviews.cs: Eliminated static port 12345 across Web Admin Backup, Online Help, and Engine Switch endpoints by binding dynamically via call-by-reference to `EmbeddedRelayServer.Instance.AdminPort` and `db.Settings.connection.localPort`.
+2. Relational Database Group Harmonization (database.json & models/database.json):
+   - Harmonized dev-1 and dev-2 group names from "Core Workstations" to "Workstations" matching grp-1.name ("Workstations").
+   - Dual-file mirrored database.json to models/database.json (0 differences via fc.exe /b).
+3. Pre-Hydration UI Port Status Cleanup (index.html & views/index.html):
+   - Updated line 825 web-gateway-status-text default from static "Port 12345 (HTTP 200)" to "Gateway (HTTP 200)" to eliminate stale port flash before DOM hydration.
+   - Dual-file mirrored index.html to views/index.html (0 differences via fc.exe /b).
+4. Dual-File Mirror Master Verification:
+   - database.json == models/database.json (100% byte match)
+   - index.html == views/index.html (100% byte match)
+   - styles.css == styles/styles.css (100% byte match)
+   - app.js == controllers/app-controller.js (100% byte match)
+5. Build & Test Verification:
+   - C# Native Build: Authenticode Status VALID (CN=jDroid-X Studio Enterprise).
+   - Automated Verification Suite (node test.js): 246 PASSED, 0 FAILED (100% Pass Rate).
+================================================================================

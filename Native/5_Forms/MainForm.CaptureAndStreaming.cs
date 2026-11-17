@@ -85,7 +85,14 @@ namespace JDroidXDesk.Native
                 // Live Connected Screen View
                 SimulatorDesktop target = connectedTargetDesktop ?? (dynamicDesktops.Count > 1 ? dynamicDesktops[1] : dynamicDesktops[0]);
 
-                // 1. Live Remote Screen Stream via Colab Relay (Thread-Safe Clone & Draw)
+                // 1. Anti-Loopback Shield Mode: Prevent self-mirror recursion if target matches local desk ID
+                if (isLiveScreenMirror || (currentHostDesktop != null && target.RemoteId == currentHostDesktop.RemoteId))
+                {
+                    RenderLoopbackShieldScreen(g, target, cw, ch);
+                    return;
+                }
+
+                // 2. Live Remote Screen Stream via Colab Relay (Thread-Safe Clone & Draw)
                 Image frameToDraw = null;
                 lock (frameLock)
                 {
@@ -110,13 +117,6 @@ namespace JDroidXDesk.Native
                         g.DrawString("🟢 LIVE SCREEN SHARING: " + target.RemoteId, fOverlay, bGreen, 18, 16);
                         g.DrawString("Frames: " + framesReceivedCount, fOverlay, bBlue, 280, 16);
                     }
-                    return;
-                }
-
-                // 2. Local Live Screen Loopback & Mirror Shield Mode (Zero Infinite Recursion)
-                if (isLiveScreenMirror || (currentHostDesktop != null && target.RemoteId == currentHostDesktop.RemoteId))
-                {
-                    RenderLoopbackShieldScreen(g, target, cw, ch);
                     return;
                 }
 

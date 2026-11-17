@@ -27,7 +27,15 @@ native_compile.rsp
 NativeTest.exe
 *.mindmap*
 jdroid-x-desk-mindmap*
+local_desk_identity.json
 
-# Ephemeral runtime file transfers
+# Ephemeral runtime file transfers and backups
 transfers/
+backups/
+*.backup_*
+*.tmp_*
+*.arch
+*.arch_*
+*.bak
+*.docx
 cloudflared*.exe

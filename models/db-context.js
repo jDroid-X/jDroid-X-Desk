@@ -34,7 +34,11 @@ const DEFAULT_SETTINGS = {
         screenshotPath: path.join(defaultUserProfile, 'Pictures', 'jDroid-X'),
         chatLogPath: path.join(defaultAppData, 'jDroid-X', 'chat'),
         onlineStatusVisibility: true,
-        allowDataCollection: false
+        allowDataCollection: false,
+        startupMode: 'mini',
+        githubDownloadUrl: 'https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe',
+        nativeCompanionPort: 8088,
+        targetReleaseVersion: '2.5.0'
     },
     connection: {
         allowDirectConnections: true,
@@ -234,16 +238,23 @@ const DEFAULT_SCHEMA = {
 };
 
 const RETENTION_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days in Milliseconds
+const MAX_LOGS_COUNT = 500; // Maximum log entries to prevent runaway JSON bloat
+const BACKUP_DIR = path.join(ROOT_DIR, 'backups', 'database');
+const MAX_REGULATORY_BACKUPS = 3; // Keep maximum 3 historical snapshots
 
 function purgeOldLogs(db) {
     if (!Array.isArray(db.logs)) return false;
     const cutoff = Date.now() - RETENTION_MS;
     const initialLen = db.logs.length;
-    db.logs = db.logs.filter(l => {
+    let filtered = db.logs.filter(l => {
         const t = new Date(l.timestamp).getTime();
         return !isNaN(t) && t >= cutoff;
     });
-    return db.logs.length < initialLen;
+    if (filtered.length > MAX_LOGS_COUNT) {
+        filtered = filtered.slice(-MAX_LOGS_COUNT);
+    }
+    db.logs = filtered;
+    return db.logs.length !== initialLen;
 }
 
 function writeDB(data) {
@@ -293,11 +304,59 @@ function readDB() {
         if (dirty) writeDB(parsed);
         return parsed;
     } catch (e) {
-        console.error('[DATABASE CORRUPTION] Resetting.', e.message);
-        const bk = DB_PATH + '.backup_' + Date.now();
-        if (fs.existsSync(DB_PATH)) fs.renameSync(DB_PATH, bk);
-        fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_SCHEMA, null, 2));
+        console.warn('[DATABASE READ COLLISION] Attempting fallback mirror read:', e.message);
+        // Fallback to secondary encapsulated mirror if primary had a transient read collision
+        if (fs.existsSync(MODELS_DB_PATH)) {
+            try {
+                const mirrorRaw = fs.readFileSync(MODELS_DB_PATH, 'utf8');
+                const mirrorParsed = JSON.parse(mirrorRaw);
+                console.info('[DATABASE RECOVERY] Successfully served from encapsulated mirror store.');
+                return mirrorParsed;
+            } catch (_) {}
+        }
+        // If unrecoverable, return default schema in memory without dumping uncontrolled backups in root
+        console.warn('[DATABASE RESET] Serving clean default schema in memory.');
+        try {
+            fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_SCHEMA, null, 2));
+        } catch (_) {}
         return { ...DEFAULT_SCHEMA };
+    }
+}
+
+function pruneRegulatoryBackups() {
+    try {
+        if (!fs.existsSync(BACKUP_DIR)) return;
+        const files = fs.readdirSync(BACKUP_DIR)
+            .filter(f => f.startsWith('database_snapshot_') && f.endsWith('.json'))
+            .map(f => ({ name: f, time: fs.statSync(path.join(BACKUP_DIR, f)).mtimeMs }))
+            .sort((a, b) => b.time - a.time); // Newest first
+
+        if (files.length > MAX_REGULATORY_BACKUPS) {
+            const toDelete = files.slice(MAX_REGULATORY_BACKUPS);
+            for (const item of toDelete) {
+                try {
+                    fs.unlinkSync(path.join(BACKUP_DIR, item.name));
+                } catch (_) {}
+            }
+        }
+    } catch (_) {}
+}
+
+function createDatabaseBackup(triggerReason = 'manual') {
+    try {
+        if (!fs.existsSync(BACKUP_DIR)) {
+            fs.mkdirSync(BACKUP_DIR, { recursive: true });
+        }
+        if (!fs.existsSync(DB_PATH)) return null;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `database_snapshot_${triggerReason}_${timestamp}.json`;
+        const destPath = path.join(BACKUP_DIR, filename);
+        fs.copyFileSync(DB_PATH, destPath);
+        pruneRegulatoryBackups();
+        return destPath;
+    } catch (err) {
+        console.error('[REGULATORY BACKUP ERROR]', err.message);
+        return null;
     }
 }
 
@@ -320,11 +379,15 @@ module.exports = {
     ROOT_DIR,
     DB_PATH,
     MODELS_DB_PATH,
+    BACKUP_DIR,
+    MAX_REGULATORY_BACKUPS,
     DEFAULT_SETTINGS,
     DEFAULT_SERVER_CONFIG,
     DEFAULT_SCHEMA,
     readDB,
     writeDB,
     purgeOldLogs,
+    createDatabaseBackup,
+    pruneRegulatoryBackups,
     deepMerge
 };

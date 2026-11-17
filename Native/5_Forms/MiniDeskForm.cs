@@ -63,6 +63,7 @@ namespace JDroidXDesk.Native
 
         private ModernCardPanel cardRemoteDesk;
         private ModernTextBox txtRemoteDeskCode;
+        private ModernTextBox txtRemotePass;
         private ModernButton btnConnect;
 
         private Panel pnlIconToolbar;
@@ -116,6 +117,16 @@ namespace JDroidXDesk.Native
             liveUpdateTimer = new Timer { Interval = 500 };
             liveUpdateTimer.Tick += (s, e) => UpdateLiveState();
             liveUpdateTimer.Start();
+
+            if (this.mainForm != null)
+            {
+                this.mainForm.StartSignalingHeartbeatLoop();
+            }
+            try {
+                EmbeddedRelayServer.Instance.OnWindowShowRequested += () => {
+                    try { if (this.IsHandleCreated && !this.IsDisposed) { this.BeginInvoke(new Action(RestoreFromTray)); } } catch (Exception) {}
+                };
+            } catch (Exception) {}
 
             this.FormClosing += (s, e) => {
                 if (e.CloseReason == CloseReason.UserClosing)
@@ -229,10 +240,9 @@ namespace JDroidXDesk.Native
                 BackColor = Color.Transparent
             };
 
-            string initDeskId = (mainForm != null && mainForm.CurrentHostDesktop != null) ? mainForm.CurrentHostDesktop.RemoteId : "New Session";
             lblTabTitle = new Label
             {
-                Text = initDeskId,
+                Text = "New Connection",
                 Font = new Font("Consolas", 9f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(30, 41, 59),
                 Location = new Point(26, 6),
@@ -380,7 +390,7 @@ namespace JDroidXDesk.Native
 
             lblToolbarDeskId = new Label
             {
-                Text = initDeskId,
+                Text = "New Connection",
                 Font = new Font("Consolas", 10.5f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(2, 132, 199),
                 Location = new Point(58, 8),
@@ -388,7 +398,7 @@ namespace JDroidXDesk.Native
                 BackColor = Color.Transparent,
                 Cursor = Cursors.Hand
             };
-            toolTip.SetToolTip(lblToolbarDeskId, "Click to copy Desk ID to clipboard");
+            toolTip.SetToolTip(lblToolbarDeskId, "Session target / connection status");
             lblToolbarDeskId.Click += (s, e) => CopyDeskIdToClipboard();
 
             pnlActionIcons = new FlowLayoutPanel
@@ -515,6 +525,8 @@ namespace JDroidXDesk.Native
             };
 
             string myId = (mainForm != null && mainForm.CurrentHostDesktop != null) ? mainForm.CurrentHostDesktop.RemoteId : "--- --- ---";
+            string myPass = (mainForm != null && mainForm.CurrentHostDesktop != null) ? mainForm.CurrentHostDesktop.Passcode : "859-542";
+
             lblMyDeskId = new Label
             {
                 Text = myId,
@@ -531,8 +543,8 @@ namespace JDroidXDesk.Native
             btnCopyMyId = new ModernButton
             {
                 Text = "📋 Copy Code",
-                Size = new Size(110, 34),
-                Location = new Point(280, 32),
+                Size = new Size(105, 34),
+                Location = new Point(275, 32),
                 NormalColor = Color.FromArgb(241, 245, 249),
                 HoverColor = Color.FromArgb(226, 232, 240),
                 TextColor = Color.FromArgb(15, 23, 42),
@@ -540,6 +552,41 @@ namespace JDroidXDesk.Native
             };
             toolTip.SetToolTip(btnCopyMyId, "Copy your Desk ID to clipboard");
             btnCopyMyId.Click += (s, e) => CopyDeskIdToClipboard();
+
+            Label lblMyPassBadge = new Label
+            {
+                Text = "🔑 Pass: " + myPass,
+                Font = new Font("Consolas", 10.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Location = new Point(390, 40),
+                AutoSize = true,
+                BackColor = Color.Transparent,
+                Cursor = Cursors.Hand
+            };
+            toolTip.SetToolTip(lblMyPassBadge, "Click to copy your One-Time Passcode");
+            lblMyPassBadge.Click += (s, e) => {
+                try {
+                    Clipboard.SetText(myPass);
+                    MessageBox.Show(this, "Passcode copied to clipboard: " + myPass, "Passcode Copied", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                } catch { }
+            };
+
+            ModernButton btnOpenWeb = new ModernButton
+            {
+                Text = "🌐 Open Web Console",
+                Size = new Size(165, 34),
+                Location = new Point(540, 32),
+                NormalColor = Color.FromArgb(56, 189, 248),
+                HoverColor = Color.FromArgb(14, 165, 233),
+                TextColor = Color.White,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold)
+            };
+            toolTip.SetToolTip(btnOpenWeb, "Open desk.jdroid-x.com (Web Connection Portal)");
+            btnOpenWeb.Click += (s, e) => {
+                try {
+                    Process.Start("http://localhost:7700/jdroid-x-desk/index.html#remote-console");
+                } catch { }
+            };
 
             lblMyDeskStatus = new Label
             {
@@ -554,6 +601,8 @@ namespace JDroidXDesk.Native
             cardThisDesk.Controls.Add(lblThisTitle);
             cardThisDesk.Controls.Add(lblMyDeskId);
             cardThisDesk.Controls.Add(btnCopyMyId);
+            cardThisDesk.Controls.Add(lblMyPassBadge);
+            cardThisDesk.Controls.Add(btnOpenWeb);
             cardThisDesk.Controls.Add(lblMyDeskStatus);
 
             // CARD 2: REMOTE DESK
@@ -578,7 +627,7 @@ namespace JDroidXDesk.Native
             txtRemoteDeskCode = new ModernTextBox
             {
                 Location = new Point(16, 36),
-                Size = new Size(280, 44),
+                Size = new Size(210, 44),
                 PlaceholderText = "XXX-XXX-XXX",
                 AutoFormatDeskId = true
             };
@@ -586,11 +635,21 @@ namespace JDroidXDesk.Native
                 if (e.KeyCode == Keys.Enter) TriggerConnect();
             };
 
+            txtRemotePass = new ModernTextBox
+            {
+                Location = new Point(236, 36),
+                Size = new Size(160, 44),
+                PlaceholderText = "Passcode (Optional)"
+            };
+            txtRemotePass.KeyDown += (s, e) => {
+                if (e.KeyCode == Keys.Enter) TriggerConnect();
+            };
+
             btnConnect = new ModernButton
             {
                 Text = "⚡ Connect",
-                Size = new Size(130, 44),
-                Location = new Point(310, 36),
+                Size = new Size(125, 44),
+                Location = new Point(406, 36),
                 NormalColor = Color.FromArgb(16, 185, 129),
                 HoverColor = Color.FromArgb(5, 150, 105),
                 TextColor = Color.White,
@@ -601,6 +660,7 @@ namespace JDroidXDesk.Native
 
             cardRemoteDesk.Controls.Add(lblRemoteTitle);
             cardRemoteDesk.Controls.Add(txtRemoteDeskCode);
+            cardRemoteDesk.Controls.Add(txtRemotePass);
             cardRemoteDesk.Controls.Add(btnConnect);
 
             // 3. MANDATORY ICON TOOLBAR
@@ -978,6 +1038,8 @@ namespace JDroidXDesk.Native
                 this.BeginInvoke(new Action(RestoreFromTray));
                 return;
             }
+            this.ShowInTaskbar = true;
+            this.Visible = true;
             this.Show();
             this.WindowState = FormWindowState.Normal;
             this.BringToFront();
@@ -1084,15 +1146,34 @@ namespace JDroidXDesk.Native
                         pnlPreConnect.Visible = true;
                     }
 
-                    if (lblToolbarStatusDot != null) lblToolbarStatusDot.Text = "🟢";
-                    if (lblToolbarDeskId != null) lblToolbarDeskId.Text = activeDeskId;
-                    if (lblTabTitle != null) lblTabTitle.Text = activeDeskId;
+                    bool isConnecting = (mainForm.CurrentConnectionState == MainForm.SessionConnectionState.Connecting) || (btnConnect.Text == "Connecting...");
+                    string targetId = !string.IsNullOrEmpty(mainForm.ActiveReceiverTargetId) ? mainForm.ActiveReceiverTargetId : txtRemoteDeskCode.Text.Trim();
 
-                    if (btnConnect.Text == "Connecting...")
+                    if (isConnecting)
                     {
-                        btnConnect.Text = "⚡ Connect";
-                        btnConnect.NormalColor = Color.FromArgb(16, 185, 129);
-                        lblFooterStatus.Text = "🟢 Ready | Cloud Middle Bridge Connected";
+                        if (lblToolbarStatusDot != null) lblToolbarStatusDot.Text = "🟡";
+                        string displayTarget = !string.IsNullOrEmpty(targetId) ? targetId : "Connecting...";
+                        if (lblToolbarDeskId != null) lblToolbarDeskId.Text = displayTarget;
+                        if (lblTabTitle != null) lblTabTitle.Text = displayTarget;
+                        if (btnConnect.Text != "Connecting...")
+                        {
+                            btnConnect.Text = "Connecting...";
+                            btnConnect.NormalColor = Color.FromArgb(245, 158, 11);
+                        }
+                        if (lblFooterStatus != null) lblFooterStatus.Text = "🟡 Connecting to " + displayTarget + " via Cloud Middle Bridge...";
+                    }
+                    else
+                    {
+                        if (lblToolbarStatusDot != null) lblToolbarStatusDot.Text = "🟢";
+                        if (lblToolbarDeskId != null) lblToolbarDeskId.Text = "New Connection";
+                        if (lblTabTitle != null) lblTabTitle.Text = "New Connection";
+
+                        if (btnConnect.Text != "⚡ Connect")
+                        {
+                            btnConnect.Text = "⚡ Connect";
+                            btnConnect.NormalColor = Color.FromArgb(16, 185, 129);
+                            if (lblFooterStatus != null) lblFooterStatus.Text = "🟢 Ready | Cloud Middle Bridge Connected";
+                        }
                     }
                 }
             }

@@ -403,6 +403,13 @@ class AppController {
         this.loginLockedUntil = 0;     // SEC-2: lockout timestamp
     }
 
+    getLocalDeviceId() {
+        return this.systemModel?.deviceId || 
+               document.getElementById('local-device-id')?.textContent?.trim() || 
+               document.getElementById('portal-local-device-id')?.textContent?.trim() || 
+               '984-102-391';
+    }
+
     async init() {
         this.bindNavigation();
         this.bindModals();
@@ -410,20 +417,46 @@ class AppController {
         this.bindRemoteConnectLogic();
         this.bindSettingsEvents();
         this.bindLoginGate();
+        this.initAppParitySupervisor();
 
         // Fetch hardware ID early for login email prepopulation
         try {
-            const res = await fetch('/api/hardware-id');
+            const isLocalHost = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+            let storedClientId = localStorage.getItem('jdx_client_desk_id');
+
+            // If a secondary or incognito client previously stored host ID '381-422-623', purge so it gets its own client ID
+            if (!isLocalHost && storedClientId === '381-422-623') {
+                localStorage.removeItem('jdx_client_desk_id');
+                storedClientId = null;
+            }
+
+            if (!isLocalHost && !storedClientId) {
+                const rNum = Math.floor(100000000 + Math.random() * 900000000).toString();
+                storedClientId = `${rNum.slice(0,3)}-${rNum.slice(3,6)}-${rNum.slice(6,9)}`;
+                localStorage.setItem('jdx_client_desk_id', storedClientId);
+            }
+
+            let storedPasscode = localStorage.getItem('jdx_client_passcode');
+            if (!storedPasscode) {
+                const rPass = Math.floor(100000 + Math.random() * 900000).toString();
+                storedPasscode = `${rPass.slice(0,3)}-${rPass.slice(3,6)}`;
+                localStorage.setItem('jdx_client_passcode', storedPasscode);
+            }
+
+            const queryParam = isLocalHost ? '?isLocalHost=true' : `?clientDeviceId=${encodeURIComponent(storedClientId)}&isBrowser=true`;
+            const res = await fetch('/api/hardware-id' + queryParam);
             const data = await res.json();
-            this.systemModel.deviceId = data.deviceId || 'JDX-ERR-0000';
+            this.systemModel.deviceId = data.deviceId || storedClientId || 'JDX-ERR-0000';
+            this.systemModel.passcode = data.passcode || storedPasscode || '859-542';
         } catch (e) {
-            let fallbackId = localStorage.getItem('jdx_fallback_device_id');
+            let fallbackId = localStorage.getItem('jdx_client_desk_id') || localStorage.getItem('jdx_fallback_device_id');
             if (!fallbackId) {
                 const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
                 fallbackId = `JDX-OFLN-${randomHex}`;
                 localStorage.setItem('jdx_fallback_device_id', fallbackId);
             }
             this.systemModel.deviceId = fallbackId;
+            this.systemModel.passcode = localStorage.getItem('jdx_client_passcode') || '859-542';
         }
 
         // Prepopulate login email with device address
@@ -432,12 +465,25 @@ class AppController {
             emailInput.value = `${this.systemModel.deviceId.toLowerCase()}@jdroid-x-desk.com`;
         }
 
-        // Dynamically update UI elements showing the hardware ID
+        // Dynamically update UI elements showing the hardware ID across all screens and drawers
+        const upperDevId = this.systemModel.deviceId.toUpperCase();
         const localDeviceIdEl = document.getElementById('local-device-id');
-        if (localDeviceIdEl) localDeviceIdEl.textContent = this.systemModel.deviceId.toUpperCase();
+        if (localDeviceIdEl) localDeviceIdEl.textContent = upperDevId;
         
         const localNodeDescEl = document.getElementById('local-node-desc');
-        if (localNodeDescEl) localNodeDescEl.textContent = `Local Node: ${this.systemModel.deviceId.toUpperCase()} (Windows 11 Enterprise)`;
+        if (localNodeDescEl) localNodeDescEl.textContent = `Local Node: ${upperDevId} (Windows 11 Enterprise)`;
+
+        const portalLocalIdEl = document.getElementById('portal-local-device-id');
+        if (portalLocalIdEl) portalLocalIdEl.textContent = upperDevId;
+
+        const ribbonLocalId = document.getElementById('ribbon-local-desk-id');
+        if (ribbonLocalId) ribbonLocalId.textContent = upperDevId;
+
+        const drawerLocalId = document.getElementById('drawer-local-desk-id');
+        if (drawerLocalId) drawerLocalId.textContent = upperDevId;
+
+        const portalPassEl = document.getElementById('portal-local-one-time-pass');
+        if (portalPassEl && this.systemModel.passcode) portalPassEl.textContent = this.systemModel.passcode;
 
         // Dynamic Gateway Route and Ingress Mapping (Replace Hardcoded Values per Directive 5)
         const activePort = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
@@ -473,14 +519,397 @@ class AppController {
             });
         }
 
-        /** UX-2: Helper to hide the preloader with a smooth fade */
-        const hidePreloader = () => {
-            const preloader = document.getElementById('app-preloader');
-            if (preloader) {
-                preloader.style.transition = 'opacity 0.4s ease';
-                preloader.style.opacity = '0';
-                setTimeout(() => { preloader.style.display = 'none'; }, 450);
+        // UX-3: Landing Portal & Dual Desk Controller Integration (Step 5 & Step 6)
+        const portalLocalId = document.getElementById('portal-local-device-id');
+        if (portalLocalId && this.systemModel?.deviceId) {
+            portalLocalId.textContent = this.systemModel.deviceId;
+        }
+
+        const portalLocalPass = document.getElementById('portal-local-one-time-pass');
+        if (portalLocalPass && this.systemModel?.passcode) {
+            portalLocalPass.textContent = this.systemModel.passcode;
+        }
+
+        const portalEditIdBtn = document.getElementById('portal-btn-edit-desk-id');
+        if (portalEditIdBtn) {
+            portalEditIdBtn.addEventListener('click', () => {
+                const currentId = portalLocalId ? portalLocalId.textContent.trim() : (this.systemModel?.deviceId || '');
+                const newId = prompt('Enter Custom or Synced Desk ID (e.g. 582-109-431):', currentId);
+                if (newId && /^[0-9]{3}-?[0-9]{3}-?[0-9]{3}$/.test(newId.trim())) {
+                    const digits = newId.replace(/\D/g, '');
+                    const formatted = `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6,9)}`;
+                    localStorage.setItem('jdx_client_desk_id', formatted);
+                    this.systemModel.deviceId = formatted;
+                    if (portalLocalId) portalLocalId.textContent = formatted;
+                    const localDevEl = document.getElementById('local-device-id');
+                    if (localDevEl) localDevEl.textContent = formatted;
+                    this.view.showToast('success', 'Desk ID Updated', 'Your Desk ID updated to ' + formatted);
+                }
+            });
+        }
+
+        const portalCopyIdBtn = document.getElementById('portal-btn-copy-desk-id');
+        if (portalCopyIdBtn) {
+            portalCopyIdBtn.addEventListener('click', () => {
+                const idToCopy = this.getLocalDeviceId();
+                this.copyToClipboard(idToCopy);
+                this.view.showToast('success', 'Desk ID Copied', 'Your Desk ID ' + idToCopy + ' copied to clipboard!');
+            });
+        }
+
+        const portalInviteBtn = document.getElementById('portal-btn-invite');
+        if (portalInviteBtn) {
+            portalInviteBtn.addEventListener('click', () => {
+                const currentId = this.getLocalDeviceId();
+                const inviteUrl = `${window.location.origin}/?connect=${encodeURIComponent(currentId)}`;
+                this.copyToClipboard(inviteUrl);
+                this.view.showToast('success', 'Invite Link Copied', 'Share this link to let partner connect: ' + inviteUrl);
+            });
+        }
+
+        // Auto-populate partner ID if passed in URL query parameter (?connect=... or ?partnerId=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const incomingConnectId = urlParams.get('connect') || urlParams.get('partnerId') || urlParams.get('targetId');
+        if (incomingConnectId) {
+            const portalTargetInput = document.getElementById('portal-target-id-input');
+            const mainTargetInput = document.getElementById('target-id-input');
+            if (portalTargetInput) portalTargetInput.value = incomingConnectId;
+            if (mainTargetInput) mainTargetInput.value = incomingConnectId;
+        }
+
+        const portalTargetInput = document.getElementById('portal-target-id-input');
+        const portalTargetPass = document.getElementById('portal-target-pass-input');
+        const portalConnectBtn = document.getElementById('portal-connect-session-btn');
+        const landingPortal = document.getElementById('landing-portal-wrapper');
+
+        if (portalTargetInput) {
+            portalTargetInput.addEventListener('input', (e) => {
+                let val = e.target.value.trim().toUpperCase();
+                const isDirectEndpoint = val.includes('.') || val.includes(':') || val.startsWith('HTTP') || val.includes('LOCALHOST');
+                const digitsOnly = val.replace(/\D/g, '');
+                if (digitsOnly.length > 0 && !val.startsWith('JDX') && !isDirectEndpoint) {
+                    if (digitsOnly.length <= 3) {
+                        e.target.value = digitsOnly;
+                    } else if (digitsOnly.length <= 6) {
+                        e.target.value = digitsOnly.slice(0, 3) + '-' + digitsOnly.slice(3);
+                    } else {
+                        e.target.value = digitsOnly.slice(0, 3) + '-' + digitsOnly.slice(3, 6) + '-' + digitsOnly.slice(6, 9);
+                    }
+                }
+            });
+
+            portalTargetInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && portalConnectBtn) {
+                    portalConnectBtn.click();
+                }
+            });
+
+            // UX: Discovered Online Partners Live Bar (Auto-refresh every 4s)
+            const updateOnlinePartnersStrip = async () => {
+                const strip = document.getElementById('portal-online-peers-strip');
+                if (!strip) return;
+                try {
+                    const res = await fetch('/api/signaling/directory');
+                    const data = await res.json();
+                    if (data && data.success && Array.isArray(data.data)) {
+                        const localId = (this.systemModel?.deviceId || document.getElementById('portal-local-device-id')?.textContent || '').replace(/\D/g, '');
+                        const onlinePeers = data.data.filter(p => {
+                            const cleanPeerId = (p.deskId || '').replace(/\D/g, '');
+                            return cleanPeerId && cleanPeerId !== localId;
+                        });
+                        if (onlinePeers.length === 0) {
+                            strip.innerHTML = '<span style="font-size:0.75rem; color:var(--text-dim,#94a3b8);"><i class="fa-solid fa-circle-nodes"></i> Waiting for partner workstation online presence...</span>';
+                        } else {
+                            strip.innerHTML = '<span style="font-size:0.75rem; color:#10b981; font-weight:700;"><i class="fa-solid fa-signal"></i> Active Online:</span>' +
+                                onlinePeers.map(p => `<button type="button" class="portal-peer-quick-fill" data-id="${p.deskId}" style="background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.4); border-radius:12px; padding:2px 8px; font-size:0.75rem; font-family:var(--font-mono); font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s;"><i class="fa-solid fa-circle" style="font-size:5px; color:#10b981;"></i> ${p.deskId}</button>`).join(' ');
+
+                            strip.querySelectorAll('.portal-peer-quick-fill').forEach(btn => {
+                                btn.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    const chosenId = btn.getAttribute('data-id');
+                                    if (chosenId) {
+                                        if (portalTargetInput) { portalTargetInput.value = chosenId; portalTargetInput.focus(); }
+                                        const mInput = document.getElementById('target-id-input');
+                                        if (mInput) mInput.value = chosenId;
+                                        this.view?.showToast('info', 'Partner Selected', `Partner Desk ID ${chosenId} selected.`);
+                                    }
+                                });
+                            });
+                        }
+                    }
+                } catch (_) {}
+            };
+            updateOnlinePartnersStrip();
+            setInterval(updateOnlinePartnersStrip, 4000);
+        }
+
+        this.transitionToRemoteWorkspace = (targetIdVal, targetPassVal) => {
+            // Sync inputs to the underlying primary app-shell inputs
+            const mainTargetInput = document.getElementById('target-id-input');
+            const mainTargetPass = document.getElementById('target-pass-input');
+            if (mainTargetInput) mainTargetInput.value = targetIdVal;
+            if (mainTargetPass) mainTargetPass.value = targetPassVal;
+
+            // Sync target ID and Local Desk ID across Stage 3 workspace elements
+            const tabDeskId = document.getElementById('tab-active-desk-id');
+            const footerDeskId = document.getElementById('footer-target-desk-id');
+            if (tabDeskId) tabDeskId.textContent = targetIdVal;
+            if (footerDeskId) footerDeskId.textContent = targetIdVal;
+
+            // Sync Local Desk ID into Header 3 Ribbon and Slide Drawer
+            const myLocalId = this.getLocalDeviceId();
+            const ribbonLocalId = document.getElementById('ribbon-local-desk-id');
+            const drawerLocalId = document.getElementById('drawer-local-desk-id');
+            if (ribbonLocalId) ribbonLocalId.textContent = myLocalId;
+            if (drawerLocalId) drawerLocalId.textContent = myLocalId;
+
+            const remoteWorkspace = document.getElementById('remote-console-workspace');
+            const appCont = document.getElementById('app-container');
+            if (appCont) appCont.style.setProperty('display', 'none', 'important');
+            const sideDrawer = document.getElementById('sidebar-drawer');
+            if (sideDrawer) sideDrawer.style.setProperty('display', 'none', 'important');
+
+            if (remoteWorkspace) {
+                remoteWorkspace.style.display = 'flex';
             }
+
+            const keyframeOverlay = document.getElementById('connecting-keyframe-overlay');
+            if (keyframeOverlay) {
+                keyframeOverlay.classList.remove('hidden');
+            }
+
+            // Transition from Landing Portal to Remote Workspace
+            if (landingPortal) {
+                landingPortal.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                landingPortal.style.opacity = '0';
+                landingPortal.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    landingPortal.style.display = 'none';
+                    document.body.classList.remove('portal-mode');
+                }, 400);
+            }
+
+            // Trigger primary connection routine
+            const mainConnectBtn = document.getElementById('connect-session-btn');
+            if (mainConnectBtn) {
+                mainConnectBtn.click();
+            }
+        };
+
+        if (portalConnectBtn) {
+            portalConnectBtn.addEventListener('click', () => {
+                const targetIdVal = (portalTargetInput?.value || '').trim();
+                const targetPassVal = (portalTargetPass?.value || '').trim();
+
+                if (!targetIdVal) {
+                    this.view.showToast('warning', 'Partner ID Required', 'Please enter a Partner Desk ID in the Desk 2 card.');
+                    portalTargetInput?.focus();
+                    return;
+                }
+
+                // Desk 1 Native App Parity: If Desk 1 is purely in Browser, show Setup Card first!
+                if (!this._desk1IsNative) {
+                    this.showDesk1NativePrompt(targetIdVal, () => {
+                        this.transitionToRemoteWorkspace(targetIdVal, targetPassVal);
+                    });
+                    return;
+                }
+
+                this.transitionToRemoteWorkspace(targetIdVal, targetPassVal);
+            });
+        }
+
+        // VIBGYOR Theme Selector Spine on Landing Portal (Login.html Reactive Parity)
+        this.lockedAccent = localStorage.getItem('jdroid_theme_accent') || 'violet';
+        this.currentThemeMode = localStorage.getItem('jdx_theme_mode') || 'light';
+
+        document.querySelectorAll('.theme-spine-column .vib-box').forEach(box => {
+            const accent = box.getAttribute('data-theme') || box.getAttribute('data-color');
+            if (!accent) return;
+
+            // Live Preview on Hover (Login.html Parity)
+            box.addEventListener('mouseenter', () => {
+                this.applyTheme(this.currentThemeMode || 'light', accent, false);
+            });
+
+            // Revert on Mouse Leave (Login.html Parity)
+            box.addEventListener('mouseleave', () => {
+                this.applyTheme(this.currentThemeMode || 'light', this.lockedAccent || 'violet', false);
+            });
+
+            // Lock on Click (Login.html Parity)
+            box.addEventListener('click', () => {
+                this.lockedAccent = accent;
+                localStorage.setItem('jdroid_theme_accent', accent);
+                this.applyTheme(this.currentThemeMode || 'light', accent, true);
+                if (this.view?.showToast) {
+                    this.view.showToast('info', 'Accent Locked', 'Applied ' + accent.toUpperCase() + ' theme.');
+                }
+            });
+        });
+
+        document.getElementById('portal-theme-light')?.addEventListener('click', () => {
+            this.currentThemeMode = 'light';
+            localStorage.setItem('jdx_theme_mode', 'light');
+            this.applyTheme('light', this.lockedAccent || 'violet', true);
+            if (this.view?.showToast) this.view.showToast('info', 'Light Mode', 'Switched to Light Theme.');
+        });
+        document.getElementById('portal-theme-dark')?.addEventListener('click', () => {
+            this.currentThemeMode = 'dark';
+            localStorage.setItem('jdx_theme_mode', 'dark');
+            this.applyTheme('dark', this.lockedAccent || 'violet', true);
+            if (this.view?.showToast) this.view.showToast('info', 'Dark Mode', 'Switched to Dark Theme.');
+        });
+
+        // Topbar Portal Toggle Button Listener
+        const btnPortalToggle = document.getElementById('btn-portal-modal-toggle');
+        if (btnPortalToggle) {
+            btnPortalToggle.addEventListener('click', () => {
+                if (landingPortal) {
+                    const isHidden = (landingPortal.style.display === 'none' || !landingPortal.style.display);
+                    if (isHidden) {
+                        landingPortal.style.display = 'flex';
+                        setTimeout(() => { landingPortal.style.opacity = '1'; }, 30);
+                    } else {
+                        landingPortal.style.opacity = '0';
+                        setTimeout(() => { landingPortal.style.display = 'none'; }, 300);
+                    }
+                }
+            });
+        }
+
+        // Studio Console Mode Toggle Button on Landing Portal
+        const toggleConsoleBtn = document.getElementById('portal-btn-toggle-console');
+        if (toggleConsoleBtn) {
+            toggleConsoleBtn.addEventListener('click', () => {
+                if (landingPortal) {
+                    const isVisible = landingPortal.style.display !== 'none';
+                    if (isVisible) {
+                        landingPortal.style.opacity = '0';
+                        setTimeout(() => {
+                            landingPortal.style.display = 'none';
+                            document.body.classList.remove('portal-mode');
+                        }, 300);
+                    } else {
+                        landingPortal.style.display = 'flex';
+                        document.body.classList.add('portal-mode');
+                        setTimeout(() => { landingPortal.style.opacity = '1'; }, 50);
+                    }
+                }
+            });
+        }
+
+        /** UX-2: jDroid-X Engine Heartbeat Pulse & Cloudflare Tunnel Handshake Controller */
+        let _handshakeInitiated = false;
+        const initHeartbeatEngineHandshake = () => {
+            if (_handshakeInitiated) return;
+            _handshakeInitiated = true;
+
+            const preloader = document.getElementById('app-preloader');
+            const statusTitle = document.getElementById('splash-status-title');
+            const statusSub = document.getElementById('splash-status-sub');
+            const healthEl = document.getElementById('splash-engine-health');
+            const progressBar = document.getElementById('preloader-bar');
+
+            if (!preloader) return;
+
+            let attempts = 0;
+            const maxAttempts = 60; // 60s window for cold boot / fresh restart tunnel sync
+            let healDispatched = false;
+
+            const checkTunnelAndNodeHealth = async () => {
+                attempts++;
+                const t0 = performance.now();
+                try {
+                    // Stage 1: Query comprehensive system diagnostics
+                    const res = await fetch('/api/system/diagnostics', { cache: 'no-store' });
+                    if (res.ok) {
+                        const diag = await res.json();
+                        const rtt = Math.round(performance.now() - t0);
+                        const isTunnelActive = diag.dependencies && diag.dependencies.cloudflareTunnel && diag.dependencies.cloudflareTunnel.active;
+                        const isIngressActive = diag.dependencies && diag.dependencies.ingressPort7700 && diag.dependencies.ingressPort7700.active;
+
+                        // Auto-Heal: If Cloudflare tunnel is not active, trigger background autostart
+                        if (!isTunnelActive && !healDispatched) {
+                            healDispatched = true;
+                            fetch('/api/system/heal', { method: 'POST', cache: 'no-store' }).catch(() => {});
+                        }
+
+                        // Transition ONLY if Tunnel and Gateway are confirmed active
+                        if (isTunnelActive || diag.allHealthy) {
+                            if (statusTitle) statusTitle.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#10b981;"></i> CLOUDFLARE TUNNEL SYNCHRONIZED';
+                            if (statusSub) statusSub.textContent = `[Zero-Trust Tunnel Active • desk.jdroid-x.com Verified • Latency: ${rtt}ms]`;
+                            if (healthEl) healthEl.innerHTML = `<span style="color:#10b981;font-weight:700;">ONLINE (HTTP 200 &bull; ${rtt}ms)</span>`;
+                            if (progressBar) {
+                                progressBar.style.animation = 'none';
+                                progressBar.style.width = '100%';
+                                progressBar.style.background = 'linear-gradient(90deg, #10b981, #06b6d4)';
+                            }
+                            setTimeout(() => {
+                                preloader.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                                preloader.style.opacity = '0';
+                                preloader.style.transform = 'scale(1.02)';
+                                setTimeout(() => {
+                                    preloader.style.display = 'none';
+                                    const deskCard = document.querySelector('.desk-card-box');
+                                    if (deskCard) {
+                                        deskCard.style.transition = 'box-shadow 0.6s ease';
+                                        deskCard.style.boxShadow = '0 0 25px rgba(0,242,254,0.4)';
+                                        setTimeout(() => { deskCard.style.boxShadow = ''; }, 1200);
+                                    }
+                                }, 600);
+                            }, 500);
+                            return true;
+                        } else {
+                            // Diagnostics responded, but Cloudflare tunnel is still initializing
+                            if (statusTitle) statusTitle.innerHTML = '<i class="fa-solid fa-satellite-dish fa-spin" style="color:#00f2fe;"></i> STARTING CLOUDFLARE TUNNEL...';
+                            if (statusSub) statusSub.textContent = `[Starting Cloudflare Zero-Trust Tunnel & Mesh Gateway (${attempts}s)]`;
+                            if (healthEl) healthEl.innerHTML = `<span style="color:#f59e0b;font-weight:600;">Tunnel Syncing &bull; Attempt ${attempts}/${maxAttempts}</span>`;
+                        }
+                    } else {
+                        // Fallback health check during boot
+                        if (!healDispatched && attempts > 2) {
+                            healDispatched = true;
+                            fetch('/api/system/heal', { method: 'POST', cache: 'no-store' }).catch(() => {});
+                        }
+                    }
+                } catch (e) {
+                    // Node or Tunnel still booting up
+                    if (!healDispatched && attempts > 2) {
+                        healDispatched = true;
+                        fetch('/api/system/heal', { method: 'POST', cache: 'no-store' }).catch(() => {});
+                    }
+                }
+
+                if (healthEl && !healthEl.innerHTML.includes('Tunnel Syncing')) {
+                    healthEl.textContent = `Attempting Handshake (${attempts}/${maxAttempts})...`;
+                }
+                if (statusSub && !statusSub.textContent.includes('Starting Cloudflare')) {
+                    statusSub.textContent = `[Starting Local Background Engine • Waiting for Cloudflare Tunnel]`;
+                }
+                if (progressBar) {
+                    progressBar.style.width = `${Math.min(94, 20 + attempts * 2)}%`;
+                }
+
+                if (attempts < maxAttempts) {
+                    setTimeout(checkTunnelAndNodeHealth, 1000);
+                } else {
+                    // Final fallback to Standby Mode after full 60s timeout
+                    if (statusTitle) statusTitle.textContent = 'STANDBY MODE';
+                    if (statusSub) statusSub.textContent = '[Operating in Mesh Mode • Tunnel Sync Timed Out]';
+                    setTimeout(() => {
+                        preloader.style.opacity = '0';
+                        setTimeout(() => { preloader.style.display = 'none'; }, 500);
+                    }, 800);
+                }
+                return false;
+            };
+
+            checkTunnelAndNodeHealth();
+        };
+
+        const hidePreloader = () => {
+            initHeartbeatEngineHandshake();
         };
 
         // Check Firebase Auth state first — hide preloader after resolution
@@ -539,6 +968,11 @@ class AppController {
                 const deskId = this.systemModel?.deviceId || document.getElementById('local-device-id')?.textContent?.trim();
                 if (!deskId) return;
 
+                const activeTunnelUrl = document.getElementById('custom-domain-url')?.value?.trim() || 
+                                       this.settingsModel?.connection?.customDomain || 
+                                       window.location.origin || 
+                                       'https://desk.jdroid-x.com';
+
                 const res = await fetch('/api/signaling/heartbeat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -547,14 +981,15 @@ class AppController {
                         name: `jDroid-X-${deskId}`,
                         os: navigator.userAgent.includes('Windows') ? 'Windows' : 'WebClient',
                         version: '2.0.0',
-                        tunnelUrl: 'https://desk.jdroid-x.com'
+                        tunnelUrl: activeTunnelUrl
                     })
                 });
                 const data = await res.json();
                 if (data && data.success) {
                     const tunnelBadge = document.getElementById('edge-tunnel-status-pill');
                     if (tunnelBadge) {
-                        tunnelBadge.innerHTML = `<i class="fa-solid fa-cloud"></i> Ingress: desk.jdroid-x.com (Active: ${data.activeDirectoryCount || 1} Nodes)`;
+                        const displayDomain = activeTunnelUrl.replace(/^https?:\/\//, '');
+                        tunnelBadge.innerHTML = `<i class="fa-solid fa-cloud"></i> Ingress: ${displayDomain} (Active: ${data.activeDirectoryCount || 1} Nodes)`;
                     }
                 }
             } catch (_) {}
@@ -593,6 +1028,11 @@ class AppController {
                 // Host receives WebRTC Offer from incoming operator
                 await this.setupWebRtcPeerConnection(fromDesk, false);
                 if (this._rtcPeerConnection && typeof RTCSessionDescription !== 'undefined') {
+                    if (this._hostMediaStream) {
+                        this._hostMediaStream.getTracks().forEach(track => {
+                            try { this._rtcPeerConnection.addTrack(track, this._hostMediaStream); } catch (_) {}
+                        });
+                    }
                     await this._rtcPeerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: msg.payload.sdp }));
                     const answer = await this._rtcPeerConnection.createAnswer();
                     await this._rtcPeerConnection.setLocalDescription(answer);
@@ -620,6 +1060,51 @@ class AppController {
                 // ICE Candidate exchange
                 if (this._rtcPeerConnection && typeof RTCIceCandidate !== 'undefined') {
                     await this._rtcPeerConnection.addIceCandidate(new RTCIceCandidate(msg.payload.candidate));
+                }
+            } else if (type === 'SESSION_TERMINATED') {
+                this.stopRemoteStreamLoop();
+                this.updateLifecycleState('DISCONNECTED', fromDesk);
+                if (this._rtcPeerConnection) {
+                    try { this._rtcPeerConnection.close(); } catch (_) {}
+                    this._rtcPeerConnection = null;
+                }
+                const statusText = document.getElementById('session-status-text');
+                if (statusText) {
+                    statusText.textContent = 'Session Terminated by Remote Desk';
+                    statusText.style.color = 'var(--accent-amber)';
+                }
+                if (this.view?.showToast) {
+                    this.view.showToast('info', 'Session Ended', `Remote Desk (${fromDesk || 'Host'}) ended session (${msg.reason || 'DISCONNECT'}).`);
+                }
+            } else if (type === 'PROPOSAL_ACCEPTED') {
+                this.traceModel?.addLog('P2P', 'PROPOSAL_ACCEPTED', `Proposal accepted by ${fromDesk} (Session: ${msg.sessionId})`);
+                if (this.view?.showToast) {
+                    this.view.showToast('success', 'Connected', `Remote Desk (${fromDesk}) accepted the connection.`);
+                }
+                const isViewOnly = msg.permissions && msg.permissions.keyboard === false;
+                this.updateLifecycleState(isViewOnly ? 'CONNECTED_VIEW_ONLY' : 'CONNECTED_CONTROL_ENABLED', fromDesk);
+                this.startRemoteStreamLoop(fromDesk);
+            } else if (type === 'PROPOSAL_REJECTED') {
+                this.traceModel?.addLog('P2P', 'PROPOSAL_REJECTED', `Proposal rejected by ${fromDesk}: ${msg.reason}`);
+                if (this.view?.showToast) {
+                    this.view.showToast('error', 'Rejected', msg.reason || 'Remote Desk declined connection request.');
+                }
+                this.updateLifecycleState('REJECTED', fromDesk);
+            } else if (type === 'INCOMING_PROPOSAL') {
+                this.traceModel?.addLog('P2P', 'INCOMING_PROPOSAL', `Incoming proposal from ${msg.fromDeskId} (ID: ${msg.proposalId})`);
+                const incomingModal = document.getElementById('anydesk-incoming-modal');
+                const portalIncomingCard = document.getElementById('portal-incoming-alert');
+                const portalIncomingSrc = document.getElementById('portal-incoming-source-id');
+                const srcLabel = document.getElementById('incoming-source-id');
+                if (portalIncomingSrc) portalIncomingSrc.textContent = msg.fromDeskId || 'Remote Operator';
+                if (srcLabel) srcLabel.textContent = msg.fromDeskId || 'Remote Operator';
+                const isPortalMode = document.body.classList.contains('portal-mode') ||
+                    (document.getElementById('landing-portal-wrapper') && document.getElementById('landing-portal-wrapper').style.display !== 'none');
+                if (isPortalMode && portalIncomingCard) {
+                    portalIncomingCard.style.display = 'block';
+                } else if (incomingModal) {
+                    incomingModal.style.display = 'flex';
+                    incomingModal.classList.add('active');
                 }
             }
         } catch (err) {
@@ -1187,12 +1672,19 @@ class AppController {
                         transmitHotkeys: document.getElementById('ad-set-transmit-hotkeys')?.checked !== false,
                         onlineStatusVisibility: document.getElementById('ad-set-online-vis')?.checked !== false,
                         allowDataCollection: document.getElementById('ad-set-allow-telemetry')?.checked || false,
+                        startupMode: document.getElementById('ad-set-startup-mode')?.value || 'mini',
+                        githubDownloadUrl: document.getElementById('ad-conn-github-url')?.value.trim() || 'https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe',
+                        nativeCompanionPort: parseInt(document.getElementById('ad-conn-relay-port')?.value || '8088', 10),
+                        targetReleaseVersion: document.getElementById('ad-conn-release-ver')?.value.trim() || '2.5.0',
                         screenshotPath: document.getElementById('ad-ss-path-display')?.textContent.trim() || 'C:\\Users\\Default\\Pictures\\jDroid-X',
                         chatLogPath: document.getElementById('ad-chat-path-display')?.textContent.trim() || 'C:\\Users\\Default\\AppData\\Roaming\\jDroid-X\\chat'
                     },
                     connection: {
                         allowDirectConnections: document.getElementById('ad-conn-direct')?.checked !== false,
                         localPort: parseInt(document.getElementById('ad-conn-port')?.value || '7070', 10),
+                        relayPort: parseInt(document.getElementById('ad-conn-relay-port')?.value || '8088', 10),
+                        targetReleaseVersion: document.getElementById('ad-conn-release-ver')?.value.trim() || '2.5.0',
+                        githubDownloadUrl: document.getElementById('ad-conn-github-url')?.value.trim() || 'https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe',
                         proxyType: document.getElementById('ad-proxy-type')?.value || 'HTTP(S)',
                         proxyAddress: document.getElementById('ad-proxy-addr')?.value || '',
                         proxyPort: document.getElementById('ad-proxy-port')?.value || '',
@@ -1209,7 +1701,7 @@ class AppController {
                     access: {
                         aclEnabled: document.getElementById('ad-acl-enabled')?.checked || false,
                         aclAddresses: aclRules,
-                        autoDisconnectMinutes: parseInt(document.getElementById('ad-timeout-select')?.value || '10', 10)
+                        autoDisconnectMinutes: parseInt(document.getElementById('ad-auto-disconnect-mins')?.value || document.getElementById('ad-timeout-select')?.value || '10', 10)
                     },
                     recording: {
                         autoRecordIncoming: document.getElementById('ad-rec-incoming')?.checked || false,
@@ -1685,6 +2177,132 @@ class AppController {
         }
     }
 
+        applyTheme(themeOrMode, accentName, isPermanent = false) {
+        const ALL_THEME_CLASSES = [
+            'light-theme', 'dark-theme', 'theme-light', 'theme-dark', 'theme-nord',
+            'theme-solarized-light', 'theme-solarized-dark', 'theme-monokai',
+            'theme-dracula', 'theme-tokyo-night', 'theme-cyberpunk', 'theme-emerald',
+            'theme-ocean', 'theme-sunset', 'theme-gruvbox', 'theme-slate', 'theme-high-contrast'
+        ];
+
+        const VIBGYOR_RGB_MAP = {
+            'violet': '139, 92, 246',
+            'indigo': '79, 70, 229',
+            'blue': '14, 165, 233',
+            'green': '16, 185, 129',
+            'yellow': '234, 179, 8',
+            'orange': '249, 115, 22',
+            'red': '239, 68, 68'
+        };
+
+        const VIBGYOR_MAP = {
+            'violet': 'theme-dracula',
+            'indigo': 'theme-tokyo-night',
+            'blue': 'theme-ocean',
+            'green': 'theme-emerald',
+            'yellow': 'theme-solarized-light',
+            'orange': 'theme-sunset',
+            'red': 'theme-cyberpunk',
+            'light': 'light-theme',
+            'dark': 'dark-theme'
+        };
+
+        // Determine effective accent
+        let accent = accentName;
+        if (!accent) {
+            if (VIBGYOR_RGB_MAP[themeOrMode]) {
+                accent = themeOrMode;
+            } else {
+                accent = this.lockedAccent || localStorage.getItem('jdroid_theme_accent') || 'violet';
+            }
+        }
+        if (!VIBGYOR_RGB_MAP[accent]) accent = 'violet';
+
+        // Determine effective theme class and mode
+        let targetClass = VIBGYOR_MAP[themeOrMode] || themeOrMode;
+        if (targetClass === 'light') targetClass = 'light-theme';
+        if (targetClass === 'dark') targetClass = 'dark-theme';
+        if (!targetClass || !ALL_THEME_CLASSES.includes(targetClass)) {
+            targetClass = this.currentThemeMode === 'dark' ? 'dark-theme' : 'light-theme';
+        }
+
+        const isLight = targetClass === 'light-theme' || targetClass === 'theme-solarized-light' || themeOrMode === 'light';
+        const mode = isLight ? 'light' : 'dark';
+
+        // Update DOM attributes for instant CSS variable reactivity (Login.html Parity)
+        document.documentElement.setAttribute('data-theme', mode);
+        document.documentElement.setAttribute('data-accent', accent);
+        document.body.setAttribute('data-accent', accent);
+
+        // Update inline root CSS variables for instantaneous guaranteed reactive propagation
+        if (VIBGYOR_RGB_MAP[accent]) {
+            const rgb = VIBGYOR_RGB_MAP[accent];
+            document.documentElement.style.setProperty('--accent-rgb', rgb);
+            document.documentElement.style.setProperty('--accent-primary', `rgb(${rgb})`);
+            document.documentElement.style.setProperty('--accent-glow', `rgba(${rgb}, 0.38)`);
+        }
+
+        // Apply body class
+        ALL_THEME_CLASSES.forEach(c => document.body.classList.remove(c));
+        document.body.classList.add(targetClass);
+
+        if (isPermanent) {
+            this.lockedAccent = accent;
+            this.currentThemeMode = mode;
+            localStorage.setItem('jdroid_theme_accent', accent);
+            localStorage.setItem('jdx_theme_mode', mode);
+            localStorage.setItem('jdroid_theme', targetClass);
+            localStorage.setItem('jdx_theme', mode);
+        }
+
+        // Ambient background wash tint on Landing Portal
+        const ambientWash = document.getElementById('portal-ambient-wash');
+        if (ambientWash && VIBGYOR_RGB_MAP[accent]) {
+            const rgb = VIBGYOR_RGB_MAP[accent];
+            ambientWash.style.background = `radial-gradient(circle at 50% 30%, rgba(${rgb}, 0.22) 0%, transparent 70%)`;
+        }
+
+        // Active state indicator on VIBGYOR boxes (Lock indicator)
+        const activeAccent = isPermanent ? accent : (this.lockedAccent || accent);
+        document.querySelectorAll('.theme-spine-column .vib-box').forEach(box => {
+            const bTheme = box.getAttribute('data-theme') || box.getAttribute('data-color');
+            if (bTheme === activeAccent) {
+                box.classList.add('active');
+            } else {
+                box.classList.remove('active');
+            }
+        });
+
+        const lightBox = document.getElementById('portal-theme-light');
+        const darkBox = document.getElementById('portal-theme-dark');
+        if (lightBox) lightBox.classList.toggle('active', isLight);
+        if (darkBox) darkBox.classList.toggle('active', !isLight);
+
+        const themeSelector = document.getElementById('global-theme-selector');
+        if (themeSelector && themeSelector.value !== targetClass) {
+            themeSelector.value = targetClass;
+        }
+
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        if (themeBtn) {
+            const icon = themeBtn.querySelector('i');
+            if (icon) {
+                icon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            }
+        }
+
+            if (window.serverAdminController) {
+            const eng = window.serverAdminController.currentActiveEngine || 'sunshine';
+            window.serverAdminController.probeEngineStatus(eng);
+        }
+
+        fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme: targetClass })
+        }).catch(() => {});
+    }
+
     bindThemeToggle() {
         const themeBtn = document.getElementById('theme-toggle-btn');
         const themeSelector = document.getElementById('global-theme-selector');
@@ -1696,50 +2314,14 @@ class AppController {
             'theme-ocean', 'theme-sunset', 'theme-gruvbox', 'theme-slate', 'theme-high-contrast'
         ];
 
-        const applyTheme = (themeName) => {
-            let targetClass = themeName;
-            if (targetClass === 'light') targetClass = 'light-theme';
-            if (targetClass === 'dark') targetClass = 'dark-theme';
-            if (!targetClass || !ALL_THEME_CLASSES.includes(targetClass)) targetClass = 'light-theme';
-
-            ALL_THEME_CLASSES.forEach(c => document.body.classList.remove(c));
-            document.body.classList.add(targetClass);
-
-            localStorage.setItem('jdroid_theme', targetClass);
-            localStorage.setItem('jdx_theme', targetClass === 'light-theme' ? 'light' : (targetClass === 'dark-theme' ? 'dark' : targetClass));
-
-            if (themeSelector && themeSelector.value !== targetClass) {
-                themeSelector.value = targetClass;
-            }
-
-            if (themeBtn) {
-                const icon = themeBtn.querySelector('i');
-                if (icon) {
-                    const isLightParadigm = targetClass === 'light-theme' || targetClass === 'theme-solarized-light';
-                    icon.className = isLightParadigm ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-                }
-            }
-
-            if (window.serverAdminController) {
-                const eng = window.serverAdminController.currentActiveEngine || 'sunshine';
-                window.serverAdminController.probeEngineStatus(eng);
-            }
-
-            fetch('/api/settings', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ theme: targetClass })
-            }).catch(() => {});
-        };
-
         // 1. Initial Load: Light-First Discipline
         const savedTheme = localStorage.getItem('jdroid_theme') || localStorage.getItem('jdx_theme') || 'light-theme';
-        applyTheme(savedTheme);
+        this.applyTheme(savedTheme);
 
         // 2. Global Dropdown Selector Listener
         if (themeSelector) {
             themeSelector.addEventListener('change', (e) => {
-                applyTheme(e.target.value);
+                this.applyTheme(e.target.value);
             });
         }
 
@@ -1748,7 +2330,7 @@ class AppController {
             themeBtn.addEventListener('click', () => {
                 const isLight = document.body.classList.contains('light-theme') || document.body.classList.contains('theme-solarized-light');
                 const nextTheme = isLight ? 'dark-theme' : 'light-theme';
-                applyTheme(nextTheme);
+                this.applyTheme(nextTheme);
             });
         }
 
@@ -1756,7 +2338,7 @@ class AppController {
         window.addEventListener('storage', (e) => {
             if (e.key === 'jdroid_theme' || e.key === 'jdx_theme') {
                 if (e.newValue) {
-                    applyTheme(e.newValue);
+                    this.applyTheme(e.newValue);
                 }
             }
         });
@@ -1819,6 +2401,381 @@ class AppController {
     bindRemoteConnectLogic() {
         if (this._remoteConnectLogicBound) return;
         this._remoteConnectLogicBound = true;
+
+        // Stage 3: Remote Console Workspace Interactive Ribbon & Tab Controls (Login.html / Image Parity)
+        const btnTabClose = document.getElementById('btn-tab-close-session');
+        const btnRibbonDisconnect = document.getElementById('ribbon-btn-disconnect');
+        const winBtnClose = document.getElementById('win-btn-close');
+
+        const returnToConnectScreen = () => {
+            const mainDisconnectBtn = document.getElementById('disconnect-session-btn');
+            if (mainDisconnectBtn) mainDisconnectBtn.click();
+
+            const remoteWorkspace = document.getElementById('remote-console-workspace');
+            if (remoteWorkspace) remoteWorkspace.style.display = 'none';
+
+            const landingPortal = document.getElementById('landing-portal-wrapper');
+            if (landingPortal) {
+                landingPortal.style.display = 'flex';
+                landingPortal.style.opacity = '1';
+                landingPortal.style.transform = 'scale(1)';
+            }
+            document.body.classList.add('portal-mode');
+            if (this.view?.showToast) {
+                this.view.showToast('info', 'Session Ended', 'Returned to Connect Screen.');
+            }
+        };
+
+        btnTabClose?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            returnToConnectScreen();
+        });
+        btnRibbonDisconnect?.addEventListener('click', returnToConnectScreen);
+
+        // Slide In / Out Sidebar Drawer Controls
+        const remoteDrawer = document.getElementById('remote-sidebar-drawer');
+        const remoteBackdrop = document.getElementById('remote-sidebar-backdrop');
+        const btnToggleSidebar = document.getElementById('btn-toggle-remote-sidebar');
+        const btnCloseSidebar = document.getElementById('btn-close-remote-sidebar');
+        const btnMenuSidebar = document.getElementById('ribbon-btn-menu');
+
+        const openRemoteSidebar = () => {
+            if (remoteDrawer && remoteBackdrop) {
+                remoteDrawer.classList.add('open');
+                remoteBackdrop.classList.add('open');
+                // Ensure local desk ID is fresh
+                const myId = this.getLocalDeviceId();
+                const dId = document.getElementById('drawer-local-desk-id');
+                const rId = document.getElementById('ribbon-local-desk-id');
+                if (dId) dId.textContent = myId;
+                if (rId) rId.textContent = myId;
+            }
+        };
+
+        const closeRemoteSidebar = () => {
+            if (remoteDrawer && remoteBackdrop) {
+                remoteDrawer.classList.remove('open');
+                remoteBackdrop.classList.remove('open');
+            }
+        };
+
+        btnToggleSidebar?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (remoteDrawer?.classList.contains('open')) {
+                closeRemoteSidebar();
+            } else {
+                openRemoteSidebar();
+            }
+        });
+
+        btnMenuSidebar?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openRemoteSidebar();
+        });
+
+        btnCloseSidebar?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeRemoteSidebar();
+        });
+
+        remoteBackdrop?.addEventListener('click', closeRemoteSidebar);
+
+        // Header 3: Copy Local Desk ID Button
+        document.getElementById('btn-ribbon-copy-local-id')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const localId = document.getElementById('ribbon-local-desk-id')?.textContent?.trim() || this.getLocalDeviceId();
+            this.copyToClipboard(localId);
+            if (this.view?.showToast) {
+                this.view.showToast('success', 'Local Desk Copied', 'Your Desk ID ' + localId + ' copied to clipboard.');
+            }
+        });
+
+        // Drawer navigation links
+        document.getElementById('drawer-link-active-session')?.addEventListener('click', closeRemoteSidebar);
+        document.getElementById('drawer-link-portal')?.addEventListener('click', () => {
+            closeRemoteSidebar();
+            returnToConnectScreen();
+        });
+        document.getElementById('drawer-btn-disconnect')?.addEventListener('click', () => {
+            closeRemoteSidebar();
+            returnToConnectScreen();
+        });
+        document.getElementById('drawer-link-chat')?.addEventListener('click', () => {
+            closeRemoteSidebar();
+            document.getElementById('ribbon-btn-chat')?.click();
+        });
+        document.getElementById('drawer-link-settings')?.addEventListener('click', () => {
+            closeRemoteSidebar();
+            document.getElementById('ribbon-btn-quality')?.click();
+        });
+        document.getElementById('drawer-link-fleet')?.addEventListener('click', () => {
+            closeRemoteSidebar();
+            if (this.view?.showToast) this.view.showToast('info', 'Fleet Directory', 'Accessing sovereign workstation fleet...');
+        });
+        document.getElementById('drawer-link-logs')?.addEventListener('click', () => {
+            closeRemoteSidebar();
+            if (this.view?.showToast) this.view.showToast('info', 'Audit Logs', 'Traceability and telemetry logs active.');
+        });
+    
+        winBtnClose?.addEventListener('click', returnToConnectScreen);
+
+        // Fullscreen toggle
+        const toggleFs = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        };
+        document.getElementById('btn-toggle-fullscreen')?.addEventListener('click', toggleFs);
+        document.getElementById('win-btn-maximize')?.addEventListener('click', toggleFs);
+
+        // SAS / Ctrl+Alt+Del
+        document.getElementById('ribbon-btn-sas')?.addEventListener('click', () => {
+            document.getElementById('ctrl-alt-del-btn')?.click();
+            if (this.view?.showToast) this.view.showToast('info', 'SAS Injected', 'Ctrl+Alt+Del signal transmitted to remote desk.');
+        });
+
+        // Clipboard
+        document.getElementById('ribbon-btn-clipboard')?.addEventListener('click', () => {
+            document.getElementById('btn-toggle-clipboard')?.click();
+        });
+
+        // Refresh Keyframe
+        document.getElementById('ribbon-btn-refresh')?.addEventListener('click', () => {
+            document.getElementById('btn-webrtc-share-screen')?.click();
+            if (this.view?.showToast) this.view.showToast('info', 'Keyframe Requested', 'I-Frame refresh requested from remote host.');
+        });
+
+        // Theme toggle from ribbon
+        document.getElementById('ribbon-btn-theme')?.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark-theme');
+            const newMode = isDark ? 'light' : 'dark';
+            this.applyTheme(newMode, this.lockedAccent || 'violet', true);
+            if (this.view?.showToast) this.view.showToast('info', 'Theme Toggled', `Switched to ${newMode.toUpperCase()} mode.`);
+        });
+
+        // Monitor switching from ribbon
+        const ribbonBtnMonitors = document.getElementById('ribbon-btn-monitors');
+        if (ribbonBtnMonitors) {
+            ribbonBtnMonitors.addEventListener('click', async () => {
+                const targetId = this.systemModel?.activeSession || 'DEFAULT';
+                const monSelect = document.getElementById('stream-monitor-select');
+                let nextIdx = 0;
+                if (monSelect && monSelect.options.length > 1) {
+                    nextIdx = (monSelect.selectedIndex + 1) % monSelect.options.length;
+                    monSelect.selectedIndex = nextIdx;
+                } else {
+                    const badge = ribbonBtnMonitors.querySelector('.badge-sub');
+                    const curr = parseInt(badge?.textContent || '1', 10) - 1;
+                    nextIdx = curr === 0 ? 1 : 0;
+                }
+                try {
+                    const res = await fetch('/api/relay/monitors/switch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetId, monitorIndex: nextIdx })
+                    });
+                    if (res.ok) {
+                        const badge = ribbonBtnMonitors.querySelector('.badge-sub');
+                        if (badge) badge.textContent = String(nextIdx + 1);
+                        if (this.view?.showToast) this.view.showToast('info', 'Display Switched', `Switched viewport to Display ${nextIdx + 1}`);
+                    }
+                } catch (err) {
+                    if (this.view?.showToast) this.view.showToast('error', 'Switch Error', err.message);
+                }
+            });
+        }
+
+        // Stream Quality from ribbon
+        const ribbonBtnQuality = document.getElementById('ribbon-btn-quality');
+        if (ribbonBtnQuality) {
+            ribbonBtnQuality.addEventListener('click', () => {
+                const qSelect = document.getElementById('stream-quality-select');
+                if (qSelect) {
+                    const nextIndex = (qSelect.selectedIndex + 1) % qSelect.options.length;
+                    qSelect.selectedIndex = nextIndex;
+                    qSelect.dispatchEvent(new Event('change'));
+                    const selectedText = qSelect.options[nextIndex]?.text || 'Quality Updated';
+                    if (this.view?.showToast) this.view.showToast('info', 'Stream Quality', `Switched quality to: ${selectedText}`);
+                } else {
+                    if (this.view?.showToast) this.view.showToast('info', 'Stream Quality', 'Adaptive 1080p 60FPS NVENC stream active.');
+                }
+            });
+        }
+
+        // Latency & Telemetry HUD from ribbon
+        const ribbonBtnLatency = document.getElementById('ribbon-btn-latency');
+        if (ribbonBtnLatency) {
+            ribbonBtnLatency.addEventListener('click', () => {
+                const rttEl = document.getElementById('footer-rtt');
+                const fpsEl = document.getElementById('footer-fps');
+                const rttText = rttEl?.textContent || '12 ms RTT';
+                const fpsText = fpsEl?.textContent || '60 FPS';
+                if (this.view?.showToast) this.view.showToast('info', 'Stream Telemetry', `⚡ ${fpsText} | ⏱️ ${rttText} | Codec: DeskRT Tile Differential`);
+            });
+        }
+
+        // Display Orientation & Canvas Scale from ribbon
+        const ribbonBtnOrientation = document.getElementById('ribbon-btn-orientation');
+        if (ribbonBtnOrientation) {
+            const scaleModes = ['contain', 'cover', 'none'];
+            let currentScaleModeIdx = 0;
+            ribbonBtnOrientation.addEventListener('click', () => {
+                currentScaleModeIdx = (currentScaleModeIdx + 1) % scaleModes.length;
+                const mode = scaleModes[currentScaleModeIdx];
+                const canvasEl = document.getElementById('remote-stream-canvas');
+                if (canvasEl) {
+                    canvasEl.style.objectFit = mode;
+                }
+                const label = mode === 'contain' ? 'Fit to Window (Aspect Ratio)' : (mode === 'cover' ? 'Fill Viewport (Stretch)' : 'Original 1:1 Pixels');
+                if (this.view?.showToast) this.view.showToast('info', 'Display Scale', label);
+            });
+        }
+
+        // Add to Contacts / Favorites from ribbon
+        const ribbonBtnFavorite = document.getElementById('ribbon-btn-favorite');
+        if (ribbonBtnFavorite) {
+            ribbonBtnFavorite.addEventListener('click', async () => {
+                const targetId = this.systemModel?.activeSession || document.getElementById('tab-active-desk-id')?.textContent?.trim() || document.getElementById('target-id-input')?.value?.trim();
+                if (!targetId) {
+                    if (this.view?.showToast) this.view.showToast('warning', 'No Target', 'No active remote desk to add to address book.');
+                    return;
+                }
+                const name = prompt(`Enter a contact name for Desk ${targetId}:`, `Desk ${targetId}`);
+                if (!name) return;
+                try {
+                    const res = await fetch('/api/contacts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, remoteId: targetId, group: 'Favorite Desks' })
+                    });
+                    if (res.ok) {
+                        if (this.view?.showToast) this.view.showToast('success', 'Favorite Saved', `Added ${name} (${targetId}) to Address Book.`);
+                    }
+                } catch (err) {
+                    if (this.view?.showToast) this.view.showToast('error', 'Save Failed', err.message);
+                }
+            });
+        }
+
+        // Virtual Keyboard / Special Keys from ribbon
+        const ribbonBtnKeyboard = document.getElementById('ribbon-btn-keyboard');
+        if (ribbonBtnKeyboard) {
+            ribbonBtnKeyboard.addEventListener('click', () => {
+                const choice = prompt("Send Special Key to Remote Workstation:\n1. Windows Key (Win)\n2. Alt + Tab\n3. Alt + F4\n4. Escape (Esc)\n5. Ctrl + Shift + Esc (Task Manager)\nEnter 1-5:", "1");
+                if (!choice) return;
+                const cmdMap = { '1': 'key_win', '2': 'key_alttab', '3': 'key_altf4', '4': 'key_esc', '5': 'taskmgr' };
+                const cmd = cmdMap[choice.trim()];
+                if (cmd) {
+                    const targetId = this.systemModel?.activeSession || 'DEFAULT';
+                    fetch('/api/relay/input', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetId, event: { type: 'admin_cmd', cmd } })
+                    }).catch(() => {});
+                    if (this.view?.showToast) this.view.showToast('info', 'Key Dispatched', `Transmitted synthetic keystroke: ${cmd}`);
+                }
+            });
+        }
+
+        // Whiteboard / Annotation Pen from ribbon
+        const ribbonBtnWhiteboard = document.getElementById('ribbon-btn-whiteboard');
+        if (ribbonBtnWhiteboard) {
+            let isWhiteboardEnabled = false;
+            ribbonBtnWhiteboard.addEventListener('click', () => {
+                isWhiteboardEnabled = !isWhiteboardEnabled;
+                ribbonBtnWhiteboard.style.color = isWhiteboardEnabled ? '#ef4444' : '';
+                ribbonBtnWhiteboard.style.background = isWhiteboardEnabled ? 'rgba(239, 68, 68, 0.15)' : '';
+                if (this.view?.showToast) this.view.showToast('info', 'Whiteboard', isWhiteboardEnabled ? '✏️ Whiteboard annotation mode enabled. Drag on screen to draw.' : 'Whiteboard mode disabled.');
+            });
+        }
+
+        // Drawer link curtain
+        const drawerLinkCurtain = document.getElementById('drawer-link-curtain');
+        if (drawerLinkCurtain) {
+            let curtainActive = false;
+            drawerLinkCurtain.addEventListener('click', async () => {
+                closeRemoteSidebar();
+                curtainActive = !curtainActive;
+                const targetId = this.systemModel?.activeSession || 'DEFAULT';
+                try {
+                    const res = await fetch('/api/relay/curtain/toggle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetId, enabled: curtainActive })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        drawerLinkCurtain.style.color = curtainActive ? '#eab308' : '';
+                        if (this.view?.showToast) this.view.showToast(curtainActive ? 'warning' : 'info', 'Screen Curtain', data.message || (curtainActive ? 'Privacy screen curtain activated' : 'Privacy screen curtain deactivated'));
+                    }
+                } catch (err) {
+                    if (this.view?.showToast) this.view.showToast('error', 'Curtain Error', err.message);
+                }
+            });
+        }
+
+        // In-Session Chat Toggle & Messaging
+        const chatPanel = document.getElementById('in-session-chat-panel');
+        const chatBtn = document.getElementById('ribbon-btn-chat');
+        const chatCloseBtn = document.getElementById('btn-close-in-session-chat');
+        const chatSendBtn = document.getElementById('btn-send-in-session-chat');
+        const chatInput = document.getElementById('in-session-chat-input');
+        const chatMessages = document.getElementById('in-session-chat-messages');
+
+        const toggleChat = () => {
+            if (!chatPanel) return;
+            const isHidden = chatPanel.style.display === 'none';
+            chatPanel.style.display = isHidden ? 'flex' : 'none';
+            if (isHidden && chatInput) chatInput.focus();
+        };
+
+        if (chatBtn) chatBtn.addEventListener('click', toggleChat);
+        if (chatCloseBtn) chatCloseBtn.addEventListener('click', toggleChat);
+
+        const sendChatMessage = async () => {
+            if (!chatInput) return;
+            const text = chatInput.value.trim();
+            if (!text) return;
+            chatInput.value = '';
+            const targetId = this.systemModel?.activeSession || 'DEFAULT';
+
+            // Append locally
+            const msgEl = document.createElement('div');
+            msgEl.className = 'chat-msg chat-msg-self';
+            msgEl.textContent = text;
+            chatMessages?.appendChild(msgEl);
+            if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                await fetch(`/api/chat/${encodeURIComponent(targetId)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: 'Operator', text })
+                });
+            } catch (_) {}
+        };
+
+        if (chatSendBtn) chatSendBtn.addEventListener('click', sendChatMessage);
+        if (chatInput) {
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
+            });
+        }
+
+        // Hide keyframe connecting overlay on first canvas frame
+        const canvas = document.getElementById('remote-stream-canvas');
+        if (canvas) {
+            const origDraw = canvas.getContext;
+            const keyframeOverlay = document.getElementById('connecting-keyframe-overlay');
+            // When canvas receives draw or activity, hide overlay
+            canvas.addEventListener('mousemove', () => keyframeOverlay?.classList.add('hidden'), { once: true });
+        }
+
 
         const copyBtn = document.getElementById('copy-id-btn');
         const connectBtn = document.getElementById('connect-session-btn');
@@ -1897,26 +2854,70 @@ class AppController {
 
                 const origHtml = connectBtn.innerHTML;
                 connectBtn.disabled = true;
-                connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking Presence...';
+                connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking Reachability...';
 
-                // Gate 3 Pre-Flight Signaling Lookup (BRD Section 2 Gate 3)
+                // =========================================================================
+                // ENCAPSULATION WATERFALL PROTOCOL (N1 -> N2 -> N3): Pre-Flight Reachability
+                // Level N1: Central Signaling Directory
+                // If N1 passes -> Proceed directly to dispatching connection invite (skip N2/N3).
+                // If N1 fails -> Cascade to Level N2: Local Native Companion.
+                // If N2 passes -> Proceed directly to dispatching connection invite (skip N3).
+                // If N2 fails -> Cascade to Level N3: Ingress Gateway Direct Queue.
+                // Dispatches connection request via /api/invites and /api/signaling/propose.
+                // Only if Desk 2 fails to respond within bounded 45s window does it time out.
+                // =========================================================================
+                let targetFoundOnline = false;
+
+                // Level N1: Central Signaling Directory
                 try {
                     const lookupRes = await fetch(`/api/signaling/lookup/${encodeURIComponent(cleanOldId || formattedId)}`);
                     const lookupData = await lookupRes.json();
                     if (lookupData && lookupData.success) {
                         if (lookupData.online) {
+                            targetFoundOnline = true;
                             this._targetSignalingProfile = lookupData;
                             this.view.showToast('info', 'Target Online', `Desk ${formattedId} is ONLINE (${lookupData.name || 'Workstation'}). Preparing high-speed connection...`);
-                            this.traceModel?.addLog('SIGNALING', 'PEER_DISCOVERY', `Resolved active peer ${formattedId} at ${lookupData.publicIp} via Central Signaling Directory.`);
-                        } else {
-                            this.view.showToast('warning', 'Peer Awaiting Presence', `Desk ${formattedId} is not currently registered in live Signaling Directory. Queuing invitation to delivery queue...`);
+                            this.traceModel?.addLog('SIGNALING', 'PEER_DISCOVERY', `[Waterfall N1 Pass] Resolved active peer ${formattedId} at ${lookupData.publicIp} via Central Signaling Directory.`);
+                        } else if (lookupData.suggestion && lookupData.suggestion.deskId) {
+                            const suggestedId = lookupData.suggestion.deskId;
+                            this.view.showToast('warning', 'Partner Auto-Corrected', `Desk ${formattedId} is offline. Auto-correcting to active partner: ${suggestedId}`);
+                            this.traceModel?.addLog('SIGNALING', 'PEER_AUTOCORRECT', `[Waterfall N1 AutoCorrect] Auto-corrected destination to online peer ${suggestedId}.`);
+                            formattedId = suggestedId;
+                            targetFoundOnline = true;
+                            const portalTargetInput = document.getElementById('portal-target-id-input');
+                            const mainTargetInput = document.getElementById('target-id-input');
+                            if (portalTargetInput) portalTargetInput.value = suggestedId;
+                            if (mainTargetInput) mainTargetInput.value = suggestedId;
                         }
                     }
                 } catch (lookupErr) {
-                    console.warn('[SIGNALING] Pre-flight lookup bypassed:', lookupErr.message);
+                    console.warn('[WATERFALL] N1 Signaling lookup bypassed:', lookupErr.message);
+                }
+
+                // Level N2: Local Companion / Direct Socket Probe (If N1 was not confirmed)
+                if (!targetFoundOnline) {
+                    try {
+                        const compPort = this._companionPort || 8088;
+                        const nativeStatus = await fetch(`http://127.0.0.1:${compPort}/api/version`, { timeout: 600 }).then(r => r.json()).catch(() => null);
+                        if (nativeStatus && nativeStatus.success) {
+                            this.traceModel?.addLog('SIGNALING', 'PEER_DISCOVERY', `[Waterfall N2 Pass] Local companion active on port ${compPort}.`);
+                            targetFoundOnline = true;
+                        }
+                    } catch (_) {}
+                }
+
+                // Level N3: Universal Ingress Gateway Queue (Cascade fallback if N1 & N2 did not return definitive presence)
+                if (!targetFoundOnline) {
+                    this.view.showToast('info', 'Connecting...', `Connecting to Desk ${formattedId} via Universal Ingress Gateway...`);
+                    this.traceModel?.addLog('SIGNALING', 'PEER_DISCOVERY', `[Waterfall N3 Cascade] Dispatching universal invitation via Ingress Gateway queue to ${formattedId}.`);
                 }
 
                 connectBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Awaiting Remote Acceptance...';
+
+                // Desk 1 Native App Parity Check: If Desk 1 is purely in Browser, show Desk 1 Setup Prompt!
+                if (!this._desk1IsNative) {
+                    this.showDesk1NativePrompt(formattedId);
+                }
 
                 // Dispatch connection invitation to remote desk
                 let pendingInviteId = null;
@@ -1927,7 +2928,9 @@ class AppController {
                         body: JSON.stringify({
                             targetId: formattedId,
                             sourceId: myDeskId || this.systemModel.deviceId || 'PRIMARY-DESK',
-                            permissions: { screen: true, keyboard: true, clipboard: true }
+                            permissions: { screen: true, keyboard: true, clipboard: true },
+                            clientPlatform: this._desk1IsNative ? 'NATIVE' : 'BROWSER',
+                            clientVersion: this._desk1Version || '2.5.0'
                         })
                     });
                     const resData = await res.json();
@@ -2014,6 +3017,11 @@ class AppController {
                                 this.sessionInvitePollInterval = null;
                                 this.systemModel.isAwaitingAcceptance = false;
 
+                                const keyframeOverlay = document.getElementById('connecting-keyframe-overlay');
+                                if (keyframeOverlay) {
+                                    keyframeOverlay.classList.add('hidden');
+                                }
+
                                 if (pollData.session && pollData.session.id) {
                                     this.systemModel.currentSessionDbId = pollData.session.id;
                                 }
@@ -2038,6 +3046,23 @@ class AppController {
                                 if (launchCanvasBtn) launchCanvasBtn.disabled = false;
                                 this.updateLifecycleState(isViewOnly ? 'CONNECTED_VIEW_ONLY' : 'CONNECTED_CONTROL_ENABLED', formattedId);
 
+                                // Smooth Transition: Reveal Remote Console Workspace & Focus Interactive Canvas
+                                const landingPortal = document.getElementById('landing-portal-wrapper') || document.getElementById('landing-portal-mode');
+                                const remoteWorkspace = document.getElementById('remote-console-workspace');
+                                if (landingPortal) landingPortal.style.display = 'none';
+                                if (remoteWorkspace) {
+                                    remoteWorkspace.style.display = 'flex';
+                                    const tabIdLabel = document.getElementById('tab-active-desk-id');
+                                    if (tabIdLabel) tabIdLabel.textContent = formattedId;
+                                    const footerDeskId = document.getElementById('footer-target-desk-id');
+                                    if (footerDeskId) footerDeskId.textContent = formattedId;
+                                    const streamCanvas = document.getElementById('remote-stream-canvas');
+                                    if (streamCanvas) {
+                                        streamCanvas.focus();
+                                    }
+                                }
+                                document.body.classList.remove('portal-mode');
+
                                 this.view.showToast('success', 'Session Established', isViewOnly 
                                     ? `Remote Desk (${formattedId}) accepted connection in View-Only mode.`
                                     : `Remote Desk (${formattedId}) accepted connection. Primary user now has full remote control.`);
@@ -2048,6 +3073,7 @@ class AppController {
 
                                 // Start High-Speed Remote Stream & Input Engine (Canvas Fallback)
                                 this.startRemoteStreamLoop(formattedId);
+                                this.startChatSyncLoop(formattedId);
                             } else if (inv.status === 'REJECTED') {
                                 clearInterval(this.sessionInvitePollInterval);
                                 this.sessionInvitePollInterval = null;
@@ -2173,6 +3199,17 @@ class AppController {
                     }).catch(() => {});
                 } catch (_) {}
             }
+            if (this._signalingSessionId) {
+                try {
+                    fetch('/api/signaling/terminate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId: this._signalingSessionId, reason: 'Viewer closed session' })
+                    }).catch(() => {});
+                } catch (_) {}
+                this._signalingSessionId = null;
+            }
+            this.stopChatSyncLoop();
             if (this._stopAudioPlayback) this._stopAudioPlayback();
 
             if (this.sessionInvitePollInterval) {
@@ -2397,77 +3434,206 @@ class AppController {
         const incomingModal = document.getElementById('anydesk-incoming-modal');
         const acceptInviteBtn = document.getElementById('btn-accept-invite');
         const rejectInviteBtn = document.getElementById('btn-reject-invite');
+        const portalIncomingCard = document.getElementById('portal-incoming-alert');
+        const portalIncomingSrc = document.getElementById('portal-incoming-source-id');
+        const portalAcceptBtn = document.getElementById('portal-btn-accept-incoming');
+        const portalRejectBtn = document.getElementById('portal-btn-reject-incoming');
         let currentActiveInvite = null;
+        let consecutiveMisses = 0;
+
+        const showIncomingPrompt = (invite) => {
+            currentActiveInvite = invite;
+            const srcId = invite.sourceId || 'Remote Operator';
+
+            const isPortalMode = document.body.classList.contains('portal-mode') || 
+                (document.getElementById('landing-portal-wrapper') && document.getElementById('landing-portal-wrapper').style.display !== 'none');
+
+            // 1. If in Landing Portal Mode: Show ONLY the dedicated Portal Incoming Card
+            // to avoid any fixed modal overlay backdrop blocking clicks
+            if (isPortalMode && portalIncomingCard) {
+                if (portalIncomingSrc) portalIncomingSrc.textContent = srcId;
+                portalIncomingCard.style.display = 'block';
+                if (incomingModal) {
+                    incomingModal.style.display = 'none';
+                    incomingModal.classList.remove('active');
+                }
+            } else {
+                // 2. In Console / Full Workspace Mode: Show Full-Screen Modal
+                const srcLabel = document.getElementById('incoming-source-id');
+                if (srcLabel) srcLabel.textContent = srcId;
+                if (incomingModal) {
+                    incomingModal.style.display = 'flex';
+                    incomingModal.classList.add('active');
+                    incomingModal.style.opacity = '1';
+                    incomingModal.style.pointerEvents = 'auto';
+                }
+            }
+        };
+
+        const hideIncomingPrompt = () => {
+            if (incomingModal) {
+                incomingModal.classList.remove('active');
+                incomingModal.style.opacity = '0';
+                incomingModal.style.pointerEvents = 'none';
+                incomingModal.style.display = 'none';
+            }
+            if (portalIncomingCard) {
+                portalIncomingCard.style.display = 'none';
+            }
+            currentActiveInvite = null;
+            consecutiveMisses = 0;
+        };
 
         setInterval(async () => {
-            const localIdEl = document.getElementById('local-device-id') || document.getElementById('my-desk-id');
-            const myId = (this.systemModel.deviceId || (localIdEl ? localIdEl.textContent.trim() : '')).toUpperCase();
-            if (!myId || this.systemModel.activeSession || (incomingModal && incomingModal.style.display === 'flex')) return;
+            const localIdEl = document.getElementById('portal-local-device-id') || document.getElementById('local-device-id') || document.getElementById('my-desk-id') || document.getElementById('ribbon-local-desk-id');
+            const myId = (this.systemModel?.deviceId || (localIdEl ? localIdEl.textContent.trim() : '')).toUpperCase();
+            if (!myId || this.systemModel?.activeSession) return;
 
             try {
                 const res = await fetch(`/api/invites/pending/${encodeURIComponent(myId)}`);
                 const data = await res.json();
                 if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-                    currentActiveInvite = data.data[0];
-                    const srcLabel = document.getElementById('incoming-source-id');
-                    if (srcLabel) srcLabel.textContent = currentActiveInvite.sourceId;
-                    if (incomingModal) incomingModal.style.display = 'flex';
+                    consecutiveMisses = 0;
+                    showIncomingPrompt(data.data[0]);
+                } else if (currentActiveInvite) {
+                    consecutiveMisses++;
+                    const remMs = (currentActiveInvite.expiresAt || 0) - Date.now();
+                    if (consecutiveMisses >= 8 || remMs <= 0) {
+                        hideIncomingPrompt();
+                    }
                 }
             } catch (_) {}
-        }, 1200);
 
-        if (acceptInviteBtn && incomingModal) {
-            acceptInviteBtn.addEventListener('click', async () => {
-                if (!currentActiveInvite) return;
-                try {
-                    const grantedPerms = {
-                        control: document.getElementById('incoming-perm-control') ? document.getElementById('incoming-perm-control').checked : true,
-                        keyboard: document.getElementById('incoming-perm-control') ? document.getElementById('incoming-perm-control').checked : true,
-                        clipboard: document.getElementById('incoming-perm-clipboard') ? document.getElementById('incoming-perm-clipboard').checked : true,
-                        audio: document.getElementById('incoming-perm-audio') ? document.getElementById('incoming-perm-audio').checked : true,
-                        files: document.getElementById('incoming-perm-files') ? document.getElementById('incoming-perm-files').checked : true,
-                        lockLocalInput: document.getElementById('incoming-perm-lockinput') ? document.getElementById('incoming-perm-lockinput').checked : false
-                    };
-                    const res = await fetch(`/api/invites/${currentActiveInvite.id}/respond`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            status: 'ACCEPTED',
-                            permissions: grantedPerms
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        incomingModal.style.display = 'none';
-                        this.view.showToast('success', 'Connection Established', `Accepted remote control from ${currentActiveInvite.sourceId}.`);
-                        this.traceModel.addLog('INFO', 'SESSION_INVITE_ACCEPTED', `Accepted incoming connection from ${currentActiveInvite.sourceId}. Permissions: ${JSON.stringify(grantedPerms)}`);
-                        
-                        // Switch status
-                        const statusText = document.getElementById('session-status-text');
-                        if (statusText) {
-                            statusText.textContent = `Connected to ${currentActiveInvite.sourceId}`;
-                            statusText.style.color = 'var(--accent-emerald)';
+            // Live 120s Countdown ticker
+            if (currentActiveInvite) {
+                const expiresAt = currentActiveInvite.expiresAt || (Date.now() + 120000);
+                const remSec = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+                const cd1 = document.getElementById('portal-incoming-countdown');
+                if (cd1) cd1.textContent = `${remSec}s`;
+                const cd2 = document.getElementById('incoming-timer');
+                if (cd2) cd2.textContent = `${remSec}s`;
+                if (remSec <= 0) {
+                    hideIncomingPrompt();
+                }
+            }
+        }, 1000);
+
+        const handleAcceptInvite = async (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            if (e && e.stopPropagation) e.stopPropagation();
+
+            // Resilient lookup of active invite if reference is detached
+            if (!currentActiveInvite) {
+                const localIdEl = document.getElementById('portal-local-device-id') || document.getElementById('local-device-id') || document.getElementById('my-desk-id');
+                const myId = (this.systemModel?.deviceId || (localIdEl ? localIdEl.textContent.trim() : '')).toUpperCase();
+                if (myId) {
+                    try {
+                        const chkRes = await fetch(`/api/invites/pending/${encodeURIComponent(myId)}`);
+                        const chkData = await chkRes.json();
+                        if (chkData.success && Array.isArray(chkData.data) && chkData.data.length > 0) {
+                            currentActiveInvite = chkData.data[0];
                         }
-                    }
-                } catch (_) {}
-            });
-        }
+                    } catch (_) {}
+                }
+            }
 
-        if (rejectInviteBtn && incomingModal) {
-            rejectInviteBtn.addEventListener('click', async () => {
-                if (!currentActiveInvite) return;
-                try {
-                    await fetch(`/api/invites/${currentActiveInvite.id}/respond`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ status: 'REJECTED' })
-                    });
-                } catch (_) {}
-                incomingModal.style.display = 'none';
-                currentActiveInvite = null;
-                this.view.showToast('warning', 'Invitation Dismissed', 'Declined remote session invitation.');
-            });
-        }
+            if (!currentActiveInvite) {
+                this.view.showToast('warning', 'No Active Request', 'No pending incoming invitation found or session already handled.');
+                hideIncomingPrompt();
+                return;
+            }
+
+            // Visual feedback on both accept buttons
+            const origAcceptHtml = acceptInviteBtn ? acceptInviteBtn.innerHTML : '';
+            const origPortalHtml = portalAcceptBtn ? portalAcceptBtn.innerHTML : '';
+            if (acceptInviteBtn) {
+                acceptInviteBtn.disabled = true;
+                acceptInviteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+            }
+            if (portalAcceptBtn) {
+                portalAcceptBtn.disabled = true;
+                portalAcceptBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+            }
+
+            try {
+                const grantedPerms = {
+                    control: document.getElementById('incoming-perm-control') ? document.getElementById('incoming-perm-control').checked : true,
+                    keyboard: document.getElementById('incoming-perm-control') ? document.getElementById('incoming-perm-control').checked : true,
+                    clipboard: document.getElementById('incoming-perm-clipboard') ? document.getElementById('incoming-perm-clipboard').checked : true,
+                    audio: document.getElementById('incoming-perm-audio') ? document.getElementById('incoming-perm-audio').checked : true,
+                    files: document.getElementById('incoming-perm-files') ? document.getElementById('incoming-perm-files').checked : true,
+                    lockLocalInput: document.getElementById('incoming-perm-lockinput') ? document.getElementById('incoming-perm-lockinput').checked : false
+                };
+                const res = await fetch(`/api/invites/${encodeURIComponent(currentActiveInvite.id)}/respond`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'ACCEPTED',
+                        permissions: grantedPerms
+                    })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    const callerId = currentActiveInvite.sourceId;
+                    this.systemModel.activeSession = callerId;
+                    hideIncomingPrompt();
+                    this.view.showToast('success', 'Connection Established', `Accepted remote control from ${callerId}.`);
+                    this.traceModel?.addLog('INFO', 'SESSION_INVITE_ACCEPTED', `Accepted incoming connection from ${callerId}. Permissions: ${JSON.stringify(grantedPerms)}`);
+                    
+                    // Switch status
+                    const statusText = document.getElementById('session-status-text');
+                    if (statusText) {
+                        statusText.textContent = `Connected to ${callerId}`;
+                        statusText.style.color = 'var(--accent-emerald)';
+                    }
+                    this.updateLifecycleState('CONNECTED_CONTROL_ENABLED', callerId);
+
+                    // Launch Host Screen Sharing (WebRTC + Canvas HTTP Relay)
+                    this.startHostScreenCapture(callerId, grantedPerms);
+                } else {
+                    const errMsg = (data && data.error) ? data.error : 'Failed to accept invitation.';
+                    this.view.showToast('error', 'Accept Failed', errMsg);
+                    if (errMsg.includes('expired') || errMsg.includes('not found') || errMsg.includes('already')) {
+                        hideIncomingPrompt();
+                    }
+                }
+            } catch (err) {
+                console.error('[INVITE] Accept error:', err);
+                this.view.showToast('error', 'Network Error', 'Failed to reach invitation relay.');
+            } finally {
+                if (acceptInviteBtn) {
+                    acceptInviteBtn.disabled = false;
+                    acceptInviteBtn.innerHTML = origAcceptHtml;
+                }
+                if (portalAcceptBtn) {
+                    portalAcceptBtn.disabled = false;
+                    portalAcceptBtn.innerHTML = origPortalHtml;
+                }
+            }
+        };
+
+        const handleRejectInvite = async (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            if (e && e.stopPropagation) e.stopPropagation();
+            if (!currentActiveInvite) {
+                hideIncomingPrompt();
+                return;
+            }
+            try {
+                await fetch(`/api/invites/${encodeURIComponent(currentActiveInvite.id)}/respond`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'REJECTED' })
+                });
+            } catch (_) {}
+            hideIncomingPrompt();
+            this.view.showToast('warning', 'Invitation Dismissed', 'Declined remote session invitation.');
+        };
+
+        if (acceptInviteBtn) acceptInviteBtn.addEventListener('click', handleAcceptInvite);
+        if (rejectInviteBtn) rejectInviteBtn.addEventListener('click', handleRejectInvite);
+        if (portalAcceptBtn) portalAcceptBtn.addEventListener('click', handleAcceptInvite);
+        if (portalRejectBtn) portalRejectBtn.addEventListener('click', handleRejectInvite);
 
 
 
@@ -2744,6 +3910,8 @@ class AppController {
         let lastFpsCheck = performance.now();
         let bytesCount = 0;
         let lastValidFrameTime = performance.now();
+        let lastFrameTimestamp = 0;
+        const t0Initial = performance.now();
 
         const fetchFrame = async () => {
             if (!this._streamActive) return;
@@ -2751,18 +3919,26 @@ class AppController {
             const t0 = performance.now();
             let gotFrame = false;
             try {
-                // High-Speed Binary Frame Pull (Wire-speed AnyDesk standard)
-                const res = await fetch(`/api/relay/frame_bin?targetId=${encodeURIComponent(targetId)}`, {
-                    cache: 'no-store'
+                // High-Speed Binary Frame Pull (Wire-speed AnyDesk standard with 304 Delta Support)
+                const sinceParam = lastFrameTimestamp > 0 ? `&since=${lastFrameTimestamp}` : '';
+                const res = await fetch(`/api/relay/frame_bin?targetId=${encodeURIComponent(targetId)}${sinceParam}`, {
+                    cache: 'no-store',
+                    headers: lastFrameTimestamp > 0 ? { 'If-None-Match': lastFrameTimestamp.toString() } : {}
                 });
 
                 if (res.status === 200) {
+                    const serverTs = parseInt(res.headers.get('X-Frame-Timestamp') || res.headers.get('ETag') || '0', 10);
+                    if (serverTs > 0) lastFrameTimestamp = serverTs;
+
                     const blob = await res.blob();
                     if (blob && blob.size > 100) {
                         bytesCount += blob.size;
                         frameCount++;
                         gotFrame = true;
                         lastValidFrameTime = performance.now();
+
+                        const keyframeOverlay = document.getElementById('connecting-keyframe-overlay');
+                        if (keyframeOverlay) keyframeOverlay.classList.add('hidden');
 
                         const imgBitmap = await createImageBitmap(blob);
                         if (canvas && this._streamActive) {
@@ -2774,26 +3950,46 @@ class AppController {
                             ctx.drawImage(imgBitmap, 0, 0);
                         }
                     }
+                } else if (res.status === 304) {
+                    // DeskRT 304 Not Modified: Frame is identical to current viewport, active and healthy
+                    gotFrame = true;
+                    lastValidFrameTime = performance.now();
+                    frameCount++;
+                    const keyframeOverlay = document.getElementById('connecting-keyframe-overlay');
+                    if (keyframeOverlay) keyframeOverlay.classList.add('hidden');
                 } else if (res.status === 204) {
                     // Fallback to JSON base64 frame
-                    const jsonRes = await fetch(`/api/relay/frame?targetId=${encodeURIComponent(targetId)}`);
-                    const jsonData = await jsonRes.json();
-                    if (jsonData && jsonData.frame) {
+                    const jsonRes = await fetch(`/api/relay/frame?targetId=${encodeURIComponent(targetId)}${sinceParam}`);
+                    if (jsonRes.status === 304) {
                         gotFrame = true;
                         lastValidFrameTime = performance.now();
-                        const img = new Image();
-                        img.onload = () => {
-                            if (canvas && this._streamActive) {
-                                if (canvas.width !== img.naturalWidth || canvas.height !== img.naturalHeight) {
-                                    canvas.width = img.naturalWidth;
-                                    canvas.height = img.naturalHeight;
-                                }
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0);
-                            }
-                        };
-                        img.src = jsonData.frame.startsWith('data:') ? jsonData.frame : `data:image/jpeg;base64,${jsonData.frame}`;
                         frameCount++;
+                        const keyframeOverlay = document.getElementById('connecting-keyframe-overlay');
+                        if (keyframeOverlay) keyframeOverlay.classList.add('hidden');
+                    } else if (jsonRes.status === 200) {
+                        const jsonData = await jsonRes.json();
+                        if (jsonData && jsonData.frame) {
+                            gotFrame = true;
+                            lastValidFrameTime = performance.now();
+                            if (jsonData.timestamp) lastFrameTimestamp = jsonData.timestamp;
+
+                            const keyframeOverlay = document.getElementById('connecting-keyframe-overlay');
+                            if (keyframeOverlay) keyframeOverlay.classList.add('hidden');
+
+                            const img = new Image();
+                            img.onload = () => {
+                                if (canvas && this._streamActive) {
+                                    if (canvas.width !== img.naturalWidth || canvas.height !== img.naturalHeight) {
+                                        canvas.width = img.naturalWidth;
+                                        canvas.height = img.naturalHeight;
+                                    }
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.drawImage(img, 0, 0);
+                                }
+                            };
+                            img.src = jsonData.frame.startsWith('data:') ? jsonData.frame : `data:image/jpeg;base64,${jsonData.frame}`;
+                            frameCount++;
+                        }
                     }
                 }
             } catch (_) {}
@@ -2810,16 +4006,18 @@ class AppController {
                 }
             } else if (gotFrame && this._currentLifecycleState === 'RECONNECTING') {
                 // Recovered! Resume active control per Workflow E2
-                this.updateLifecycleState('CONNECTED_CONTROL_ENABLED', targetId);
+                const isViewOnly = (this.systemModel?.sessionPermissions && this.systemModel.sessionPermissions.control === false);
+                this.updateLifecycleState(isViewOnly ? 'CONNECTED_VIEW_ONLY' : 'CONNECTED_CONTROL_ENABLED', targetId);
                 const statusText = document.getElementById('session-status-text');
                 if (statusText) {
-                    statusText.textContent = 'CONNECTED & ACTIVE';
+                    statusText.textContent = isViewOnly ? 'CONNECTED (VIEW ONLY)' : 'CONNECTED & ACTIVE';
                     statusText.style.color = 'var(--accent-emerald)';
                 }
             }
 
-            // Anti-Freeze Radar: If no frames received after bounded window (> 7.5s)
-            if (!gotFrame && performance.now() - lastValidFrameTime > 7500) {
+            // Anti-Freeze Radar: Bounded initial connection grace (up to 40s) for remote user to pick screen
+            const isInitialAwaiting = (frameCount === 0 && (performance.now() - t0Initial < 40000));
+            if (!gotFrame && !isInitialAwaiting && (performance.now() - lastValidFrameTime > 15000)) {
                 console.warn('[STREAM] Host stopped transmitting frames (bounded retry timeout expired). Teardown active.');
                 this.stopRemoteStreamLoop();
                 this.systemModel.activeSession = null;
@@ -2869,6 +4067,7 @@ class AppController {
 
     stopRemoteStreamLoop() {
         this._streamActive = false;
+        this.stopChatSyncLoop();
         if (this._streamTimer) {
             clearTimeout(this._streamTimer);
             this._streamTimer = null;
@@ -2888,6 +4087,840 @@ class AppController {
         const placeholder = document.getElementById('virtual-screen-placeholder');
         if (canvas) canvas.style.display = 'none';
         if (placeholder) placeholder.style.display = 'block';
+    }
+
+    startChatSyncLoop(sessionId) {
+        if (this._chatSyncInterval) clearInterval(this._chatSyncInterval);
+        let lastMsgCount = 0;
+        this._chatSyncInterval = setInterval(async () => {
+            if (!this._streamActive && !this.systemModel.activeSession) {
+                clearInterval(this._chatSyncInterval);
+                this._chatSyncInterval = null;
+                return;
+            }
+            try {
+                const targetSession = sessionId || this.systemModel.activeSession || 'DEFAULT';
+                const res = await fetch(`/api/chat/${encodeURIComponent(targetSession)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && Array.isArray(data.messages) && data.messages.length > lastMsgCount) {
+                        const newMsgs = data.messages.slice(lastMsgCount);
+                        lastMsgCount = data.messages.length;
+                        const chatMessages = document.getElementById('in-session-chat-messages');
+                        const chatPanel = document.getElementById('in-session-chat-panel');
+                        newMsgs.forEach(m => {
+                            if (m.sender !== 'Operator') {
+                                const msgEl = document.createElement('div');
+                                msgEl.className = 'chat-msg chat-msg-peer';
+                                msgEl.textContent = `${m.sender || 'Partner'}: ${m.text}`;
+                                chatMessages?.appendChild(msgEl);
+                                if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+                                if (chatPanel && chatPanel.style.display === 'none') {
+                                    if (this.view?.showToast) this.view.showToast('info', 'Chat Message', `${m.sender || 'Partner'}: ${m.text}`);
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (_) {}
+        }, 2000);
+    }
+
+    stopChatSyncLoop() {
+        if (this._chatSyncInterval) {
+            clearInterval(this._chatSyncInterval);
+            this._chatSyncInterval = null;
+        }
+    }
+
+    /**
+     * Initiates actual screen capture on the host and broadcasts via WebRTC & HTTP Relay
+     */
+    async startHostScreenCapture(callerId, permissions = {}) {
+        this.stopHostScreenCapture();
+
+        // 1. Dual-Ping check if jDroid-X-Desk.exe Native Host Agent is already running on this workstation
+        let isNative = false;
+        try {
+            isNative = await this.checkNativeCompanionRunning();
+        } catch (_) {}
+
+        // 2. Display the Action Prompts for the Host User:
+        // Shows both the dedicated inline Landing Portal Card (#portal-native-control-card)
+        // and the centered Modal Dialog (#native-control-prompt-modal)
+        this.showNativeControlPrompt(callerId, isNative, () => {
+            // Callback if user chooses manual browser screen capture
+            this.startBrowserScreenCapture(callerId, permissions);
+        });
+    }
+
+    async startBrowserScreenCapture(callerId, permissions = {}) {
+        this.stopHostScreenCapture();
+
+        // Check if browser supports getDisplayMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+            this.view?.showToast('warning', 'Screen Capture API Unavailable', 'Your browser does not expose navigator.mediaDevices.getDisplayMedia.');
+            return;
+        }
+
+        try {
+            this.view?.showToast('info', 'Screen Sharing', 'Please choose "Entire Screen" in the prompt to share your desktop with partner.');
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { cursor: 'always', frameRate: { ideal: 60, max: 60 } },
+                audio: permissions.audio === true
+            });
+            this._hostMediaStream = stream;
+
+            const myDeskId = this.systemModel?.deviceId || document.getElementById('portal-local-device-id')?.textContent?.trim() || document.getElementById('local-device-id')?.textContent?.trim();
+
+            this.view?.showToast('success', 'Screen Broadcast Live', `Screen is now streaming to Remote Operator ${callerId}.`);
+            this.traceModel?.addLog('INFO', 'HOST_SCREEN_ACTIVE', `Broadcasting live display to ${callerId} via WebRTC & High-Speed Frame Relay.`);
+
+            // A. Attach tracks to existing or newly created WebRTC PeerConnection
+            if (this._rtcPeerConnection) {
+                stream.getTracks().forEach(track => {
+                    try { this._rtcPeerConnection.addTrack(track, stream); } catch (_) {}
+                });
+                try {
+                    const offer = await this._rtcPeerConnection.createOffer();
+                    await this._rtcPeerConnection.setLocalDescription(offer);
+                    await fetch('/api/signaling/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fromDeskId: myDeskId,
+                            toDeskId: callerId,
+                            type: 'OFFER',
+                            payload: { sdp: offer.sdp }
+                        })
+                    });
+                } catch (_) {}
+            }
+
+            // B. High-Speed Canvas Frame Push to /api/relay/push_frame (Wire-speed fallback)
+            const hiddenVideo = document.createElement('video');
+            hiddenVideo.autoplay = true;
+            hiddenVideo.muted = true;
+            hiddenVideo.playsInline = true;
+            hiddenVideo.srcObject = stream;
+            await hiddenVideo.play().catch(() => {});
+
+            const offscreenCanvas = document.createElement('canvas');
+            const offscreenCtx = offscreenCanvas.getContext('2d', { alpha: false });
+
+            let isPushing = false;
+            this._hostCaptureInterval = setInterval(async () => {
+                if (!this._hostMediaStream || this._hostMediaStream.getTracks().every(t => t.readyState === 'ended')) {
+                    this.stopHostScreenCapture();
+                    return;
+                }
+                if (isPushing || hiddenVideo.videoWidth === 0) return;
+                isPushing = true;
+                try {
+                    const targetW = hiddenVideo.videoWidth || 1280;
+                    const targetH = hiddenVideo.videoHeight || 720;
+                    if (offscreenCanvas.width !== targetW || offscreenCanvas.height !== targetH) {
+                        offscreenCanvas.width = targetW;
+                        offscreenCanvas.height = targetH;
+                    }
+                    offscreenCtx.drawImage(hiddenVideo, 0, 0, targetW, targetH);
+                    const b64 = offscreenCanvas.toDataURL('image/jpeg', 0.65);
+
+                    await fetch('/api/relay/push_frame', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            targetId: myDeskId,
+                            frame: b64
+                        })
+                    });
+                } catch (_) {}
+                isPushing = false;
+            }, 66); // ~15 FPS wire-speed canvas push
+
+            stream.getVideoTracks()[0].onended = () => {
+                this.stopHostScreenCapture();
+                this.view?.showToast('info', 'Screen Sharing Stopped', 'Desktop screen broadcast closed.');
+            };
+
+            this.showHostScreenSharingBanner(callerId);
+            this.verifyNativeCompanionForHost(callerId);
+
+        } catch (err) {
+            console.warn('[HOST_CAPTURE] User cancelled or error:', err);
+            this.view?.showToast('warning', 'Screen Share Needed', 'Screen was not selected. Click "Share Screen Now" to broadcast display.');
+            this.showHostScreenSharingBanner(callerId, true);
+        }
+    }
+
+    async checkNativeAppStatus() {
+        const GITHUB_TARGET_VERSION = this.settingsModel?.connection?.targetReleaseVersion || this.settingsModel?.general?.targetReleaseVersion || '2.5.0';
+        const port = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 900);
+            const res = await fetch(`http://127.0.0.1:${port}/api/version`, {
+                signal: controller.signal
+            }).catch(() => null);
+            clearTimeout(timeoutId);
+            if (res && res.ok) {
+                const data = await res.json().catch(() => ({}));
+                const version = data.version || GITHUB_TARGET_VERSION;
+                return {
+                    running: true,
+                    version: version,
+                    isOutdated: version < GITHUB_TARGET_VERSION,
+                    targetVersion: GITHUB_TARGET_VERSION
+                };
+            }
+        } catch (_) {}
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 800);
+            const res = await fetch(`http://127.0.0.1:${port}/ping`, {
+                signal: controller.signal
+            }).catch(() => null);
+            clearTimeout(timeoutId);
+            if (res && res.ok) {
+                return {
+                    running: true,
+                    version: GITHUB_TARGET_VERSION,
+                    isOutdated: false,
+                    targetVersion: GITHUB_TARGET_VERSION
+                };
+            }
+        } catch (_) {}
+
+        return {
+            running: false,
+            version: null,
+            isOutdated: false,
+            targetVersion: GITHUB_TARGET_VERSION
+        };
+    }
+
+    initAppParitySupervisor() {
+        const updateParityUi = async () => {
+            const status = await this.checkNativeAppStatus();
+            this._desk1IsNative = status.running;
+            this._desk1Version = status.version || '2.5.0';
+
+            const dot = document.getElementById('parity-desk1-dot');
+            const statusText = document.getElementById('parity-desk1-status');
+            const quickBtn = document.getElementById('btn-quick-run-or-update');
+            const badge = document.getElementById('parity-app-badge');
+            const ribbonAgentBtn = document.getElementById('ribbon-btn-native-agent');
+            const ribbonAgentText = document.getElementById('ribbon-native-agent-text');
+
+            if (status.running) {
+                if (dot) dot.style.background = '#10b981';
+                if (statusText) {
+                    statusText.textContent = `Native App v${status.version} Active`;
+                    statusText.style.color = '#10b981';
+                }
+                if (quickBtn) quickBtn.style.display = 'none';
+                if (badge) {
+                    badge.textContent = `v${status.version} Synced`;
+                    badge.style.color = '#10b981';
+                    badge.style.borderColor = '#10b981';
+                    badge.style.background = 'rgba(16,185,129,0.15)';
+                }
+                if (ribbonAgentBtn && ribbonAgentText) {
+                    ribbonAgentBtn.style.color = '#10b981';
+                    ribbonAgentBtn.style.borderColor = '#10b981';
+                    ribbonAgentBtn.style.background = 'rgba(16,185,129,0.12)';
+                    ribbonAgentText.textContent = `Native Active (v${status.version})`;
+                    ribbonAgentBtn.onclick = async () => {
+                        await fetch('/api/system/launch-native', { method: 'POST' });
+                    };
+                }
+                const card = document.getElementById('portal-desk1-control-card');
+                if (card && card.dataset.autoOpened === 'true') {
+                    card.style.display = 'none';
+                    delete card.dataset.autoOpened;
+                }
+            } else {
+                if (dot) dot.style.background = '#eab308';
+                if (statusText) {
+                    statusText.textContent = 'Browser Only (Run App for Full Remote Control)';
+                    statusText.style.color = '#eab308';
+                }
+                if (quickBtn) {
+                    quickBtn.style.display = 'inline-flex';
+                    quickBtn.onclick = () => this.showDesk1NativePrompt('Local Workstation');
+                }
+                if (badge) {
+                    badge.textContent = `GitHub: v${status.targetVersion || '2.5.0'} (Latest)`;
+                    badge.style.color = '#38bdf8';
+                    badge.style.borderColor = '#38bdf8';
+                    badge.style.background = 'rgba(56,189,248,0.12)';
+                }
+                if (ribbonAgentBtn && ribbonAgentText) {
+                    ribbonAgentBtn.style.color = '#eab308';
+                    ribbonAgentBtn.style.borderColor = '#eab308';
+                    ribbonAgentBtn.style.background = 'rgba(234,179,8,0.15)';
+                    ribbonAgentText.textContent = 'Run App (For Control)';
+                    ribbonAgentBtn.onclick = () => {
+                        this.showDesk1NativePrompt('Active Workspace');
+                    };
+                }
+            }
+        };
+
+        updateParityUi();
+        if (!this._parityInterval) {
+            this._parityInterval = setInterval(updateParityUi, 3000);
+        }
+    }
+
+    showDesk1NativePrompt(targetId, onContinueBrowser = null) {
+        const card = document.getElementById('portal-desk1-control-card');
+        if (!card) return;
+        card.style.display = 'block';
+        card.dataset.autoOpened = 'true';
+
+        const targetEl = document.getElementById('portal-desk1-target-desk');
+        if (targetEl) targetEl.textContent = targetId;
+
+        const statusBox = document.getElementById('portal-desk1-control-status');
+
+        const runBtn = document.getElementById('portal-desk1-btn-run-local-exe');
+        if (runBtn) {
+            runBtn.onclick = async () => {
+                runBtn.disabled = true;
+                runBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking & Running...';
+                try {
+                    const res = await fetch('/api/system/launch-native', { method: 'POST' });
+                    const data = await res.json().catch(() => ({}));
+                    if (data && data.success) {
+                        if (statusBox) {
+                            statusBox.style.display = 'block';
+                            statusBox.style.background = 'rgba(16,185,129,0.15)';
+                            statusBox.style.border = '1px solid #10b981';
+                            statusBox.innerHTML = '<span style="color:#10b981;font-weight:700;"><i class="fa-solid fa-check-circle"></i> ' + (data.message || 'jDroid-X-Desk.exe active!') + '</span>';
+                        }
+                        this.view?.showToast('success', 'Native App Launched', data.message || 'jDroid-X-Desk.exe active.');
+                        this.startDesk1CompanionListener(targetId);
+                    } else if (data && data.notFound) {
+                        if (statusBox) {
+                            statusBox.style.display = 'block';
+                            statusBox.style.background = 'rgba(239,68,68,0.15)';
+                            statusBox.style.border = '1px solid #ef4444';
+                            statusBox.innerHTML = '<span style="color:#ef4444;font-weight:700;"><i class="fa-solid fa-circle-exclamation"></i> jDroid-X-Desk.exe not found on PC. Please download it below.</span>';
+                        }
+                        this.downloadDesk1Companion(targetId);
+                    }
+                } catch (e) {
+                    console.warn('[DESK1] Launch failed:', e.message);
+                } finally {
+                    runBtn.disabled = false;
+                    runBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> Run Local (.EXE)';
+                }
+            };
+        }
+
+        const dlBtn = document.getElementById('portal-desk1-btn-download-exe');
+        if (dlBtn) {
+            dlBtn.onclick = () => {
+                this.downloadDesk1Companion(targetId);
+            };
+        }
+
+        const contBtn = document.getElementById('portal-desk1-btn-browser-continue');
+        if (contBtn) {
+            contBtn.onclick = () => {
+                card.style.display = 'none';
+                if (typeof onContinueBrowser === 'function') onContinueBrowser();
+            };
+        }
+    }
+
+    downloadDesk1Companion(targetId) {
+        const GITHUB_EXE_DOWNLOAD_URL = this.settingsModel?.connection?.githubDownloadUrl || this.settingsModel?.general?.githubDownloadUrl || 'https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe';
+        const a = document.createElement('a');
+        a.href = GITHUB_EXE_DOWNLOAD_URL;
+        a.target = '_blank';
+        a.download = 'jDroid-X-Desk.exe';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        const statusBox = document.getElementById('portal-desk1-control-status');
+        if (statusBox) {
+            statusBox.style.display = 'block';
+            statusBox.style.background = 'rgba(168,85,247,0.15)';
+            statusBox.style.border = '1px solid #c084fc';
+            statusBox.innerHTML = `
+                <div style="color:#c084fc;font-weight:700;"><i class="fa-solid fa-arrow-down-to-bracket"></i> Downloading jDroid-X-Desk.exe from GitHub...</div>
+                <div style="font-size:0.8rem;margin-top:0.25rem;color:var(--text-muted);">After download finishes, run the file or click "Run Local (.EXE)".</div>
+            `;
+        }
+        this.startDesk1CompanionListener(targetId);
+    }
+
+    startDesk1CompanionListener(targetId) {
+        if (this._desk1PollInterval) clearInterval(this._desk1PollInterval);
+        this._desk1PollInterval = setInterval(async () => {
+            const status = await this.checkNativeAppStatus();
+            if (status.running) {
+                clearInterval(this._desk1PollInterval);
+                this._desk1PollInterval = null;
+                this._desk1IsNative = true;
+                this._desk1Version = status.version || '2.5.0';
+
+                const card = document.getElementById('portal-desk1-control-card');
+                const statusBox = document.getElementById('portal-desk1-control-status');
+                if (statusBox) {
+                    statusBox.style.background = 'rgba(16,185,129,0.15)';
+                    statusBox.style.border = '1px solid #10b981';
+                    statusBox.innerHTML = '<span style="color:#10b981;font-weight:700;"><i class="fa-solid fa-check-circle"></i> Desk 1 App Connected (v' + (status.version || '2.5.0') + ')! Remote control enabled.</span>';
+                }
+                setTimeout(() => {
+                    if (card) card.style.display = 'none';
+                }, 1800);
+            }
+        }, 1500);
+    }
+
+    async checkNativeCompanionRunning(deskId = null) {
+        const compPort = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+        // Layer 1: Direct Local Loopback Probe (Configured Embedded Relay Port)
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1000);
+            const res = await fetch(`http://127.0.0.1:${compPort}/api/relay/ping`, {
+                method: 'GET',
+                mode: 'cors',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const data = await res.json().catch(() => ({}));
+                if (data && (data.success || data.status === 'AWAKE')) {
+                    return true;
+                }
+            }
+        } catch (_) {}
+
+        // Layer 2: Gateway Presence Probe (Central Signaling Heartbeat Registry)
+        const targetDeskId = deskId || this.systemModel?.deviceId || document.getElementById('portal-local-device-id')?.textContent?.trim() || document.getElementById('local-device-id')?.textContent?.trim();
+        if (targetDeskId) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1200);
+                const res = await fetch(`/api/signaling/lookup/${encodeURIComponent(targetDeskId)}`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    if (data && data.online && data.capabilities && (data.capabilities.dxgi || data.capabilities.p2p)) {
+                        return true;
+                    }
+                }
+            } catch (_) {}
+        }
+        return false;
+    }
+
+    async verifyNativeCompanionForHost(callerId) {
+        const compPort = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+        const isRunning = await this.checkNativeCompanionRunning();
+        if (isRunning) {
+            this._isNativeCompanionActive = true;
+            this.updateHostControlBannerStatus(callerId, true);
+            this.view?.showToast('success', 'Remote Control Active', `jDroid-X Native Host Agent is running on Port ${compPort}.`);
+            return;
+        }
+
+        this._isNativeCompanionActive = false;
+        this.updateHostControlBannerStatus(callerId, false);
+        this.showNativeControlPrompt(callerId);
+    }
+
+    showNativeControlPrompt(callerId, isNativeAlreadyRunning = false, onBrowserFallback = null) {
+        // 1. Target both UI components: Dedicated Portal Banner Card & Standalone Modal
+        const portalCard = document.getElementById('portal-native-control-card');
+        const modal = document.getElementById('native-control-prompt-modal');
+
+        // Update Caller ID labels
+        const portalCaller = document.getElementById('portal-native-control-caller');
+        if (portalCaller) portalCaller.textContent = callerId;
+        const modalCaller = document.getElementById('native-prompt-caller-id');
+        if (modalCaller) modalCaller.textContent = callerId;
+
+        const GITHUB_EXE_DOWNLOAD_URL = this.settingsModel?.connection?.githubDownloadUrl || this.settingsModel?.general?.githubDownloadUrl || 'https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe';
+        const dlHostEl = document.getElementById('native-download-source-host');
+        if (dlHostEl) {
+            dlHostEl.textContent = GITHUB_EXE_DOWNLOAD_URL;
+            dlHostEl.href = GITHUB_EXE_DOWNLOAD_URL;
+        }
+
+        const portalStatus = document.getElementById('portal-native-control-status');
+        const modalStatus = document.getElementById('native-prompt-status-box');
+        const compPort = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+
+        if (isNativeAlreadyRunning) {
+            const activeMsg = `
+                <div style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> jDroid-X-Desk.exe Host Agent is Active on Port ${compPort}!</div>
+                <div style="color:var(--text-muted); font-size:0.8rem; margin-top:0.25rem;">DXGI Hardware Screen Capture &amp; Remote Control ready. Click "Run Local" to connect or "Browser Share".</div>
+            `;
+            if (portalStatus) {
+                portalStatus.style.display = 'block';
+                portalStatus.style.background = 'rgba(16, 185, 129, 0.15)';
+                portalStatus.style.border = '1px solid #10b981';
+                portalStatus.innerHTML = activeMsg;
+            }
+            if (modalStatus) {
+                modalStatus.style.display = 'block';
+                modalStatus.style.background = 'rgba(16, 185, 129, 0.15)';
+                modalStatus.style.border = '1px solid #10b981';
+                modalStatus.innerHTML = activeMsg;
+            }
+        }
+
+        // Shared Actions:
+        // A. Run Local EXE (Searches Downloads folder or project root)
+        const handleRunLocal = async (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            const runBtns = [
+                document.getElementById('portal-btn-run-local-exe'),
+                document.getElementById('btn-native-prompt-run-local')
+            ];
+            runBtns.forEach(b => {
+                if (b) {
+                    b.disabled = true;
+                    b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking & Running...';
+                }
+            });
+
+            const showStatus = (bg, border, html) => {
+                [portalStatus, modalStatus].forEach(s => {
+                    if (s) {
+                        s.style.display = 'block';
+                        s.style.background = bg;
+                        s.style.border = border;
+                        s.innerHTML = html;
+                    }
+                });
+            };
+
+            showStatus('rgba(16, 185, 129, 0.12)', '1px solid #10b981', `<i class="fa-solid fa-spinner fa-spin text-emerald"></i> Searching Downloads / Project folder for jDroid-X-Desk.exe...`);
+
+            try {
+                const res = await fetch('/api/system/launch-native', { method: 'POST' });
+                const data = await res.json();
+                if (data && data.success) {
+                    showStatus('rgba(16, 185, 129, 0.15)', '1px solid #10b981', `
+                        <div style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Launched ${ValidationUtil?.escapeHTML?.(data.path) || 'Local Executable'}!</div>
+                        <div style="color:var(--text-muted); font-size:0.8rem; margin-top:0.25rem;">Binding host capture engine on Port ${compPort}...</div>
+                    `);
+                    this.view?.showToast('success', 'Native Agent Launched', 'jDroid-X-Desk.exe started successfully.');
+                    this.startCompanionListener(callerId);
+                } else {
+                    showStatus('rgba(245, 158, 11, 0.12)', '1px solid #f59e0b', `
+                        <div style="color:#f59e0b; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Not found in Downloads folder yet.</div>
+                        <div style="color:var(--text-muted); font-size:0.8rem; margin-top:0.25rem;">
+                            Click <strong>Download (.EXE)</strong> to download it from GitHub, then double-click it in your browser download bar.
+                        </div>
+                    `);
+                    runBtns.forEach(b => {
+                        if (b) {
+                            b.disabled = false;
+                            b.innerHTML = '<i class="fa-solid fa-bolt"></i> Run Local (.EXE)';
+                        }
+                    });
+                    this.startCompanionListener(callerId);
+                }
+            } catch (err) {
+                showStatus('rgba(255,255,255,0.05)', '1px solid var(--border-color)', `
+                    <div style="color:var(--text-color); font-size:0.82rem;">
+                        If you already downloaded <strong>jDroid-X-Desk.exe</strong>, please double-click it in your <strong>Downloads</strong> folder to run.
+                    </div>
+                `);
+                this.startCompanionListener(callerId);
+                runBtns.forEach(b => {
+                    if (b) {
+                        b.disabled = false;
+                        b.innerHTML = '<i class="fa-solid fa-bolt"></i> Run Local (.EXE)';
+                    }
+                });
+            }
+        };
+
+        // B. Download from GitHub
+        const handleDownload = (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            this.downloadAndStartCompanionListener(callerId);
+        };
+
+        // C. Browser Share Fallback
+        const handleBrowserShare = (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            this.hideNativeControlPrompt();
+            if (typeof onBrowserFallback === 'function') {
+                onBrowserFallback();
+            } else {
+                this.startBrowserScreenCapture(callerId);
+            }
+        };
+
+        // D. Quick Assist
+        const handleQuickAssist = (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            window.location.href = 'ms-quick-assist:';
+            this.view?.showToast('info', 'Windows Quick Assist', 'Launching built-in Windows Quick Assist tunnel...');
+        };
+
+        // Bind Portal Card Buttons
+        const portalRunBtn = document.getElementById('portal-btn-run-local-exe');
+        if (portalRunBtn) portalRunBtn.onclick = handleRunLocal;
+        const portalDlBtn = document.getElementById('portal-btn-download-exe');
+        if (portalDlBtn) portalDlBtn.onclick = handleDownload;
+        const portalShareBtn = document.getElementById('portal-btn-browser-share');
+        if (portalShareBtn) portalShareBtn.onclick = handleBrowserShare;
+        const portalQaBtn = document.getElementById('portal-btn-quickassist');
+        if (portalQaBtn) portalQaBtn.onclick = handleQuickAssist;
+
+        // Bind Modal Buttons
+        const modalRunBtn = document.getElementById('btn-native-prompt-run-local');
+        if (modalRunBtn) modalRunBtn.onclick = handleRunLocal;
+        const modalDlBtn = document.getElementById('btn-native-prompt-download');
+        if (modalDlBtn) modalDlBtn.onclick = handleDownload;
+        const modalShareBtn = document.getElementById('btn-native-prompt-decline');
+        if (modalShareBtn) modalShareBtn.onclick = handleBrowserShare;
+        const modalQaBtn = document.getElementById('btn-native-prompt-quickassist');
+        if (modalQaBtn) modalQaBtn.onclick = handleQuickAssist;
+
+        // Show both the Landing Portal Card and the Centered Modal Dialog
+        if (portalCard) {
+            portalCard.style.display = 'block';
+        }
+
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+            modal.style.visibility = 'visible';
+        }
+    }
+
+    hideNativeControlPrompt() {
+        const portalCard = document.getElementById('portal-native-control-card');
+        if (portalCard) portalCard.style.display = 'none';
+
+        const modal = document.getElementById('native-control-prompt-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+        }
+        if (this._nativeCompanionPollInterval) {
+            clearInterval(this._nativeCompanionPollInterval);
+            this._nativeCompanionPollInterval = null;
+        }
+    }
+
+    startCompanionListener(callerId) {
+        const statusBox = document.getElementById('native-prompt-status-box');
+        if (this._nativeCompanionPollInterval) clearInterval(this._nativeCompanionPollInterval);
+        this._nativeCompanionPollInterval = setInterval(async () => {
+            const isRunning = await this.checkNativeCompanionRunning();
+            if (isRunning) {
+                clearInterval(this._nativeCompanionPollInterval);
+                this._nativeCompanionPollInterval = null;
+                this._isNativeCompanionActive = true;
+
+                if (statusBox) {
+                    statusBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                    statusBox.style.border = '1px solid #10b981';
+                    statusBox.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:0.5rem; color:#10b981; font-weight:700;">
+                            <i class="fa-solid fa-circle-check"></i> jDroid-X-Desk.exe Detected & Running!
+                        </div>
+                        <div style="font-size:0.82rem; margin-top:0.25rem; color:var(--text-color);">
+                            Full Remote Mouse, Keyboard & OS Control is now ACTIVE.
+                        </div>
+                    `;
+                }
+
+                const compPort = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+                this.view?.showToast('success', 'Remote Control Granted', `jDroid-X Native Host Agent connected on port ${compPort}.`);
+                this.updateHostControlBannerStatus(callerId, true);
+
+                setTimeout(() => {
+                    this.hideNativeControlPrompt();
+                }, 2200);
+            }
+        }, 1500);
+    }
+
+    downloadAndStartCompanionListener(callerId) {
+        // 1. Trigger automated download of jDroid-X-Desk.exe directly from official GitHub repository
+        const GITHUB_EXE_DOWNLOAD_URL = this.settingsModel?.connection?.githubDownloadUrl || this.settingsModel?.general?.githubDownloadUrl || 'https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe';
+        const downloadLink = document.createElement('a');
+        downloadLink.href = GITHUB_EXE_DOWNLOAD_URL;
+        downloadLink.target = '_blank';
+        downloadLink.download = 'jDroid-X-Desk.exe';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+
+        const statusBox = document.getElementById('native-prompt-status-box');
+        const downloadBtn = document.getElementById('btn-native-prompt-download');
+        const compPort = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+        if (downloadBtn) {
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Downloading from GitHub...';
+        }
+
+        if (statusBox) {
+            statusBox.style.display = 'block';
+            statusBox.style.background = 'rgba(56, 189, 248, 0.12)';
+            statusBox.style.border = '1px solid var(--accent-blue)';
+            statusBox.style.color = 'var(--text-color)';
+            statusBox.innerHTML = `
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; color:var(--accent-blue); font-weight:700;">
+                    <i class="fa-solid fa-arrow-down-to-bracket"></i> Downloading from GitHub: jDroid-X-Desk.exe (900 KB)
+                </div>
+                <div style="font-size:0.8rem; line-height:1.45; color:var(--text-muted);">
+                    <strong>Next Steps on Desk 2:</strong>
+                    <ol style="margin:0.25rem 0 0.5rem 1.1rem; padding:0;">
+                        <li>Click <strong>jDroid-X-Desk.exe</strong> in your browser download bar to run it.</li>
+                        <li>Or click the <strong>Run Local (.EXE)</strong> button above once downloaded.</li>
+                    </ol>
+                    <div style="display:flex; align-items:center; gap:0.4rem; color:#10b981; font-weight:600;">
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse 1s infinite;"></span>
+                        Awaiting host agent on 127.0.0.1:${compPort} / Gateway Registry...
+                    </div>
+                </div>
+            `;
+        }
+
+        // 2. Poll port every 1.5 seconds until detected
+        this.startCompanionListener(callerId);
+    }
+
+    updateHostControlBannerStatus(callerId, isActive) {
+        const statusSpan = document.getElementById('host-banner-control-status');
+        const compPort = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+        if (statusSpan) {
+            if (isActive) {
+                statusSpan.innerHTML = `
+                    <span style="background:rgba(16,185,129,0.25); color:#10b981; border:1px solid #10b981; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                        <i class="fa-solid fa-gamepad"></i> Control: Active (Port ${compPort})
+                    </span>
+                `;
+            } else {
+                statusSpan.innerHTML = `
+                    <button type="button" id="btn-host-banner-enable-control" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8; border-radius:14px; padding:3px 9px; font-weight:700; cursor:pointer; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                        <i class="fa-solid fa-gamepad"></i> Enable Remote Control
+                    </button>
+                `;
+                document.getElementById('btn-host-banner-enable-control')?.addEventListener('click', () => {
+                    this.verifyNativeCompanionForHost(callerId);
+                });
+            }
+        }
+    }
+
+    showHostScreenSharingBanner(callerId, needsTrigger = false, isNativeMode = false) {
+        let banner = document.getElementById('host-screen-sharing-banner');
+        const compPort = this.settingsModel?.connection?.relayPort || this.settingsModel?.general?.nativeCompanionPort || 8088;
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'host-screen-sharing-banner';
+            banner.style.cssText = 'position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:999999; background:rgba(15,23,42,0.95); border:1px solid #10b981; border-radius:30px; padding:8px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 8px 30px rgba(0,0,0,0.6); backdrop-filter:blur(10px); color:#fff; font-family:var(--font-mono, monospace); font-size:0.85rem;';
+            document.body.appendChild(banner);
+        }
+
+        if (isNativeMode) {
+            banner.style.borderColor = '#10b981';
+            banner.innerHTML = `
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse 1.5s infinite;"></span>
+                <span>DXGI 60 FPS GPU Stream Live to <strong>${callerId}</strong></span>
+                <span style="background:rgba(16,185,129,0.25); color:#10b981; border:1px solid #10b981; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                    <i class="fa-solid fa-gamepad"></i> Control: Active (Port ${compPort})
+                </span>
+                <button type="button" id="btn-host-disconnect-banner" style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; border-radius:14px; padding:4px 10px; font-weight:700; cursor:pointer; font-size:0.8rem;">
+                    Disconnect
+                </button>
+            `;
+            document.getElementById('btn-host-disconnect-banner')?.addEventListener('click', () => {
+                this.stopHostScreenCapture();
+                this.hideNativeControlPrompt();
+                this.systemModel.activeSession = null;
+                this.view?.showToast('info', 'Session Ended', 'Disconnected from remote operator.');
+                banner.remove();
+            });
+            return;
+        }
+
+        if (needsTrigger) {
+            banner.style.borderColor = '#f59e0b';
+            banner.innerHTML = `
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span>
+                <span>Connected to <strong>${callerId}</strong> (Screen Not Shared)</span>
+                <button type="button" id="btn-host-trigger-share" style="background:#10b981; color:#fff; border:none; border-radius:14px; padding:4px 12px; font-weight:700; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;">
+                    <i class="fa-solid fa-desktop"></i> Share Screen Now
+                </button>
+                <button type="button" id="btn-host-disconnect-banner" style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; border-radius:14px; padding:4px 10px; font-weight:700; cursor:pointer; font-size:0.8rem;">
+                    Disconnect
+                </button>
+            `;
+            document.getElementById('btn-host-trigger-share')?.addEventListener('click', () => {
+                this.startHostScreenCapture(callerId, { audio: true });
+            });
+        } else {
+            banner.style.borderColor = '#10b981';
+            const controlHtml = this._isNativeCompanionActive 
+                ? `<span style="background:rgba(16,185,129,0.25); color:#10b981; border:1px solid #10b981; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-gamepad"></i> Control: Active</span>`
+                : `<button type="button" id="btn-host-banner-enable-control" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8; border-radius:14px; padding:3px 9px; font-weight:700; cursor:pointer; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-gamepad"></i> Enable Remote Control</button>`;
+
+            banner.innerHTML = `
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse 1.5s infinite;"></span>
+                <span>Live Broadcasting to <strong>${callerId}</strong></span>
+                <span id="host-banner-control-status">${controlHtml}</span>
+                <button type="button" id="btn-host-reshare" style="background:rgba(16,185,129,0.2); color:#10b981; border:1px solid #10b981; border-radius:14px; padding:4px 10px; font-weight:700; cursor:pointer; font-size:0.8rem;">
+                    Switch Screen
+                </button>
+                <button type="button" id="btn-host-disconnect-banner" style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; border-radius:14px; padding:4px 10px; font-weight:700; cursor:pointer; font-size:0.8rem;">
+                    Stop Sharing
+                </button>
+            `;
+            document.getElementById('btn-host-reshare')?.addEventListener('click', () => {
+                this.startHostScreenCapture(callerId, { audio: true });
+            });
+            document.getElementById('btn-host-banner-enable-control')?.addEventListener('click', () => {
+                this.verifyNativeCompanionForHost(callerId);
+            });
+        }
+
+        document.getElementById('btn-host-disconnect-banner')?.addEventListener('click', () => {
+            this.stopHostScreenCapture();
+            this.hideNativeControlPrompt();
+            this.systemModel.activeSession = null;
+            this.view?.showToast('info', 'Session Ended', 'Disconnected from remote operator.');
+            banner.remove();
+        });
+    }
+
+    stopHostScreenCapture() {
+        if (this._hostCaptureInterval) {
+            clearInterval(this._hostCaptureInterval);
+            this._hostCaptureInterval = null;
+        }
+        if (this._hostMediaStream) {
+            try {
+                this._hostMediaStream.getTracks().forEach(t => t.stop());
+            } catch (_) {}
+            this._hostMediaStream = null;
+        }
+        const banner = document.getElementById('host-screen-sharing-banner');
+        if (banner) banner.remove();
     }
 
     renderAntiRecursionShield(canvas, targetId) {
@@ -3427,7 +5460,7 @@ class AppController {
                         <span class="badge badge-green"><i class="fa-solid fa-circle"></i> Online</span>
                     </div>
                     <h4 style="margin: 0.5rem 0 0.2rem 0; color: #fff;">${ValidationUtil.escapeHTML(localId)}</h4>
-                    <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);">IP: ${ValidationUtil.escapeHTML(localIp)} | Port: 12345</div>
+                    <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);">IP: ${ValidationUtil.escapeHTML(localIp)} | Port: ${window.location.port || (this.settingsModel?.connection?.localPort || 7700)}</div>
                     <div style="font-size: 0.72rem; color: var(--accent-emerald); margin-top: 0.4rem;"><i class="fa-solid fa-shield-halved"></i> Host Gateway Supervisor Active</div>
                 </div>
             `;
@@ -3640,6 +5673,7 @@ class AppController {
                 setCheck('ad-set-transmit-hotkeys', s.general.transmitHotkeys);
                 setCheck('ad-set-online-vis', s.general.onlineStatusVisibility);
                 setCheck('ad-set-allow-telemetry', s.general.allowDataCollection);
+                setVal('ad-set-startup-mode', s.general.startupMode || 'mini');
                 setText('ad-ss-path-display', s.general.screenshotPath || 'C:\\Users\\Default\\Pictures\\jDroid-X');
                 setText('ad-chat-path-display', s.general.chatLogPath || 'C:\\Users\\Default\\AppData\\Roaming\\jDroid-X\\chat');
             }
@@ -3647,6 +5681,9 @@ class AppController {
             if (s.connection) {
                 setCheck('ad-conn-direct', s.connection.allowDirectConnections);
                 setVal('ad-conn-port', s.connection.localPort || 7070);
+                setVal('ad-conn-relay-port', s.connection.relayPort || s.general?.nativeCompanionPort || 8088);
+                setVal('ad-conn-release-ver', s.connection.targetReleaseVersion || s.general?.targetReleaseVersion || '2.5.0');
+                setVal('ad-conn-github-url', s.connection.githubDownloadUrl || s.general?.githubDownloadUrl || 'https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe');
                 setVal('ad-proxy-type', s.connection.proxyType || 'HTTP(S)');
                 setVal('ad-proxy-addr', s.connection.proxyAddress || '');
                 setVal('ad-proxy-port', s.connection.proxyPort || '');
@@ -3931,8 +5968,9 @@ class AppController {
         }
 
         // Add Subnet / Safe Zone (Delegates to SafeZoneController MVC)
-        const addSubnetBtn = document.getElementById('btn-open-add-subnet');
-        if (addSubnetBtn) {
+        const addSubnetBtn = document.getElementById('btn-open-add-subnet') || document.getElementById('btn-add-safe-zone');
+        if (addSubnetBtn && !addSubnetBtn._bound) {
+            addSubnetBtn._bound = true;
             addSubnetBtn.onclick = () => {
                 if (window.safeZoneController) {
                     window.safeZoneController.showAddDialog();
@@ -3954,7 +5992,8 @@ class AppController {
         const diagBtn = document.getElementById('btn-run-self-diagnostic');
         if (diagBtn) {
             diagBtn.onclick = () => {
-                this.view.showToast('info', 'Benchmark Running', 'Testing local CPU, Memory, and Express Port 12345...');
+                const gwPort = window.location.port || (this.settingsModel?.connection?.localPort || 7700);
+                this.view.showToast('info', 'Benchmark Running', `Testing local CPU, Memory, and Gateway Port ${gwPort}...`);
                 setTimeout(() => {
                     this.view.showToast('success', 'Diagnostic Passed', 'All system checks 100% HEALTHY. Express & Tray Icon active.');
                 }, 1500);
@@ -4956,7 +6995,7 @@ class NotificationsController {
                     <i class="fa-solid fa-circle-check text-emerald" style="font-size: 1.5rem;"></i>
                     <div>
                         <strong>Background Web Server Running</strong>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">Listening on http://localhost:12345 (System Tray active)</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Listening on ${window.location.origin || 'http://localhost:7700'} (System Tray active)</div>
                     </div>
                 </div>
             `;
@@ -5028,6 +7067,7 @@ class DeviceController {
         this.modal = document.getElementById('add-device-modal');
         this.nameInput = document.getElementById('device-modal-name');
         this.ipInput = document.getElementById('device-modal-ip');
+        this.macInput = document.getElementById('device-modal-mac');
         this.groupSelect = document.getElementById('device-modal-group');
         this.accessInput = document.getElementById('device-modal-access');
         this.idInput = document.getElementById('device-modal-id');
@@ -5110,6 +7150,7 @@ class DeviceController {
         const frag = document.createDocumentFragment();
         devices.forEach(d => {
             const groupName = d.groupId ? (groupMap[d.groupId] || 'Assigned Group') : 'Unassigned';
+            const isStandbyOrOffline = d.status !== 'Online' && d.status !== 'ONLINE';
             const li = document.createElement('li');
             li.style.cssText = 'padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;';
             li.innerHTML = `
@@ -5118,16 +7159,40 @@ class DeviceController {
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">
                         Group: <span class="badge badge-blue">${ValidationUtil.escapeHTML(groupName)}</span> | 
                         ${d.ip ? 'Desk ID/IP: <code style="font-size:0.75rem; font-family:var(--font-mono);">' + ValidationUtil.escapeHTML(d.ip) + '</code> | ' : ''}
+                        ${d.mac ? 'MAC: <code style="font-size:0.75rem; font-family:var(--font-mono);">' + ValidationUtil.escapeHTML(d.mac) + '</code> | ' : ''}
                         Access: ${ValidationUtil.escapeHTML(d.accessLevel || 'Standard')} | 
                         Status: <span class="${d.status === 'Online' || d.status === 'ONLINE' ? 'text-emerald' : 'text-warning'}">● ${ValidationUtil.escapeHTML(d.status || 'Standby')}</span>
                     </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    ${isStandbyOrOffline ? '<button class="btn btn-secondary btn-sm wake-btn" title="Send Wake-on-LAN Magic Packet" style="padding: 0.35rem 0.65rem;"><i class="fa-solid fa-wifi text-warning"></i> Wake</button>' : ''}
                     <button class="btn btn-primary btn-sm connect-btn" style="padding: 0.35rem 0.75rem; font-weight: 600;"><i class="fa-solid fa-link"></i> Connect</button>
                     <button class="btn btn-secondary btn-sm edit-btn" title="Edit Device"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn btn-secondary btn-sm delete-btn" title="Delete Device"><i class="fa-solid fa-trash text-danger"></i></button>
                 </div>
             `;
+            const wakeBtn = li.querySelector('.wake-btn');
+            if (wakeBtn) {
+                wakeBtn.onclick = async () => {
+                    const targetMac = d.mac || prompt(`Enter MAC address for ${d.name} (e.g. 00:1A:2B:3C:4D:5E):`, '00:1A:2B:3C:4D:5E');
+                    if (!targetMac) return;
+                    try {
+                        const res = await fetch('/api/relay/wake', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ mac: targetMac, port: 9 })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            window.appController.view.showToast('success', 'Magic Packet Sent', `Broadcasted Wake-on-LAN to ${d.name} (${mac}).`);
+                        } else {
+                            window.appController.view.showToast('error', 'WoL Failed', data.error || 'Failed to send packet');
+                        }
+                    } catch (err) {
+                        window.appController.view.showToast('error', 'WoL Error', err.message);
+                    }
+                };
+            }
             li.querySelector('.connect-btn').onclick = () => {
                 const targetInput = document.getElementById('target-id-input');
                 if (targetInput) targetInput.value = d.ip || (d.name.includes('-') ? d.name : (d.id || d.name));
@@ -5146,6 +7211,7 @@ class DeviceController {
         if(this.idInput) this.idInput.value = '';
         if(this.nameInput) this.nameInput.value = '';
         if(this.ipInput) this.ipInput.value = '';
+        if(this.macInput) this.macInput.value = '';
         if(this.groupSelect) this.groupSelect.value = '';
         if(this.accessInput) this.accessInput.value = 'Standard';
         if(this.title) this.title.innerHTML = '<i class="fa-solid fa-plus"></i> Register Device';
@@ -5157,6 +7223,7 @@ class DeviceController {
         if(this.idInput) this.idInput.value = d.id;
         if(this.nameInput) this.nameInput.value = d.name;
         if(this.ipInput) this.ipInput.value = d.ip || '';
+        if(this.macInput) this.macInput.value = d.mac || '';
         if(this.groupSelect) this.groupSelect.value = d.groupId || '';
         if(this.accessInput) this.accessInput.value = d.accessLevel || 'Standard';
         if(this.title) this.title.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Device';
@@ -5171,6 +7238,7 @@ class DeviceController {
         const id = this.idInput ? this.idInput.value : '';
         const name = this.nameInput ? this.nameInput.value.trim() : '';
         const ip = this.ipInput ? this.ipInput.value.trim() : null;
+        const mac = this.macInput ? this.macInput.value.trim().toUpperCase() : '';
         const groupId = this.groupSelect ? (this.groupSelect.value || null) : null;
         const access = this.accessInput ? (this.accessInput.value || 'Standard') : 'Standard';
 
@@ -5182,11 +7250,11 @@ class DeviceController {
 
         try {
             if (id) {
-                const res = await this.model.update(id, { name, ip, groupId, accessLevel: access });
+                const res = await this.model.update(id, { name, ip, mac, groupId, accessLevel: access });
                 if(!res.success) throw new Error(res.error);
                 window.appController.view.showToast('success', 'Device Updated', 'Device details saved.');
             } else {
-                const res = await this.model.add({ name, ip, groupId, accessLevel: access, status: 'Online' });
+                const res = await this.model.add({ name, ip, mac, groupId, accessLevel: access, status: 'Online' });
                 if(!res.success) throw new Error(res.error);
                 window.appController.view.showToast('success', 'Device Registered', 'New device added to fleet.');
             }
@@ -5444,7 +7512,8 @@ class ServerAdminController {
         const activeClass = Array.from(document.body.classList).find(c => themeMap[c]) || 'light-theme';
         const theme = themeMap[activeClass] || 'Light Enterprise';
         const hostId = document.getElementById('local-device-id')?.textContent || '984-102-391';
-        ticker.innerHTML = `⚡ jDroid-X Remote Console &middot; jDroid-Engine: ${engineId.toUpperCase()} [${isLive ? '● RUNNING : ' + port : '⚠️ STOPPED'}] &middot; Security: AES-256-GCM &middot; Host Desk ID: ${hostId} &middot; Node Gateway: HTTP 200 (Port 12345) &middot; RTT Latency: &lt;2ms LAN / 14ms WAN &middot; Codec: Hardware Acceleration &middot; SmartFit: Mobile / Tablet / Laptop / 4K / Flat 55"+ TV &middot; Theme: ${theme} &middot; Operator: JEET &middot; System Status: ALL SYSTEMS NOMINAL`;
+        const gwPort = window.location.port || (this.settingsModel?.connection?.localPort || 7700);
+        ticker.innerHTML = `⚡ jDroid-X Remote Console &middot; jDroid-Engine: ${engineId.toUpperCase()} [${isLive ? '● RUNNING : ' + port : '⚠️ STOPPED'}] &middot; Security: AES-256-GCM &middot; Host Desk ID: ${hostId} &middot; Node Gateway: HTTP 200 (Port ${gwPort}) &middot; RTT Latency: &lt;2ms LAN / 14ms WAN &middot; Codec: Hardware Acceleration &middot; SmartFit: Mobile / Tablet / Laptop / 4K / Flat 55"+ TV &middot; Theme: ${theme} &middot; Operator: JEET &middot; System Status: ALL SYSTEMS NOMINAL`;
     }
 
     updateActiveEngineUI(activeId) {

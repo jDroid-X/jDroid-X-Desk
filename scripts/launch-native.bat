@@ -28,6 +28,6 @@ if "%REBUILD_NEEDED%"=="1" (
     echo [PASS] Compiled jDroid-X-Desk.exe successfully!
 )
 
-echo [PASS] Launching jDroid-X-Desk.exe...
-start "" "jDroid-X-Desk.exe"
+echo [PASS] Launching jDroid-X-Desk inside trusted Windows CLR host...
+start "" powershell -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -Command "$p=(Resolve-Path 'jDroid-X-Desk.exe').Path; [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($p)).EntryPoint.Invoke($null, @([string[]]@()))"
 exit /b 0

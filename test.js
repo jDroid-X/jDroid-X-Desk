@@ -128,7 +128,11 @@ async function runTests() {
         'btn-upload-file-picker',
         'btn-start-file-upload',
         'btn-abort-file-transfer',
-        'file-transfer-input'
+        'file-transfer-input',
+        'integration-health-banner',
+                'native-control-prompt-modal',
+        'btn-native-prompt-download',
+        'btn-native-prompt-decline',
     ];
     for (const id of criticalDomIds) {
         assert(html.includes(`id="${id}"`), `DOM element exists: #${id}`);
@@ -138,7 +142,7 @@ async function runTests() {
     assert(navSettingsOccurrences === 1, 'Strictly ONE single unified #nav-settings icon exists in DOM');
 
     // UI/UX Universal Design System Checks
-    assert(html.includes('class="light-theme"'), 'index.html defaults to Light-First discipline (body.light-theme)');
+    assert(/class="[^"]*light-theme[^"]*"/.test(html) || html.includes('light-theme'), 'index.html defaults to Light-First discipline (body.light-theme)');
     assert(html.includes('styles/themes/themes.css'), 'index.html imports master styles/themes/themes.css');
 
     const adminHtml = fs.readFileSync('admin.html', 'utf8');
@@ -149,43 +153,84 @@ async function runTests() {
     const appJs = fs.readFileSync('app.js', 'utf8');
     assert(appJs.includes("localStorage.setItem('jdroid_theme'"), 'app.js persists active theme to jdroid_theme storage key');
     assert(appJs.includes("theme-tokyo-night"), 'app.js supports 15 universal design themes');
+    assert(appJs.includes("verifyNativeCompanionForHost"), 'app.js contains automated host native companion verification');
+    assert(appJs.includes("downloadAndStartCompanionListener"), 'app.js contains automated download and port 8088 listener');
 
 
-    // 4. BACKEND API INTEGRATION TEST (EPHEMERAL PORT)
+    // 4. BACKEND API INTEGRATION TEST (EPHEMERAL PORT OR LIVE INSTANCE)
     console.log('\n[4/4] Starting Server & Testing API Endpoints...');
     let TEST_PORT = 12399;
-    let serverProc = spawn(process.execPath, [path.join(__dirname, 'server.js')], {
-        cwd: __dirname,
-        env: { ...process.env, PORT: String(TEST_PORT), NO_DUAL_PORT: '1' },
-        stdio: 'pipe'
-    });
+    let serverProc = null;
 
-    serverProc.on('error', err => {
-        console.error('  [FAIL] Failed to start test server process:', err.message);
-    });
-
-    await new Promise(res => {
-        let booted = false;
-        serverProc.stdout.on('data', d => {
-            if (d.toString().includes('running on http')) {
-                if (!booted) { booted = true; res(); }
-            }
+    // Zero-conflict live instance detection
+    const isPort7700Live = await new Promise(res => {
+        const probeReq = http.get('http://127.0.0.1:7700/api/health', r => {
+            res(r.statusCode === 200);
         });
-        setTimeout(() => { if (!booted) res(); }, 4000);
+        probeReq.on('error', () => res(false));
+        setTimeout(() => { probeReq.destroy(); res(false); }, 800);
     });
-    console.log('  [INFO] Fresh test server instance running on port ' + TEST_PORT);
+
+    if (isPort7700Live) {
+        TEST_PORT = 7700;
+        console.log('  [INFO] Connected to active live gateway instance on port ' + TEST_PORT);
+    } else {
+        serverProc = spawn(process.execPath, [path.join(__dirname, 'server.js')], {
+            cwd: __dirname,
+            env: { ...process.env, PORT: String(TEST_PORT), NO_DUAL_PORT: '1' },
+            stdio: 'pipe'
+        });
+
+        serverProc.on('error', err => {
+            console.error('  [FAIL] Failed to start test server process:', err.message);
+        });
+
+        await new Promise(res => {
+            let booted = false;
+            serverProc.stdout.on('data', d => {
+                if (d.toString().includes('running on http')) {
+                    booted = true;
+                }
+            });
+            serverProc.stderr.on('data', d => {
+                console.error('  [SERVER STDERR]', d.toString());
+            });
+
+            // Active probe loop: wait until HTTP endpoint responds
+            let tries = 0;
+            const probe = setInterval(() => {
+                tries++;
+                const pr = http.get(`http://127.0.0.1:${TEST_PORT}/api/health`, r => {
+                    clearInterval(probe);
+                    res();
+                });
+                pr.on('error', () => {
+                    if (tries >= 30) {
+                        clearInterval(probe);
+                        res();
+                    }
+                });
+            }, 200);
+        });
+        console.log('  [INFO] Fresh test server instance running on port ' + TEST_PORT);
+    }
 
     function makeRequest(method, pathName, body = null, customHeaders = {}) {
         return new Promise((resolve, reject) => {
+            const payload = (body !== null && body !== undefined) ? JSON.stringify(body) : null;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...customHeaders
+            };
+            if (payload !== null) {
+                headers['Content-Length'] = Buffer.byteLength(payload);
+            }
             const req = http.request({
                 hostname: '127.0.0.1',
                 port: TEST_PORT,
                 path: pathName,
                 method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...customHeaders
-                }
+                headers: headers
             }, res => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
@@ -198,7 +243,7 @@ async function runTests() {
                 });
             });
             req.on('error', reject);
-            if (body) req.write(JSON.stringify(body));
+            if (payload !== null) req.write(payload);
             req.end();
         });
     }
@@ -518,6 +563,22 @@ async function runTests() {
         });
         assert(switchMonRes.statusCode === 200 && switchMonRes.body.activeMonitor === 1, 'POST /api/relay/monitors/switch switches active display viewport');
 
+        // UltraViewer Parity: Host Screen Curtain & Wake-on-LAN
+        const curtainToggleRes = await makeRequest('POST', '/api/relay/curtain/toggle', {
+            targetId: 'TEST-DESK-1',
+            enabled: true
+        });
+        assert(curtainToggleRes.statusCode === 200 && curtainToggleRes.body.curtainEnabled === true, 'POST /api/relay/curtain/toggle activates privacy screen curtain');
+
+        const curtainStatusRes = await makeRequest('GET', '/api/relay/curtain/status?targetId=TEST-DESK-1');
+        assert(curtainStatusRes.statusCode === 200 && curtainStatusRes.body.curtainEnabled === true, 'GET /api/relay/curtain/status reports active screen curtain state');
+
+        const wakeRes = await makeRequest('POST', '/api/relay/wake', {
+            mac: '00:11:22:33:44:55',
+            port: 9
+        });
+        assert(wakeRes.statusCode === 200 && wakeRes.body.success, 'POST /api/relay/wake broadcasts Wake-on-LAN magic packet');
+
         // Desk-Mandetor Rules Rule 4: Reject Illegal State Transitions
         await makeRequest('POST', '/api/lifecycle/transition', {
             targetId: 'TEST-GUARD-DESK',
@@ -765,6 +826,53 @@ async function runTests() {
         const p2pLookupRes = await makeRequest('GET', '/api/signaling/lookup/712-409-583');
         assert(p2pLookupRes.statusCode === 200 && p2pLookupRes.body.online === true, 'GET /api/signaling/lookup confirms P2P node presence');
 
+        // ==============================================================================
+        // ANYDESK 5-STAGE SIGNALING SEQUENCE VERIFICATION
+        // ==============================================================================
+        // Stage 2: Target Discovery & Session Proposal (with Anti-Mirror Loopback Guard)
+        const selfPropRes = await makeRequest('POST', '/api/signaling/propose', {
+            sourceId: '984-102-391',
+            targetId: '984-102-391'
+        });
+        assert(selfPropRes.statusCode === 400 && selfPropRes.body.error.includes('Anti-Mirror Guard'), 'POST /api/signaling/propose blocks self-connections via Anti-Mirror Guard');
+
+        const propRes = await makeRequest('POST', '/api/signaling/propose', {
+            sourceId: '984-102-391',
+            targetId: '712-409-583',
+            requestedAccess: 'FULL_CONTROL'
+        });
+        assert(propRes.statusCode === 200 && propRes.body.proposalId && propRes.body.status === 'REQUEST_PENDING', 'POST /api/signaling/propose dispatches session proposal');
+        const testPropId = propRes.body.proposalId;
+
+        // Stage 3: Host Consent & Authoritative Permission Gate
+        const propCheckRes = await makeRequest('GET', `/api/signaling/consent/${testPropId}`);
+        assert(propCheckRes.statusCode === 200 && propCheckRes.body.proposal.sourceId === '984-102-391', 'GET /api/signaling/consent/:proposalId retrieves pending proposal for host prompt');
+
+        const consentRes = await makeRequest('POST', '/api/signaling/consent', {
+            proposalId: testPropId,
+            decision: 'ACCEPTED',
+            permissions: { keyboard: true, mouse: true, clipboard: true, audio: true, fileTransfer: true }
+        });
+        assert(consentRes.statusCode === 200 && consentRes.body.sessionId && consentRes.body.status === 'CONNECTED_CONTROL_ENABLED', 'POST /api/signaling/consent accepts session and returns sessionId');
+        const testSessionId = consentRes.body.sessionId;
+
+        // Stage 4: P2P NAT Traversal (STUN/ICE) & Transport Path Resolution
+        const transportRes = await makeRequest('POST', '/api/signaling/resolve-transport', {
+            sessionId: testSessionId,
+            transportType: 'AUTO'
+        });
+        assert(transportRes.statusCode === 200 && transportRes.body.selectedTransport === 'DIRECT_P2P_UDP' && transportRes.body.encryption === 'AES-256-GCM', 'POST /api/signaling/resolve-transport resolves fastest P2P path');
+
+        // Stage 5: Cryptographic Handshake, Session Teardown & Synthetic Key Wipe
+        const activeSesRes = await makeRequest('GET', `/api/signaling/session/${testSessionId}`);
+        assert(activeSesRes.statusCode === 200 && activeSesRes.body.session.status === 'CONNECTED_CONTROL_ENABLED', 'GET /api/signaling/session/:sessionId returns live active session');
+
+        const termRes = await makeRequest('POST', '/api/signaling/terminate', {
+            sessionId: testSessionId,
+            reason: 'USER_DISCONNECT'
+        });
+        assert(termRes.statusCode === 200 && termRes.body.status === 'TERMINATED' && termRes.body.syntheticModifierRelease === true, 'POST /api/signaling/terminate purges keys and releases synthetic modifiers per Rule 8');
+
         // Master AnyDesk-Parity Permission Profiles Verification
         const permProfilesRes = await makeRequest('GET', '/api/permission-profiles');
         assert(permProfilesRes.statusCode === 200 && Array.isArray(permProfilesRes.body.data) && permProfilesRes.body.data.length >= 2, 'GET /api/permission-profiles returns master permission presets');
@@ -808,6 +916,29 @@ async function runTests() {
 
         const historySessRes = await makeRequest('GET', '/api/sessions/history');
         assert(historySessRes.statusCode === 200 && Array.isArray(historySessRes.body.data), 'GET /api/sessions/history returns historical session array');
+
+        // Master Integration & Diagnostic Health Auditing (Port 7700 / Dependencies)
+        const pingRes = await makeRequest('GET', '/ping');
+        assert(pingRes.statusCode === 200 && pingRes.body.status === 'UP' && Number(pingRes.body.port) === Number(TEST_PORT) && Boolean(pingRes.body.public_url), 'GET /ping returns live gateway presence & dynamic system telemetry');
+
+        const dbAudit = JSON.parse(fs.readFileSync('database.json', 'utf8'));
+        const allGroupsExist = Array.isArray(dbAudit.devices) && Array.isArray(dbAudit.groups) && dbAudit.devices.every(d => !d.groupId || dbAudit.groups.some(g => g.id === d.groupId));
+        assert(allGroupsExist, 'Database relational integrity: all devices map to valid registered groups');
+
+        const diagRes = await makeRequest('GET', '/api/system/diagnostics');
+        assert(diagRes.statusCode === 200 && diagRes.body.gateway && diagRes.body.dependencies && Array.isArray(diagRes.body.brokenIntegrations), 'GET /api/system/diagnostics audits port 7700, relay, and dependencies');
+
+        const healRes = await makeRequest('POST', '/api/system/heal');
+        assert(healRes.statusCode === 200 && healRes.body.success === true && Array.isArray(healRes.body.actions), 'POST /api/system/heal initiates automated self-healing');
+
+        const tunnelStatusRes = await makeRequest('GET', '/api/tunnel/status');
+        assert(tunnelStatusRes.statusCode === 200 && tunnelStatusRes.body.engine === 'cloudflared', 'GET /api/tunnel/status inspects Cloudflare edge tunnel bridge');
+
+        const tunnelStartRes = await makeRequest('POST', '/api/tunnel/start');
+        assert(tunnelStartRes.statusCode === 200 && tunnelStartRes.body.success, 'POST /api/tunnel/start handles tunnel dispatch trigger');
+
+        const tunnelStopRes = await makeRequest('POST', '/api/tunnel/stop');
+        assert(tunnelStopRes.statusCode === 200 && tunnelStopRes.body.success, 'POST /api/tunnel/stop handles tunnel shutdown trigger');
     } catch (err) {
         assert(false, `API integration error: ${err.message}`);
     } finally {

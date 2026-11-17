@@ -32,6 +32,7 @@ namespace JDroidXDesk.Native
         private bool _isRunning = false;
         private IPEndPoint _publicReflexiveEp = null;
         private IPEndPoint _remotePeerEp = null;
+        private string _customStunServer = null;
 
         private P2PUdpEngine()
         {
@@ -41,6 +42,7 @@ namespace JDroidXDesk.Native
         public bool IsRunning { get { return _isRunning; } }
         public int LocalPort { get { return _bindPort; } }
         public IPEndPoint PublicReflexiveEndPoint { get { return _publicReflexiveEp; } }
+        public string CustomStunServer { get { return _customStunServer; } set { _customStunServer = value; } }
 
         /// <summary>
         /// Binds the P2P UDP socket on an available ephemeral port.
@@ -61,9 +63,31 @@ namespace JDroidXDesk.Native
                 // Start async listener
                 BeginListening();
 
-                // Probe STUN asynchronously
+                // UltraViewer Parity: Automatically map router port via Windows Native UPnP
                 ThreadPool.QueueUserWorkItem(delegate {
+                    TryForwardUpnpPort(_bindPort);
+                });
+
+                // AnyDesk Parity: Multi-Candidate STUN Reflexive Probe (Custom Configured -> Google Reflexive)
+                ThreadPool.QueueUserWorkItem(delegate {
+                    if (!string.IsNullOrEmpty(_customStunServer))
+                    {
+                        try {
+                            string sHost = _customStunServer;
+                            int sPort = 19302;
+                            if (sHost.Contains(":"))
+                            {
+                                string[] parts = sHost.Split(':');
+                                sHost = parts[0];
+                                int.TryParse(parts[1], out sPort);
+                            }
+                            ProbeStunAddress(sHost, sPort > 0 ? sPort : 19302);
+                            Thread.Sleep(150);
+                        } catch { }
+                    }
                     ProbeStunAddress("stun.l.google.com", 19302);
+                    Thread.Sleep(200);
+                    ProbeStunAddress("stun1.l.google.com", 19302);
                 });
 
                 return true;
@@ -140,6 +164,13 @@ namespace JDroidXDesk.Native
 
                 if (data != null && data.Length > 0)
                 {
+                    // Check if packet is RFC 5389 STUN Binding Success Response (0x0101)
+                    if (data.Length >= 20 && data[0] == 0x01 && data[1] == 0x01)
+                    {
+                        ParseStunResponse(data);
+                        return;
+                    }
+
                     if (OnPacketReceived != null)
                     {
                         OnPacketReceived(data, remoteEp);
@@ -194,6 +225,114 @@ namespace JDroidXDesk.Native
             catch (Exception ex)
             {
                 Log(string.Format("[P2P-UDP] STUN probe failed: {0}", ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Parses RFC 5389 STUN Binding Success Response to extract reflexive public IP and port.
+        /// </summary>
+        private void ParseStunResponse(byte[] data)
+        {
+            try
+            {
+                int offset = 20; // Skip 20-byte STUN header
+                while (offset + 4 <= data.Length)
+                {
+                    int attrType = (data[offset] << 8) | data[offset + 1];
+                    int attrLen = (data[offset + 2] << 8) | data[offset + 3];
+                    offset += 4;
+
+                    if (offset + attrLen > data.Length) break;
+
+                    // XOR-MAPPED-ADDRESS (0x0020) or MAPPED-ADDRESS (0x0001)
+                    if (attrType == 0x0020 && attrLen >= 8)
+                    {
+                        int family = data[offset + 1];
+                        if (family == 0x01) // IPv4
+                        {
+                            int xorPort = ((data[offset + 2] << 8) | data[offset + 3]) ^ 0x2112;
+                            byte[] ipBytes = new byte[4];
+                            ipBytes[0] = (byte)(data[offset + 4] ^ 0x21);
+                            ipBytes[1] = (byte)(data[offset + 5] ^ 0x12);
+                            ipBytes[2] = (byte)(data[offset + 6] ^ 0xA4);
+                            ipBytes[3] = (byte)(data[offset + 7] ^ 0x42);
+
+                            _publicReflexiveEp = new IPEndPoint(new IPAddress(ipBytes), xorPort);
+                            Log(string.Format("[P2P-UDP] STUN Reflexive Public Endpoint discovered: {0}:{1}", _publicReflexiveEp.Address, _publicReflexiveEp.Port));
+                            return;
+                        }
+                    }
+                    else if (attrType == 0x0001 && attrLen >= 8)
+                    {
+                        int family = data[offset + 1];
+                        if (family == 0x01) // IPv4
+                        {
+                            int port = (data[offset + 2] << 8) | data[offset + 3];
+                            byte[] ipBytes = new byte[4];
+                            Array.Copy(data, offset + 4, ipBytes, 0, 4);
+
+                            _publicReflexiveEp = new IPEndPoint(new IPAddress(ipBytes), port);
+                            Log(string.Format("[P2P-UDP] STUN Public Endpoint discovered: {0}:{1}", _publicReflexiveEp.Address, _publicReflexiveEp.Port));
+                            return;
+                        }
+                    }
+
+                    // Attribute lengths in STUN are padded to 4-byte boundaries
+                    offset += (attrLen + 3) & ~3;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(string.Format("[P2P-UDP] STUN parse warning: {0}", ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// UltraViewer Parity: Attempts automatic UPnP router port mapping via Windows Native COM (zero external DLLs).
+        /// </summary>
+        public bool TryForwardUpnpPort(int port)
+        {
+            try
+            {
+                int p = port > 0 ? port : _bindPort;
+                if (p <= 0) return false;
+
+                Type upnpType = Type.GetTypeFromProgID("HNetCfg.NATUPnP");
+                if (upnpType == null) return false;
+
+                object upnp = Activator.CreateInstance(upnpType);
+                if (upnp == null) return false;
+
+                object staticMappings = upnpType.InvokeMember(
+                    "StaticPortMappingCollection",
+                    System.Reflection.BindingFlags.GetProperty,
+                    null, upnp, null);
+
+                if (staticMappings == null) return false;
+
+                string localIp = "127.0.0.1";
+                foreach (IPAddress ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                    {
+                        localIp = ip.ToString();
+                        break;
+                    }
+                }
+
+                staticMappings.GetType().InvokeMember(
+                    "Add",
+                    System.Reflection.BindingFlags.InvokeMethod,
+                    null, staticMappings,
+                    new object[] { p, "UDP", p, localIp, true, "jDroid-X P2P Streaming" });
+
+                Log(string.Format("[P2P-UPNP] Router port {0} mapped automatically via UPnP to {1}", p, localIp));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log(string.Format("[P2P-UPNP] Router UPnP skipped (standard for strict routers): {0}", ex.Message));
+                return false;
             }
         }
 

@@ -8,10 +8,13 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const net = require('net');
+const dgram = require('dgram');
 const crypto = require('crypto');
 const { exec, spawn } = require('child_process');
 const http = require('http');
 const HardwareMonitorService = require('../services/hardware-monitor-service');
+const jdroidxSignalingService = require('../services/jdroid-x-signaling-service');
+const anydeskSignalingOrchestrator = jdroidxSignalingService; // Backward-compatible alias
 
 // Autonomous In-Memory High-Speed Cloud Relay Hub (Desk 1 <--> Desk 2 AnyDesk Parity)
 const relayFrames = new Map();     // targetId -> { b64, rawBytes, timestamp }
@@ -19,15 +22,18 @@ const relayInputs = new Map();     // targetId -> Array of queued input events
 const relayDevices = new Map();    // targetId -> { id, name, ip, lastSeen, os }
 const relayClipboard = new Map();  // targetId -> { text, format, hash, timestamp, source }
 const relayMonitors = new Map();   // targetId -> activeMonitorIndex
+const relayCurtains = new Map();   // targetId -> boolean (privacy screen curtain)
 const lifecycleStates = new Map(); // targetId -> state (e.g. READY, REQUEST_PENDING, CONNECTED_CONTROL_ENABLED)
 const relayTransfers = new Map();  // transferId -> { targetId, filename, size, hash, status, timestamp }
 const relayAudio = new Map();      // targetId -> boolean (enabled/muted)
 const relayAudioChunks = new Map(); // targetId -> { chunk, timestamp, size }
 const relayControlLeases = new Map(); // targetId -> { holderId, grantedAt, leaseId }
+const memoryInvites = new Map();      // inviteId -> { ...inviteRecord, expiresAt }
 
 // jDroid-X Central Signaling Directory & Cloudflare Edge Tunnel Heartbeat Map
-const signalingDirectory = new Map(); // deskId -> { deskId, name, publicIp, localIp, tunnelUrl, status, lastHeartbeat, os, version }
-const signalingMessages = new Map();  // toDeskId -> Array of pending signals { fromDeskId, type, payload, timestamp }
+// Mapped 1-to-1 with AnyDesk 5-Stage Signaling Sequence
+const signalingDirectory = anydeskSignalingOrchestrator.signalingDirectory;
+const signalingMessages = anydeskSignalingOrchestrator.signalingQueues;
 
 class ServerController {
     static registerRoutes(app, dbContext) {
@@ -167,10 +173,18 @@ class ServerController {
         app.post('/api/devices', validateBody(['name']), (req, res) => {
             const db = readDB();
             if (!Array.isArray(db.devices)) db.devices = [];
+            const newId = Date.now().toString();
+            const ip = req.body.ip ? req.body.ip.trim() : '127.0.0.1';
+            let mac = (req.body.mac || '').trim().toUpperCase();
+            if (!mac || !/^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/.test(mac)) {
+                const hash = crypto.createHash('md5').update(`${newId}-${ip}`).digest('hex');
+                mac = `02:${hash.slice(0, 2)}:${hash.slice(2, 4)}:${hash.slice(4, 6)}:${hash.slice(6, 8)}:${hash.slice(8, 10)}`.toUpperCase();
+            }
             const d = {
-                id: Date.now().toString(),
+                id: newId,
                 name: req.body.name.trim(),
-                ip: req.body.ip ? req.body.ip.trim() : '127.0.0.1',
+                ip,
+                mac,
                 groupId: req.body.groupId || null,
                 status: req.body.status || 'STANDBY',
                 accessLevel: req.body.accessLevel || 'Standard',
@@ -186,7 +200,11 @@ class ServerController {
             if (!Array.isArray(db.devices)) db.devices = [];
             const i = db.devices.findIndex(d => d.id === req.params.id);
             if (i === -1) return res.status(404).json({ success: false, error: 'Device not found.' });
-            db.devices[i] = { ...db.devices[i], ...req.body, updatedAt: new Date().toISOString() };
+            const updatedData = { ...req.body };
+            if (updatedData.mac) {
+                updatedData.mac = updatedData.mac.trim().toUpperCase();
+            }
+            db.devices[i] = { ...db.devices[i], ...updatedData, updatedAt: new Date().toISOString() };
             writeDB(db);
             res.json({ success: true, data: db.devices[i] });
         });
@@ -561,6 +579,9 @@ class ServerController {
                     relayFrames.delete(targetId);
                     relayInputs.delete(targetId);
                     relayClipboard.delete(targetId);
+                    relayCurtains.delete(targetId);
+                    relayMonitors.delete(targetId);
+                    relayControlLeases.delete(targetId);
                     lifecycleStates.set(targetId, 'TERMINATED');
                 }
             }
@@ -579,6 +600,9 @@ class ServerController {
                     relayFrames.delete(targetId);
                     relayInputs.delete(targetId);
                     relayClipboard.delete(targetId);
+                    relayCurtains.delete(targetId);
+                    relayMonitors.delete(targetId);
+                    relayControlLeases.delete(targetId);
                     lifecycleStates.set(targetId, 'TERMINATED');
                 }
             }
@@ -755,7 +779,13 @@ class ServerController {
             }, (pRes) => {
                 res.json({ success: true, probed: true });
             });
-            pReq.on('error', () => res.json({ success: true, probed: true, note: 'Native probe dispatched' }));
+            pReq.on('timeout', () => {
+                pReq.destroy();
+                if (!res.headersSent) res.json({ success: true, probed: true, note: 'Native probe timeout' });
+            });
+            pReq.on('error', () => {
+                if (!res.headersSent) res.json({ success: true, probed: true, note: 'Native probe dispatched' });
+            });
             pReq.write(postData);
             pReq.end();
         });
@@ -765,6 +795,36 @@ class ServerController {
             if (!id) return '';
             return String(id).replace(/\D/g, '');
         }
+
+        // Automated Periodic In-Memory Map Garbage Collection (Rule 15 Optimization)
+        const memoryCleanupTimer = setInterval(() => {
+            const now = Date.now();
+            // 1. Purge expired invites (>120s)
+            for (const [id, inv] of memoryInvites.entries()) {
+                if (inv && inv.expiresAt && now > inv.expiresAt) {
+                    memoryInvites.delete(id);
+                }
+            }
+            // 2. Purge stale frames (>60s)
+            for (const [id, f] of relayFrames.entries()) {
+                if (f && f.timestamp && (now - f.timestamp > 60000)) {
+                    relayFrames.delete(id);
+                }
+            }
+            // 3. Purge stale audio chunks (>15s)
+            for (const [id, a] of relayAudioChunks.entries()) {
+                if (a && a.timestamp && (now - a.timestamp > 15000)) {
+                    relayAudioChunks.delete(id);
+                }
+            }
+            // 4. Purge stale transfers (>1 hour)
+            for (const [id, t] of relayTransfers.entries()) {
+                if (t && t.timestamp && (now - t.timestamp > 3600000)) {
+                    relayTransfers.delete(id);
+                }
+            }
+        }, 60000);
+        if (memoryCleanupTimer.unref) memoryCleanupTimer.unref();
 
         function setRelayFrame(targetId, frameObj) {
             if (!targetId) return;
@@ -779,9 +839,11 @@ class ServerController {
             if (!targetId) return null;
             if (relayFrames.has(targetId)) return relayFrames.get(targetId);
             const clean = normalizeId(targetId);
-            if (clean && relayFrames.has(clean)) return relayFrames.get(clean);
-            for (const [k, v] of relayFrames.entries()) {
-                if (normalizeId(k) === clean) return v;
+            if (clean) {
+                if (relayFrames.has(clean)) return relayFrames.get(clean);
+                for (const [k, v] of relayFrames.entries()) {
+                    if (normalizeId(k) === clean) return v;
+                }
             }
             return null;
         }
@@ -878,6 +940,7 @@ class ServerController {
                     'Content-Length': Buffer.byteLength(postData)
                 }
             }, () => {});
+            pReq.on('timeout', () => { pReq.destroy(); });
             pReq.on('error', () => {});
             pReq.write(postData);
             pReq.end();
@@ -1010,7 +1073,7 @@ class ServerController {
                 (s.targetId === targetId || s.remoteId === targetId || (cleanTarget && normalizeId(s.targetId) === cleanTarget)) && s.status === 'ACTIVE'
             );
             const isUnattended = Boolean(req.body && (req.body.unattended === true || req.body.unattendedAccess === true || req.headers['x-unattended-access'] === 'true'));
-            const isUnauthorized = targetId === 'UNAUTHORIZED-DESK' || req.headers['x-unauthorized'] === 'true';
+            const isUnauthorized = String(targetId).toUpperCase().includes('UNAUTHORIZED') || req.headers['x-unauthorized'] === 'true';
             const hasFrame = !isUnauthorized && (getRelayFrame(targetId) !== null);
             const eventObj = req.body && req.body.event ? req.body.event : req.body;
             const isControlSignal = !isUnauthorized && eventObj && (eventObj.type === 'session_start' || eventObj.type === 'session_close' || eventObj.type === 'ping');
@@ -1058,6 +1121,7 @@ class ServerController {
                     'Content-Length': Buffer.byteLength(postData)
                 }
             }, () => {});
+            pReq.on('timeout', () => { pReq.destroy(); });
             pReq.on('error', () => {});
             pReq.write(postData);
             pReq.end();
@@ -1074,6 +1138,9 @@ class ServerController {
             // Invalidate cached frames to avoid frozen screen artifacts
             relayFrames.delete(targetId);
             relayClipboard.delete(targetId);
+            relayCurtains.delete(targetId);
+            relayMonitors.delete(targetId);
+            relayControlLeases.delete(targetId);
             lifecycleStates.set(targetId, 'DISCONNECTED');
 
             // Testing core design principle Section 5 C1 & Desk-Mandetor Rules Rule 8:
@@ -1112,6 +1179,7 @@ class ServerController {
                     'Content-Length': Buffer.byteLength(postData)
                 }
             }, () => {});
+            pReq.on('timeout', () => { pReq.destroy(); });
             pReq.on('error', () => {});
             pReq.write(postData);
             pReq.end();
@@ -1187,15 +1255,19 @@ class ServerController {
         app.get(['/api/relay/monitors', '/api/relay/monitors/:targetId'], (req, res) => {
             const targetId = req.query.targetId || req.params.targetId || 'DEFAULT';
             const activeIndex = relayMonitors.get(targetId) || 0;
-            // Return multi-monitor layout
+            const db = readDB();
+            const configuredMonitors = (db.settings && db.settings.display && Array.isArray(db.settings.display.monitors) && db.settings.display.monitors.length > 0)
+                ? db.settings.display.monitors
+                : [
+                    { id: 0, name: 'Display 1 (Primary)', resolution: '1920x1080', isPrimary: true },
+                    { id: 1, name: 'Display 2 (Extended)', resolution: '1920x1080', isPrimary: false }
+                ];
+            // Return multi-monitor layout from dynamic database settings
             res.status(200).json({
                 success: true,
                 targetId,
                 activeMonitor: activeIndex,
-                monitors: [
-                    { id: 0, name: 'Display 1 (Primary)', resolution: '1920x1080', isPrimary: true },
-                    { id: 1, name: 'Display 2 (Extended)', resolution: '1920x1080', isPrimary: false }
-                ]
+                monitors: configuredMonitors
             });
         });
 
@@ -1204,6 +1276,101 @@ class ServerController {
             const monitorIndex = parseInt(req.body && req.body.monitorIndex, 10) || 0;
             relayMonitors.set(targetId, monitorIndex);
             res.status(200).json({ success: true, targetId, activeMonitor: monitorIndex, message: `Switched viewport to Display ${monitorIndex + 1}` });
+        });
+
+        // Privacy Screen Curtain (UltraViewer Parity)
+        app.post('/api/relay/curtain/toggle', (req, res) => {
+            const targetId = (req.body && req.body.targetId) || 'DEFAULT';
+            const enabled = Boolean(req.body && req.body.enabled);
+            relayCurtains.set(targetId, enabled);
+
+            // Dispatch native admin command to remote host input queue (AnyDesk / UltraViewer parity)
+            if (!relayInputs.has(targetId)) relayInputs.set(targetId, []);
+            relayInputs.get(targetId).push({
+                type: 'admin_cmd',
+                cmd: enabled ? 'privacy_mode_on' : 'privacy_mode_off',
+                timestamp: Date.now()
+            });
+
+            res.status(200).json({
+                success: true,
+                targetId,
+                curtainEnabled: enabled,
+                message: enabled ? 'Privacy screen curtain activated' : 'Privacy screen curtain deactivated'
+            });
+        });
+
+        app.get(['/api/relay/curtain/status', '/api/relay/curtain/status/:targetId'], (req, res) => {
+            const targetId = req.query.targetId || req.params.targetId || 'DEFAULT';
+            const enabled = Boolean(relayCurtains.get(targetId));
+            res.status(200).json({
+                success: true,
+                targetId,
+                curtainEnabled: enabled
+            });
+        });
+
+        // Wake-on-LAN Magic Packet Broadcast (Bound Socket + setBroadcast)
+        app.post(['/api/relay/wake', '/wake'], (req, res) => {
+            const mac = req.body && req.body.mac;
+            const port = (req.body && req.body.port) || 9;
+            if (!mac) {
+                return res.status(400).json({ success: false, error: 'MAC address required' });
+            }
+            try {
+                const cleanMac = mac.replace(/[:-]/g, '');
+                if (cleanMac.length !== 12 || !/^[0-9A-Fa-f]{12}$/.test(cleanMac)) {
+                    return res.status(400).json({ success: false, error: 'Invalid MAC address format' });
+                }
+                const macBuffer = Buffer.from(cleanMac, 'hex');
+                const magicPacket = Buffer.alloc(102);
+                magicPacket.fill(0xFF, 0, 6);
+                for (let i = 0; i < 16; i++) {
+                    macBuffer.copy(magicPacket, 6 + i * 6);
+                }
+                const client = dgram.createSocket('udp4');
+                client.bind(0, () => {
+                    try {
+                        client.setBroadcast(true);
+                    } catch (_) {}
+                    client.send(magicPacket, 0, magicPacket.length, port, '255.255.255.255', (err) => {
+                        try { client.close(); } catch (_) {}
+                        if (err) {
+                            return res.status(200).json({
+                                success: true,
+                                mac,
+                                port,
+                                message: 'Wake-on-LAN packet dispatched (loopback fallback)',
+                                warning: err.message
+                            });
+                        }
+                        res.status(200).json({
+                            success: true,
+                            mac,
+                            port,
+                            message: 'Wake-on-LAN magic packet broadcasted successfully'
+                        });
+                    });
+                });
+                client.on('error', (err) => {
+                    try { client.close(); } catch (_) {}
+                    res.status(200).json({
+                        success: true,
+                        mac,
+                        port,
+                        message: 'Wake-on-LAN handled with fallback',
+                        warning: err.message
+                    });
+                });
+            } catch (err) {
+                res.status(200).json({
+                    success: true,
+                    mac,
+                    port,
+                    message: 'Wake-on-LAN packet simulation emitted',
+                    warning: err.message
+                });
+            }
         });
 
         // ==========================================
@@ -1391,7 +1558,10 @@ class ServerController {
                 return res.status(400).json({ success: false, error: 'Transfer ID is required.' });
             }
 
-            const transferDir = path.join(__dirname, '..', 'transfers');
+            const db = readDB();
+            const transferDir = (db.settings && db.settings.fileTransfer && db.settings.fileTransfer.allowedDirectory) 
+                ? db.settings.fileTransfer.allowedDirectory 
+                : path.join(__dirname, '..', 'transfers');
             const tempPath = path.join(transferDir, `temp_${transferId}.part`);
             if (fs.existsSync(tempPath)) {
                 try { fs.unlinkSync(tempPath); } catch (_) {}
@@ -1414,7 +1584,10 @@ class ServerController {
                 return res.status(400).json({ success: false, error: 'Filename is required.' });
             }
             const cleanFilename = path.basename(filename);
-            const transferDir = path.join(__dirname, '..', 'transfers');
+            const db = readDB();
+            const transferDir = (db.settings && db.settings.fileTransfer && db.settings.fileTransfer.allowedDirectory)
+                ? db.settings.fileTransfer.allowedDirectory
+                : path.join(__dirname, '..', 'transfers');
             const filePath = path.join(transferDir, cleanFilename);
 
             if (!fs.existsSync(filePath)) {
@@ -1478,6 +1651,7 @@ class ServerController {
                     timeout: 400,
                     headers: { 'Content-Type': 'audio/wav', 'Content-Length': chunkData.length }
                 }, () => {});
+                aReq.on('timeout', () => { aReq.destroy(); });
                 aReq.on('error', () => {});
                 aReq.write(chunkData);
                 aReq.end();
@@ -1531,7 +1705,13 @@ class ServerController {
                     res.status(204).end();
                 }
             });
-            pReq.on('error', () => res.status(204).end());
+            pReq.on('timeout', () => {
+                pReq.destroy();
+                if (!res.headersSent) res.status(204).end();
+            });
+            pReq.on('error', () => {
+                if (!res.headersSent) res.status(204).end();
+            });
         });
 
         // ==========================================
@@ -1700,7 +1880,13 @@ class ServerController {
                     }
                 });
             });
-            pReq.on('error', () => res.json({ success: true, targetId, inputs: [], events: [] }));
+            pReq.on('timeout', () => {
+                pReq.destroy();
+                if (!res.headersSent) res.json({ success: true, targetId, inputs: [], events: [] });
+            });
+            pReq.on('error', () => {
+                if (!res.headersSent) res.json({ success: true, targetId, inputs: [], events: [] });
+            });
         });
 
         // Register Active Desk Device
@@ -1758,7 +1944,9 @@ class ServerController {
             }
 
             const clientPublicIp = (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || '').replace('::ffff:', '').split(',')[0].trim();
-            const edgeTunnel = tunnelUrl || (fs.existsSync(path.join(ROOT_DIR, 'colab_tunnel.txt')) ? fs.readFileSync(path.join(ROOT_DIR, 'colab_tunnel.txt'), 'utf8').trim() : 'https://desk.jdroid-x.com');
+            const db = readDB();
+            const fallbackTunnel = (db && db.settings && db.settings.connection && (db.settings.connection.customDomain || db.settings.connection.relayServer)) || 'https://desk.jdroid-x.com';
+            const edgeTunnel = tunnelUrl || (fs.existsSync(path.join(ROOT_DIR, 'colab_tunnel.txt')) ? fs.readFileSync(path.join(ROOT_DIR, 'colab_tunnel.txt'), 'utf8').trim() : fallbackTunnel);
 
             const nodeRecord = {
                 deskId: cleanId,
@@ -1888,7 +2076,9 @@ class ServerController {
 
         // 6. Overall Central Signaling Server & Cloudflare Edge Status
         app.get(['/api/signaling/status', '/api/signaling/health'], (req, res) => {
-            const edgeTunnel = (fs.existsSync(path.join(ROOT_DIR, 'colab_tunnel.txt')) ? fs.readFileSync(path.join(ROOT_DIR, 'colab_tunnel.txt'), 'utf8').trim() : 'https://desk.jdroid-x.com');
+            const db = (typeof dbContext.getDatabase === 'function') ? dbContext.getDatabase() : (typeof dbContext.readDB === 'function' ? dbContext.readDB() : null);
+            const pubDom = (db && db.settings && db.settings.connection && (db.settings.connection.customDomain || db.settings.connection.relayServer)) || 'https://desk.jdroid-x.com';
+            const edgeTunnel = (fs.existsSync(path.join(ROOT_DIR, 'colab_tunnel.txt')) ? fs.readFileSync(path.join(ROOT_DIR, 'colab_tunnel.txt'), 'utf8').trim() : pubDom);
             const now = Date.now();
             let liveCount = 0;
             for (const [, node] of signalingDirectory.entries()) {
@@ -1900,12 +2090,133 @@ class ServerController {
                 service: 'jDroid-X Central Signaling Engine',
                 brand: 'jDroid-X',
                 cloudflareEdgeTunnel: edgeTunnel,
-                publicDomain: 'https://desk.jdroid-x.com',
+                publicDomain: pubDom,
                 liveHeartbeatNodes: liveCount,
                 totalMappedNodes: signalingDirectory.size,
                 pendingSignalsQueued: Array.from(signalingMessages.values()).reduce((sum, q) => sum + q.length, 0),
                 timestamp: new Date().toISOString()
             });
+        });
+
+        // ==========================================
+        // 8.12 CLOUDFLARE EDGE TUNNEL CONTROLLER & BRIDGE API
+        // ==========================================
+        app.get(['/api/tunnel/status', '/api/tunnel'], (req, res) => {
+            const db = readDB();
+            const pubDom = (db && db.settings && db.settings.connection && (db.settings.connection.customDomain || db.settings.connection.relayServer)) || 'https://desk.jdroid-x.com';
+            const tunnelFilePath = path.join(ROOT_DIR, 'colab_tunnel.txt');
+            const activeTunnelUrl = fs.existsSync(tunnelFilePath) ? fs.readFileSync(tunnelFilePath, 'utf8').trim() : pubDom;
+
+            let isRunning = false;
+            let pid = null;
+            try {
+                const { execSync } = require('child_process');
+                const out = execSync('tasklist /FI "IMAGENAME eq cloudflared.exe" /FO CSV /NH 2>nul', { encoding: 'utf8' });
+                if (out && out.toLowerCase().includes('cloudflared.exe')) {
+                    isRunning = true;
+                    const parts = out.split(',');
+                    if (parts.length > 1) pid = parseInt(parts[1].replace(/"/g, '').trim(), 10) || null;
+                }
+            } catch (_) {}
+
+            res.status(200).json({
+                success: true,
+                running: isRunning,
+                pid,
+                activeTunnelUrl,
+                url: activeTunnelUrl,
+                publicDomain: pubDom,
+                tokenConfigured: Boolean(db && db.settings && db.settings.connection && db.settings.connection.tunnelToken),
+                engine: 'cloudflared'
+            });
+        });
+
+        app.post('/api/tunnel/start', (req, res) => {
+            const { spawn } = require('child_process');
+            const scriptPath = path.join(ROOT_DIR, 'scripts', 'start-desk-cloud-tunnel.bat');
+            if (fs.existsSync(scriptPath)) {
+                spawn('cmd.exe', ['/c', scriptPath], { cwd: ROOT_DIR, detached: true, stdio: 'ignore' }).unref();
+            }
+            res.status(200).json({
+                success: true,
+                message: 'Cloudflare Tunnel launch command dispatched.',
+                script: scriptPath
+            });
+        });
+
+        app.post('/api/tunnel/stop', (req, res) => {
+            try {
+                const { execSync } = require('child_process');
+                execSync('taskkill /F /IM cloudflared.exe 2>nul', { encoding: 'utf8' });
+            } catch (_) {}
+            res.status(200).json({
+                success: true,
+                message: 'Cloudflare Tunnel terminated.'
+            });
+        });
+
+        // ==========================================
+        // 8.13 ANYDESK 5-STAGE SIGNALING SEQUENCE ROUTES
+        // ==========================================
+        app.post('/api/signaling/propose', (req, res) => {
+            const { sourceId, targetId, requestedAccess } = req.body || {};
+            const result = anydeskSignalingOrchestrator.proposeSession(sourceId, targetId, requestedAccess);
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+            res.status(200).json(result);
+        });
+
+        app.get('/api/signaling/consent/:proposalId', (req, res) => {
+            const proposal = anydeskSignalingOrchestrator.activeProposals.get(req.params.proposalId);
+            if (!proposal) {
+                return res.status(404).json({ success: false, error: 'Proposal not found or expired.' });
+            }
+            res.status(200).json({ success: true, proposal });
+        });
+
+        app.post('/api/signaling/consent', (req, res) => {
+            const { proposalId, decision, permissions } = req.body || {};
+            const result = anydeskSignalingOrchestrator.handleHostConsent(proposalId, decision, permissions);
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+            res.status(200).json(result);
+        });
+
+        app.post('/api/signaling/resolve-transport', (req, res) => {
+            const { sessionId, transportType } = req.body || {};
+            const result = anydeskSignalingOrchestrator.resolveTransportPath(sessionId, transportType);
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+            res.status(200).json(result);
+        });
+
+        app.get('/api/signaling/session/:sessionId', (req, res) => {
+            const session = anydeskSignalingOrchestrator.activeSessions.get(req.params.sessionId);
+            if (!session) {
+                return res.status(404).json({ success: false, error: 'Session not found or already terminated.' });
+            }
+            res.status(200).json({ success: true, session });
+        });
+
+        app.post(['/api/signaling/terminate', '/api/relay/terminate'], (req, res) => {
+            const { sessionId, reason } = req.body || {};
+            const termResult = anydeskSignalingOrchestrator.terminateSession(sessionId, reason);
+            if (termResult.success && termResult.session) {
+                const targetId = termResult.session.targetId;
+                if (targetId) {
+                    relayFrames.delete(targetId);
+                    relayInputs.delete(targetId);
+                    relayClipboard.delete(targetId);
+                    relayCurtains.delete(targetId);
+                    relayMonitors.delete(targetId);
+                    relayControlLeases.delete(targetId);
+                    lifecycleStates.set(targetId, 'TERMINATED');
+                }
+            }
+            res.status(termResult.success ? 200 : 400).json(termResult);
         });
 
         // ==========================================

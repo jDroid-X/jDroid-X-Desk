@@ -1,3 +1,12 @@
+// ==============================================================================
+// [Variables]            : IsRunning, ActiveTunnelUrl, LastStatusMessage, TunnelProcess, syncLock, _isNamedTunnel, _configuredCustomDomain
+// [Constants]            : DEFAULT_CUSTOM_DOMAIN ("https://desk.jdroid-x.com")
+// [Dependencies]         : System, System.IO, System.Diagnostics, System.Text.RegularExpressions, System.Web.Script.Serialization
+// [Integration Points]   : MainForm.cs, EmbeddedRelayServer.cs, colab_tunnel.txt, LanDiscoveryEngine.cs
+// [Hardcode to Valuebase]: Dynamic domain lookup from database.json; automatic colab_tunnel.txt synchronization
+// [Optimized Performance]: Zero-allocation regex match; async process line streaming; safe process termination
+// ==============================================================================
+
 using System;
 using System.IO;
 using System.Drawing;
@@ -30,6 +39,13 @@ namespace JDroidXDesk.Native
         public static event Action<string> OnStatusChanged;
 
         private static readonly object syncLock = new object();
+        private static bool _isNamedTunnel = false;
+        private static string _configuredCustomDomain = "https://desk.jdroid-x.com";
+
+        public static void SetConfiguredDomain(string domain)
+        {
+            if (!string.IsNullOrEmpty(domain)) _configuredCustomDomain = domain.Trim();
+        }
 
         public static string GetCloudflaredBinaryPath()
         {
@@ -49,6 +65,22 @@ namespace JDroidXDesk.Native
                     if (callback != null) callback(true, bin);
                     return;
                 }
+
+                // Cloudflare is detached from the jDroid-X-Desk executable. Check system PATH or download as external tool.
+                try
+                {
+                    string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+                    foreach (string p in pathEnv.Split(';'))
+                    {
+                        string candidate = Path.Combine(p.Trim(), "cloudflared.exe");
+                        if (File.Exists(candidate))
+                        {
+                            if (callback != null) callback(true, candidate);
+                            return;
+                        }
+                    }
+                }
+                catch { }
 
                 try
                 {
@@ -75,6 +107,8 @@ namespace JDroidXDesk.Native
 
                 LastStatusMessage = "Checking cloudflared engine...";
                 if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+
+                _isNamedTunnel = !string.IsNullOrEmpty(tunnelToken);
 
                 EnsureBinaryAvailable((ok, binPath) => {
                     if (!ok)
@@ -139,15 +173,75 @@ namespace JDroidXDesk.Native
         private static void ProcessOutputLine(string line)
         {
             if (string.IsNullOrEmpty(line)) return;
+
+            // 1. Quick Tunnel Auto-Discovery (https://*.trycloudflare.com)
             Match m = Regex.Match(line, @"https://[a-zA-Z0-9-]+\.trycloudflare\.com");
             if (m.Success)
             {
                 string url = m.Value;
                 ActiveTunnelUrl = url;
                 LastStatusMessage = "Tunnel online: " + url;
+                PersistTunnelUrl(url);
                 if (OnUrlDiscovered != null) OnUrlDiscovered(url);
                 if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+                return;
             }
+
+            // 2. Named Tunnel Connection Activation (Token-based custom domain, e.g. desk.jdroid-x.com)
+            if (_isNamedTunnel && (line.Contains("Registered tunnel connection") || (line.Contains("Connection") && line.Contains("registered"))))
+            {
+                if (string.IsNullOrEmpty(ActiveTunnelUrl))
+                {
+                    string url = ResolveConfiguredDomain();
+                    ActiveTunnelUrl = url;
+                    LastStatusMessage = "Cloudflare Edge Tunnel connected: " + url;
+                    PersistTunnelUrl(url);
+                    if (OnUrlDiscovered != null) OnUrlDiscovered(url);
+                    if (OnStatusChanged != null) OnStatusChanged(LastStatusMessage);
+                }
+            }
+        }
+
+        private static string ResolveConfiguredDomain()
+        {
+            try
+            {
+                string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "database.json");
+                if (File.Exists(dbPath))
+                {
+                    string json = File.ReadAllText(dbPath);
+                    JavaScriptSerializer js = new JavaScriptSerializer();
+                    Dictionary<string, object> dict = js.Deserialize<Dictionary<string, object>>(json);
+                    if (dict != null && dict.ContainsKey("settings"))
+                    {
+                        Dictionary<string, object> s = dict["settings"] as Dictionary<string, object>;
+                        if (s != null && s.ContainsKey("connection"))
+                        {
+                            Dictionary<string, object> c = s["connection"] as Dictionary<string, object>;
+                            if (c != null)
+                            {
+                                if (c.ContainsKey("customDomain") && !string.IsNullOrEmpty(Convert.ToString(c["customDomain"])))
+                                    return Convert.ToString(c["customDomain"]).Trim();
+                                if (c.ContainsKey("relayServer") && !string.IsNullOrEmpty(Convert.ToString(c["relayServer"])))
+                                    return Convert.ToString(c["relayServer"]).Trim();
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+            return _configuredCustomDomain ?? "https://desk.jdroid-x.com";
+        }
+
+        private static void PersistTunnelUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return;
+            try
+            {
+                string tunnelFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "colab_tunnel.txt");
+                File.WriteAllText(tunnelFilePath, url);
+            }
+            catch { }
         }
 
         public static void StopTunnel()
@@ -171,9 +265,4 @@ namespace JDroidXDesk.Native
             }
         }
     }
-
-    // ==========================================================================
-    // 2. MODERN REUSABLE UI CONTROLS & RENDERERS (VIEW LAYER)
-    // ==========================================================================
-
 }

@@ -450,39 +450,140 @@ namespace JDroidXDesk.Native
             y += 46;
 
             // ==================================================================
-            // RESPONSIVE 2-COLUMN GRID: STEP 1 & STEP 2 SIDE-BY-SIDE
+            // OXAAM-STYLE HERO PORTAL (VIBGYOR PALETTE + GOLD BORDER + MARQUEE)
             // ==================================================================
             int colH = 176;
-
-            // COLUMN 1: SHARE SCREEN (GET SUPPORT) - 3D Floating Card
-            cardShare = new Panel {
-                Size = new Size(colW, colH),
+            int portalH = isTwoCol ? (colH + 82) : ((colH * 2) + 98);
+            Panel pnlOxaamPortal = new Panel {
+                Size = new Size(containerW, portalH),
                 Location = new Point(0, y),
                 BackColor = Color.Transparent
             };
+
+            // Paint Gold Border (2px) and subtle glass background
+            pnlOxaamPortal.Paint += (s, e) => {
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, pnlOxaamPortal.Width - 1, pnlOxaamPortal.Height - 1),
+                    ThemePalette.ColorBgCard, Color.FromArgb(255, 215, 0), ThemePalette.ColorShadow, 14);
+            };
+
+            // Top Bar: VIBGYOR Palette (7 small color boxes with Gold hover/accent)
+            Panel pnlVibgyorTop = new Panel {
+                Dock = DockStyle.Top,
+                Height = 34,
+                BackColor = Color.Transparent,
+                Padding = new Padding(14, 5, 14, 0)
+            };
+            Label lVibgyorTitle = new Label {
+                Text = "🎨  WORKSPACE PALETTE (VIBGYOR)",
+                Font = new Font("Segoe UI", 7.8f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(255, 215, 0),
+                Location = new Point(14, 8),
+                AutoSize = true
+            };
+            pnlVibgyorTop.Controls.Add(lVibgyorTitle);
+
+            FlowLayoutPanel flowVibgyor = new FlowLayoutPanel {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Padding = new Padding(0, 3, 10, 0)
+            };
+
+            Color[] vibgyorColors = new Color[] {
+                Color.FromArgb(139, 92, 246), // Violet
+                Color.FromArgb(79, 70, 229),  // Indigo
+                Color.FromArgb(2, 132, 199),   // Blue
+                Color.FromArgb(5, 150, 105),   // Green
+                Color.FromArgb(234, 179, 8),   // Yellow
+                Color.FromArgb(234, 88, 12),   // Orange
+                Color.FromArgb(220, 38, 38)    // Red
+            };
+            string[] vibgyorNames = new string[] { "Violet", "Indigo", "Blue", "Green", "Yellow", "Orange", "Red" };
+            string[] vibgyorThemes = new string[] { "theme-dracula", "theme-tokyo-night", "theme-ocean", "theme-emerald", "theme-solarized-light", "theme-sunset", "theme-cyberpunk" };
+
+            for (int vi = 0; vi < vibgyorColors.Length; vi++)
+            {
+                int capturedIdx = vi;
+                Color vCol = vibgyorColors[capturedIdx];
+                string vName = vibgyorNames[capturedIdx];
+                string vTheme = vibgyorThemes[capturedIdx];
+
+                Panel vBox = new Panel {
+                    Size = new Size(18, 18),
+                    Margin = new Padding(2, 0, 3, 0),
+                    BackColor = vCol,
+                    Cursor = Cursors.Hand
+                };
+                vBox.Paint += (s, e) => {
+                    using (Pen pBox = new Pen(Color.FromArgb(200, 255, 215, 0), 1f)) {
+                        e.Graphics.DrawRectangle(pBox, 0, 0, vBox.Width - 1, vBox.Height - 1);
+                    }
+                };
+                vBox.MouseEnter += (s, e) => {
+                    ThemePalette.ColorAccentSky = vCol;
+                    ThemePalette.SetTheme(vTheme);
+                    pnlOxaamPortal.Invalidate();
+                };
+                vBox.Click += (s, e) => {
+                    ThemePalette.ColorAccentSky = vCol;
+                    ThemePalette.SetTheme(vTheme);
+                    ShowToast("VIBGYOR Theme: " + vName + " Applied");
+                    pnlOxaamPortal.Invalidate();
+                };
+                flowVibgyor.Controls.Add(vBox);
+            }
+            pnlVibgyorTop.Controls.Add(flowVibgyor);
+            pnlOxaamPortal.Controls.Add(pnlVibgyorTop);
+
+            // Bottom Bar: Marquee Support Email & Slogan
+            Panel pnlMarqueeBottom = new Panel {
+                Dock = DockStyle.Bottom,
+                Height = 26,
+                BackColor = Color.FromArgb(12, 0, 0, 0),
+                Padding = new Padding(12, 4, 12, 0)
+            };
+            Label lMarquee = new Label {
+                Text = "📧 Support: support@jdroid-x.com | admin@jdroid-x.com   •   🛡️ © 2026 All Rights Reserved by jDroid-X Studio Enterprise • Next-Gen Autonomous Remote Desktop   •   ⚡ 100% P2P Encrypted Mesh",
+                Font = new Font("Segoe UI", 7.4f),
+                ForeColor = isDarkMode ? Color.FromArgb(148, 163, 184) : Color.FromArgb(71, 85, 105),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            pnlMarqueeBottom.Controls.Add(lMarquee);
+            pnlOxaamPortal.Controls.Add(pnlMarqueeBottom);
+
+            int portalInnerW = isTwoCol ? ((containerW - 36) / 2) : (containerW - 24);
+
+            // COLUMN 1: SHARE SCREEN (THIS DESK) - Inside Portal
+            cardShare = new Panel {
+                Size = new Size(portalInnerW, colH),
+                Location = new Point(12, 40),
+                BackColor = Color.Transparent
+            };
             cardShare.Paint += (s, e) => {
-                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardShare.Width - 1, cardShare.Height - 1), ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 10);
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, cardShare.Width - 1, cardShare.Height - 1), ThemePalette.ColorBgInput, ThemePalette.ColorBorderCard, ThemePalette.ColorShadow, 8);
             };
 
-            Label lShareTitle = new Label { Text = "📥  Step 1: Share Screen (This Desk)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
-            Label lShareDesc = new Label { Text = "Give your 9-digit Desk ID to allow incoming control:", Font = new Font("Segoe UI", 8.2f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 34), AutoSize = true };
+            Label lShareTitle = new Label { Text = "📥  Welcome to jDroid-X (This Desk)", Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 10), AutoSize = true };
+            Label lShareDesc = new Label { Text = "⚡ 60 FPS Low Latency | 🔒 P2P Encrypted | 🛡️ UAC Bypass", Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Location = new Point(14, 30), AutoSize = true };
 
-            codeBox = new Panel { Size = new Size(Math.Min(220, colW - 28), 38), Location = new Point(14, 58), BackColor = Color.Transparent };
+            codeBox = new Panel { Size = new Size(Math.Min(220, portalInnerW - 28), 36), Location = new Point(14, 54), BackColor = Color.Transparent };
             codeBox.Paint += (s, e) => {
-                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, codeBox.Width - 1, codeBox.Height - 1), ThemePalette.ColorBgInput, ThemePalette.ColorBorderCard, Color.FromArgb(12, 0, 0, 0), 6);
+                ThemePalette.DrawFloatingCard(e.Graphics, new Rectangle(0, 0, codeBox.Width - 1, codeBox.Height - 1), ThemePalette.ColorBgCard, ThemePalette.ColorBorderCard, Color.FromArgb(12, 0, 0, 0), 6);
             };
-            lblCardLocalId = new Label { Text = currentHostDesktop != null ? currentHostDesktop.RemoteId : GenerateMachineDeskId(), Font = new Font("Consolas", 14f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, BackColor = Color.Transparent };
+            lblCardLocalId = new Label { Text = currentHostDesktop != null ? currentHostDesktop.RemoteId : GenerateMachineDeskId(), Font = new Font("Consolas", 13.5f, FontStyle.Bold), ForeColor = Color.FromArgb(56, 189, 248), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, BackColor = Color.Transparent };
             codeBox.Controls.Add(lblCardLocalId);
 
             shareBtns = new FlowLayoutPanel {
-                Location = new Point(14, 104),
-                Size = new Size(colW - 28, 36),
+                Location = new Point(14, 98),
+                Size = new Size(portalInnerW - 28, 34),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 BackColor = Color.Transparent
             };
 
-            Button btnCardCopy = new Button { Text = "📋 Copy ID", Size = new Size(88, 28), FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 6, 0) };
+            Button btnCardCopy = new Button { Text = "📋 Copy ID", Size = new Size(84, 26), FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(40, 53, 76) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.6f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 6, 0) };
             btnCardCopy.FlatAppearance.BorderSize = 0;
             btnCardCopy.Click += (s, e) => {
                 if (currentHostDesktop != null) {
@@ -491,7 +592,7 @@ namespace JDroidXDesk.Native
                 }
             };
 
-            Button btnCardInvite = new Button { Text = "✉️ Invite", Size = new Size(78, 28), FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.8f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 6, 0) };
+            Button btnCardInvite = new Button { Text = "✉️ Invite", Size = new Size(74, 26), FlatStyle = FlatStyle.Flat, BackColor = isDarkMode ? Color.FromArgb(30, 41, 59) : Color.FromArgb(226, 232, 240), ForeColor = isDarkMode ? Color.White : Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 7.6f, FontStyle.Bold), Cursor = Cursors.Hand, Margin = new Padding(0, 0, 6, 0) };
             btnCardInvite.FlatAppearance.BorderSize = 0;
             btnCardInvite.Click += (s, e) => {
                 if (currentHostDesktop != null) {
@@ -501,7 +602,7 @@ namespace JDroidXDesk.Native
                 }
             };
 
-            Label lShareStatus = new Label { Text = "● Ready", Font = new Font("Segoe UI", 7.6f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Margin = new Padding(4, 6, 0, 0) };
+            Label lShareStatus = new Label { Text = "● Ready", Font = new Font("Segoe UI", 7.4f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129), AutoSize = true, Margin = new Padding(4, 5, 0, 0) };
 
             shareBtns.Controls.Add(btnCardCopy);
             shareBtns.Controls.Add(btnCardInvite);
@@ -511,20 +612,20 @@ namespace JDroidXDesk.Native
             cardShare.Controls.Add(lShareDesc);
             cardShare.Controls.Add(codeBox);
             cardShare.Controls.Add(shareBtns);
-            cardContainer.Controls.Add(cardShare);
+            pnlOxaamPortal.Controls.Add(cardShare);
 
-            // COLUMN 2: CONNECT TO ANOTHER WORKSTATION (GIVE SUPPORT) - 3D Floating Flipper
+            // COLUMN 2: CONNECT (REMOTE DESK) - Inside Portal
             flipperConnect = new ModernCardFlipper {
-                Size = new Size(colW, colH),
-                Location = isTwoCol ? new Point(colW + 16, y) : new Point(0, y + colH + 14)
+                Size = new Size(portalInnerW, colH),
+                Location = isTwoCol ? new Point(portalInnerW + 24, 40) : new Point(12, 40 + colH + 10)
             };
 
             // FRONT VIEW: Connection Actions
-            Label lConnTitle = new Label { Text = "📤  Step 2: Connect (Remote Desk)", Font = new Font("Segoe UI", 11f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 12), AutoSize = true };
-            Label lConnDesc = new Label { Text = "Enter remote 9-digit Desk ID or select fleet:", Font = new Font("Segoe UI", 8.2f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(14, 34), AutoSize = true };
+            Label lConnTitle = new Label { Text = "📤  Connect to Remote Desk", Font = new Font("Segoe UI", 10.5f, FontStyle.Bold), ForeColor = ThemePalette.ColorTextPrimary, Location = new Point(14, 10), AutoSize = true };
+            Label lConnDesc = new Label { Text = "Enter partner Desk ID (Password is optional):", Font = new Font("Segoe UI", 7.8f), ForeColor = Color.FromArgb(16, 185, 129), Location = new Point(14, 30), AutoSize = true };
 
-            int targetInputW = Math.Max(120, Math.Min(220, colW - 130));
-            modernCardTargetBox = new ModernTextBox { Location = new Point(14, 58), Size = new Size(targetInputW, 38), AutoFormatDeskId = true };
+            int targetInputW = Math.Max(120, Math.Min(220, portalInnerW - 130));
+            modernCardTargetBox = new ModernTextBox { Location = new Point(14, 54), Size = new Size(targetInputW, 36), AutoFormatDeskId = true };
             if (txtCardTargetId == null) txtCardTargetId = new TextBox();
             modernCardTargetBox.TextChangedCustom += (s, e) => {
                 txtCardTargetId.Text = modernCardTargetBox.Text;
@@ -532,13 +633,13 @@ namespace JDroidXDesk.Native
                     txtTargetId.Text = modernCardTargetBox.Text;
             };
 
-            btnCardConnect = new ModernButton { Text = "⚡ Connect", Size = new Size(88, 38), Location = new Point(modernCardTargetBox.Right + 8, 58), NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38) };
+            btnCardConnect = new ModernButton { Text = "⚡ Connect", Size = new Size(88, 36), Location = new Point(modernCardTargetBox.Right + 8, 54), NormalColor = Color.FromArgb(239, 51, 64), HoverColor = Color.FromArgb(220, 38, 38) };
             btnCardConnect.Click += (s, e) => {
                 if (txtTargetId != null) txtTargetId.Text = modernCardTargetBox.Text.Trim();
                 ToggleSessionConnection();
             };
 
-            cboSavedFleet = new ComboBox { Location = new Point(14, 106), Size = new Size(colW - 28, 24), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8f) };
+            cboSavedFleet = new ComboBox { Location = new Point(14, 102), Size = new Size(portalInnerW - 28, 24), DropDownStyle = ComboBoxStyle.DropDownList, BackColor = ThemePalette.ColorBgInput, ForeColor = ThemePalette.ColorTextPrimary, Font = new Font("Segoe UI", 8f) };
             cboSavedFleet.Items.Add("-- Quick Select Fleet Workstation --");
             if (db != null && db.Devices != null)
             {
@@ -575,7 +676,7 @@ namespace JDroidXDesk.Native
                 ShowToast("LAN fallback: " + (swDirectLan.Checked ? "ON" : "OFF"));
             };
 
-            FlowLayoutPanel flowCipher = new FlowLayoutPanel { Location = new Point(14, 72), Size = new Size(colW - 28, 54), FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+            FlowLayoutPanel flowCipher = new FlowLayoutPanel { Location = new Point(14, 72), Size = new Size(portalInnerW - 28, 54), FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
             Action<string, string> addTelemTag = (k, v) => {
                 Panel tp = new Panel { Size = new Size(82, 42), Margin = new Padding(0, 0, 4, 0), BackColor = ThemePalette.ColorBgInput, BorderStyle = BorderStyle.FixedSingle };
                 Label tk = new Label { Text = k, Font = new Font("Segoe UI", 6.5f), ForeColor = ThemePalette.ColorTextSecondary, Location = new Point(3, 1), AutoSize = true };
@@ -595,9 +696,10 @@ namespace JDroidXDesk.Native
             flipperConnect.BackView.Controls.Add(swDirectLan);
             flipperConnect.BackView.Controls.Add(flowCipher);
 
-            cardContainer.Controls.Add(flipperConnect);
+            pnlOxaamPortal.Controls.Add(flipperConnect);
+            cardContainer.Controls.Add(pnlOxaamPortal);
 
-            y += isTwoCol ? colH + 16 : (colH * 2) + 28;
+            y += portalH + 16;
 
             // CARD 2.5: DISCOVERED ON LOCAL NETWORK (Nearby Desks) - 3D Floating Card
             cardDiscovered = new Panel {
@@ -1408,6 +1510,9 @@ namespace JDroidXDesk.Native
 
             currentConnectionState = SessionConnectionState.Disconnected;
             isSessionActive = false;
+            ReleaseAllModifierKeys();
+            try { SetHostPrivacyCurtain(false); } catch { }
+            isPrivacyModeActive = false;
             if (connectingAnimationTimer != null) connectingAnimationTimer.Stop();
             if (sessionTelemetryTimer != null) sessionTelemetryTimer.Stop();
             StopFrameReceiver();

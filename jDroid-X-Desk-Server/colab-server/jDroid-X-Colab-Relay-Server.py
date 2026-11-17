@@ -78,7 +78,7 @@ try:
     if os.path.exists("colab_tunnel.txt"):
         with open("colab_tunnel.txt", "r", encoding="utf-8") as f:
             t = f.read().strip()
-            if t and ".trycloudflare.com" in t:
+            if t and (t.startswith("http://") or t.startswith("https://")):
                 PUBLIC_TUNNEL_URL = t
 except Exception:
     pass
@@ -606,9 +606,15 @@ class ColabRelayHandler(BaseHTTPRequestHandler):
             target_id = payload.get('targetId')
             ev = payload.get('event')
             if target_id and ev:
+                import re
+                clean_target = re.sub(r'[^\d]', '', str(target_id))
                 if target_id not in INPUT_BUFFERS:
                     INPUT_BUFFERS[target_id] = []
                 INPUT_BUFFERS[target_id].append(ev)
+                if clean_target and clean_target != target_id:
+                    if clean_target not in INPUT_BUFFERS:
+                        INPUT_BUFFERS[clean_target] = []
+                    INPUT_BUFFERS[clean_target].append(ev)
             self.send_response(200)
             self._set_cors()
             self.send_header('Content-Type', 'application/json')

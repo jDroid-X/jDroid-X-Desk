@@ -5,16 +5,11 @@ param(
 
 $thumbprint = "ACBD12BEE072C0CAE42760AF078BD1996A6F293F"
 
-# Check if the Enterprise Root is trusted by Windows Kernel (LocalMachine\Root)
-$isMachineRootTrusted = [bool](Get-ChildItem Cert:\LocalMachine\Root -ErrorAction SilentlyContinue | Where-Object { $_.Thumbprint -eq $thumbprint })
+# 1. Unblock file from Mark-of-the-Web (Zone.Identifier)
+Unblock-File -Path $TargetExe -ErrorAction SilentlyContinue
 
-if (-not $isMachineRootTrusted -and -not $Force) {
-    Write-Host "[NOTICE] Enterprise Root certificate is not in Cert:\LocalMachine\Root." -ForegroundColor Yellow
-    Write-Host "[NOTICE] Under Windows 11 Smart App Control (SAC), signing with an un-whitelisted private certificate triggers Event ID 3077 (Device Guard Block)." -ForegroundColor Yellow
-    Write-Host "[NOTICE] Leaving binary unsigned so it runs cleanly without Device Guard blocking." -ForegroundColor Green
-    Write-Host "[ACTION] To sign with full kernel trust, run 'TRUST_ENTERPRISE_CERT_AS_ADMIN.bat' as Administrator once." -ForegroundColor Cyan
-    exit 0
-}
+# 2. Check if the Enterprise Root is trusted by Windows Kernel (LocalMachine\Root)
+$isMachineRootTrusted = [bool](Get-ChildItem Cert:\LocalMachine\Root -ErrorAction SilentlyContinue | Where-Object { $_.Thumbprint -eq $thumbprint })
 
 Write-Host "=== Step 1: Whitelist in Trusted Publisher Store ===" -ForegroundColor Cyan
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -37,7 +32,17 @@ if (-not $cert) {
 }
 
 Write-Host "[+] Signer: $($cert.Subject)"
-$sig = Set-AuthenticodeSignature -FilePath $TargetExe -Certificate $cert
+try {
+    $sig = Set-AuthenticodeSignature -FilePath $TargetExe -Certificate $cert -ErrorAction Stop
+} catch {
+    Write-Error "[FAIL] Set-AuthenticodeSignature threw exception: $_"
+    exit 1
+}
+
+if ($sig.Status -ne "Valid") {
+    Write-Error "[FAIL] Authenticode Signing Failed with Status: $($sig.Status) ($($sig.StatusMessage))"
+    exit 1
+}
 
 Write-Host "`n=== Step 3: Microsoft Authenticode Verification ===" -ForegroundColor Cyan
 $auth = Get-AuthenticodeSignature -FilePath $TargetExe

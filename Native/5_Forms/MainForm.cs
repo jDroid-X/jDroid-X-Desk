@@ -86,6 +86,33 @@ namespace JDroidXDesk.Native
         [DllImport("user32.dll")]
         private static extern bool DrawIcon(IntPtr hdc, int x, int y, IntPtr hIcon);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr OpenInputDesktop(uint dwFlags, bool fInherit, uint dwDesiredAccess);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetThreadDesktop(IntPtr hDesktop);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool CloseDesktop(IntPtr hDesktop);
+
+        private const uint DESKTOP_ALL_ACCESS = 0x01FF;
+
+        public static void AttachToActiveInputDesktop()
+        {
+            try
+            {
+                IntPtr hDesk = OpenInputDesktop(0, false, DESKTOP_ALL_ACCESS);
+                if (hDesk != IntPtr.Zero)
+                {
+                    SetThreadDesktop(hDesk);
+                    CloseDesktop(hDesk);
+                }
+            }
+            catch { }
+        }
+
+        public static string AutoResumeSessionId = null;
+
         private static int activeHostMonitorIndex = 0;
         public static void SetActiveHostMonitorIndex(int idx)
         {
@@ -322,6 +349,7 @@ namespace JDroidXDesk.Native
         // Host Daemon (Continuous Screen Capture & Remote Admin Input Execution)
         private Thread hostDaemonThread;
         private volatile bool isHostDaemonRunning = false;
+        private AutoResetEvent hostWakeEvent = new AutoResetEvent(false);
         private string cachedWinningRelayUrl = null;
         private DateTime lastWinningCheckTime = DateTime.MinValue;
 
@@ -370,6 +398,7 @@ namespace JDroidXDesk.Native
 
         // System Tray
         private NotifyIcon trayIcon;
+        public NotifyIcon TrayIcon { get { return trayIcon; } }
         private ContextMenu trayMenu;
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -408,22 +437,87 @@ namespace JDroidXDesk.Native
                 {
                     if (!isFirstInstance)
                     {
-                        IntPtr hWndMini = FindWindow(null, "jDroid-X-Desk Mini | Remote Connection");
-                        if (hWndMini != IntPtr.Zero)
+                        bool isHandoff = (args != null && args.Length > 0 && (Array.IndexOf(args, "--elevated") >= 0 || Array.IndexOf(args, "--session-elevate") >= 0));
+                        if (isHandoff)
                         {
-                            ShowWindow(hWndMini, 9); // SW_RESTORE
-                            SetForegroundWindow(hWndMini);
-                            return;
+                            try { isFirstInstance = singleMutex.WaitOne(3500, true); } catch { }
                         }
-                        IntPtr hWndFull = FindWindow(null, "jDroid-X-Desk | Remote Desktop Workspace");
-                        if (hWndFull != IntPtr.Zero)
+                    }
+
+                    if (!isFirstInstance)
+                    {
+                        // Layer 1: Ping local Embedded Relay to restore existing window to foreground instantly
+                        try
                         {
-                            ShowWindow(hWndFull, 9); // SW_RESTORE
-                            SetForegroundWindow(hWndFull);
-                            return;
+                            int wakePort = 8088;
+                            try
+                            {
+                                string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "database.json");
+                                if (File.Exists(dbPath))
+                                {
+                                    string txt = File.ReadAllText(dbPath);
+                                    int idx = txt.IndexOf("\"relayPort\":");
+                                    if (idx > 0)
+                                    {
+                                        string sub = txt.Substring(idx + 12, Math.Min(12, txt.Length - (idx + 12)));
+                                        var m = System.Text.RegularExpressions.Regex.Match(sub, @"\d+");
+                                        if (m.Success) wakePort = int.Parse(m.Value);
+                                    }
+                                }
+                            }
+                            catch { }
+
+                            var req = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(string.Format("http://127.0.0.1:{0}/api/window/show", wakePort));
+                            req.Timeout = 800;
+                            using (var resp = req.GetResponse())
+                            {
+                                return; // Existing instance successfully awakened and brought to foreground!
+                            }
                         }
-                        MessageBox.Show("jDroid-X-Desk is already running in the background or system tray.\nCheck the notification area or double-click the shield icon.", "Already Running", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        catch { }
+
+                        // Layer 2: Signal existing running instance IPC restore event
+                        try
+                        {
+                            using (var restoreEvent = EventWaitHandle.OpenExisting(@"Global\jDroid-X-Desk-Restore-Event-2026"))
+                            {
+                                restoreEvent.Set();
+                                return;
+                            }
+                        }
+                        catch { }
+
+                        // Layer 3: Fallback Win32 FindWindow search across all official window titles
+                        string[] knownTitles = new string[] {
+                            "jDroid-X-Desk Mini | Remote Desktop Console",
+                            "jDroid-X-Desk | Remote Desktop Workspace",
+                            "jDroid-X-Desk Launcher"
+                        };
+                        foreach (string title in knownTitles)
+                        {
+                            IntPtr hWnd = FindWindow(null, title);
+                            if (hWnd != IntPtr.Zero)
+                            {
+                                ShowWindow(hWnd, 9); // SW_RESTORE
+                                ShowWindow(hWnd, 5); // SW_SHOW
+                                SetForegroundWindow(hWnd);
+                                return;
+                            }
+                        }
                         return;
+                    }
+
+                    // Parse session elevate target argument
+                    if (args != null && args.Length > 0)
+                    {
+                        for (int ai = 0; ai < args.Length; ai++)
+                        {
+                            if (args[ai] == "--session-elevate" && ai + 1 < args.Length)
+                            {
+                                AutoResumeSessionId = args[ai + 1];
+                                break;
+                            }
+                        }
                     }
 
                     // Self-healing: Ensure essential files exist in working directory
@@ -500,6 +594,38 @@ namespace JDroidXDesk.Native
                 }
 
                 MainForm mainApp = new MainForm();
+                MiniDeskForm miniFormInstance = null;
+
+                // Background IPC Listener: When another instance is clicked, immediately restore active window to foreground
+                ThreadPool.QueueUserWorkItem(_ => {
+                    try
+                    {
+                        using (var restoreEvent = new EventWaitHandle(false, EventResetMode.AutoReset, @"Global\jDroid-X-Desk-Restore-Event-2026"))
+                        {
+                            while (true)
+                            {
+                                restoreEvent.WaitOne();
+                                try
+                                {
+                                    if (miniFormInstance != null && !miniFormInstance.IsDisposed)
+                                    {
+                                        miniFormInstance.BeginInvoke(new Action(() => {
+                                            miniFormInstance.RestoreFromTray();
+                                        }));
+                                    }
+                                    else if (mainApp != null && !mainApp.IsDisposed)
+                                    {
+                                        mainApp.BeginInvoke(new Action(() => {
+                                            mainApp.ShowFullConsole();
+                                        }));
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    catch { }
+                });
 
                 if (chosenMode == "mini")
                 {
@@ -508,9 +634,9 @@ namespace JDroidXDesk.Native
                     mainApp.ShowInTaskbar = false;
                     mainApp.Visible = false;
 
-                    MiniDeskForm miniForm = new MiniDeskForm(mainApp);
-                    mainApp.RegisterMiniDeskForm(miniForm);
-                    Application.Run(miniForm);
+                    miniFormInstance = new MiniDeskForm(mainApp);
+                    mainApp.RegisterMiniDeskForm(miniFormInstance);
+                    Application.Run(miniFormInstance);
                 }
                 else
                 {
@@ -622,23 +748,35 @@ namespace JDroidXDesk.Native
         {
             try
             {
-                var p = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent());
-                return p.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                return SessionElevationService.Instance.IsElevated();
             }
-            catch { return false; }
+            catch
+            {
+                try
+                {
+                    var p = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent());
+                    return p.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                }
+                catch { return false; }
+            }
         }
 
-        public static void RequestProcessElevation()
+        public static void RequestProcessElevation(string resumeSessionId = null)
         {
             try
             {
-                ProcessStartInfo psi = new ProcessStartInfo(Application.ExecutablePath)
+                string args = string.IsNullOrEmpty(resumeSessionId) ? "--elevated" : ("--session-elevate " + resumeSessionId);
+                if (!SessionElevationService.Instance.RelaunchElevated(args))
                 {
-                    UseShellExecute = true,
-                    Verb = "runas"
-                };
-                Process.Start(psi);
-                Application.Exit();
+                    ProcessStartInfo psi = new ProcessStartInfo(Application.ExecutablePath)
+                    {
+                        UseShellExecute = true,
+                        Verb = "runas",
+                        Arguments = args
+                    };
+                    Process.Start(psi);
+                    Application.Exit();
+                }
             }
             catch { }
         }
@@ -1013,12 +1151,33 @@ namespace JDroidXDesk.Native
 
         public MainForm()
         {
+            try { SessionElevationService.Instance.ConfigureUIPIBypass(); } catch { }
             EngineScriptProvisioner.EnsureAllEngineScripts(AppDomain.CurrentDomain.BaseDirectory);
             db = new DatabaseContext();
 
-            // Local Node Identity dynamically derived from machine hardware key
-            string uniqueId = GenerateMachineDeskId();
-            string uniquePass = GenerateMachinePasscode();
+            // Establish Single Source of Truth (SSOT): First check local_desk_identity.json
+            string uniqueId = "";
+            string uniquePass = "";
+            string idFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "local_desk_identity.json");
+            if (File.Exists(idFile))
+            {
+                try
+                {
+                    string rawJson = File.ReadAllText(idFile);
+                    var dict = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(rawJson);
+                    if (dict != null)
+                    {
+                        if (dict.ContainsKey("deskId") && dict["deskId"] != null) uniqueId = dict["deskId"].ToString().Trim();
+                        if (dict.ContainsKey("passcode") && dict["passcode"] != null) uniquePass = dict["passcode"].ToString().Trim();
+                    }
+                }
+                catch { }
+            }
+
+            if (string.IsNullOrEmpty(uniqueId)) uniqueId = GenerateMachineDeskId();
+            if (string.IsNullOrEmpty(uniquePass)) uniquePass = GenerateMachinePasscode();
+
+            EmbeddedRelayServer.Instance.SetHostIdentity(uniqueId, uniquePass);
             currentHostDesktop = new SimulatorDesktop {
                 Key = "LOCAL",
                 Name = Environment.MachineName,
@@ -1030,6 +1189,14 @@ namespace JDroidXDesk.Native
                 AccentColor = Color.FromArgb(56, 189, 248),
                 ActiveApps = new[] { "Desktop Session" }
             };
+
+            try
+            {
+                string idJson = string.Format("{{\"deskId\":\"{0}\",\"passcode\":\"{1}\",\"machineName\":\"{2}\",\"updatedAt\":\"{3}\"}}",
+                    uniqueId, uniquePass, Environment.MachineName, DateTime.UtcNow.ToString("o"));
+                File.WriteAllText(idFile, idJson);
+            }
+            catch { }
 
             // Remote Desktops are loaded strictly from db.Contacts / db.Devices (excluding self)
             SyncDynamicDesktopsFromDatabase();
@@ -1128,10 +1295,23 @@ namespace JDroidXDesk.Native
                     string ep = EmbeddedRelayServer.Instance.LastViewerEndpoint ?? "Remote Desk";
                     string clientIp = ExtractClientIp(ep);
 
-                    // Suppress loopback self-triggers
-                    if (clientIp == "127.0.0.1" || clientIp == "::1" || clientIp == "localhost")
+                    // Anti-Recursion: Only suppress if the incoming connection is literally from this host's own self-client ID
+                    if (currentHostDesktop != null && !string.IsNullOrEmpty(currentHostDesktop.RemoteId))
                     {
-                        hasViewer = false;
+                        if (string.Equals(ep, currentHostDesktop.RemoteId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasViewer = false;
+                        }
+                    }
+
+                    if (hasViewer && db != null && db.Settings != null && db.Settings.access != null && db.Settings.access.unattendedAccess)
+                    {
+                        if (!approvedViewerIps.Contains(clientIp))
+                        {
+                            approvedViewerIps.Add(clientIp);
+                            EmbeddedRelayServer.Instance.AuthorizeViewer(clientIp);
+                            EmbeddedRelayServer.Instance.AuthorizeViewer(ep);
+                        }
                     }
 
                     if (!hasViewer)
@@ -1204,6 +1384,12 @@ namespace JDroidXDesk.Native
                     UpdateDiscoveredDesksContent();
                 }
 
+                // Periodic Cloud Signaling Presence Heartbeat (every 15 seconds)
+                if (headerHeartbeatPulseFrame % 60 == 0)
+                {
+                    RegisterWithColabRelay();
+                }
+
                 if (currentConnectionState == SessionConnectionState.Connecting)
                 {
                     if (connectingAnimationTimer.Interval != 40) connectingAnimationTimer.Interval = 40;
@@ -1223,10 +1409,76 @@ namespace JDroidXDesk.Native
 
             BuildAntigravityLayout();
             SetupTraySupervisor();
-            RegisterWithColabRelay();
+
+            // Wire Remote Relay Window Wake/Restore Event & Viewer Activity Wakeup
+            try
+            {
+                EmbeddedRelayServer.OnViewerActivity += () => {
+                    try { if (hostWakeEvent != null) hostWakeEvent.Set(); } catch { }
+                };
+                EmbeddedRelayServer.Instance.OnWindowShowRequested += () => {
+                    try
+                    {
+                        if (miniDeskForm != null && !miniDeskForm.IsDisposed)
+                        {
+                            miniDeskForm.BeginInvoke(new Action(() => miniDeskForm.RestoreFromTray()));
+                        }
+                        else if (this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            this.BeginInvoke(new Action(() => ShowFullConsole()));
+                        }
+                    }
+                    catch { }
+                };
+            }
+            catch { }
+
+            StartSignalingHeartbeatLoop();
             StartHostDaemon();
             StartColabTelemetryMonitor();
             SyncFromGitHubBackend();
+
+            // Initialize Autonomous Enterprise Dependency & Integration Supervisor
+            try
+            {
+                DependencySupervisor.Instance.OnIntegrationBroken += (msg) => {
+                    try {
+                        if (this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            this.BeginInvoke(new Action(() => {
+                                ShowToast("⚠️ " + msg);
+                            }));
+                        }
+                    } catch { }
+                };
+
+                DependencySupervisor.Instance.OnSelfHealed += (msg) => {
+                    try {
+                        if (this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            this.BeginInvoke(new Action(() => {
+                                ShowToast(msg);
+                                ThreadPool.QueueUserWorkItem(delegate { PingColabServer(); });
+                            }));
+                        }
+                    } catch { }
+                };
+
+                DependencySupervisor.Instance.Start(8000);
+            }
+            catch { }
+
+            // Auto-launch Cloudflare Ingress Tunnel if colabCloudRelay enabled
+            try
+            {
+                if (db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.colabCloudRelay)
+                {
+                    int rPort = db.Settings.connection.relayPort > 0 ? db.Settings.connection.relayPort : 8088;
+                    string token = db.Settings.connection.tunnelToken;
+                    CloudflareTunnelEngine.StartTunnel(rPort, string.IsNullOrEmpty(token) ? null : token);
+                }
+            }
+            catch { }
 
             // Hook Cloudflare Tunnel auto-discovery
             CloudflareTunnelEngine.OnUrlDiscovered += (url) => {
@@ -1251,6 +1503,14 @@ namespace JDroidXDesk.Native
             SwitchWorkspaceView("Console");
             SetDoubleBuffered(this);
             StartEmbeddedRelayServer();
+
+            if (!string.IsNullOrEmpty(AutoResumeSessionId))
+            {
+                isHostServingRemoteClient = true;
+                approvedViewerIps.Add("ELEVATED_SESSION");
+                EmbeddedRelayServer.Instance.AuthorizeViewer("ELEVATED_SESSION");
+                ShowToast("🛡️ Resumed elevated session as Administrator: " + AutoResumeSessionId);
+            }
 
             // Background Firewall Rule Registration (Zero-Block Inbound LAN P2P)
             ThreadPool.QueueUserWorkItem(delegate {
@@ -3440,14 +3700,40 @@ namespace JDroidXDesk.Native
             }
 
             // 5. Online Cloud Middle Bridge & Cloudflare Ingress (Primary Cloud Relay for jDroid-X)
-            if (!candidateUrls.Contains("https://desk.jdroid-x.com")) candidateUrls.Insert(0, "https://desk.jdroid-x.com");
+            string defaultRelay = (db != null && db.Settings != null && db.Settings.connection != null && !string.IsNullOrEmpty(db.Settings.connection.relayServer))
+                ? db.Settings.connection.relayServer
+                : "https://desk.jdroid-x.com";
+            if (!string.IsNullOrEmpty(defaultRelay) && defaultRelay.Contains("freemodels.club"))
+            {
+                defaultRelay = "https://desk.jdroid-x.com";
+            }
+            if (!candidateUrls.Contains(defaultRelay))
+            {
+                if (candidateUrls.Count > 0 && (candidateUrls[0].Contains("192.168.") || candidateUrls[0].Contains("10.") || candidateUrls[0].Contains("172.")))
+                {
+                    candidateUrls.Add(defaultRelay);
+                }
+                else
+                {
+                    candidateUrls.Insert(0, defaultRelay);
+                }
+            }
 
             // Local loopback is ONLY permitted when targetId is explicitly localhost or 127.0.0.1
             bool isExplicitLoopback = !string.IsNullOrEmpty(targetId) && (targetId.Contains("127.0.0.1") || targetId.ToLower().Contains("localhost"));
-            if (isExplicitLoopback)
+            bool isSelfRegistration = string.IsNullOrEmpty(targetId);
+            if (isExplicitLoopback || isSelfRegistration)
             {
-                if (!candidateUrls.Contains("http://127.0.0.1:8088")) candidateUrls.Add("http://127.0.0.1:8088");
-                if (!candidateUrls.Contains("http://localhost:8088")) candidateUrls.Add("http://localhost:8088");
+                int rPort = (db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.relayPort > 0) ? db.Settings.connection.relayPort : 8088;
+                int gPort = (db != null && db.Settings != null && db.Settings.connection != null && db.Settings.connection.localPort > 0) ? db.Settings.connection.localPort : 7700;
+                string rUrl = "http://127.0.0.1:" + rPort;
+                string gUrl = "http://127.0.0.1:" + gPort;
+                if (!candidateUrls.Contains(rUrl)) candidateUrls.Add(rUrl);
+                if (!candidateUrls.Contains(gUrl)) candidateUrls.Add(gUrl);
+            }
+            else
+            {
+                candidateUrls.RemoveAll(u => u.Contains("127.0.0.1") || u.ToLower().Contains("localhost"));
             }
 
             // 6. YAML fallbacks
@@ -3630,6 +3916,8 @@ namespace JDroidXDesk.Native
             btn.ForeColor = isActive ? Color.White : Color.FromArgb(148, 163, 184);
             btn.BackColor = isActive ? Color.FromArgb(40, 53, 76) : Color.Transparent;
         }
+
+
 
     }
 }

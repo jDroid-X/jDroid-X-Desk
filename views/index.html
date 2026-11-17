@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light" data-accent="violet">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +8,287 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/themes/themes.css?v=2026.10.22.4">
-    <link rel="stylesheet" href="styles/styles.css?v=2026.10.22.4">
-    <link rel="stylesheet" href="styles.css?v=2026.10.22.4">
+    <link rel="stylesheet" href="styles/themes/themes.css?v=2026.10.31.01">
+    <link rel="stylesheet" href="styles/styles.css?v=2026.10.31.02">
+    <link rel="stylesheet" href="styles.css?v=2026.10.31.02">
 </head>
-<body class="light-theme">
-    <!-- UX-2: App Preloader — hidden by default for instant AnyDesk-style access -->
-    <div id="app-preloader" style="position:fixed;inset:0;z-index:999999;background:rgba(4,8,20,0.98);display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem;">
-        <img src="assets/jdroidxlogo_trans.png" alt="Loading" style="width:64px;height:64px;filter:drop-shadow(0 0 20px rgba(0,102,255,0.7));animation:logoPulse 1.5s ease-in-out infinite;">
-        <div style="width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;">
-            <div id="preloader-bar" style="height:100%;width:30%;background:linear-gradient(90deg,#0066ff,#00f2fe);border-radius:99px;animation:preloaderSlide 1.2s ease-in-out infinite;"></div>
+<body class="light-theme portal-mode" data-accent="violet">
+    <!-- LANDING PORTAL: Ultra-Compact Login.html Layout & VIBGYOR Spine (Initial Screen Mode) -->
+    <div id="landing-portal-wrapper" class="landing-portal-overlay">
+        <!-- Ambient Color Tint Wash -->
+        <div class="portal-ambient-wash" id="portal-ambient-wash"></div>
+        
+        <!-- Main Card Container with Gold Aura -->
+        <div class="portal-card-container">
+            <!-- Radiant Edge Accents -->
+            <div class="portal-edge-left card-edge-highlight-left"></div>
+            <div class="portal-edge-right card-edge-highlight-right"></div>
+            
+            <!-- 3-Column Core Split -->
+            <div class="portal-core-split">
+                <!-- Column 1: Brand & Hero Features -->
+                <div class="portal-brand-col">
+                    <div class="portal-bg-watermark"></div>
+                    <!-- 1st Line: Logo Left, Name Center, Version Right (Spread across Left Panel Width) -->
+                    <div class="brand-header-cluster portal-brand-header">
+                        <div class="brand-header-left">
+                            <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" class="brand-logo-img portal-brand-logo-img" onerror="this.style.display='none'; const fb = document.getElementById('brandFallbackLogo'); if (fb) fb.style.display='flex';">
+                            <div id="brandFallbackLogo" class="brand-fallback-logo" style="display: none;">JX</div>
+                        </div>
+                        <div class="brand-title portal-brand-title">
+                            <span class="brand-name-text portal-brand-name-text">jDroid-X</span>
+                        </div>
+                        <div class="brand-header-right">
+                            <span class="brand-sub-badge portal-sub-badge">v2.5 PRO</span>
+                        </div>
+                    </div>
+                    <h1 class="portal-hero-title">Welcome <span class="thumbsup-anim">👍</span></h1>
+                    <p class="portal-hero-desc">Next-Gen Sovereign Remote Desktop & Ultra-Low Latency P2P Workspace.</p>
+                    <div class="portal-feature-pills-wrap">
+                        <div class="portal-pill-item">
+                            <span class="portal-pill-icon">⚡</span>
+                            <span>1-Click Ultra-Low Latency (60 FPS NVENC/AV1)</span>
+                        </div>
+                        <div class="portal-pill-item">
+                            <span class="portal-pill-icon">🔒</span>
+                            <span>100% Secure P2P Encryption (Zero-Trust DTLS)</span>
+                        </div>
+                        <div class="portal-pill-item">
+                            <span class="portal-pill-icon">🛡️</span>
+                            <span>Built-in UAC Admin Bypass (SYSTEM Elevation)</span>
+                        </div>
+                        <div class="portal-pill-item">
+                            <span class="portal-status-dot"></span>
+                            <span>Zero-Install Web & Native Mesh</span>
+                        </div>
+                        <div class="portal-pill-item">
+                            <span class="portal-pill-icon">🎧</span>
+                            <span>24×7 Instant Remote Support & AI Agents</span>
+                        </div>
+                    </div>
+                    <div class="portal-footnote">
+                        Cross-platform connectivity: Windows 11/10, Linux, macOS, iOS & Android.
+                    </div>
+                </div>
+
+                <!-- Column 2: VIBGYOR Theme Spine -->
+                <div class="theme-spine-column">
+                    <div class="mode-tickbox mode-tickbox-white" id="portal-theme-light" title="Light Mode">
+                        <i class="fa-solid fa-sun" style="font-size:10px; color:#f59e0b;"></i>
+                    </div>
+                    <div class="spine-line"></div>
+                    <div class="vibgyor-cluster">
+                        <div class="vib-box vib-v" data-theme="violet" title="Violet Theme"></div>
+                        <div class="vib-box vib-i" data-theme="indigo" title="Indigo Theme"></div>
+                        <div class="vib-box vib-b" data-theme="blue" title="Blue Theme"></div>
+                        <div class="vib-box vib-g" data-theme="green" title="Green Theme"></div>
+                        <div class="vib-box vib-y" data-theme="yellow" title="Yellow Theme"></div>
+                        <div class="vib-box vib-o" data-theme="orange" title="Orange Theme"></div>
+                        <div class="vib-box vib-r" data-theme="red" title="Red Theme"></div>
+                    </div>
+                    <div class="spine-line"></div>
+                    <div class="mode-tickbox mode-tickbox-black" id="portal-theme-dark" title="Dark Mode">
+                        <i class="fa-solid fa-moon" style="font-size:10px; color:#a78bfa;"></i>
+                    </div>
+                </div>
+
+                <!-- Column 3: Dual Desk Boxes & Connect -->
+                <div class="portal-connect-box">
+                    <!-- Application Parity & Version Indicator -->
+                    <div id="portal-app-parity-bar" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; margin-bottom: 0.75rem; background: rgba(15,23,42,0.8); border: 1px solid var(--border-color, #334155); border-radius: 8px; font-size: 0.76rem; gap: 8px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span id="parity-desk1-dot" class="portal-status-dot" style="background:#eab308;"></span>
+                            <span style="color: var(--text-color);">Desk App Parity: <strong id="parity-desk1-status" style="color: #eab308;">Detecting Local Engine...</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span id="parity-app-badge" class="badge" style="background: rgba(56,189,248,0.12); color: #38bdf8; border: 1px solid #38bdf8; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px;">
+                                GitHub: v2.5.0 (Latest)
+                            </span>
+                            <button type="button" id="btn-quick-run-or-update" class="portal-mini-btn" style="padding: 2px 8px; font-size: 0.72rem; background: #10b981; color: #fff; border: none; border-radius: 4px; cursor: pointer; display: none;">
+                                <i class="fa-solid fa-bolt"></i> Run App
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Desk 1: Your Desk Card -->
+                    <div class="desk-card-box">
+                        <div class="desk-box-header">
+                            <span class="desk-box-title"><i class="fa-solid fa-desktop"></i> YOUR DESK ID (GET SUPPORT)</span>
+                            <span class="uac-badge"><i class="fa-solid fa-shield-halved"></i> UAC Ready</span>
+                        </div>
+                        <div class="desk-id-row">
+                            <span class="desk-id-display" id="portal-local-device-id">381-422-623</span>
+                            <div class="desk-id-actions">
+                                <button type="button" class="portal-mini-btn" id="portal-btn-edit-desk-id" title="Set/Sync Desk ID">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button type="button" class="portal-mini-btn" id="portal-btn-copy-desk-id" title="Copy Desk ID">
+                                    <i class="fa-regular fa-copy"></i> Copy
+                                </button>
+                                <button type="button" class="portal-mini-btn portal-invite-btn" id="portal-btn-invite" title="Invite User">
+                                    <i class="fa-solid fa-paper-plane"></i> Invite
+                                </button>
+                            </div>
+                        </div>
+                        <div class="desk-sub-row">
+                            <span>One-Time Password: <strong class="pass-value" id="portal-local-one-time-pass">931-620</strong></span>
+                            <span style="color:var(--text-dim,#94a3b8);"><i class="fa-solid fa-lock"></i> Auto-Generated</span>
+                        </div>
+                    </div>
+
+                    <!-- Reactive Incoming Invitation Banner (Desk 2 Acceptance Alert) -->
+                    <div id="portal-incoming-alert" class="portal-incoming-alert-card" style="display: none;">
+                        <div class="incoming-alert-header">
+                            <span class="incoming-pulse-dot"></span>
+                            <span class="incoming-alert-title"><i class="fa-solid fa-tower-broadcast"></i> INCOMING CONNECTION REQUEST</span>
+                            <span id="portal-incoming-timer" style="margin-left: auto; font-size: 0.75rem; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid #10b981; padding: 2px 7px; border-radius: 4px; font-weight: 700;">
+                                <i class="fa-solid fa-clock"></i> <span id="portal-incoming-countdown">120s</span>
+                            </span>
+                        </div>
+                        <div class="incoming-alert-body">
+                            <p>Remote Operator <strong id="portal-incoming-source-id" class="caller-highlight">---</strong> is requesting remote access to this desk.</p>
+                        </div>
+                        <div class="incoming-alert-actions">
+                            <button type="button" class="portal-btn-accept" id="portal-btn-accept-incoming">
+                                <i class="fa-solid fa-check"></i> Accept Connection
+                            </button>
+                            <button type="button" class="portal-btn-decline" id="portal-btn-reject-incoming">
+                                <i class="fa-solid fa-xmark"></i> Decline
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Reactive Native Remote Control & Download Action Card (Desk 2 Accepted Alert) -->
+                    <div id="portal-native-control-card" class="portal-incoming-alert-card" style="display: none; border-color: var(--accent-blue, #0284c7); background: linear-gradient(135deg, rgba(2,132,199,0.12), rgba(15,23,42,0.95)); margin-bottom: 1rem;">
+                        <div class="incoming-alert-header">
+                            <span class="incoming-pulse-dot" style="background: var(--accent-blue, #38bdf8);"></span>
+                            <span class="incoming-alert-title" style="color: var(--accent-blue, #38bdf8); font-size: 0.85rem;"><i class="fa-solid fa-gamepad"></i> REMOTE CONTROL ACCESS &amp; SCREEN SHARING</span>
+                            <span class="badge" style="margin-left: auto; font-size: 0.72rem; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid #10b981; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                                <i class="fa-solid fa-feather"></i> Portable (No Install)
+                            </span>
+                        </div>
+                        <div class="incoming-alert-body" style="font-size: 0.85rem; color: var(--text-color); margin: 0.5rem 0;">
+                            <p style="margin: 0 0 0.35rem;">
+                                Connection accepted from Operator <strong id="portal-native-control-caller" style="color: var(--accent-blue, #38bdf8); font-family: var(--font-mono, monospace);">---</strong>.
+                            </p>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                Run portable <strong>jDroid-X-Desk.exe</strong> for zero-prompt DXGI 60 FPS screen capture &amp; full mouse/keyboard remote control. Or share via browser (view-only).
+                            </p>
+                            <div id="portal-native-control-status" style="display: none; margin-top: 0.5rem; padding: 0.45rem 0.7rem; border-radius: 6px; font-size: 0.78rem;"></div>
+                        </div>
+                        <div class="incoming-alert-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem;">
+                            <button type="button" class="btn btn-primary" id="portal-btn-run-local-exe" style="flex: 1.2; padding: 0.55rem 0.8rem; font-weight: 700; font-size: 0.82rem; background: #10b981; border: 1px solid #10b981; color: #fff; cursor: pointer; border-radius: 6px;" title="Directly launch jDroid-X-Desk.exe if available in Downloads or PC">
+                                <i class="fa-solid fa-bolt"></i> Run Local (.EXE)
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="portal-btn-download-exe" style="flex: 1.1; padding: 0.55rem 0.8rem; font-weight: 600; font-size: 0.8rem; background: rgba(56,189,248,0.15); border: 1px solid #38bdf8; color: #38bdf8; cursor: pointer; border-radius: 6px;" title="Download portable executable directly from GitHub">
+                                <i class="fa-solid fa-download"></i> Download (.EXE)
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="portal-btn-browser-share" style="flex: 1; padding: 0.55rem 0.8rem; font-weight: 600; font-size: 0.8rem; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: var(--text-color); cursor: pointer; border-radius: 6px;" title="Share screen using standard browser picker (View-Only)">
+                                <i class="fa-solid fa-desktop"></i> Browser Share
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="portal-btn-quickassist" style="flex: 0.9; padding: 0.55rem 0.6rem; font-weight: 600; font-size: 0.78rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; border-radius: 6px;" title="Windows Quick Assist">
+                                <i class="fa-brands fa-windows"></i> Quick Assist
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Desk 2: Partner Desk Card -->
+                    <div class="desk-card-box">
+                        <div class="desk-box-header">
+                            <span class="desk-box-title"><i class="fa-solid fa-network-wired"></i> PARTNER DESK ID (GIVE SUPPORT)</span>
+                        </div>
+                        <div class="portal-input-group">
+                            <input type="text" id="portal-target-id-input" class="portal-input" placeholder="e.g. 582-109-431 or JDX-ABCD-1234" autocomplete="off">
+                        </div>
+                        <!-- Active Online Discovered Desks Pill Strip -->
+                        <div id="portal-online-peers-strip" class="portal-online-peers-strip" style="display:flex; align-items:center; gap:6px; margin-top:6px; flex-wrap:wrap; min-height:22px;"></div>
+                        <div class="portal-input-group" style="margin-top:4px;">
+                            <div class="pass-header-line">
+                                <span class="pass-sub-label">SECURITY PASSWORD:</span>
+                                <span class="not-mandatory-note">✔ (Password is not mandatory)</span>
+                            </div>
+                            <input type="password" id="portal-target-pass-input" class="portal-input" placeholder="Enter partner password (optional)" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <!-- Reactive Native Remote Control & Download Action Card for Desk 1 (Controller) -->
+                    <div id="portal-desk1-control-card" class="portal-incoming-alert-card" style="display: none; border-color: var(--accent-purple, #8b5cf6); background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(15,23,42,0.95)); margin-bottom: 1rem;">
+                        <div class="incoming-alert-header">
+                            <span class="incoming-pulse-dot" style="background: #a855f7;"></span>
+                            <span class="incoming-alert-title" style="color: #c084fc; font-size: 0.85rem;"><i class="fa-solid fa-gamepad"></i> DESK 1 CONTROLLER (PORTABLE APP SETUP)</span>
+                            <span id="portal-desk1-version-badge" class="badge" style="margin-left: auto; font-size: 0.72rem; background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid #c084fc; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                                <i class="fa-solid fa-shield-halved"></i> App Parity Required
+                            </span>
+                        </div>
+                        <div class="incoming-alert-body" style="font-size: 0.85rem; color: var(--text-color); margin: 0.5rem 0;">
+                            <p style="margin: 0 0 0.35rem;">
+                                Remote Target: <strong id="portal-desk1-target-desk" style="color: #c084fc; font-family: var(--font-mono, monospace);">---</strong>.
+                            </p>
+                            <p id="portal-desk1-reason-msg" style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                Desk 1 is currently in Browser mode. For full remote control access (mouse, keyboard, and low-latency DXGI 60 FPS streaming), both Desk 1 and Desk 2 must run <strong>jDroid-X-Desk.exe</strong>.
+                            </p>
+                            <div id="portal-desk1-control-status" style="display: none; margin-top: 0.5rem; padding: 0.45rem 0.7rem; border-radius: 6px; font-size: 0.78rem;"></div>
+                        </div>
+                        <div class="incoming-alert-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem;">
+                            <button type="button" class="btn btn-primary" id="portal-desk1-btn-run-local-exe" style="flex: 1.2; padding: 0.55rem 0.8rem; font-weight: 700; font-size: 0.82rem; background: #8b5cf6; border: 1px solid #8b5cf6; color: #fff; cursor: pointer; border-radius: 6px;" title="Directly launch jDroid-X-Desk.exe if available in Downloads or PC">
+                                <i class="fa-solid fa-bolt"></i> Run Local (.EXE)
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="portal-desk1-btn-download-exe" style="flex: 1.1; padding: 0.55rem 0.8rem; font-weight: 600; font-size: 0.8rem; background: rgba(168,85,247,0.15); border: 1px solid #c084fc; color: #c084fc; cursor: pointer; border-radius: 6px;" title="Download portable executable directly from GitHub">
+                                <i class="fa-solid fa-download"></i> Download (.EXE)
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="portal-desk1-btn-browser-continue" style="flex: 1; padding: 0.55rem 0.8rem; font-weight: 600; font-size: 0.8rem; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: var(--text-color); cursor: pointer; border-radius: 6px;" title="Continue in browser (View-Only)">
+                                <i class="fa-solid fa-globe"></i> Continue in Browser
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ONLY ONE CONNECT BUTTON -->
+                    <button type="button" id="portal-connect-session-btn" class="portal-main-connect-btn">
+                        <i class="fa-solid fa-link"></i> Connect & Control Screen ➔
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Slogan Marquee -->
+            <div class="portal-marquee-bar">
+                <span class="portal-marquee-text">
+                    ⭐ <strong>jDroid-X Sovereign Remote Gateway</strong> &nbsp;&bull;&nbsp; 
+                    Sub-15ms Direct UDP P2P Relay &nbsp;&bull;&nbsp; 
+                    22 Autonomous AI Cognitive Agents &nbsp;&bull;&nbsp; 
+                    Zero-Trust Military Grade AES-256 GCM &nbsp;&bull;&nbsp; 
+                    Support: <a href="mailto:support@jdroid-x.com">support@jdroid-x.com</a> &nbsp;&bull;&nbsp; 
+                    <strong>Copyright &copy; 2026 jDroid-X. All Rights Reserved.</strong>
+                </span>
+            </div>
         </div>
-        <span style="font-size:0.8rem;color:rgba(255,255,255,0.4);font-family:monospace;">Verifying authentication...</span>
+    </div>
+
+    <!-- UX-2: jDroid-X Engine Heartbeat Splash Screen & Radar Handshake -->
+    <div id="app-preloader" style="position:fixed;inset:0;z-index:999999;background:radial-gradient(circle at center, rgba(10,20,40,0.98) 0%, rgba(4,8,16,0.99) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;backdrop-filter:blur(8px);transition:opacity 0.6s ease, visibility 0.6s ease;">
+        <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+            <div style="position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(0,180,255,0.3);animation:heartbeatPulse 1.8s infinite ease-out;"></div>
+            <div style="position:absolute;width:140px;height:140px;border-radius:50%;border:1px dashed rgba(0,255,180,0.25);animation:spinReverse 12s linear infinite;"></div>
+            <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Engine" style="width:72px;height:72px;filter:drop-shadow(0 0 25px rgba(0,180,255,0.85));animation:logoPulse 2s ease-in-out infinite;z-index:2;">
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;text-align:center;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="live-dot pulse" style="background:#00f2fe;box-shadow:0 0 8px #00f2fe;"></span>
+                <span id="splash-status-title" style="font-family:var(--font-mono, monospace);font-size:0.95rem;font-weight:700;color:#e0f2fe;letter-spacing:1px;text-transform:uppercase;">Connecting to jDroid-X Engine</span>
+            </div>
+            <span id="splash-status-sub" style="font-size:0.8rem;color:rgba(224,242,254,0.6);font-family:var(--font-mono, monospace);">[Signal Node Synchronizing &middot; Handshake In Progress]</span>
+        </div>
+        <!-- High-Tech Heartbeat Progress Bar -->
+        <div style="width:280px;height:5px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;border:1px solid rgba(255,255,255,0.12);box-shadow:0 0 12px rgba(0,102,255,0.2);">
+            <div id="preloader-bar" style="height:100%;width:35%;background:linear-gradient(90deg,#0066ff,#00f2fe,#10b981);border-radius:99px;transition:width 0.4s ease;animation:preloaderSlide 1.4s ease-in-out infinite;"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.6rem;font-size:0.75rem;color:rgba(255,255,255,0.45);font-family:var(--font-mono, monospace);">
+            <span>Target: <strong style="color:#38bdf8;">desk.jdroid-x.com</strong></span>
+            <span>&bull;</span>
+            <span id="splash-engine-health">Probing Local Socket...</span>
+        </div>
     </div>
     <!-- Firebase Authentication Login Portal Gate (Accessible via System Studio or on demand) -->
     <div id="login-gate-overlay" class="login-gate-container" style="display: none;">
@@ -70,8 +336,242 @@
     <!-- Toast Popup Notification Container -->
     <div id="toast-container" class="toast-overlay-container"></div>
 
+    
+    <!-- =========================================================================
+         STAGE 3: SHARED DESKTOP SCREEN (Remote Control Console Full Page Parity)
+         Matches media_1793376092426_c6d4b115.png 1:1
+         ========================================================================= -->
+        <div id="remote-console-workspace" class="remote-workspace-container" style="display: none;">
+        <!-- Slide In / Out Sidebar Drawer -->
+        <aside id="remote-sidebar-drawer" class="remote-slide-drawer">
+            <div class="remote-drawer-header">
+                <div class="drawer-brand">
+                    <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" class="drawer-logo-img">
+                    <div class="drawer-brand-text">
+                        <span class="drawer-title">jDroid-X</span>
+                        <span class="drawer-sub">Sovereign Cockpit</span>
+                    </div>
+                </div>
+                <button type="button" class="drawer-close-btn" id="btn-close-remote-sidebar" title="Slide Out Sidebar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="remote-drawer-body">
+                <!-- Local Desk Quick Card -->
+                <div class="drawer-desk-badge-box">
+                    <div class="drawer-badge-title"><i class="fa-solid fa-laptop"></i> YOUR LOCAL DESK</div>
+                    <div class="drawer-badge-id" id="drawer-local-desk-id">539-559-745</div>
+                    <div class="drawer-badge-status"><span class="live-dot-mini"></span> Online &amp; UAC Elevated</div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="drawer-nav-section">
+                    <span class="drawer-nav-heading">Console Navigation</span>
+                    <ul class="drawer-nav-list">
+                        <li class="drawer-nav-item active">
+                            <a href="javascript:void(0)" id="drawer-link-active-session">
+                                <i class="fa-solid fa-desktop text-primary"></i>
+                                <span>Active Remote Session</span>
+                            </a>
+                        </li>
+                        <li class="drawer-nav-item">
+                            <a href="javascript:void(0)" id="drawer-link-portal">
+                                <i class="fa-solid fa-arrow-left text-amber"></i>
+                                <span>Return to Connect Screen</span>
+                            </a>
+                        </li>
+                        <li class="drawer-nav-item">
+                            <a href="javascript:void(0)" id="drawer-link-fleet">
+                                <i class="fa-solid fa-address-book text-emerald"></i>
+                                <span>Address Book &amp; Fleet</span>
+                            </a>
+                        </li>
+                        <li class="drawer-nav-item">
+                            <a href="javascript:void(0)" id="drawer-link-chat">
+                                <i class="fa-solid fa-comment-dots text-info"></i>
+                                <span>Session Chat Drawer</span>
+                            </a>
+                        </li>
+                        <li class="drawer-nav-item">
+                            <a href="javascript:void(0)" id="drawer-link-settings">
+                                <i class="fa-solid fa-sliders text-purple"></i>
+                                <span>Stream &amp; Display Settings</span>
+                            </a>
+                        </li>
+                        <li class="drawer-nav-item">
+                            <a href="javascript:void(0)" id="drawer-link-curtain">
+                                <i class="fa-solid fa-glasses text-warning"></i>
+                                <span>Privacy Screen Curtain (Blank Host)</span>
+                            </a>
+                        </li>
+                        <li class="drawer-nav-item">
+                            <a href="javascript:void(0)" id="drawer-link-logs">
+                                <i class="fa-solid fa-clock-rotate-left text-dim"></i>
+                                <span>Traceability Logs</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="remote-drawer-footer">
+                <button type="button" class="drawer-disconnect-btn" id="drawer-btn-disconnect">
+                    <i class="fa-solid fa-power-off"></i> Disconnect Session
+                </button>
+            </div>
+        </aside>
+
+        <!-- Semi-Transparent Backdrop (Click to Slide Out) -->
+        <div id="remote-sidebar-backdrop" class="remote-slide-backdrop"></div>
+
+    <!-- 2. Browser Tab Bar -->
+        <div class="remote-tab-bar">
+            <div class="tab-brand-lead">
+                <span class="tab-brand-accent">⚡</span>
+                <span class="tab-brand-text">jDroid-X</span>
+            </div>
+            
+            <div class="tab-scroller-area" id="remote-tabs-container">
+                <!-- Active Connection Tab -->
+                <div class="remote-session-tab active" id="active-session-tab">
+                    <i class="fa-solid fa-desktop tab-desk-icon"></i>
+                    <span class="tab-desk-id-label" id="tab-active-desk-id">123-234-345</span>
+                    <button type="button" class="tab-close-btn" id="btn-tab-close-session" title="Close Session">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                
+                <!-- New Tab Button -->
+                <button type="button" class="tab-add-btn" id="btn-tab-add-connection" title="New Connection Tab">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <div class="tab-bar-right-controls">
+                <div class="tab-user-avatar-pill" id="tab-user-profile-btn" title="Operator Profile">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <i class="fa-solid fa-caret-down caret-mini"></i>
+                </div>
+                <button type="button" class="tab-tool-btn" id="btn-toggle-fullscreen" title="Toggle Fullscreen">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Action Toolbar Ribbon -->
+        <div class="remote-action-ribbon">
+            <div class="ribbon-left-identity">
+                <!-- Slide In/Out Sidebar Toggle Button -->
+                <button type="button" class="ribbon-tool-btn ribbon-sidebar-toggle-btn" id="btn-toggle-remote-sidebar" title="Toggle Navigation Sidebar (Slide In/Out)">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <span class="ribbon-globe-icon" id="ribbon-connection-status-dot" title="Network Active">
+                    <i class="fa-solid fa-globe"></i>
+                </span>
+                <!-- Local Desk Number Display in Header 3 -->
+                <div class="ribbon-local-desk-cluster" title="Your Local Desk Number">
+                    <i class="fa-solid fa-desktop ribbon-desk-icon"></i>
+                    <span class="ribbon-desk-label">Desk:</span>
+                    <span class="ribbon-local-desk-id" id="ribbon-local-desk-id">539-559-745</span>
+                    <button type="button" class="ribbon-mini-copy-btn" id="btn-ribbon-copy-local-id" title="Copy Local Desk ID">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ribbon-right-tools">
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-native-agent" title="Native Remote Control Status (Click to Run/Download jDroid-X-Desk.exe)" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; padding: 2px 9px; border-radius: 12px; border: 1px solid #10b981; color: #10b981; background: rgba(16,185,129,0.12); cursor:pointer;">
+                    <i class="fa-solid fa-gamepad"></i> <span id="ribbon-native-agent-text">Native Active</span>
+                </button>
+                <button type="button" class="ribbon-tool-btn text-danger" id="ribbon-btn-disconnect" title="Disconnect Session (Power Off)">
+                    <i class="fa-solid fa-link-slash"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-latency" title="Stream Telemetry & Latency">
+                    <i class="fa-regular fa-hourglass-half"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-orientation" title="Display Orientation & Scale">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-favorite" title="Add to Favorites / Address Book">
+                    <i class="fa-regular fa-star"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-refresh" title="Refresh Stream / Request Keyframe">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-monitors" title="Switch Remote Monitor">
+                    <i class="fa-solid fa-display"></i> <span class="badge-sub">1</span>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-clipboard" title="Bi-directional Clipboard Sync">
+                    <i class="fa-regular fa-clipboard"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-chat" title="Toggle In-Session Chat">
+                    <i class="fa-regular fa-comment-dots"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-sas" title="Send Ctrl+Alt+Del (SAS Injection)">
+                    <i class="fa-solid fa-bolt"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-keyboard" title="Toggle Virtual Keyboard / Special Keys">
+                    <i class="fa-regular fa-keyboard"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-theme" title="Toggle Theme & High Contrast">
+                    <i class="fa-solid fa-circle-half-stroke"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-quality" title="Stream Quality & NVENC/AV1 Settings">
+                    <i class="fa-solid fa-sliders"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-whiteboard" title="Screen Annotation / Pointer Pen">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button type="button" class="ribbon-tool-btn" id="ribbon-btn-menu" title="Session Options & Audio">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. Center Black Viewport (Streams Remote Desktop) -->
+        <div class="remote-black-viewport" id="remote-black-viewport">
+            <!-- Connecting Keyframe Overlay -->
+            <div class="connecting-keyframe-overlay" id="connecting-keyframe-overlay">
+                <div class="keyframe-spinner-ring"></div>
+                <p class="keyframe-lead-msg">Connecting to Remote Workstation...</p>
+                <p class="keyframe-sub-msg">Awaiting Video Keyframe...</p>
+            </div>
+
+            <!-- High-Speed Live Remote Canvas -->
+            <canvas id="remote-stream-canvas" tabindex="0" class="remote-interactive-canvas"></canvas>
+            <video id="live-screen-video" autoplay playsinline muted class="remote-interactive-video" style="display: none;"></video>
+
+            <!-- In-Session Chat Floating Panel -->
+            <div id="in-session-chat-panel" class="in-session-chat-panel" style="display: none;">
+                <div class="chat-header">
+                    <div class="chat-title"><i class="fa-solid fa-comment-dots text-info"></i> In-Session Chat</div>
+                    <button type="button" class="chat-close-btn" id="btn-close-in-session-chat"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="chat-messages" id="in-session-chat-messages">
+                    <div class="chat-system-msg"><i class="fa-solid fa-lock"></i> Chat channel encrypted (AES-256-GCM)</div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="in-session-chat-input" placeholder="Type a message to partner..." class="chat-input">
+                    <button type="button" id="btn-send-in-session-chat" class="chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Bottom Status Bar -->
+        <div class="remote-status-bar">
+            <div class="status-bar-left">
+                <span class="status-pulse-dot" id="footer-status-dot"></span>
+                <span id="footer-status-text">Connected to <strong id="footer-target-desk-id">123-234-345</strong> | ⚡ <span id="footer-fps">60 FPS</span> | <span id="footer-rtt">14 ms RTT</span> | GPU Accelerated</span>
+            </div>
+            <div class="status-bar-right">
+                <span class="sec-badge"><i class="fa-solid fa-shield-halved"></i> Zero-Trust DTLS AES-256-GCM | Sovereign Mesh</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Main App Container -->
-    <div id="app-container" class="app-layout">
+    <div id="app-container" class="app-layout" style="display: none !important;">
         
         <!-- Sidebar Navigation Drawer (Desktop & Mobile) -->
         <aside id="sidebar-drawer" class="sidebar">
@@ -315,11 +815,14 @@
                         <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X Logo" class="header-logo-img">
                     </div>
                     <h1 id="view-title" class="page-title">Remote Control Console</h1>
+                    <button id="btn-return-portal" class="btn btn-secondary btn-sm" style="padding: 0.35rem 0.65rem; font-size: 0.75rem; border-radius: 6px; margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 0.4rem;" title="Switch to Compact Connect Portal">
+                        <i class="fa-solid fa-arrow-left"></i> Connect Portal
+                    </button>
                 </div>
 
                 <div class="topbar-right" style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
                     <span id="web-header-gateway-pill" class="status-pill status-pill-green" title="Active Gateway Telemetry">
-                        <i class="fa-solid fa-server"></i> <span id="web-gateway-status-text">Port 12345 (HTTP 200)</span>
+                        <i class="fa-solid fa-server"></i> <span id="web-gateway-status-text">Gateway (HTTP 200)</span>
                     </span>
                     <div id="web-header-engine-badge" class="badge badge-blue" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.65rem; font-size: 0.75rem; border-radius: 6px;" title="Active jDroid-Engine. Click to switch.">
                         <i class="fa-solid fa-bolt" style="color: var(--accent-amber);"></i>
@@ -359,6 +862,22 @@
             <!-- Dynamic View Containers -->
             <div id="content-area" class="content-container">
                 
+                <!-- Global Dependency & Broken Integration Alert Banner (Dynamic) -->
+                <div id="integration-health-banner" class="integration-alert-banner" style="display: none; margin: 0.75rem 1.25rem 0 1.25rem; padding: 0.65rem 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: var(--accent-danger); font-size: 0.82rem; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1rem;"></i>
+                        <span id="integration-alert-text"><strong>Integration Alert:</strong> One or more background dependencies are inactive.</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button id="btn-self-heal" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.65rem; font-size: 0.75rem;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> ⚡ Autostart / Self-Heal
+                        </button>
+                        <button id="btn-dismiss-integration-alert" class="icon-btn" style="width: 24px; height: 24px; font-size: 0.75rem; background: none; border: none; cursor: pointer; color: inherit;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- VIEW 1: UNIFIED REMOTE CONTROL CONSOLE -->
                 <section id="view-remote-console" class="view-panel active">
                     <!-- SmartFit Active Engine & Fast-Action Banner -->
@@ -381,7 +900,7 @@
                             <button id="console-switch-engine-btn" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem;">
                                 <i class="fa-solid fa-sliders" style="color: var(--accent-amber);"></i> Switch Engine
                             </button>
-                            <a id="btn-download-exe" href="jDroid-X-Desk.exe" download="jDroid-X-Desk.exe" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem; text-decoration: none;">
+                            <a id="btn-download-exe" href="https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe" target="_blank" download="jDroid-X-Desk.exe" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem; text-decoration: none;">
                                 <i class="fa-solid fa-download"></i> Download .EXE
                             </a>
                             <button id="btn-download-share-bat" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; font-size: 0.78rem;">
@@ -394,17 +913,17 @@
                     <div id="gateway-entry-card" class="gateway-entry-card">
                         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                             <span class="gateway-pill-tag">
-                                <i class="fa-solid fa-network-wired"></i> <span id="gateway-pill-status">GATEWAY PORT 8080 : HTTP 200</span>
+                                <i class="fa-solid fa-network-wired"></i> <span id="gateway-pill-status">GATEWAY PORT 7700 : HTTP 200</span>
                             </span>
                             <div style="font-size: 0.8rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                <strong>Active Gateway:</strong> <span id="gateway-url-display" style="font-family: var(--font-mono); color: var(--accent-blue);">http://localhost:8080/jdroid-x-desk/</span>
+                                <strong>Active Gateway:</strong> <span id="gateway-url-display" style="font-family: var(--font-mono); color: var(--accent-blue); word-break: break-all;">http://localhost:7700/jdroid-x-desk/</span>
                                 <span class="badge badge-green" id="edge-tunnel-status-pill" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); border-radius: 6px;">
                                     <i class="fa-solid fa-cloud"></i> Ingress: desk.jdroid-x.com (Active)
                                 </span>
                             </div>
                         </div>
                         <div style="display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap;">
-                            <button id="btn-copy-gateway-url" class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('http://localhost:8080/jdroid-x-desk/index.html#remote-console'); alert('Gateway URL copied to clipboard!');" title="Copy Gateway Route URL">
+                            <button id="btn-copy-gateway-url" class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText(window.location.origin + '/jdroid-x-desk/index.html#remote-console'); alert('Gateway URL copied to clipboard!');" title="Copy Gateway Route URL">
                                 <i class="fa-solid fa-copy"></i> Copy Route
                             </button>
                             <a id="btn-launch-gateway-route" href="/jdroid-x-desk/index.html#remote-console" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;" title="Open Unified Gateway Screen">
@@ -413,96 +932,148 @@
                         </div>
                     </div>
 
-                    <!-- jDroid-X 2-Card Connection Grid: Share Screen & Connect to Partner Side-by-Side -->
-                    <div class="remote-console-2col-grid">
-                        <!-- CARD 1: STEP 2 - THIS DESK (Share Screen - Get Support) -->
-                        <div class="widget-box console-hero-card" style="border-top: 4px solid var(--accent-blue);">
-                            <div>
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fa-solid fa-laptop text-primary" style="font-size: 1.25rem;"></i>
-                                        <h3 style="margin: 0; font-size: 1.05rem;">Step 2: Share Screen (Get Support)</h3>
-                                    </div>
-                                    <span class="badge badge-green" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-circle-check"></i> Ready for Connections</span>
+                    <!-- OXAAM-STYLE HERO PORTAL: FIRST INTERFACE WITH BRANDING, VIBGYOR, SELF & REMOTE DESK, GOLD BORDER, MARQUEE -->
+                    <div id="hero-portal-container" class="portal-hero-container">
+                        <div id="hero-portal-card" class="portal-hero-card">
+                            
+                            <!-- Top Bar: VIBGYOR 7-Color Swatches & Gold Border Accent -->
+                            <div class="portal-topbar">
+                                <div class="portal-topbar-title">
+                                    <i class="fa-solid fa-palette" style="color: #FFD700;"></i>
+                                    <span>Workspace Palette (VIBGYOR)</span>
                                 </div>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">Your local computer is ready. Share this address and password with your partner to let them control your screen.</p>
+                                <div class="vibgyor-palette" title="Hover or click any color box to switch workspace theme">
+                                    <span class="vibgyor-box" data-theme="theme-dracula" style="background: #8B5CF6;" title="Violet (Dracula Midnight)"></span>
+                                    <span class="vibgyor-box" data-theme="theme-tokyo-night" style="background: #4F46E5;" title="Indigo (Tokyo Night)"></span>
+                                    <span class="vibgyor-box" data-theme="theme-ocean" style="background: #0284C7;" title="Blue (Deep Ocean)"></span>
+                                    <span class="vibgyor-box" data-theme="theme-emerald" style="background: #059669;" title="Green (Matrix Emerald)"></span>
+                                    <span class="vibgyor-box" data-theme="theme-solarized-light" style="background: #EAB308;" title="Yellow (Solarized Gold)"></span>
+                                    <span class="vibgyor-box" data-theme="theme-sunset" style="background: #EA580C;" title="Orange (Crimson Sunset)"></span>
+                                    <span class="vibgyor-box" data-theme="theme-cyberpunk" style="background: #DC2626;" title="Red (Cyberpunk Neon)"></span>
+                                </div>
+                            </div>
+
+                            <!-- 2-Column Responsive Grid matching Oxaam reference -->
+                            <div class="portal-grid">
                                 
-                                <div class="margin-top-md" style="background: var(--bg-tertiary); padding: 1rem 1.15rem; border-radius: 12px; border: 1px solid var(--border-color);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Your Desk ID</span>
-                                        <span style="font-size: 0.72rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> UAC Ready</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-                                        <div style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; color: var(--accent-blue); letter-spacing: 2px;" id="local-device-id">984-102-391</div>
-                                        <div style="display: flex; gap: 0.4rem;">
-                                            <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
-                                            <button class="btn btn-danger btn-sm" id="btn-open-invite-modal" style="background: #e53935; border-color: #d32f2f; font-weight: 600; padding: 0.25rem 0.65rem;" title="Send Session Invitation"><i class="fa-solid fa-paper-plane"></i> Invite</button>
-                                        </div>
-                                    </div>
-                                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;" id="local-node-desc">Local Node: Initializing Node Identity...</div>
-                                    
-                                    <div style="border-top: 1px solid var(--border-color); margin-top: 0.85rem; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                                <!-- LEFT COLUMN: Project Branding & Feature Pointers -->
+                                <div class="portal-brand-col">
+                                    <div class="portal-brand-header">
+                                        <img src="assets/jdroidxlogo_trans.png" alt="jDroid-X-Desk Logo" class="portal-brand-logo">
                                         <div>
-                                            <span style="font-size: 0.75rem; color: var(--text-dim); display: block;">One-Time Password:</span>
-                                            <span style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">k9X#m2P8</span>
+                                            <h1 class="portal-brand-title">Welcome to jDroid-X 👋</h1>
+                                            <p class="portal-brand-desc">Next-Gen Autonomous Remote Desktop & Ultra-Low Latency P2P Screen Control Workspace.</p>
                                         </div>
-                                        <span style="font-size: 0.72rem; color: var(--text-dim);"><i class="fa-solid fa-lock"></i> Auto-Generated</span>
+                                    </div>
+
+                                    <!-- 4-5 Feature Pointers (Icons + Badges) -->
+                                    <div class="portal-features-list">
+                                        <div class="portal-feature-pill">
+                                            <span class="portal-feature-icon" style="background: rgba(2, 132, 199, 0.15); color: #38bdf8;"><i class="fa-solid fa-bolt"></i></span>
+                                            <span><strong>1-Click Ultra-Low Latency:</strong> 60 FPS NVENC/AV1 hardware streaming</span>
+                                        </div>
+                                        <div class="portal-feature-pill">
+                                            <span class="portal-feature-icon" style="background: rgba(16, 185, 129, 0.15); color: #10B981;"><i class="fa-solid fa-lock"></i></span>
+                                            <span><strong>100% Secure P2P Encryption:</strong> Zero-trust DTLS / AES-256 peer tunneling</span>
+                                        </div>
+                                        <div class="portal-feature-pill">
+                                            <span class="portal-feature-icon" style="background: rgba(124, 77, 255, 0.15); color: #a78bfa;"><i class="fa-solid fa-shield-halved"></i></span>
+                                            <span><strong>Built-in UAC Admin Bypass:</strong> High-integrity SYSTEM interactive elevation</span>
+                                        </div>
+                                        <div class="portal-feature-pill">
+                                            <span class="portal-feature-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fa-solid fa-globe"></i></span>
+                                            <span><strong>Zero-Install Web & Native Mesh:</strong> Instant browser control or portable .EXE</span>
+                                        </div>
+                                        <div class="portal-feature-pill">
+                                            <span class="portal-feature-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171;"><i class="fa-solid fa-headset"></i></span>
+                                            <span><strong>24×7 Instant Remote Support:</strong> Live chat, bidirectional clipboard & audio sync</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem;">
+                                        <i class="fa-solid fa-circle-check" style="color: #10B981;"></i> Cross-platform connectivity: Windows 11/10, Linux, macOS, iOS & Android.
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="margin-top-md" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
-                                <span><i class="fa-solid fa-bolt text-warning"></i> Status: <strong id="session-status-text" style="color: var(--text-muted);">Idle (Awaiting Connection)</strong></span>
-                                <span id="session-protocol-text" style="font-family: var(--font-mono); font-size: 0.72rem;">P2P Encrypted</span>
-                            </div>
-                        </div>
-
-                        <!-- CARD 2: STEP 3 - REMOTE DESK (Connect - Give Support) -->
-                        <div class="widget-box console-hero-card" style="border-top: 4px solid var(--accent-purple);">
-                            <div>
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fa-solid fa-tower-broadcast" style="color: var(--accent-purple); font-size: 1.25rem;"></i>
-                                        <h3 style="margin: 0; font-size: 1.05rem;">Step 3: Connect to Partner (Give Support)</h3>
-                                    </div>
-                                    <span class="badge" style="background: rgba(124,77,255,0.15); color: var(--accent-purple); font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-terminal"></i> Admin Control</span>
-                                </div>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">Enter partner's 9-digit Desk ID to connect with Windows-level Administrator rights.</p>
-
-                                <div class="margin-top-md">
-                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.35rem; font-weight: 600;">Partner Desk ID:</label>
-                                    <div style="position: relative; display: flex; align-items: center;">
-                                        <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; min-height: 44px; box-sizing: border-box; border-radius: 8px; padding: 0.6rem 2.4rem 0.6rem 0.85rem; font-family: var(--font-mono); font-size: 1.05rem; letter-spacing: 0.8px;" placeholder="e.g. 582-109-431 or JDX-ABCD-1234">
-                                        <button type="button" id="btn-clear-target-id" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; display: none; font-size: 0.9rem;" title="Clear Input"><i class="fa-solid fa-circle-xmark"></i></button>
-                                    </div>
+                                <!-- RIGHT COLUMN: Self Desk + Remote Desk Connect Form -->
+                                <div class="portal-connect-col">
                                     
-                                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.75rem; margin-bottom: 0.35rem; font-weight: 600;">Security Password:</label>
-                                    <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; min-height: 44px; box-sizing: border-box; border-radius: 8px; padding: 0.6rem 0.85rem; font-family: var(--font-mono); font-size: 1.05rem;" placeholder="Enter one-time password">
+                                    <!-- Section A: Self Desk Identity -->
+                                    <div style="background: var(--bg-tertiary); padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Your Desk ID (Get Support)</span>
+                                            <span style="font-size: 0.72rem; color: var(--accent-emerald);"><i class="fa-solid fa-shield-halved"></i> UAC Ready</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                                            <div style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: var(--accent-blue); letter-spacing: 2px;" id="local-device-id">381-422-623</div>
+                                            <div style="display: flex; gap: 0.35rem;">
+                                                <button class="btn btn-secondary btn-sm" id="btn-edit-desk-id" title="Set or Sync Desk ID from Native App"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button class="btn btn-secondary btn-sm" id="copy-id-btn" title="Copy Address"><i class="fa-solid fa-copy"></i> Copy</button>
+                                                <button class="btn btn-danger btn-sm" id="btn-open-invite-modal" style="background: #e53935; border-color: #d32f2f; font-weight: 600; padding: 0.2rem 0.55rem;" title="Send Session Invitation"><i class="fa-solid fa-paper-plane"></i> Invite</button>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem;" id="local-node-desc">Local Node: Initializing Node Identity...</div>
+                                        <div style="border-top: 1px solid var(--border-color); margin-top: 0.65rem; padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <span style="font-size: 0.72rem; color: var(--text-dim);">One-Time Password: </span>
+                                                <span style="font-family: var(--font-mono); font-size: 1.05rem; font-weight: 600; color: var(--accent-emerald);" id="local-device-pass">859-542</span>
+                                            </div>
+                                            <span style="font-size: 0.7rem; color: var(--text-dim);"><i class="fa-solid fa-lock"></i> Auto-Generated</span>
+                                        </div>
+                                    </div>
 
-                                    <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-                                        <button id="connect-session-btn" class="btn btn-primary" style="flex: 2; min-height: 44px; padding: 0.65rem 1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                             <i class="fa-solid fa-link"></i> Connect & Control Screen
-                                        </button>
-                                        <button id="launch-canvas-btn" class="btn btn-secondary" style="flex: 1; min-height: 44px; padding: 0.65rem 1rem; font-size: 0.88rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" disabled>
-                                             <i class="fa-solid fa-expand"></i> View Screen
-                                        </button>
+                                    <!-- Section B: Remote Desk Input & Connect -->
+                                    <div>
+                                        <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.3rem; font-weight: 600; text-transform: uppercase;">Partner Desk ID (Give Support):</label>
+                                        <div style="position: relative; display: flex; align-items: center;">
+                                            <input type="text" id="target-id-input" class="search-bar-mini" style="width: 100%; min-height: 42px; box-sizing: border-box; border-radius: 8px; padding: 0.55rem 2.4rem 0.55rem 0.85rem; font-family: var(--font-mono); font-size: 1.05rem; letter-spacing: 0.8px;" placeholder="e.g. 582-109-431 or JDX-ABCD-1234">
+                                            <button type="button" id="btn-clear-target-id" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; display: none; font-size: 0.9rem;" title="Clear Input"><i class="fa-solid fa-circle-xmark"></i></button>
+                                        </div>
+
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.65rem; margin-bottom: 0.25rem;">
+                                            <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase;">Security Password:</label>
+                                            <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> (Password is not mandatory)</span>
+                                        </div>
+                                        <input type="password" id="target-pass-input" class="search-bar-mini" style="width: 100%; min-height: 42px; box-sizing: border-box; border-radius: 8px; padding: 0.55rem 0.85rem; font-family: var(--font-mono); font-size: 1.05rem;" placeholder="Enter partner password (optional)">
+
+                                        <div style="display: flex; gap: 0.65rem; margin-top: 0.9rem;">
+                                            <button id="connect-session-btn" class="btn btn-primary" style="flex: 2; min-height: 44px; padding: 0.65rem 1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                                <i class="fa-solid fa-link"></i> Connect & Control Screen
+                                            </button>
+                                            <button id="launch-canvas-btn" class="btn btn-secondary" style="flex: 1; min-height: 44px; padding: 0.65rem 0.85rem; font-size: 0.88rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" disabled>
+                                                <i class="fa-solid fa-expand"></i> View Screen
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Section C: Direct Native Relay & Session Status -->
+                                    <div style="padding-top: 0.65rem; border-top: 1px dashed var(--border-color);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                                            <span style="font-size: 0.7rem; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px;">NATIVE WINDOWS DIRECT RELAY:</span>
+                                            <span style="font-size: 0.72rem; color: var(--text-muted);"><i class="fa-solid fa-bolt text-warning"></i> <strong id="session-status-text">Idle</strong></span>
+                                        </div>
+                                        <div style="display: flex; gap: 0.4rem;">
+                                            <button id="btn-native-quick-assist" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 36px; font-size: 0.74rem; padding: 0.35rem 0.5rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;" title="Native Windows Quick Assist">
+                                                <i class="fa-brands fa-windows text-info"></i> Quick Assist
+                                            </button>
+                                            <button id="btn-native-terminal" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 36px; font-size: 0.74rem; padding: 0.35rem 0.5rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;" title="Elevated Windows Remote Admin Terminal">
+                                                <i class="fa-solid fa-terminal text-emerald"></i> Admin Terminal
+                                            </button>
+                                            <button id="btn-native-msra" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 36px; font-size: 0.74rem; padding: 0.35rem 0.5rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;" title="Microsoft Remote Assistance (MSRA)">
+                                                <i class="fa-solid fa-headset text-warning"></i> MSRA
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Native Windows Remote Assistance Buttons -->
-                            <div class="margin-top-md" style="padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
-                                <span style="font-size: 0.72rem; color: var(--text-dim); display: block; margin-bottom: 0.45rem; font-weight: 600; letter-spacing: 0.5px;">NATIVE WINDOWS DIRECT RELAY (BUILT-IN UAC BYPASS):</span>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button id="btn-native-quick-assist" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 38px; font-size: 0.76rem; padding: 0.45rem 0.6rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;" title="Native Windows Quick Assist (Cloud-assisted screen control)">
-                                        <i class="fa-brands fa-windows text-info"></i> Quick Assist
-                                    </button>
-                                    <button id="btn-native-terminal" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 38px; font-size: 0.76rem; padding: 0.45rem 0.6rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;" title="Elevated Windows Remote Admin Terminal">
-                                        <i class="fa-solid fa-terminal text-emerald"></i> Admin Terminal
-                                    </button>
-                                    <button id="btn-native-msra" class="btn btn-secondary btn-sm" style="flex: 1; min-height: 38px; font-size: 0.76rem; padding: 0.45rem 0.6rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;" title="Microsoft Remote Assistance (MSRA)">
-                                        <i class="fa-solid fa-headset text-warning"></i> MSRA
-                                    </button>
+                            <!-- Bottom Line Marquee: Support Email & Copyright Slogan -->
+                            <div class="portal-marquee-bar">
+                                <div class="portal-marquee-text">
+                                    <strong><i class="fa-solid fa-envelope"></i> Support:</strong> <a href="mailto:support@jdroid-x.com">support@jdroid-x.com</a> &middot; <a href="mailto:admin@jdroid-x.com">admin@jdroid-x.com</a> &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    <strong><i class="fa-solid fa-shield-halved"></i> Copyright:</strong> © 2026 All Rights Reserved by jDroid-X Studio Enterprise &middot; Next-Gen Autonomous Remote Desktop &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    <strong><i class="fa-solid fa-bolt"></i> Engine:</strong> 100% P2P Encrypted Mesh &middot; Zero Cloud Dependency &middot; Built-in UAC Admin Bypass &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    <strong><i class="fa-solid fa-circle-nodes"></i> Mesh Status:</strong> Active &middot; Protocol: AES-256-GCM / WebRTC DTLS
                                 </div>
                             </div>
                         </div>
@@ -1064,6 +1635,15 @@
                                 </div>
 
                                 <div class="anydesk-section">
+                                    <div class="anydesk-section-title"><i class="fa-solid fa-rocket text-primary"></i> Startup Mode (Native Windows Companion)</div>
+                                    <select id="ad-set-startup-mode" style="width: 100%; max-width: 400px; padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px;">
+                                        <option value="mini">Mini Desk Console (Recommended - Fast & Lightweight)</option>
+                                        <option value="desk">Full Workstation Cockpit</option>
+                                        <option value="ask">Ask on Every Startup</option>
+                                    </select>
+                                </div>
+
+                                <div class="anydesk-section">
                                     <div class="anydesk-section-title">Miscellaneous</div>
                                     <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.4rem;">
                                         <label class="ui-switch switch-danger">
@@ -1163,6 +1743,19 @@
                                     <div style="display: flex; align-items: center; gap: 0.8rem;">
                                         <label style="font-size: 0.88rem;">Local port:</label>
                                         <input type="number" id="ad-conn-port" value="7070" style="width: 100px; padding: 0.35rem; border: 1px solid #ccc; border-radius: 4px;">
+                                    </div>
+                                </div>
+
+                                <div class="anydesk-section">
+                                    <div class="anydesk-section-title"><i class="fa-solid fa-gamepad text-primary"></i> Native Windows Companion & GitHub Release Parity</div>
+                                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.6rem;">Dynamic configuration for local port 8088 companion and GitHub automated downloader.</p>
+                                    <div style="display: grid; grid-template-columns: 190px 1fr; gap: 0.6rem; max-width: 600px; margin-top: 0.5rem; align-items: center;">
+                                        <label style="font-size: 0.85rem;">Native Relay Port:</label>
+                                        <input type="number" id="ad-conn-relay-port" value="8088" style="width: 120px; padding: 0.35rem; border: 1px solid #ccc; border-radius: 4px;">
+                                        <label style="font-size: 0.85rem;">Target Release Version:</label>
+                                        <input type="text" id="ad-conn-release-ver" value="2.5.0" style="width: 120px; padding: 0.35rem; border: 1px solid #ccc; border-radius: 4px;">
+                                        <label style="font-size: 0.85rem;">GitHub Download URL:</label>
+                                        <input type="url" id="ad-conn-github-url" value="https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe" style="width: 100%; padding: 0.35rem; border: 1px solid #ccc; border-radius: 4px;">
                                     </div>
                                 </div>
 
@@ -1640,7 +2233,7 @@
                                 <div class="anydesk-section">
                                     <div class="anydesk-section-title">Current License</div>
                                     <div style="display: flex; align-items: center; justify-content: space-between; max-width: 400px;">
-                                        <span style="font-size: 0.95rem; font-weight: 600;">free-1</span>
+                                        <span id="ad-license-type-badge" style="font-size: 0.95rem; font-weight: 600;">free-1</span>
                                         <button class="anydesk-btn-secondary" id="btn-ad-account-remove-license" style="font-size: 0.8rem;">Remove license key</button>
                                     </div>
                                 </div>
@@ -2698,6 +3291,9 @@
                 <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">IP Address / Desk ID (Optional):</label>
                 <input type="text" id="device-modal-ip" class="search-bar-mini" placeholder="e.g. 192.168.1.100 or 984-102-391" style="width: 100%; margin-top: 0.1rem;">
 
+                <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">MAC Address (for Wake-on-LAN):</label>
+                <input type="text" id="device-modal-mac" class="search-bar-mini" placeholder="e.g. 00:1A:2B:3C:4D:5E" style="width: 100%; margin-top: 0.1rem;">
+
                 <label style="font-size: 0.8rem; display: block; margin-top: 0.3rem;">Assign Group:</label>
                 <select id="device-modal-group" class="search-bar-mini" style="width: 100%; margin-top: 0.1rem; background: var(--bg-tertiary); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.2rem; border-radius: 4px;">
                     <option value="">Unassigned (No Group)</option>
@@ -2878,6 +3474,57 @@
         </div>
     </div>
 
+    <!-- Native Remote Control Companion Prompt Modal -->
+    <div id="native-control-prompt-modal" class="modal-overlay" style="display: none; z-index: 10002;">
+        <div class="modal-dialog" style="max-width: 560px; border-top: 4px solid var(--accent-blue); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); text-align: center;">
+            <div style="padding: 1.4rem 1.4rem 0.5rem;">
+                <div style="width: 58px; height: 58px; border-radius: 50%; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.6rem; color: var(--accent-blue); font-size: 1.8rem;">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                    <span class="badge" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid #10b981; font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-feather"></i> Portable Run-Only (Zero Installation)
+                    </span>
+                    <span class="badge" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid #38bdf8; font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-file-zipper"></i> 900 KB Standalone
+                    </span>
+                </div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Enable Full Remote Control Access</h3>
+                <p style="font-size: 0.86rem; color: var(--text-color); margin: 0.4rem 0 0; line-height: 1.4;">
+                    Connection from Remote Operator <strong id="native-prompt-caller-id" style="color: var(--accent-blue); font-family: var(--font-mono);">---</strong> accepted.
+                </p>
+                <div style="margin-top: 0.85rem; background: var(--bg-tertiary); padding: 0.85rem; border-radius: 8px; font-size: 0.82rem; text-align: left; border: 1px solid var(--border-color);">
+                    <div style="font-weight: 700; color: #f59e0b; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-shield-halved"></i> Download & Run jDroid-X-Desk.exe for Remote Control Access?
+                    </div>
+                    <p style="margin: 0 0 0.5rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.4;">
+                        Web browsers run in an isolated sandbox and cannot inject OS-level mouse clicks or keystrokes into other Windows applications. Running the portable <strong>jDroid-X-Desk.exe</strong> enables automatic DXGI 60 FPS screen capture (0 browser prompts) and full mouse & keyboard remote control.
+                    </p>
+                    <div style="background: rgba(15,23,42,0.6); padding: 0.55rem 0.75rem; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--border-color); color: var(--text-dim); display: flex; flex-direction: column; gap: 0.25rem;">
+                        <div><strong style="color: var(--text-color);">GitHub Download:</strong> <a id="native-download-source-host" href="https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe" target="_blank" style="color: var(--accent-blue); font-family: var(--font-mono); text-decoration: underline;">https://github.com/jDroid-X/jDroid-X-Desk/raw/main/jDroid-X-Desk.exe</a></div>
+                        <div><strong style="color: var(--text-color);">Local File Location:</strong> <span style="color: var(--accent-emerald); font-family: var(--font-mono);">Downloads \ jDroid-X-Desk.exe</span></div>
+                        <div><strong style="color: var(--text-color);">Installation Status:</strong> <span style="color: #10b981;">NO installation needed</span> — single-click portable run-only.</div>
+                    </div>
+                    <div id="native-prompt-status-box" style="display: none; padding: 0.6rem 0.8rem; border-radius: 6px; font-size: 0.8rem; margin-top: 0.5rem;"></div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 0.5rem; border-top: 1px solid var(--border-color); padding: 0.8rem 1.2rem; margin-top: 0.8rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary" id="btn-native-prompt-decline" style="flex: 1; padding: 0.6rem; font-weight: 600; font-size: 0.8rem;" title="Use standard browser screen sharing (View-Only)">
+                    <i class="fa-solid fa-desktop"></i> Browser Share
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-native-prompt-quickassist" style="flex: 1; padding: 0.6rem; font-weight: 600; font-size: 0.8rem;" title="Windows Quick Assist (Built-in, No Download)">
+                    <i class="fa-brands fa-windows"></i> Quick Assist
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-native-prompt-download" style="flex: 1.1; padding: 0.6rem; font-weight: 600; font-size: 0.8rem;" title="Download portable executable directly from GitHub">
+                    <i class="fa-solid fa-download"></i> Download (.EXE)
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-native-prompt-run-local" style="flex: 1.3; padding: 0.6rem; font-weight: 700; font-size: 0.82rem; background: var(--accent-emerald, #10b981); border-color: #10b981; color: #fff;" title="Directly launch jDroid-X-Desk.exe if available in Downloads or PC">
+                    <i class="fa-solid fa-bolt"></i> Run Local (.EXE)
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Graphical Bi-Directional File Transfer Modal (Workflow C3) -->
     <div id="file-transfer-modal" class="modal-overlay" style="display: none; z-index: 10001;">
         <div class="modal-dialog modal-lg" style="max-width: 860px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.7); overflow: hidden; display: flex; flex-direction: column;">
@@ -2986,6 +3633,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <!-- Application Script -->
-    <script src="app.js?v=2026.10.22"></script>
+    <script src="app.js?v=2026.10.31.03"></script>
 </body>
 </html>
