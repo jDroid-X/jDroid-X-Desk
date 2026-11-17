@@ -74,8 +74,8 @@ echo.
 :: 1. Ensure Node.js Gateway is active on Port 7700 [Detached / Persistent]
 netstat -ano | findstr /R /C:":!LOCAL_PORT! *LISTENING" >nul 2>&1
 if !ERRORLEVEL! NEQ 0 (
-    echo [1/3] Starting jDroid-X Node.js Gateway on Port !LOCAL_PORT! [Detached]
-    wscript.exe "!WORKSPACE!\scripts\launch-detached.vbs" "node server.js" "!WORKSPACE!"
+    echo [1/3] Starting jDroid-X Node.js Gateway on Port !LOCAL_PORT! [Background]
+    start "jDroid-X Gateway" /min cmd /c "node server.js"
     timeout /t 3 /nobreak >nul 2>&1
 ) else (
     echo [1/3] Node.js Gateway already active on Port !LOCAL_PORT! [OK]
@@ -85,11 +85,11 @@ if !ERRORLEVEL! NEQ 0 (
 tasklist /FI "IMAGENAME eq cloudflared.exe" 2>nul | findstr /I "cloudflared.exe" >nul 2>&1
 if !ERRORLEVEL! NEQ 0 (
     if exist "!USERPROFILE!\.cloudflared\config.yml" (
-        echo [2/3] Connecting Cloudflare Edge Named Tunnel to desk.jdroid-x.com [Detached]
-        wscript.exe "!WORKSPACE!\scripts\launch-detached.vbs" """!CF_BIN!"" --config ""!USERPROFILE!\.cloudflared\config.yml"" tunnel run !TUNNEL_ID!" "!WORKSPACE!"
+        echo [2/3] Connecting Cloudflare Edge Named Tunnel to desk.jdroid-x.com [Background]
+        start "jDroid-X Cloudflare Tunnel" /min "!CF_BIN!" --config "!USERPROFILE!\.cloudflared\config.yml" tunnel run !TUNNEL_ID!
     ) else (
-        echo [2/3] Connecting Zero-Config Cloudflare Quick Tunnel to 127.0.0.1:!LOCAL_PORT! [Detached]
-        wscript.exe "!WORKSPACE!\scripts\launch-detached.vbs" """!CF_BIN!"" tunnel --protocol http2 --url http://127.0.0.1:!LOCAL_PORT!" "!WORKSPACE!"
+        echo [2/3] Connecting Zero-Config Cloudflare Quick Tunnel to 127.0.0.1:!LOCAL_PORT! [Background]
+        start "jDroid-X Cloudflare Tunnel" /min "!CF_BIN!" tunnel --protocol http2 --url http://127.0.0.1:!LOCAL_PORT!
     )
     timeout /t 5 /nobreak >nul 2>&1
 ) else (
