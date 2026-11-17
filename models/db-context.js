@@ -272,10 +272,7 @@ function writeDB(data) {
                 throw renameErr;
             }
         }
-        // Mirror to models/database.json as encapsulated store
-        try {
-            fs.writeFileSync(MODELS_DB_PATH, jsonStr, 'utf8');
-        } catch (_) {}
+        // Single source: root database.json (mirror removed to eliminate duplication)
     } catch (e) {
         if (fs.existsSync(tmpPath)) { try { fs.unlinkSync(tmpPath); } catch (_) {} }
         throw e;
@@ -284,11 +281,7 @@ function writeDB(data) {
 
 function readDB() {
     if (!fs.existsSync(DB_PATH)) {
-        if (fs.existsSync(MODELS_DB_PATH)) {
-            fs.copyFileSync(MODELS_DB_PATH, DB_PATH);
-        } else {
-            fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_SCHEMA, null, 2));
-        }
+        fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_SCHEMA, null, 2));
     }
     try {
         const raw = fs.readFileSync(DB_PATH, 'utf8');
@@ -304,16 +297,7 @@ function readDB() {
         if (dirty) writeDB(parsed);
         return parsed;
     } catch (e) {
-        console.warn('[DATABASE READ COLLISION] Attempting fallback mirror read:', e.message);
-        // Fallback to secondary encapsulated mirror if primary had a transient read collision
-        if (fs.existsSync(MODELS_DB_PATH)) {
-            try {
-                const mirrorRaw = fs.readFileSync(MODELS_DB_PATH, 'utf8');
-                const mirrorParsed = JSON.parse(mirrorRaw);
-                console.info('[DATABASE RECOVERY] Successfully served from encapsulated mirror store.');
-                return mirrorParsed;
-            } catch (_) {}
-        }
+        console.warn('[DATABASE READ ERROR]:', e.message);
         // If unrecoverable, return default schema in memory without dumping uncontrolled backups in root
         console.warn('[DATABASE RESET] Serving clean default schema in memory.');
         try {
