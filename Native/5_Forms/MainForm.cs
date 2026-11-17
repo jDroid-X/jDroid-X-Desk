@@ -566,6 +566,13 @@ namespace JDroidXDesk.Native
                         }
                     }
 
+                // Stage 5 / UI Flow: Branded System Splash Screen & Preflight Service Check
+                bool skipSplash = (args != null && Array.IndexOf(args, "--no-splash") >= 0);
+                if (!skipSplash)
+                {
+                    SplashScreenForm.ShowSplash();
+                }
+
                 // Determine startup mode (Default: Mini Desk)
                 string chosenMode = "mini";
                 bool cliForced = false;
